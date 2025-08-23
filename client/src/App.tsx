@@ -6,7 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Import our new components
 import { BustanSplashScreen } from "./components/BustanSplashScreen";
-import { Homepage } from "./components/Homepage";
+import { NewHomepage } from "./components/NewHomepage";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
@@ -72,7 +72,7 @@ function App() {
       
       case 'home':
         return (
-          <Homepage
+          <NewHomepage
             onLoginClick={() => setAppState('auth')}
             onRegisterClick={() => setAppState('register')}
             onQuranReader={() => setAppState('quran')}

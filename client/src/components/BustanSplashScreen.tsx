@@ -73,6 +73,32 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   className="w-32 h-32 mx-auto mb-4"
                 >
                   <svg viewBox="0 0 200 200" className="w-full h-full text-blue-300">
+                    {/* مصحف مفتوح */}
+                    <path
+                      d="M30 60 L30 160 L100 160 L100 60 Z"
+                      fill="currentColor"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M100 60 L170 60 L170 160 L100 160 Z"
+                      fill="currentColor"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                    {/* خطوط النص */}
+                    <line x1="40" y1="80" x2="90" y2="80" stroke="white" strokeWidth="1" opacity="0.8" />
+                    <line x1="40" y1="90" x2="90" y2="90" stroke="white" strokeWidth="1" opacity="0.8" />
+                    <line x1="40" y1="100" x2="90" y2="100" stroke="white" strokeWidth="1" opacity="0.8" />
+                    <line x1="110" y1="80" x2="160" y2="80" stroke="white" strokeWidth="1" opacity="0.8" />
+                    <line x1="110" y1="90" x2="160" y2="90" stroke="white" strokeWidth="1" opacity="0.8" />
+                    <line x1="110" y1="100" x2="160" y2="100" stroke="white" strokeWidth="1" opacity="0.8" />
+                    {/* نجمة صغيرة */}
+                    <polygon
+                      points="100,40 105,50 115,50 107,57 110,67 100,62 90,67 93,57 85,50 95,50"
+                      fill="white"
+                      opacity="0.9"
+                    />
                     <defs>
                       <linearGradient id="starGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#3b82f6" />
