@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "name": "عبد الباسط عبد الصمد",
+    "englishName": "Abdul Basit Abdul Samad",
+    "style": "مرتل",
+    "audioUrl": "AbdulSamad_64kbps_QuranExplorer.Com"
+  },
+  {
+    "id": 2,
+    "name": "ماهر المعيقلي",
+    "englishName": "Maher Al Muaiqly",
+    "style": "مرتل",
+    "audioUrl": "Maher_AlMuaiqly_64kbps"
+  },
+  {
+    "id": 3,
+    "name": "محمود خليل الحصري",
+    "englishName": "Mahmoud Khalil Al-Hussary",
+    "style": "مرتل",
+    "audioUrl": "Husary_64kbps"
+  },
+  {
+    "id": 4,
+    "name": "مشاري راشد العفاسي",
+    "englishName": "Mishari Rashid Alafasy",
+    "style": "مرتل",
+    "audioUrl": "Alafasy_64kbps"
+  },
+  {
+    "id": 5,
+    "name": "سعد الغامدي",
+    "englishName": "Saad Al-Ghamdi",
+    "style": "مرتل",
+    "audioUrl": "Ghamdi_40kbps"
+  },
+  {
+    "id": 6,
+    "name": "عبد الرحمن السديس",
+    "englishName": "Abdurrahman Al-Sudais",
+    "style": "مرتل",
+    "audioUrl": "Sudais_64kbps"
+  },
+  {
+    "id": 7,
+    "name": "سعود الشريم",
+    "englishName": "Saud Al-Shuraim",
+    "style": "مرتل",
+    "audioUrl": "Shuraim_64kbps"
+  },
+  {
+    "id": 8,
+    "name": "أحمد العجمي",
+    "englishName": "Ahmed Al-Ajmi",
+    "style": "مرتل",
+    "audioUrl": "Ahmed_ibn_Ali_al-Ajamy_64kbps"
+  }
+]

@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 44 30% 92%;
+  --foreground: 20 14.3% 8%;
+  --muted: 60 4.8% 95.9%;
+  --muted-foreground: 25 5.3% 44.7%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 14.3% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 20 14.3% 4.1%;
+  --border: 20 5.9% 90%;
+  --input: 20 5.9% 90%;
+  --primary: 159 45% 22%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 43 56% 58%;
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 350 54% 37%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 60 9.1% 97.8%;
+  --ring: 43 56% 58%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 159 45% 10%;
+  --foreground: 60 9.1% 97.8%;
+  --muted: 12 6.5% 15.1%;
+  --muted-foreground: 24 5.4% 63.9%;
+  --popover: 20 14.3% 4.1%;
+  --popover-foreground: 60 9.1% 97.8%;
+  --card: 20 14.3% 4.1%;
+  --card-foreground: 60 9.1% 97.8%;
+  --border: 12 6.5% 15.1%;
+  --input: 12 6.5% 15.1%;
+  --primary: 159 45% 22%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 43 56% 58%;
+  --secondary-foreground: 24 9.8% 10%;
+  --accent: 350 54% 37%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --ring: 43 56% 58%;
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Harmattan', sans-serif;
+  }
+}
+
+/* Custom styles for the Quran application */
+.quran-text {
+  font-family: 'Amiri', serif;
+  line-height: 2.5;
+  text-align: justify;
+}
+
+.surah-name {
+  font-family: 'Amiri', serif;
+  font-weight: bold;
+}
+
+.islamic-pattern {
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCI+PGcgZmlsbC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNNTAgMzhhMTIgMTIgMCAwIDEgMTIgMTJ2NmgxNnYtNmExMiAxMiAwIDAgMS0xMi0xMmgtNlYyMmg2YTEyIDEyIDAgMCAxIDEyIDEydjZoNnYxNmg2YTEyIDEyIDAgMCAxIDEyIDEydjZoLTE2djZhMTIgMTIgMCAwIDEtMTIgMTJoLTZ2MTZoLTE2di0xNmgtNmExMiAxMiAwIDAgMS0xMi0xMnYtNkgyMnYtNmExMiAxMiAwIDAgMS0xMi0xMnYtNmgxNnYtNmExMiAxMiAwIDAgMSAxMi0xMmg2VjIyaDE2djE2aDZ6IiBmaWxsPSIjMUQ0RjQ1IiBvcGFjaXR5PSIuMiIvPjwvZz48L3N2Zz4=');
+  background-repeat: repeat;
+}
+
+.verse-end {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin: 0 4px;
+  background-color: #F8F5EB;
+  border: 1px solid hsl(var(--secondary));
+  border-radius: 50%;
+  font-size: 12px;
+  color: hsl(var(--primary));
+}
+
+/* Splash screen animations */
+.fade-in {
+  animation: fadeIn 1.5s ease-in-out;
+}
+
+.fade-out {
+  animation: fadeOut 1.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { 
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.slide-in {
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Mobile sidebar transitions */
+.sidebar-enter {
+  transform: translateX(-100%);
+}
+
+.sidebar-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms;
+}
+
+.sidebar-exit {
+  transform: translateX(0);
+}
+
+.sidebar-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms;
+}

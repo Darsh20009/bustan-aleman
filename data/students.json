@@ -1,0 +1,192 @@
+[
+  {
+    "id": "yousef_darwish_001",
+    "studentName": "يوسف درويش",
+    "email": "yousef.darwish@example.com",
+    "password": "182009",
+    "phone": "+966532441566",
+    "dateOfBirth": "2009-08-18",
+    "age": 16,
+    "grade": "الثاني الثانوي",
+    "memorizedSurahs": [
+      "البقرة",
+      "آل عمران"
+    ],
+    "errors": [
+      {
+        "id": "err_001",
+        "surah": "البقرة",
+        "ayahNumber": 285,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - البقرة آية 285",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      },
+      {
+        "id": "err_002",
+        "surah": "البقرة",
+        "ayahNumber": 217,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - البقرة آية 217",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      },
+      {
+        "id": "err_003",
+        "surah": "البقرة",
+        "ayahNumber": 15,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - البقرة آية 15",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      },
+      {
+        "id": "err_004",
+        "surah": "آل عمران",
+        "ayahNumber": 1,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - آل عمران آية 1",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      },
+      {
+        "id": "err_005",
+        "surah": "آل عمران",
+        "ayahNumber": 5,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - آل عمران آية 5",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      },
+      {
+        "id": "err_006",
+        "surah": "آل عمران",
+        "ayahNumber": 6,
+        "errorType": "recitation",
+        "errorDescription": "خطأ في التلاوة - آل عمران آية 6",
+        "isResolved": false,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      }
+    ],
+    "sessions": [
+      {
+        "id": "session_001",
+        "sessionNumber": 3,
+        "sessionDate": "2025-08-23",
+        "sessionTime": "4:00 PM",
+        "evaluationGrade": "جيد",
+        "nextSessionDate": "2025-08-24",
+        "newMaterial": "يوم الأحد سورة آل عمران إلى الآية (180) فلما أحس",
+        "reviewMaterial": "يوم الأربعاء أربع أرباع من قوله تعالى (ليس عليك هداهم...) البقرة",
+        "notes": "مستوى الحفظ اليوم ممتاز ولكن يريد التميز أكثر",
+        "attended": true,
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      }
+    ],
+    "payments": [
+      {
+        "id": "payment_001",
+        "amount": "60.00",
+        "currency": "SAR",
+        "paymentMethod": "whatsapp",
+        "subscriptionPeriod": "monthly",
+        "sessionsIncluded": 16,
+        "sessionsRemaining": 13,
+        "expiryDate": "2025-09-23",
+        "status": "active",
+        "notes": "مدفوع عن طريق الواتساب",
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      }
+    ],
+    "schedules": [
+      {
+        "id": "schedule_001",
+        "dayOfWeek": 6,
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      },
+      {
+        "id": "schedule_002",
+        "dayOfWeek": 2,
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      },
+      {
+        "id": "schedule_003",
+        "dayOfWeek": 3,
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      },
+      {
+        "id": "schedule_004",
+        "dayOfWeek": 4,
+        "startTime": "16:00",
+        "endTime": "17:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      }
+    ],
+    "currentLevel": "advanced",
+    "notes": "طالب متميز، حافظ سورة البقرة وآل عمران. مستوى الحفظ ممتاز لكن يريد التميز أكثر",
+    "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+    "createdAt": "2025-08-23T21:20:24.374Z",
+    "isActive": true
+  },
+  {
+    "id": "mohamed_ahmed_001",
+    "studentName": "محمد أحمد",
+    "email": "mohamed.ahmed@example.com",
+    "password": "123789",
+    "phone": "+966532441566",
+    "dateOfBirth": "2010-01-01",
+    "age": 15,
+    "grade": "غير محدد",
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [
+      {
+        "id": "payment_002",
+        "amount": "30.00",
+        "currency": "SAR",
+        "paymentMethod": "whatsapp",
+        "subscriptionPeriod": "monthly",
+        "sessionsIncluded": 8,
+        "sessionsRemaining": 8,
+        "expiryDate": "2025-09-23",
+        "status": "active",
+        "notes": "مدفوع عن طريق الواتساب",
+        "createdAt": "2025-08-23T21:20:24.374Z"
+      }
+    ],
+    "schedules": [
+      {
+        "id": "schedule_005",
+        "dayOfWeek": 0,
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      },
+      {
+        "id": "schedule_006",
+        "dayOfWeek": 6,
+        "startTime": "18:00",
+        "endTime": "19:00",
+        "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        "isActive": true
+      }
+    ],
+    "currentLevel": "beginner",
+    "notes": "طالب جديد، لم يكمل أي حصة بعد. سيبدأ من سورة الناس، الفلق، الإخلاص",
+    "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+    "createdAt": "2025-08-23T21:20:24.374Z",
+    "isActive": true
+  }
+]
