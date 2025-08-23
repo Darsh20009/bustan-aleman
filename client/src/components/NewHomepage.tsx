@@ -16,10 +16,28 @@ export function NewHomepage({ onLoginClick, onRegisterClick, onQuranReader }: Ne
       <style>{`
         @media (max-width: 768px) {
           .grid { grid-template-columns: 1fr !important; }
-          .text-5xl { font-size: 2.5rem !important; }
-          .text-4xl { font-size: 2rem !important; }
+          .text-5xl { font-size: 1.8rem !important; }
+          .text-4xl { font-size: 1.5rem !important; }
+          .text-2xl { font-size: 1.25rem !important; }
+          .text-lg { font-size: 1rem !important; }
           .px-8 { padding-left: 1rem !important; padding-right: 1rem !important; }
-          .py-16 { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+          .py-16 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+          .py-20 { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+          .max-w-7xl { max-width: 100% !important; }
+          .px-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+          .space-x-4 > * + * { margin-left: 0.5rem !important; }
+          .mb-8 { margin-bottom: 1rem !important; }
+          .mb-12 { margin-bottom: 1.5rem !important; }
+          .w-16 { width: 3rem !important; }
+          .h-16 { height: 3rem !important; }
+          .w-10 { width: 1.5rem !important; }
+          .h-10 { height: 1.5rem !important; }
+        }
+        @media (max-width: 480px) {
+          .text-5xl { font-size: 1.5rem !important; }
+          .text-4xl { font-size: 1.25rem !important; }
+          .px-4 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+          .py-6 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
         }
       `}</style>
       {/* Header */}

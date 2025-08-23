@@ -152,15 +152,15 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-100 to-amber-200 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md mx-2 sm:mx-4"
       >
         <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+          <CardHeader className="text-center bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -174,7 +174,7 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
             <CardTitle className="text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
               انضم إلى بستان الإيمان
             </CardTitle>
-            <CardDescription className="text-blue-100">
+            <CardDescription className="text-amber-100">
               سجل الآن وابدأ رحلتك في حفظ القرآن الكريم
             </CardDescription>
           </CardHeader>
@@ -270,7 +270,7 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
                   className={errors.dateOfBirth ? 'border-red-500' : ''}
                 />
                 {formData.dateOfBirth && (
-                  <p className="text-blue-600 text-sm text-right">
+                  <p className="text-amber-600 text-sm text-right">
                     العمر: {calculateAge(formData.dateOfBirth)} سنة
                   </p>
                 )}
@@ -279,9 +279,9 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
                 )}
               </div>
 
-              <Alert className="bg-blue-50 border-blue-200">
-                <AlertDescription className="text-right text-blue-700">
-                  📱 سيتم إرسال تفاصيل التسجيل إلى الواتساب: +966 54 994 7386
+              <Alert className="bg-amber-50 border-amber-200">
+                <AlertDescription className="text-right text-amber-700">
+                  📱 سيتم إرسال تفاصيل التسجيل إلى الواتساب: +966549947386
                 </AlertDescription>
               </Alert>
 
@@ -292,7 +292,7 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-lg transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 rounded-lg transition-all duration-300"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center">

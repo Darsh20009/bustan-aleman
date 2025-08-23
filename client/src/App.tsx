@@ -105,31 +105,33 @@ function App() {
       
       case 'quran':
         return (
-          <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200">
+          <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
             {/* Header with back button */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4">
-              <div className="max-w-6xl mx-auto flex justify-between items-center">
-                <h1 className="text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4">
+              <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
+                <h1 className="text-xl md:text-2xl font-bold mb-2 md:mb-0" style={{ fontFamily: 'Amiri, serif' }}>
                   قارئ القرآن الكريم
                 </h1>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 md:space-x-4 flex-wrap">
                   <button
-                    onClick={() => setAppState('dashboard')}
-                    className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors"
+                    onClick={() => currentStudent ? setAppState('dashboard') : setAppState('home')}
+                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base"
                   >
-                    ← العودة للوحة التحكم
+                    ← العودة
                   </button>
-                  <span className="text-blue-200">
-                    {currentStudent?.studentName}
-                  </span>
+                  {currentStudent && (
+                    <span className="text-amber-200 text-sm md:text-base">
+                      {currentStudent.studentName}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             
             {/* Quran Reader Container */}
-            <div className="p-6">
+            <div className="p-2 md:p-6">
               <div className="max-w-6xl mx-auto">
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-6">
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-3 md:p-6">
                   <QuranReader mode="page" pageNumber={1} />
                 </div>
               </div>
