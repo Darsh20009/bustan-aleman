@@ -235,7 +235,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
               </div>
             </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-gray-600">
                 ليس لديك حساب؟{' '}
                 <button
@@ -243,6 +243,15 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                   className="text-blue-600 hover:text-blue-800 font-medium underline"
                 >
                   سجل الآن
+                </button>
+              </p>
+              <p className="text-xs text-gray-500">
+                أو{' '}
+                <button
+                  onClick={() => window.location.reload()}
+                  className="text-gray-600 hover:text-gray-800 underline"
+                >
+                  العودة للصفحة الرئيسية
                 </button>
               </p>
             </div>

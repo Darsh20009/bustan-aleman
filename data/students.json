@@ -188,5 +188,24 @@
     "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
     "createdAt": "2025-08-23T21:20:24.374Z",
     "isActive": true
+  },
+  {
+    "studentName": "ييي",
+    "email": "ma3k.2025@gmail.com",
+    "password": "123456",
+    "phone": "0532441566",
+    "dateOfBirth": "2009-08-18",
+    "age": 16,
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "beginner",
+    "notes": "طالب جديد",
+    "zoomLink": "",
+    "isActive": true,
+    "id": "mb0tb60f8meorma4f",
+    "createdAt": "2025-08-23T21:22:20.223Z"
   }
 ]

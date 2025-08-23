@@ -6,12 +6,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Import our new components
 import { BustanSplashScreen } from "./components/BustanSplashScreen";
+import { Homepage } from "./components/Homepage";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
 import QuranReader from "./components/QuranReader";
 
-type AppState = 'splash' | 'auth' | 'register' | 'dashboard' | 'quran';
+type AppState = 'splash' | 'home' | 'auth' | 'register' | 'dashboard' | 'quran';
 
 interface Student {
   id: string;
@@ -43,7 +44,7 @@ function App() {
   }, []);
 
   const handleSplashComplete = () => {
-    setAppState('auth');
+    setAppState('home');
   };
 
   const handleLoginSuccess = (student: Student) => {
@@ -52,14 +53,14 @@ function App() {
   };
 
   const handleRegistrationSuccess = () => {
-    setAppState('auth');
+    setAppState('home');
   };
 
   const handleLogout = () => {
     fetch('/api/student-logout', { method: 'POST' })
       .then(() => {
         setCurrentStudent(null);
-        setAppState('auth');
+        setAppState('home');
       })
       .catch(console.error);
   };
@@ -68,6 +69,15 @@ function App() {
     switch (appState) {
       case 'splash':
         return <BustanSplashScreen onComplete={handleSplashComplete} />;
+      
+      case 'home':
+        return (
+          <Homepage
+            onLoginClick={() => setAppState('auth')}
+            onRegisterClick={() => setAppState('register')}
+            onQuranReader={() => setAppState('quran')}
+          />
+        );
       
       case 'auth':
         return (

@@ -125,8 +125,16 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
       if (response.ok) {
         toast({
           title: "تم التسجيل بنجاح! 🎉",
-          description: "سيتم التواصل معك قريباً عبر الواتساب",
+          description: result.message || "سيتم التواصل معك قريباً عبر الواتساب",
         });
+        
+        // Open WhatsApp if link is provided
+        if (result.whatsappLink && result.shouldRedirectToWhatsApp) {
+          setTimeout(() => {
+            window.open(result.whatsappLink, '_blank');
+          }, 1500);
+        }
+        
         onRegistrationSuccess(registrationData);
       } else {
         throw new Error(result.message || 'فشل في التسجيل');

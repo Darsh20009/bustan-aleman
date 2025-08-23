@@ -64,10 +64,15 @@ export function setupJSONRoutes(app: Express) {
 تم التسجيل بنجاح في ${new Date().toLocaleString('ar-SA')}
       `.trim();
 
-      await jsonStorage.sendToWhatsApp('+966549947386', whatsappMessage);
+      // Create WhatsApp link for user to send the message
+      const whatsappLink = `https://wa.me/966549947386?text=${encodeURIComponent(whatsappMessage)}`;
+      
+      console.log(`Sending to +966549947386: ${whatsappMessage}`);
 
       res.status(201).json({ 
-        message: "تم التسجيل بنجاح! سيتم التواصل معك قريباً.",
+        message: "تم التسجيل بنجاح! انقر على الرابط للتواصل عبر الواتساب",
+        whatsappLink,
+        shouldRedirectToWhatsApp: true,
         student: {
           id: student.id,
           studentName: student.studentName,
@@ -90,7 +95,10 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
 
-      // Store student session
+      // Store student session (create session object if it doesn't exist)
+      if (!req.session) {
+        req.session = {} as any;
+      }
       req.session.studentId = student.id;
       
       res.json({
@@ -113,7 +121,7 @@ export function setupJSONRoutes(app: Express) {
   // Get student profile
   app.get('/api/student/profile', async (req, res) => {
     try {
-      const studentId = req.session.studentId;
+      const studentId = req.session?.studentId;
       if (!studentId) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
@@ -133,7 +141,7 @@ export function setupJSONRoutes(app: Express) {
   // Update student progress
   app.post('/api/student/progress', async (req, res) => {
     try {
-      const studentId = req.session.studentId;
+      const studentId = req.session?.studentId;
       if (!studentId) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
@@ -153,7 +161,7 @@ export function setupJSONRoutes(app: Express) {
   // Get student errors
   app.get('/api/student/errors', async (req, res) => {
     try {
-      const studentId = req.session.studentId;
+      const studentId = req.session?.studentId;
       if (!studentId) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
@@ -173,7 +181,7 @@ export function setupJSONRoutes(app: Express) {
   // Add student error
   app.post('/api/student/errors', async (req, res) => {
     try {
-      const studentId = req.session.studentId;
+      const studentId = req.session?.studentId;
       if (!studentId) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
@@ -219,7 +227,7 @@ export function setupJSONRoutes(app: Express) {
   // Send renewal request to WhatsApp
   app.post('/api/request-renewal', async (req, res) => {
     try {
-      const studentId = req.session.studentId;
+      const studentId = req.session?.studentId;
       if (!studentId) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
