@@ -127,15 +127,15 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-100 to-amber-200 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md mx-2 sm:mx-4"
       >
         <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-          <CardHeader className="text-center bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+          <CardHeader className="text-center bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -149,7 +149,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
             <CardTitle className="text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
               تسجيل الدخول
             </CardTitle>
-            <CardDescription className="text-blue-100">
+            <CardDescription className="text-amber-100">
               ادخل إلى حسابك في بستان الإيمان
             </CardDescription>
           </CardHeader>
@@ -198,7 +198,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 rounded-lg transition-all duration-300"
+                  className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold py-3 rounded-lg transition-all duration-300"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center">
@@ -220,7 +220,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                   onClick={() => handleQuickLogin('yousef.darwish@example.com', '182009', 'يوسف درويش')}
                   disabled={isSubmitting}
                   variant="outline"
-                  className="w-full text-blue-600 border-blue-300 hover:bg-blue-50"
+                  className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
                 >
                   دخول كـ يوسف درويش (المستوى المتقدم)
                 </Button>
@@ -228,7 +228,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                   onClick={() => handleQuickLogin('mohamed.ahmed@example.com', '123789', 'محمد أحمد')}
                   disabled={isSubmitting}
                   variant="outline"
-                  className="w-full text-green-600 border-green-300 hover:bg-green-50"
+                  className="w-full text-orange-600 border-orange-300 hover:bg-orange-50"
                 >
                   دخول كـ محمد أحمد (مبتدئ)
                 </Button>
@@ -240,7 +240,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                 ليس لديك حساب؟{' '}
                 <button
                   onClick={onRegisterClick}
-                  className="text-blue-600 hover:text-blue-800 font-medium underline"
+                  className="text-amber-600 hover:text-amber-800 font-medium underline"
                 >
                   سجل الآن
                 </button>
@@ -248,8 +248,8 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
               <p className="text-xs text-gray-500">
                 أو{' '}
                 <button
-                  onClick={() => window.location.reload()}
-                  className="text-gray-600 hover:text-gray-800 underline"
+                  onClick={() => window.history.back()}
+                  className="text-amber-600 hover:text-amber-800 underline"
                 >
                   العودة للصفحة الرئيسية
                 </button>

@@ -258,19 +258,6 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
           )}
         </AnimatePresence>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: currentPhase >= 2 ? 1 : 0 }}
-          transition={{ duration: 1 }}
-          className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center px-4 max-w-xs md:max-w-md"
-        >
-          <p className="text-amber-200 text-sm" style={{ fontFamily: 'Amiri, serif' }}>
-            "وَلَقَدْ يَسَّرْنَا الْقُرْآنَ لِلذِّكْرِ فَهَلْ مِن مُّدَّكِرٍ"
-          </p>
-          <p className="text-amber-300 text-xs mt-1">
-            And We have certainly made the Quran easy for remembrance, so is there any who will remember?
-          </p>
-        </motion.div>
       </div>
 
       <motion.button

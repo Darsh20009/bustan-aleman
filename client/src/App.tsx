@@ -6,13 +6,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Import our new components
 import { BustanSplashScreen } from "./components/BustanSplashScreen";
-import { NewHomepage } from "./components/NewHomepage";
+import { MainHomepage } from "./components/MainHomepage";
+import { AboutUsPage } from "./components/AboutUsPage";
+import { CoursesPage } from "./components/CoursesPage";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
+import { PersonalProfile } from "./components/PersonalProfile";
 import QuranReader from "./components/QuranReader";
 
-type AppState = 'splash' | 'home' | 'auth' | 'register' | 'dashboard' | 'quran';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'auth' | 'register' | 'dashboard' | 'profile' | 'quran';
 
 interface Student {
   id: string;
@@ -53,6 +56,8 @@ function App() {
   };
 
   const handleRegistrationSuccess = () => {
+    // Instead of changing state, just stay on the same page
+    // The user will now be able to login and see their profile
     setAppState('home');
   };
 
@@ -72,10 +77,27 @@ function App() {
       
       case 'home':
         return (
-          <NewHomepage
+          <MainHomepage
             onLoginClick={() => setAppState('auth')}
             onRegisterClick={() => setAppState('register')}
             onQuranReader={() => setAppState('quran')}
+            onAboutUs={() => setAppState('about')}
+            onCourses={() => setAppState('courses')}
+          />
+        );
+      
+      case 'about':
+        return (
+          <AboutUsPage
+            onBack={() => setAppState('home')}
+          />
+        );
+      
+      case 'courses':
+        return (
+          <CoursesPage
+            onBack={() => setAppState('home')}
+            onRegisterClick={() => setAppState('register')}
           />
         );
       
@@ -99,6 +121,16 @@ function App() {
           <StudentDashboard
             student={currentStudent}
             onLogout={handleLogout}
+            onQuranReader={() => setAppState('quran')}
+            onProfile={() => setAppState('profile')}
+          />
+        ) : null;
+      
+      case 'profile':
+        return currentStudent ? (
+          <PersonalProfile
+            student={currentStudent}
+            onBack={() => setAppState('dashboard')}
             onQuranReader={() => setAppState('quran')}
           />
         ) : null;

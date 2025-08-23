@@ -23,9 +23,10 @@ interface StudentDashboardProps {
   student: Student;
   onLogout: () => void;
   onQuranReader: () => void;
+  onProfile?: () => void;
 }
 
-export function StudentDashboard({ student, onLogout, onQuranReader }: StudentDashboardProps) {
+export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
   const { toast } = useToast();
 
@@ -88,63 +89,71 @@ export function StudentDashboard({ student, onLogout, onQuranReader }: StudentDa
   const currentSession = getCurrentSession();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
+      <div className="bg-gradient-to-r from-amber-800 to-orange-700 text-white p-4 md:p-6">
+        <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex items-center space-x-4"
+            className="flex items-center space-x-2 md:space-x-4"
           >
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-              </svg>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 md:w-6 md:h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
+              <h1 className="text-lg md:text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
                 مرحباً، {student.studentName}
               </h1>
-              <p className="text-blue-200">
+              <p className="text-amber-200 text-sm md:text-base">
                 المستوى: {student.currentLevel === 'advanced' ? 'متقدم' : 'مبتدئ'}
               </p>
             </div>
           </motion.div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 space-x-reverse flex-wrap gap-2 mt-2 md:mt-0">
             <Button
               onClick={onQuranReader}
-              className="bg-white/20 hover:bg-white/30 text-white border-0"
+              className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
             >
-              📖 قارئ القرآن
+              <BookOpen className="ml-1 md:ml-2 h-4 w-4" />
+              قارئ القرآن
             </Button>
+            {onProfile && (
+              <Button
+                onClick={onProfile}
+                className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
+              >
+                <User className="ml-1 md:ml-2 h-4 w-4" />
+                الملف
+              </Button>
+            )}
             <Button
               onClick={onLogout}
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10"
+              className="border-white/30 text-white hover:bg-white/10 px-3 py-2 text-sm md:px-4 md:text-base"
             >
-              تسجيل الخروج
+              خروج
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto p-6">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white shadow-md">
-            <TabsTrigger value="overview">نظرة عامة</TabsTrigger>
-            <TabsTrigger value="progress">التقدم</TabsTrigger>
-            <TabsTrigger value="schedule">الجدول</TabsTrigger>
-            <TabsTrigger value="payments">الاشتراك</TabsTrigger>
+      <div className="max-w-6xl mx-auto p-3 md:p-6">
+        <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white shadow-md">
+            <TabsTrigger value="overview" className="text-sm md:text-base">نظرة عامة</TabsTrigger>
+            <TabsTrigger value="progress" className="text-sm md:text-base">التقدم</TabsTrigger>
+            <TabsTrigger value="schedule" className="text-sm md:text-base">الجدول</TabsTrigger>
+            <TabsTrigger value="payments" className="text-sm md:text-base">الاشتراك</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <TabsContent value="overview" className="space-y-4 md:space-y-6">
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
               {/* Memorized Surahs */}
               <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-blue-700 flex items-center">
+                  <CardTitle className="text-amber-700 flex items-center text-sm md:text-base">
                     🌟 السور المحفوظة
                   </CardTitle>
                 </CardHeader>

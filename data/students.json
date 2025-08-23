@@ -245,5 +245,24 @@
     "isActive": true,
     "id": "2fb1e6ajmmeorx0x5",
     "createdAt": "2025-08-23T21:30:41.513Z"
+  },
+  {
+    "studentName": "ينت",
+    "email": "ma3k.2025@gmail.com",
+    "password": "123456",
+    "phone": "+966532441566",
+    "dateOfBirth": "2009-08-08",
+    "age": 16,
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "beginner",
+    "notes": "طالب جديد",
+    "zoomLink": "",
+    "isActive": true,
+    "id": "78bjr69y9meot5ykr",
+    "createdAt": "2025-08-23T22:05:37.995Z"
   }
 ]

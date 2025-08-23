@@ -67,12 +67,12 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
 
   if (isLoading) {
     return (
-      <Card className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-6 min-h-[calc(100vh-130px)]">
-        <div className="text-center mb-8">
-          <Skeleton className="h-10 w-48 mx-auto" />
-          <Skeleton className="h-4 w-32 mx-auto mt-2" />
-          <Skeleton className="h-1 w-48 mx-auto mt-4" />
-          <Skeleton className="h-6 w-64 mx-auto mt-4" />
+      <Card className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
+        <div className="text-center mb-4 md:mb-8">
+          <Skeleton className="h-8 md:h-10 w-32 md:w-48 mx-auto" />
+          <Skeleton className="h-3 md:h-4 w-24 md:w-32 mx-auto mt-2" />
+          <Skeleton className="h-1 w-32 md:w-48 mx-auto mt-4" />
+          <Skeleton className="h-4 md:h-6 w-48 md:w-64 mx-auto mt-4" />
         </div>
         <div className="space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (

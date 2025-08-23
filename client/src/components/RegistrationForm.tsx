@@ -305,6 +305,16 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
                 </Button>
               </motion.div>
             </form>
+            <div className="mt-6 text-center space-y-2">
+              <p className="text-xs text-gray-500">
+                <button
+                  onClick={() => window.history.back()}
+                  className="text-amber-600 hover:text-amber-800 underline"
+                >
+                  ← العودة للصفحة الرئيسية
+                </button>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
