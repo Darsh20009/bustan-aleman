@@ -10,6 +10,7 @@ import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Courses from "@/pages/Courses";
 import Quran from "@/pages/Quran";
+import Students from "@/pages/Students";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/courses" component={Courses} />
           <Route path="/quran" component={Quran} />
+          <Route path="/students" component={Students} />
           <Route path="/login" component={Login} />
           <Route path="/register" component={Register} />
         </>
@@ -33,6 +35,7 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/courses" component={Courses} />
           <Route path="/quran" component={Quran} />
+          <Route path="/students" component={Students} />
         </>
       )}
       <Route component={NotFound} />

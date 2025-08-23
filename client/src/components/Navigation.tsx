@@ -20,6 +20,7 @@ export default function Navigation() {
     { href: "/", label: "الرئيسية" },
     { href: "/courses", label: "الدورات" },
     { href: "/quran", label: "حفظ القرآن" },
+    { href: "/students", label: "إدارة الطلاب" },
     { href: "/about", label: "من نحن" },
   ];
 

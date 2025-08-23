@@ -7,6 +7,11 @@ import {
   insertInstructorSchema,
   insertEnrollmentSchema,
   insertContactMessageSchema,
+  insertStudentSchema,
+  insertStudentSessionSchema,
+  insertStudentErrorSchema,
+  insertStudentPaymentSchema,
+  insertClassScheduleSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -148,6 +153,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student routes
+  app.post('/api/students', async (req, res) => {
+    try {
+      const studentData = insertStudentSchema.parse(req.body);
+      const student = await storage.createStudent(studentData);
+      res.status(201).json(student);
+    } catch (error) {
+      console.error("Error creating student:", error);
+      res.status(500).json({ message: "Failed to create student" });
+    }
+  });
+
+  app.get('/api/students', async (req, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      res.json(students);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+
+  app.get('/api/students/:id', async (req, res) => {
+    try {
+      const student = await storage.getStudent(req.params.id);
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      res.json(student);
+    } catch (error) {
+      console.error("Error fetching student:", error);
+      res.status(500).json({ message: "Failed to fetch student" });
+    }
+  });
+
+  app.post('/api/students/login', async (req, res) => {
+    try {
+      const { studentName, password } = req.body;
+      const student = await storage.authenticateStudent(studentName, password);
+      if (!student) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      res.json(student);
+    } catch (error) {
+      console.error("Error authenticating student:", error);
+      res.status(500).json({ message: "Failed to authenticate" });
+    }
+  });
+
+  // Student sessions routes
+  app.post('/api/students/:id/sessions', async (req, res) => {
+    try {
+      const sessionData = insertStudentSessionSchema.parse({
+        ...req.body,
+        studentId: req.params.id,
+      });
+      const session = await storage.createStudentSession(sessionData);
+      res.status(201).json(session);
+    } catch (error) {
+      console.error("Error creating session:", error);
+      res.status(500).json({ message: "Failed to create session" });
+    }
+  });
+
+  app.get('/api/students/:id/sessions', async (req, res) => {
+    try {
+      const sessions = await storage.getStudentSessions(req.params.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching sessions:", error);
+      res.status(500).json({ message: "Failed to fetch sessions" });
+    }
+  });
+
+  // Student errors routes
+  app.post('/api/students/:id/errors', async (req, res) => {
+    try {
+      const errorData = insertStudentErrorSchema.parse({
+        ...req.body,
+        studentId: req.params.id,
+      });
+      const error = await storage.createStudentError(errorData);
+      res.status(201).json(error);
+    } catch (error) {
+      console.error("Error creating student error:", error);
+      res.status(500).json({ message: "Failed to create error record" });
+    }
+  });
+
+  app.get('/api/students/:id/errors', async (req, res) => {
+    try {
+      const errors = await storage.getStudentErrors(req.params.id);
+      res.json(errors);
+    } catch (error) {
+      console.error("Error fetching student errors:", error);
+      res.status(500).json({ message: "Failed to fetch errors" });
+    }
+  });
+
+  // Student payments routes
+  app.post('/api/students/:id/payments', async (req, res) => {
+    try {
+      const paymentData = insertStudentPaymentSchema.parse({
+        ...req.body,
+        studentId: req.params.id,
+      });
+      const payment = await storage.createStudentPayment(paymentData);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      res.status(500).json({ message: "Failed to create payment" });
+    }
+  });
+
+  app.get('/api/students/:id/payments', async (req, res) => {
+    try {
+      const payments = await storage.getStudentPayments(req.params.id);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
+  // Class schedules routes
+  app.post('/api/students/:id/schedules', async (req, res) => {
+    try {
+      const scheduleData = insertClassScheduleSchema.parse({
+        ...req.body,
+        studentId: req.params.id,
+      });
+      const schedule = await storage.createClassSchedule(scheduleData);
+      res.status(201).json(schedule);
+    } catch (error) {
+      console.error("Error creating schedule:", error);
+      res.status(500).json({ message: "Failed to create schedule" });
+    }
+  });
+
+  app.get('/api/students/:id/schedules', async (req, res) => {
+    try {
+      const schedules = await storage.getStudentSchedules(req.params.id);
+      res.json(schedules);
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      res.status(500).json({ message: "Failed to fetch schedules" });
+    }
+  });
+
   // Seed data route (for development)
   app.post('/api/seed', async (req, res) => {
     try {
@@ -216,10 +370,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createCourse(course);
       }
 
+      // Basic seed data created successfully
+
       res.json({ message: "Sample data created successfully" });
     } catch (error) {
       console.error("Error seeding data:", error);
       res.status(500).json({ message: "Failed to seed data" });
+    }
+  });
+
+  // Special endpoint to create specific students
+  app.post('/api/create-students', async (req, res) => {
+    try {
+      // Create Yousef Darwish
+      const yousefStudent = await storage.createStudent({
+        studentName: "يوسف درويش",
+        password: "182009",
+        dateOfBirth: "2009-08-18",
+        grade: "الثاني الثانوي",
+        monthlySessionsCount: 16,
+        monthlyPrice: "60.00",
+        isPaid: true,
+        isActive: true,
+        memorizedSurahs: JSON.stringify(["البقرة", "آل عمران"]),
+        currentLevel: "advanced",
+        notes: "طالب متميز، حافظ سورة البقرة وآل عمران. مستوى الحفظ ممتاز لكن يريد التميز أكثر",
+        zoomLink: "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        whatsappContact: "+966532441566",
+      });
+
+      // Add Yousef's schedule (Saturday, Tuesday, Wednesday, Thursday at 4 PM)
+      const yousefSchedules = [
+        { dayOfWeek: 6, startTime: "16:00", endTime: "17:00", studentId: yousefStudent.id }, // Saturday
+        { dayOfWeek: 2, startTime: "16:00", endTime: "17:00", studentId: yousefStudent.id }, // Tuesday  
+        { dayOfWeek: 3, startTime: "16:00", endTime: "17:00", studentId: yousefStudent.id }, // Wednesday
+        { dayOfWeek: 4, startTime: "16:00", endTime: "17:00", studentId: yousefStudent.id }, // Thursday
+      ];
+
+      for (const schedule of yousefSchedules) {
+        await storage.createClassSchedule({
+          ...schedule,
+          zoomLink: yousefStudent.zoomLink,
+        });
+      }
+
+      // Add Yousef's payment record
+      await storage.createStudentPayment({
+        studentId: yousefStudent.id,
+        amount: "60.00",
+        currency: "SAR",
+        paymentMethod: "whatsapp",
+        subscriptionPeriod: "monthly",
+        sessionsIncluded: 16,
+        sessionsRemaining: 13, // 16 - 3 (current session)
+        expiryDate: "2025-09-23",
+        status: "active",
+        notes: "مدفوع عن طريق الواتساب",
+      });
+
+      // Add Yousef's current session
+      await storage.createStudentSession({
+        studentId: yousefStudent.id,
+        sessionNumber: 3,
+        sessionDate: "2025-08-23",
+        sessionTime: "4:00 PM",
+        evaluationGrade: "جيد",
+        nextSessionDate: "2025-08-24",
+        newMaterial: "يوم الأحد سورة آل عمران إلى الآية (180) فلما أحس",
+        reviewMaterial: "يوم الأربعاء أربع أرباع من قوله تعالى (ليس عليك هداهم...) البقرة",
+        notes: "الطالب يحتاج للتميز أكثر",
+        attended: true,
+      });
+
+      // Add Yousef's errors
+      const yousefErrors = [
+        { surah: "البقرة", ayahNumber: 285 },
+        { surah: "البقرة", ayahNumber: 217 },
+        { surah: "البقرة", ayahNumber: 15 },
+        { surah: "آل عمران", ayahNumber: 1 },
+        { surah: "آل عمران", ayahNumber: 5 },
+        { surah: "آل عمران", ayahNumber: 6 },
+      ];
+
+      for (const error of yousefErrors) {
+        await storage.createStudentError({
+          studentId: yousefStudent.id,
+          surah: error.surah,
+          ayahNumber: error.ayahNumber,
+          errorType: "recitation",
+          errorDescription: `خطأ في التلاوة - ${error.surah} آية ${error.ayahNumber}`,
+          isResolved: false,
+        });
+      }
+
+      // Create Mohamed Ahmed
+      const mohamedStudent = await storage.createStudent({
+        studentName: "محمد أحمد",
+        password: "123789",
+        dateOfBirth: "2010-01-01", // Default date
+        grade: "غير محدد",
+        monthlySessionsCount: 8,
+        monthlyPrice: "30.00",
+        isPaid: true,
+        isActive: true,
+        memorizedSurahs: JSON.stringify([]),
+        currentLevel: "beginner",
+        notes: "طالب جديد، لم يكمل أي حصة بعد. سيبدأ من سورة الناس",
+        zoomLink: "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+        whatsappContact: "+966532441566",
+      });
+
+      // Add Mohamed's schedule (Sunday and Saturday at 6 PM)
+      const mohamedSchedules = [
+        { dayOfWeek: 0, startTime: "18:00", endTime: "19:00", studentId: mohamedStudent.id }, // Sunday
+        { dayOfWeek: 6, startTime: "18:00", endTime: "19:00", studentId: mohamedStudent.id }, // Saturday
+      ];
+
+      for (const schedule of mohamedSchedules) {
+        await storage.createClassSchedule({
+          ...schedule,
+          zoomLink: mohamedStudent.zoomLink,
+        });
+      }
+
+      // Add Mohamed's payment record
+      await storage.createStudentPayment({
+        studentId: mohamedStudent.id,
+        amount: "30.00",
+        currency: "SAR",
+        paymentMethod: "whatsapp",
+        subscriptionPeriod: "monthly",
+        sessionsIncluded: 8,
+        sessionsRemaining: 8, // No sessions completed yet
+        expiryDate: "2025-09-23",
+        status: "active",
+        notes: "مدفوع عن طريق الواتساب",
+      });
+
+      res.json({ 
+        message: "Students created successfully",
+        students: [yousefStudent, mohamedStudent]
+      });
+    } catch (error) {
+      console.error("Error creating students:", error);
+      res.status(500).json({ message: "Failed to create students" });
     }
   });
 
