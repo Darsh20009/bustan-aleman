@@ -31,6 +31,7 @@ import {
   type InsertClassSchedule,
 } from "@shared/schema";
 import { db } from "./db";
+import { jsonStorage } from "./jsonStorage";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 export interface IStorage {
@@ -85,14 +86,44 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private isDbAvailable(): boolean {
+    return db !== null;
+  }
+
   // User operations (required for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    if (!this.isDbAvailable()) {
+      // Return undefined for now - auth will be handled by JSON storage
+      return undefined;
+    }
+    const [user] = await db!.select().from(users).where(eq(users.id, id));
     return user;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
+    if (!this.isDbAvailable()) {
+      // Create a user object with default values for JSON storage fallback
+      const user: User = {
+        id: userData.id || `user_${Date.now()}`,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        profileImageUrl: userData.profileImageUrl,
+        phoneNumber: userData.phoneNumber,
+        age: userData.age,
+        educationLevel: userData.educationLevel,
+        quranExperience: userData.quranExperience,
+        learningGoals: userData.learningGoals,
+        preferredTime: userData.preferredTime,
+        whatsappNumber: userData.whatsappNumber,
+        isActive: userData.isActive ?? true,
+        registrationCompleted: userData.registrationCompleted ?? false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return user;
+    }
+    const [user] = await db!
       .insert(users)
       .values(userData)
       .onConflictDoUpdate({
@@ -107,7 +138,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(id: string, data: Partial<User>): Promise<User> {
-    const [user] = await db
+    if (!this.isDbAvailable()) {
+      // Return a dummy user for JSON storage fallback
+      throw new Error("User profile updates not available in JSON mode");
+    }
+    const [user] = await db!
       .update(users)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
@@ -117,11 +152,17 @@ export class DatabaseStorage implements IStorage {
 
   // Course operations
   async getCourses(): Promise<Course[]> {
-    return await db.select().from(courses).orderBy(desc(courses.startDate));
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(courses).orderBy(desc(courses.startDate));
   }
 
   async getActiveCourses(): Promise<Course[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(courses)
       .where(eq(courses.isActive, true))
@@ -129,17 +170,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCourse(id: string): Promise<Course | undefined> {
-    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [course] = await db!.select().from(courses).where(eq(courses.id, id));
     return course;
   }
 
   async createCourse(course: InsertCourse): Promise<Course> {
-    const [newCourse] = await db.insert(courses).values(course).returning();
+    if (!this.isDbAvailable()) {
+      throw new Error("Course creation not available in JSON mode");
+    }
+    const [newCourse] = await db!.insert(courses).values(course).returning();
     return newCourse;
   }
 
   async updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course> {
-    const [updatedCourse] = await db
+    if (!this.isDbAvailable()) {
+      throw new Error("Course updates not available in JSON mode");
+    }
+    const [updatedCourse] = await db!
       .update(courses)
       .set({ ...course, updatedAt: new Date() })
       .where(eq(courses.id, id))
@@ -149,29 +199,44 @@ export class DatabaseStorage implements IStorage {
 
   // Instructor operations
   async getInstructors(): Promise<Instructor[]> {
-    return await db.select().from(instructors);
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(instructors);
   }
 
   async getActiveInstructors(): Promise<Instructor[]> {
-    return await db.select().from(instructors).where(eq(instructors.isActive, true));
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(instructors).where(eq(instructors.isActive, true));
   }
 
   async getInstructor(id: string): Promise<Instructor | undefined> {
-    const [instructor] = await db.select().from(instructors).where(eq(instructors.id, id));
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [instructor] = await db!.select().from(instructors).where(eq(instructors.id, id));
     return instructor;
   }
 
   async createInstructor(instructor: InsertInstructor): Promise<Instructor> {
-    const [newInstructor] = await db.insert(instructors).values(instructor).returning();
+    if (!this.isDbAvailable()) {
+      throw new Error("Instructor creation not available in JSON mode");
+    }
+    const [newInstructor] = await db!.insert(instructors).values(instructor).returning();
     return newInstructor;
   }
 
   // Enrollment operations
   async enrollUserInCourse(enrollment: InsertEnrollment): Promise<CourseEnrollment> {
-    const [newEnrollment] = await db.insert(courseEnrollments).values(enrollment).returning();
+    if (!this.isDbAvailable()) {
+      throw new Error("Enrollment not available in JSON mode");
+    }
+    const [newEnrollment] = await db!.insert(courseEnrollments).values(enrollment).returning();
     
     // Update course current students count
-    await db
+    await db!
       .update(courses)
       .set({
         currentStudents: await this.getCourseEnrollmentCount(enrollment.courseId),
@@ -183,7 +248,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserEnrollments(userId: string): Promise<CourseEnrollment[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(courseEnrollments)
       .where(eq(courseEnrollments.userId, userId))
@@ -191,7 +259,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCourseEnrollments(courseId: string): Promise<CourseEnrollment[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(courseEnrollments)
       .where(eq(courseEnrollments.courseId, courseId));
@@ -204,12 +275,29 @@ export class DatabaseStorage implements IStorage {
 
   // Contact operations
   async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
-    const [newMessage] = await db.insert(contactMessages).values(message).returning();
+    if (!this.isDbAvailable()) {
+      // Create a simple contact message object for JSON mode
+      const contactMessage: ContactMessage = {
+        id: `msg_${Date.now()}`,
+        name: message.name,
+        email: message.email,
+        phone: message.phone || null,
+        subject: message.subject,
+        message: message.message,
+        isRead: false,
+        createdAt: new Date(),
+      };
+      return contactMessage;
+    }
+    const [newMessage] = await db!.insert(contactMessages).values(message).returning();
     return newMessage;
   }
 
   async getContactMessages(): Promise<ContactMessage[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(contactMessages)
       .orderBy(desc(contactMessages.createdAt));
@@ -217,21 +305,135 @@ export class DatabaseStorage implements IStorage {
 
   // Student operations
   async createStudent(student: InsertStudent): Promise<Student> {
-    const [newStudent] = await db.insert(students).values(student).returning();
+    if (!this.isDbAvailable()) {
+      // Use JSON storage fallback
+      const jsonStudent = await jsonStorage.createStudent({
+        studentName: student.studentName || '',
+        email: '',
+        password: student.password || '',
+        phone: '',
+        dateOfBirth: student.dateOfBirth || new Date().toISOString(),
+        age: 20,
+        grade: student.grade,
+        memorizedSurahs: student.memorizedSurahs ? JSON.parse(student.memorizedSurahs) : [],
+        errors: [],
+        sessions: [],
+        payments: [],
+        schedules: [],
+        currentLevel: student.currentLevel || 'beginner',
+        notes: student.notes || '',
+        zoomLink: student.zoomLink || '',
+        createdAt: new Date().toISOString(),
+        isActive: student.isActive ?? true,
+      });
+      // Convert JSON student to Student type
+      const convertedStudent: Student = {
+        id: jsonStudent.id,
+        userId: null,
+        studentName: jsonStudent.studentName,
+        password: jsonStudent.password,
+        dateOfBirth: new Date(jsonStudent.dateOfBirth),
+        grade: jsonStudent.grade || null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: jsonStudent.isActive,
+        memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
+        currentLevel: jsonStudent.currentLevel || 'beginner',
+        notes: jsonStudent.notes || null,
+        zoomLink: jsonStudent.zoomLink || null,
+        whatsappContact: '+966532441566',
+        createdAt: new Date(jsonStudent.createdAt),
+        updatedAt: new Date(),
+      };
+      return convertedStudent;
+    }
+    const [newStudent] = await db!.insert(students).values(student).returning();
     return newStudent;
   }
 
   async getAllStudents(): Promise<Student[]> {
-    return await db.select().from(students).orderBy(desc(students.createdAt));
+    if (!this.isDbAvailable()) {
+      // Use JSON storage fallback
+      const jsonStudents = await jsonStorage.getAllStudents();
+      return jsonStudents.map(jsonStudent => ({
+        id: jsonStudent.id,
+        userId: null,
+        studentName: jsonStudent.studentName,
+        password: jsonStudent.password,
+        dateOfBirth: new Date(jsonStudent.dateOfBirth),
+        grade: jsonStudent.grade || null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: jsonStudent.isActive,
+        memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
+        currentLevel: jsonStudent.currentLevel || 'beginner',
+        notes: jsonStudent.notes || null,
+        zoomLink: jsonStudent.zoomLink || null,
+        whatsappContact: '+966532441566',
+        createdAt: new Date(jsonStudent.createdAt),
+        updatedAt: new Date(),
+      }));
+    }
+    return await db!.select().from(students).orderBy(desc(students.createdAt));
   }
 
   async getStudent(id: string): Promise<Student | undefined> {
-    const [student] = await db.select().from(students).where(eq(students.id, id));
+    if (!this.isDbAvailable()) {
+      // Use JSON storage fallback
+      const jsonStudent = await jsonStorage.getStudent(id);
+      if (!jsonStudent) return undefined;
+      return {
+        id: jsonStudent.id,
+        userId: null,
+        studentName: jsonStudent.studentName,
+        password: jsonStudent.password,
+        dateOfBirth: new Date(jsonStudent.dateOfBirth),
+        grade: jsonStudent.grade || null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: jsonStudent.isActive,
+        memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
+        currentLevel: jsonStudent.currentLevel || 'beginner',
+        notes: jsonStudent.notes || null,
+        zoomLink: jsonStudent.zoomLink || null,
+        whatsappContact: '+966532441566',
+        createdAt: new Date(jsonStudent.createdAt),
+        updatedAt: new Date(),
+      };
+    }
+    const [student] = await db!.select().from(students).where(eq(students.id, id));
     return student;
   }
 
   async authenticateStudent(studentName: string, password: string): Promise<Student | undefined> {
-    const [student] = await db
+    if (!this.isDbAvailable()) {
+      // Use JSON storage fallback
+      const jsonStudent = await jsonStorage.authenticateStudent(studentName, password);
+      if (!jsonStudent) return undefined;
+      return {
+        id: jsonStudent.id,
+        userId: null,
+        studentName: jsonStudent.studentName,
+        password: jsonStudent.password,
+        dateOfBirth: new Date(jsonStudent.dateOfBirth),
+        grade: jsonStudent.grade || null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: jsonStudent.isActive,
+        memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
+        currentLevel: jsonStudent.currentLevel || 'beginner',
+        notes: jsonStudent.notes || null,
+        zoomLink: jsonStudent.zoomLink || null,
+        whatsappContact: '+966532441566',
+        createdAt: new Date(jsonStudent.createdAt),
+        updatedAt: new Date(),
+      };
+    }
+    const [student] = await db!
       .select()
       .from(students)
       .where(and(eq(students.studentName, studentName), eq(students.password, password)));
@@ -240,12 +442,32 @@ export class DatabaseStorage implements IStorage {
 
   // Student session operations
   async createStudentSession(session: InsertStudentSession): Promise<StudentSession> {
-    const [newSession] = await db.insert(studentSessions).values(session).returning();
+    if (!this.isDbAvailable()) {
+      const sessionData: StudentSession = {
+        id: `session_${Date.now()}`,
+        studentId: session.studentId,
+        sessionNumber: session.sessionNumber,
+        sessionDate: new Date(session.sessionDate),
+        sessionTime: session.sessionTime || null,
+        evaluationGrade: session.evaluationGrade || null,
+        nextSessionDate: session.nextSessionDate ? new Date(session.nextSessionDate) : null,
+        newMaterial: session.newMaterial || null,
+        reviewMaterial: session.reviewMaterial || null,
+        notes: session.notes || null,
+        attended: session.attended ?? false,
+        createdAt: new Date(),
+      };
+      return sessionData;
+    }
+    const [newSession] = await db!.insert(studentSessions).values(session).returning();
     return newSession;
   }
 
   async getStudentSessions(studentId: string): Promise<StudentSession[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(studentSessions)
       .where(eq(studentSessions.studentId, studentId))
@@ -254,12 +476,29 @@ export class DatabaseStorage implements IStorage {
 
   // Student error operations
   async createStudentError(error: InsertStudentError): Promise<StudentError> {
-    const [newError] = await db.insert(studentErrors).values(error).returning();
+    if (!this.isDbAvailable()) {
+      const errorData: StudentError = {
+        id: `error_${Date.now()}`,
+        studentId: error.studentId,
+        surah: error.surah,
+        ayahNumber: error.ayahNumber,
+        errorType: error.errorType ?? 'recitation',
+        errorDescription: error.errorDescription || null,
+        isResolved: error.isResolved ?? false,
+        resolvedDate: error.resolvedDate ? new Date(error.resolvedDate) : null,
+        createdAt: new Date(),
+      };
+      return errorData;
+    }
+    const [newError] = await db!.insert(studentErrors).values(error).returning();
     return newError;
   }
 
   async getStudentErrors(studentId: string): Promise<StudentError[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(studentErrors)
       .where(eq(studentErrors.studentId, studentId))
@@ -268,12 +507,33 @@ export class DatabaseStorage implements IStorage {
 
   // Student payment operations
   async createStudentPayment(payment: InsertStudentPayment): Promise<StudentPayment> {
-    const [newPayment] = await db.insert(studentPayments).values(payment).returning();
+    if (!this.isDbAvailable()) {
+      const paymentData: StudentPayment = {
+        id: `payment_${Date.now()}`,
+        studentId: payment.studentId,
+        amount: payment.amount,
+        currency: payment.currency ?? 'SAR',
+        paymentDate: new Date(),
+        paymentMethod: payment.paymentMethod ?? 'whatsapp',
+        subscriptionPeriod: payment.subscriptionPeriod ?? 'monthly',
+        sessionsIncluded: payment.sessionsIncluded,
+        sessionsRemaining: payment.sessionsRemaining,
+        expiryDate: payment.expiryDate ? new Date(payment.expiryDate) : null,
+        status: payment.status ?? 'active',
+        notes: payment.notes || null,
+        createdAt: new Date(),
+      };
+      return paymentData;
+    }
+    const [newPayment] = await db!.insert(studentPayments).values(payment).returning();
     return newPayment;
   }
 
   async getStudentPayments(studentId: string): Promise<StudentPayment[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(studentPayments)
       .where(eq(studentPayments.studentId, studentId))
@@ -282,12 +542,28 @@ export class DatabaseStorage implements IStorage {
 
   // Class schedule operations
   async createClassSchedule(schedule: InsertClassSchedule): Promise<ClassSchedule> {
-    const [newSchedule] = await db.insert(classSchedules).values(schedule).returning();
+    if (!this.isDbAvailable()) {
+      const scheduleData: ClassSchedule = {
+        id: `schedule_${Date.now()}`,
+        studentId: schedule.studentId,
+        dayOfWeek: schedule.dayOfWeek,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        zoomLink: schedule.zoomLink || null,
+        isActive: schedule.isActive ?? true,
+        createdAt: new Date(),
+      };
+      return scheduleData;
+    }
+    const [newSchedule] = await db!.insert(classSchedules).values(schedule).returning();
     return newSchedule;
   }
 
   async getStudentSchedules(studentId: string): Promise<ClassSchedule[]> {
-    return await db
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
       .select()
       .from(classSchedules)
       .where(eq(classSchedules.studentId, studentId))
