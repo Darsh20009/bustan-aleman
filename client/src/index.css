@@ -1,0 +1,279 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(45, 29%, 97%);
+  --foreground: hsl(210, 25%, 15%);
+  --card: hsl(45, 20%, 95%);
+  --card-foreground: hsl(210, 25%, 15%);
+  --popover: hsl(45, 29%, 97%);
+  --popover-foreground: hsl(210, 25%, 15%);
+  --primary: hsl(140, 45%, 25%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(45, 60%, 60%);
+  --secondary-foreground: hsl(210, 25%, 15%);
+  --muted: hsl(45, 15%, 90%);
+  --muted-foreground: hsl(210, 15%, 45%);
+  --accent: hsl(45, 25%, 88%);
+  --accent-foreground: hsl(140, 45%, 25%);
+  --destructive: hsl(0, 65%, 50%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(45, 20%, 85%);
+  --input: hsl(45, 15%, 92%);
+  --ring: hsl(140, 45%, 25%);
+  --chart-1: hsl(140, 45%, 25%);
+  --chart-2: hsl(45, 60%, 60%);
+  --chart-3: hsl(30, 50%, 55%);
+  --chart-4: hsl(140, 35%, 35%);
+  --chart-5: hsl(45, 45%, 45%);
+  --sidebar: hsl(45, 20%, 95%);
+  --sidebar-foreground: hsl(210, 25%, 15%);
+  --sidebar-primary: hsl(140, 45%, 25%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(45, 25%, 88%);
+  --sidebar-accent-foreground: hsl(140, 45%, 25%);
+  --sidebar-border: hsl(45, 20%, 80%);
+  --sidebar-ring: hsl(140, 45%, 25%);
+  --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
+  --font-serif: 'Amiri', serif;
+  --font-mono: 'Courier New', monospace;
+  --radius: 0.75rem;
+  
+  /* Islamic theme colors */
+  --islamic-green: hsl(140, 45%, 25%);
+  --warm-gold: hsl(45, 60%, 60%);
+  --earth-brown: hsl(30, 50%, 35%);
+  --warm-white: hsl(45, 29%, 97%);
+  --light-beige: hsl(45, 20%, 95%);
+  --dark-charcoal: hsl(210, 25%, 15%);
+}
+
+.dark {
+  --background: hsl(210, 25%, 8%);
+  --foreground: hsl(45, 20%, 90%);
+  --card: hsl(210, 25%, 12%);
+  --card-foreground: hsl(45, 20%, 90%);
+  --popover: hsl(210, 25%, 8%);
+  --popover-foreground: hsl(45, 20%, 90%);
+  --primary: hsl(140, 45%, 35%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(45, 40%, 40%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(210, 25%, 15%);
+  --muted-foreground: hsl(45, 15%, 60%);
+  --accent: hsl(210, 25%, 18%);
+  --accent-foreground: hsl(140, 45%, 35%);
+  --destructive: hsl(0, 65%, 50%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(210, 25%, 20%);
+  --input: hsl(210, 25%, 18%);
+  --ring: hsl(140, 45%, 35%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    direction: rtl;
+  }
+
+  html {
+    direction: rtl;
+  }
+
+  /* Arabic typography improvements */
+  .font-arabic-serif {
+    font-family: 'Amiri', serif;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1, 'ss01' 1;
+  }
+
+  .font-arabic-sans {
+    font-family: 'Noto Sans Arabic', Arial, sans-serif;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+  }
+
+  /* Islamic color utilities */
+  .text-islamic-green {
+    color: var(--islamic-green);
+  }
+
+  .bg-islamic-green {
+    background-color: var(--islamic-green);
+  }
+
+  .text-warm-gold {
+    color: var(--warm-gold);
+  }
+
+  .bg-warm-gold {
+    background-color: var(--warm-gold);
+  }
+
+  .text-earth-brown {
+    color: var(--earth-brown);
+  }
+
+  .bg-earth-brown {
+    background-color: var(--earth-brown);
+  }
+
+  .bg-warm-white {
+    background-color: var(--warm-white);
+  }
+
+  .bg-light-beige {
+    background-color: var(--light-beige);
+  }
+
+  .text-dark-charcoal {
+    color: var(--dark-charcoal);
+  }
+
+  /* Islamic gradient */
+  .gradient-islamic {
+    background: linear-gradient(135deg, var(--islamic-green) 0%, hsl(140, 35%, 35%) 100%);
+  }
+
+  /* Geometric pattern */
+  .geometric-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='0.1'%3E%3Cpolygon points='30 0 30 30 0 30'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* Smooth transitions for Islamic design elements */
+  .transition-islamic {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Islamic border decorations */
+  .border-islamic {
+    border-style: solid;
+    border-image: linear-gradient(45deg, var(--islamic-green), var(--warm-gold)) 1;
+  }
+
+  /* RTL fixes for components */
+  .rtl-flip {
+    transform: scaleX(-1);
+  }
+
+  /* Ensure proper text alignment for Arabic */
+  .text-start {
+    text-align: right;
+  }
+
+  .text-end {
+    text-align: left;
+  }
+
+  /* Islamic card hover effects */
+  .islamic-card {
+    @apply transition-all duration-300 hover:shadow-lg;
+  }
+
+  /* Islamic button styles */
+  .btn-islamic-primary {
+    @apply bg-islamic-green text-white hover:bg-opacity-90 transition-all duration-200;
+  }
+
+  .btn-islamic-secondary {
+    @apply bg-warm-gold text-dark-charcoal hover:bg-opacity-90 transition-all duration-200;
+  }
+
+  /* Arabic text improvements */
+  .arabic-text {
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  /* Custom scrollbar for RTL */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--light-beige);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--islamic-green);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(140, 45%, 20%);
+  }
+}
+
+@layer components {
+  /* Navigation components */
+  .nav-link {
+    @apply text-dark-charcoal hover:text-islamic-green transition-colors font-medium relative;
+  }
+
+  .nav-link.active {
+    @apply text-islamic-green;
+  }
+
+  .nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 right-0 w-full h-0.5 bg-islamic-green;
+  }
+
+  /* Hero section */
+  .hero-section {
+    @apply gradient-islamic text-white relative overflow-hidden;
+  }
+
+  .hero-content {
+    @apply relative z-10 text-center max-w-4xl mx-auto py-20;
+  }
+
+  /* Course cards */
+  .course-card {
+    @apply bg-light-beige rounded-lg p-6 hover:shadow-lg transition-shadow border-r-4;
+  }
+
+  .course-card.quran {
+    @apply border-islamic-green;
+  }
+
+  .course-card.ramadan {
+    @apply border-warm-gold;
+  }
+
+  .course-card.fiqh {
+    @apply border-earth-brown;
+  }
+
+  /* Form styles */
+  .form-input {
+    @apply w-full px-4 py-3 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all;
+  }
+
+  .form-textarea {
+    @apply w-full px-4 py-3 border border-border rounded-lg bg-input text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all min-h-[120px] resize-y;
+  }
+
+  /* Islamic decorative elements */
+  .islamic-divider {
+    @apply flex items-center my-8;
+  }
+
+  .islamic-divider::before,
+  .islamic-divider::after {
+    content: '';
+    @apply flex-1 h-px bg-gradient-to-l from-transparent to-islamic-green;
+  }
+
+  .islamic-divider::after {
+    @apply bg-gradient-to-r from-transparent to-islamic-green;
+  }
+
+  .islamic-pattern-overlay {
+    @apply absolute inset-0 geometric-pattern opacity-20;
+  }
+}
