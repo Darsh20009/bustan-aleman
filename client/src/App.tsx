@@ -113,6 +113,7 @@ function App() {
         return (
           <RegistrationForm
             onRegistrationSuccess={handleRegistrationSuccess}
+            onBackToHome={() => setAppState('home')}
           />
         );
       

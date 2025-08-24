@@ -258,4 +258,92 @@ export function setupJSONRoutes(app: Express) {
       res.status(500).json({ message: "فشل في إرسال طلب التجديد" });
     }
   });
+
+  // Quran API endpoints
+  app.get('/api/quran/surah/:surahNumber', async (req, res) => {
+    try {
+      const surahNumber = parseInt(req.params.surahNumber);
+      
+      if (isNaN(surahNumber) || surahNumber < 1 || surahNumber > 114) {
+        return res.status(400).json({ message: "رقم السورة غير صحيح" });
+      }
+
+      // Load Quran data
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
+      
+      const quranDataPath = path.join(process.cwd(), 'client/src/assets/quran-data.json');
+      const quranDataRaw = await fs.readFile(quranDataPath, 'utf-8');
+      const quranData = JSON.parse(quranDataRaw);
+      
+      const surah = quranData.data.surahs.find((s: any) => s.number === surahNumber);
+      
+      if (!surah) {
+        return res.status(404).json({ message: "السورة غير موجودة" });
+      }
+
+      res.json(surah);
+    } catch (error) {
+      console.error("Error fetching surah:", error);
+      res.status(500).json({ message: "فشل في جلب بيانات السورة" });
+    }
+  });
+
+  app.get('/api/quran/page/:pageNumber', async (req, res) => {
+    try {
+      const pageNumber = parseInt(req.params.pageNumber);
+      
+      if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > 604) {
+        return res.status(400).json({ message: "رقم الصفحة غير صحيح" });
+      }
+
+      // Load Quran data
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
+      
+      const quranDataPath = path.join(process.cwd(), 'client/src/assets/quran-data.json');
+      const quranDataRaw = await fs.readFile(quranDataPath, 'utf-8');
+      const quranData = JSON.parse(quranDataRaw);
+      
+      // Filter ayahs by page number
+      const pageAyahs: any = {};
+      
+      quranData.data.surahs.forEach((surah: any) => {
+        const surahAyahs = surah.ayahs.filter((ayah: any) => ayah.page === pageNumber);
+        if (surahAyahs.length > 0) {
+          pageAyahs[surah.number] = {
+            name: surah.name,
+            ayahs: surahAyahs
+          };
+        }
+      });
+
+      const pageData = {
+        page: pageNumber,
+        surahs: pageAyahs
+      };
+
+      res.json(pageData);
+    } catch (error) {
+      console.error("Error fetching page:", error);
+      res.status(500).json({ message: "فشل في جلب بيانات الصفحة" });
+    }
+  });
+
+  app.get('/api/quran/surahs', async (req, res) => {
+    try {
+      // Load Surah list
+      const fs = await import('fs').then(m => m.promises);
+      const path = await import('path');
+      
+      const surahListPath = path.join(process.cwd(), 'client/src/assets/surah-list.json');
+      const surahListRaw = await fs.readFile(surahListPath, 'utf-8');
+      const surahList = JSON.parse(surahListRaw);
+      
+      res.json(surahList.data);
+    } catch (error) {
+      console.error("Error fetching surah list:", error);
+      res.status(500).json({ message: "فشل في جلب قائمة السور" });
+    }
+  });
 }

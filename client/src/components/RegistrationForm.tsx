@@ -18,9 +18,10 @@ interface RegistrationData {
 
 interface RegistrationFormProps {
   onRegistrationSuccess: (data: RegistrationData) => void;
+  onBackToHome?: () => void;
 }
 
-export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProps) {
+export function RegistrationForm({ onRegistrationSuccess, onBackToHome }: RegistrationFormProps) {
   const [formData, setFormData] = useState<RegistrationData>({
     studentName: '',
     email: '',
@@ -128,6 +129,18 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
           description: result.message || "سيتم التواصل معك قريباً عبر الواتساب",
         });
         
+        // إنشاء بيانات الطالب الكاملة
+        const studentData = {
+          ...registrationData,
+          id: result.student?.id || Date.now().toString(),
+          memorizedSurahs: [],
+          currentLevel: 'beginner',
+          schedules: [],
+          errors: [],
+          sessions: [],
+          payments: []
+        };
+
         // Open WhatsApp if link is provided
         if (result.whatsappLink && result.shouldRedirectToWhatsApp) {
           setTimeout(() => {
@@ -135,7 +148,7 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
           }, 1500);
         }
         
-        onRegistrationSuccess(registrationData);
+        onRegistrationSuccess(studentData);
       } else {
         throw new Error(result.message || 'فشل في التسجيل');
       }
@@ -308,7 +321,7 @@ export function RegistrationForm({ onRegistrationSuccess }: RegistrationFormProp
             <div className="mt-6 text-center space-y-2">
               <p className="text-xs text-gray-500">
                 <button
-                  onClick={() => window.history.back()}
+                  onClick={onBackToHome || (() => window.history.back())}
                   className="text-amber-600 hover:text-amber-800 underline"
                 >
                   ← العودة للصفحة الرئيسية

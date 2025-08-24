@@ -6,6 +6,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
+import { User, BookOpen, Calendar, Clock, Award, Home, LogOut } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -28,6 +29,7 @@ interface StudentDashboardProps {
 
 export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
+  const [isNewStudent, setIsNewStudent] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -36,7 +38,23 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }
     if (savedProgress) {
       setProgress(JSON.parse(savedProgress));
     }
-  }, [student.id]);
+
+    // Check if this is a new student (no progress saved and no sessions)
+    const hasNoProgress = !savedProgress;
+    const hasNoSessions = !student.sessions || student.sessions.length === 0;
+    const isNew = hasNoProgress && hasNoSessions;
+    
+    if (isNew) {
+      setIsNewStudent(true);
+      // Show welcome message for new students
+      setTimeout(() => {
+        toast({
+          title: "مرحباً بك في بستان الإيمان! 🌸",
+          description: "نتطلع لرحلة تعلم ممتعة معك",
+        });
+      }, 1000);
+    }
+  }, [student.id, student.sessions, toast]);
 
   const saveProgress = (newProgress: any) => {
     setProgress(newProgress);
@@ -140,6 +158,45 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }
       </div>
 
       <div className="max-w-6xl mx-auto p-3 md:p-6">
+        {/* Welcome Section for New Students */}
+        {isNewStudent && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <Card className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+              <CardHeader>
+                <CardTitle className="text-center text-amber-800 text-xl md:text-2xl font-amiri flex items-center justify-center gap-2">
+                  <Award className="w-6 h-6 md:w-8 md:h-8" />
+                  أهلاً وسهلاً بك في بستان الإيمان
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="text-center space-y-4">
+                <p className="text-amber-700 text-base md:text-lg">
+                  نرحب بك في رحلة تعلم القرآن الكريم والعلوم الشرعية. نحن هنا لمساعدتك على تحقيق أهدافك التعليمية.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button
+                    onClick={onQuranReader}
+                    className="bg-amber-600 hover:bg-amber-700 px-6 py-2 text-sm md:text-base"
+                  >
+                    <BookOpen className="ml-2 h-4 w-4" />
+                    ابدأ بقراءة القرآن
+                  </Button>
+                  <Button
+                    onClick={() => setIsNewStudent(false)}
+                    variant="outline"
+                    className="border-amber-300 text-amber-700 hover:bg-amber-50 px-6 py-2 text-sm md:text-base"
+                  >
+                    استكشف لوحة التحكم
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         <Tabs defaultValue="overview" className="space-y-4 md:space-y-6">
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 bg-white shadow-md">
             <TabsTrigger value="overview" className="text-sm md:text-base">نظرة عامة</TabsTrigger>

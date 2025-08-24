@@ -67,16 +67,16 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
 
   if (isLoading) {
     return (
-      <Card className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
+      <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
         <div className="text-center mb-4 md:mb-8">
-          <Skeleton className="h-8 md:h-10 w-32 md:w-48 mx-auto" />
-          <Skeleton className="h-3 md:h-4 w-24 md:w-32 mx-auto mt-2" />
-          <Skeleton className="h-1 w-32 md:w-48 mx-auto mt-4" />
-          <Skeleton className="h-4 md:h-6 w-48 md:w-64 mx-auto mt-4" />
+          <Skeleton className="h-6 md:h-10 w-24 md:w-48 mx-auto" />
+          <Skeleton className="h-3 md:h-4 w-20 md:w-32 mx-auto mt-2" />
+          <Skeleton className="h-1 w-24 md:w-48 mx-auto mt-4" />
+          <Skeleton className="h-4 md:h-6 w-32 md:w-64 mx-auto mt-4" />
         </div>
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-6 w-full" />
+            <Skeleton key={i} className="h-4 md:h-6 w-full" />
           ))}
         </div>
       </Card>
@@ -88,38 +88,38 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
   if (mode === 'surah') {
     const surah = data as Surah;
     return (
-      <Card className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-6 min-h-[calc(100vh-130px)]">
-        <div className="text-center mb-8">
+      <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
+        <div className="text-center mb-6 md:mb-8">
           <div className="relative">
             <div className="absolute inset-0 islamic-pattern rounded-lg opacity-10"></div>
-            <div className="py-6 px-4 relative">
-              <h2 className="text-3xl font-amiri text-primary mb-2">سورة {surah.name}</h2>
-              <div className="text-sm text-gray-600 mb-3">
+            <div className="py-4 md:py-6 px-2 md:px-4 relative">
+              <h2 className="text-xl md:text-3xl font-amiri text-primary mb-2">سورة {surah.name}</h2>
+              <div className="text-xs md:text-sm text-gray-600 mb-3">
                 {surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية'} - {toArabicNumeral(surah.numberOfAyahs)} آيات
               </div>
-              <div className="w-48 h-1 bg-secondary mx-auto mb-4 rounded-full"></div>
-              <div className="text-lg font-amiri text-accent">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+              <div className="w-32 md:w-48 h-1 bg-secondary mx-auto mb-4 rounded-full"></div>
+              <div className="text-sm md:text-lg font-amiri text-accent">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
             </div>
           </div>
         </div>
         
         {/* أزرار التحكم - التفسير ومشغل الصوت */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4 md:mb-6 px-2">
           <Button 
             variant={showTafsir ? "default" : "outline"} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto text-sm md:text-base"
             onClick={() => setShowTafsir(!showTafsir)}
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
             <span>التفسير</span>
           </Button>
           
           <Button 
             variant={showAudioPlayer ? "default" : "outline"} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto text-sm md:text-base"
             onClick={() => setShowAudioPlayer(!showAudioPlayer)}
           >
-            <Headphones className="h-4 w-4" />
+            <Headphones className="h-3 w-3 md:h-4 md:w-4" />
             <span>الاستماع</span>
           </Button>
         </div>
@@ -132,7 +132,7 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
           />
         )}
         
-        <div className="quran-text text-xl leading-relaxed text-textDark mb-8">
+        <div className="quran-text text-lg md:text-xl leading-relaxed text-textDark mb-6 md:mb-8">
           {/* إذا كان التفسير مفعلاً والآية محددة، سنعرض الآية مع تفسيرها */}
           {showTafsir && selectedAyah ? (
             <TafsirView
@@ -171,24 +171,24 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
     const surahsOnPage = Object.entries(pageData.surahs);
     
     return (
-      <Card className="bg-white rounded-lg shadow-lg max-w-4xl mx-auto p-6 min-h-[calc(100vh-130px)]">
+      <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
         {/* أزرار التحكم - التفسير ومشغل الصوت */}
-        <div className="flex justify-center gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4 md:mb-6 px-2">
           <Button 
             variant={showTafsir ? "default" : "outline"} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto text-sm md:text-base"
             onClick={() => setShowTafsir(!showTafsir)}
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="h-3 w-3 md:h-4 md:w-4" />
             <span>التفسير</span>
           </Button>
           
           <Button 
             variant={showAudioPlayer ? "default" : "outline"} 
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto text-sm md:text-base"
             onClick={() => setShowAudioPlayer(!showAudioPlayer)}
           >
-            <Headphones className="h-4 w-4" />
+            <Headphones className="h-3 w-3 md:h-4 md:w-4" />
             <span>الاستماع</span>
           </Button>
         </div>
@@ -217,12 +217,12 @@ const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
           <div key={surahNum}>
             {index > 0 && <Separator className="my-6" />}
             
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-amiri text-primary">سورة {surah.name}</h2>
-              <div className="text-lg font-amiri text-accent mt-3">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+            <div className="text-center mb-4 md:mb-6">
+              <h2 className="text-lg md:text-2xl font-amiri text-primary">سورة {surah.name}</h2>
+              <div className="text-sm md:text-lg font-amiri text-accent mt-2 md:mt-3">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
             </div>
             
-            <div className="quran-text text-xl leading-relaxed text-textDark">
+            <div className="quran-text text-base md:text-xl leading-relaxed text-textDark px-2 md:px-0">
               <p className="mb-2">
                 {surah.ayahs.map((ayah) => (
                   <span 
