@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from './ui/alert';
 import { useToast } from '../hooks/use-toast';
 
 interface LoginData {
-  email: string;
+  identifier: string; // Can be student name or email
   password: string;
 }
 
@@ -19,7 +19,7 @@ interface StudentLoginProps {
 
 export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginProps) {
   const [formData, setFormData] = useState<LoginData>({
-    email: '',
+    identifier: '',
     password: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,10 +37,8 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginData> = {};
 
-    if (!formData.email.trim()) {
-      newErrors.email = 'البريد الإلكتروني مطلوب';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'البريد الإلكتروني غير صحيح';
+    if (!formData.identifier.trim()) {
+      newErrors.identifier = 'اسم الطالب أو البريد الإلكتروني مطلوب';
     }
 
     if (!formData.password) {
@@ -97,8 +95,8 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
   };
 
   // Quick login buttons for demo students
-  const handleQuickLogin = async (email: string, password: string, name: string) => {
-    setFormData({ email, password });
+  const handleQuickLogin = async (identifier: string, password: string, name: string) => {
+    setFormData({ identifier, password });
     setIsSubmitting(true);
 
     try {
@@ -107,7 +105,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ identifier, password }),
       });
 
       const result = await response.json();
@@ -157,20 +155,19 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-right block">
-                  البريد الإلكتروني
+                <Label htmlFor="identifier" className="text-right block">
+                  اسم الطالب أو البريد الإلكتروني
                 </Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={errors.email ? 'border-red-500' : ''}
-                  dir="ltr"
+                  id="identifier"
+                  type="text"
+                  placeholder="يوسف درويش أو example@email.com"
+                  value={formData.identifier}
+                  onChange={(e) => handleInputChange('identifier', e.target.value)}
+                  className={errors.identifier ? 'border-red-500' : ''}
                 />
-                {errors.email && (
-                  <p className="text-red-500 text-sm text-right">{errors.email}</p>
+                {errors.identifier && (
+                  <p className="text-red-500 text-sm text-right">{errors.identifier}</p>
                 )}
               </div>
 
@@ -217,7 +214,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
               <p className="text-center text-sm text-gray-600 mb-4">حسابات تجريبية:</p>
               <div className="space-y-2">
                 <Button
-                  onClick={() => handleQuickLogin('yousef.darwish@example.com', '182009', 'يوسف درويش')}
+                  onClick={() => handleQuickLogin('يوسف درويش', '182009', 'يوسف درويش')}
                   disabled={isSubmitting}
                   variant="outline"
                   className="w-full text-amber-600 border-amber-300 hover:bg-amber-50"
@@ -225,7 +222,7 @@ export function StudentLogin({ onLoginSuccess, onRegisterClick }: StudentLoginPr
                   دخول كـ يوسف درويش (المستوى المتقدم)
                 </Button>
                 <Button
-                  onClick={() => handleQuickLogin('mohamed.ahmed@example.com', '123789', 'محمد أحمد')}
+                  onClick={() => handleQuickLogin('محمد أحمد', '123789', 'محمد أحمد')}
                   disabled={isSubmitting}
                   variant="outline"
                   className="w-full text-orange-600 border-orange-300 hover:bg-orange-50"

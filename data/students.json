@@ -283,5 +283,48 @@
     "isActive": true,
     "id": "osgzt5336mepe1vx7",
     "createdAt": "2025-08-24T07:50:19.867Z"
+  },
+  {
+    "studentName": "يوسف درويش",
+    "email": "",
+    "password": "182009",
+    "phone": "",
+    "dateOfBirth": "2009-08-18",
+    "age": 20,
+    "grade": "الثاني الثانوي",
+    "memorizedSurahs": [
+      "البقرة",
+      "آل عمران"
+    ],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "advanced",
+    "notes": "طالب متميز، حافظ سورة البقرة وآل عمران. مستوى الحفظ ممتاز لكن يريد التميز أكثر",
+    "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+    "createdAt": "2025-08-24T16:50:41.185Z",
+    "isActive": true,
+    "id": "2c05nah2mmepxcsdd"
+  },
+  {
+    "studentName": "محمد أحمد",
+    "email": "",
+    "password": "123789",
+    "phone": "",
+    "dateOfBirth": "2010-01-01",
+    "age": 20,
+    "grade": "غير محدد",
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "beginner",
+    "notes": "طالب جديد، لم يكمل أي حصة بعد. سيبدأ من سورة الناس",
+    "zoomLink": "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
+    "createdAt": "2025-08-24T16:50:41.187Z",
+    "isActive": true,
+    "id": "jm8llrkf6mepxcsdf"
   }
 ]

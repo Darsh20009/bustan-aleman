@@ -86,11 +86,18 @@ export function setupJSONRoutes(app: Express) {
     }
   });
 
-  // Student login
+  // Student login - supports both student name and email
   app.post('/api/student-login', async (req, res) => {
     try {
-      const { email, password } = req.body;
-      const student = await jsonStorage.authenticateStudent(email, password);
+      const { identifier, password } = req.body; // Changed from email to identifier
+      
+      // Find student by name or email
+      const students = await jsonStorage.getAllStudents();
+      const student = students.find(s => 
+        (s.studentName === identifier || s.email === identifier) && 
+        s.password === password && 
+        s.isActive
+      );
       
       if (!student) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
@@ -111,6 +118,10 @@ export function setupJSONRoutes(app: Express) {
           memorizedSurahs: student.memorizedSurahs,
           currentLevel: student.currentLevel,
           schedules: student.schedules,
+          errors: student.errors,
+          sessions: student.sessions,
+          payments: student.payments,
+          notes: student.notes,
         }
       });
     } catch (error) {
@@ -483,4 +494,107 @@ export function setupJSONRoutes(app: Express) {
       res.status(500).json({ message: "فشل في تسجيل الحضور" });
     }
   });
+
+  // Check if student can access class now (time-based access)
+  app.get('/api/student/class-access', async (req, res) => {
+    try {
+      const studentId = req.session?.studentId;
+      if (!studentId) {
+        return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
+      }
+
+      const student = await jsonStorage.getStudent(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "الطالب غير موجود" });
+      }
+
+      const now = new Date();
+      const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const currentTime = now.getHours() * 60 + now.getMinutes(); // Minutes since midnight
+
+      // Find if there's a schedule for today
+      const todaySchedule = student.schedules.find(schedule => 
+        schedule.dayOfWeek === currentDay && schedule.isActive
+      );
+
+      if (!todaySchedule) {
+        return res.json({
+          canAccess: false,
+          reason: "لا توجد حصة مجدولة اليوم",
+          nextClass: getNextClassTime(student.schedules)
+        });
+      }
+
+      // Parse schedule times
+      const [startHour, startMinute] = todaySchedule.startTime.split(':').map(Number);
+      const [endHour, endMinute] = todaySchedule.endTime.split(':').map(Number);
+      const classStart = startHour * 60 + startMinute;
+      const classEnd = endHour * 60 + endMinute;
+
+      // Check if current time is within class time (with 5 minute buffer before)
+      const canAccess = currentTime >= (classStart - 5) && currentTime <= classEnd;
+
+      res.json({
+        canAccess,
+        reason: canAccess ? 
+          "يمكنك الدخول للحصة الآن" : 
+          currentTime < classStart ? 
+            `الحصة تبدأ في ${todaySchedule.startTime}` :
+            "انتهت الحصة لهذا اليوم",
+        classTime: todaySchedule,
+        nextClass: canAccess ? null : getNextClassTime(student.schedules),
+        zoomLink: canAccess ? todaySchedule.zoomLink : null
+      });
+    } catch (error) {
+      console.error("Error checking class access:", error);
+      res.status(500).json({ message: "فشل في التحقق من إمكانية الوصول للحصة" });
+    }
+  });
+
+  // Helper function to get next class time
+  function getNextClassTime(schedules: any[]) {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    // Sort schedules by day and time
+    const sortedSchedules = schedules
+      .filter(s => s.isActive)
+      .sort((a, b) => {
+        if (a.dayOfWeek !== b.dayOfWeek) {
+          return a.dayOfWeek - b.dayOfWeek;
+        }
+        const aTime = a.startTime.split(':').map(Number);
+        const bTime = b.startTime.split(':').map(Number);
+        return (aTime[0] * 60 + aTime[1]) - (bTime[0] * 60 + bTime[1]);
+      });
+
+    // Find next class
+    for (const schedule of sortedSchedules) {
+      const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+      const classStart = startHour * 60 + startMinute;
+      
+      if (schedule.dayOfWeek > currentDay || 
+          (schedule.dayOfWeek === currentDay && classStart > currentTime)) {
+        return {
+          dayOfWeek: schedule.dayOfWeek,
+          startTime: schedule.startTime,
+          dayName: getDayName(schedule.dayOfWeek)
+        };
+      }
+    }
+
+    // If no class found this week, return first class of next week
+    const firstClass = sortedSchedules[0];
+    return firstClass ? {
+      dayOfWeek: firstClass.dayOfWeek,
+      startTime: firstClass.startTime,
+      dayName: getDayName(firstClass.dayOfWeek)
+    } : null;
+  }
+
+  function getDayName(dayOfWeek: number): string {
+    const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    return days[dayOfWeek];
+  }
 }

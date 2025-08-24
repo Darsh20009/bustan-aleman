@@ -15,6 +15,7 @@ import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
 import QuranReader from "./components/QuranReader";
+import EnhancedQuranReader from "./components/EnhancedQuranReader";
 
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'register' | 'dashboard' | 'profile' | 'quran';
 
@@ -173,11 +174,14 @@ function App() {
               </div>
             </div>
             
-            {/* Quran Reader Container */}
+            {/* Enhanced Quran Reader Container */}
             <div className="p-2 md:p-6">
-              <div className="max-w-6xl mx-auto">
-                <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-3 md:p-6">
-                  <QuranReader initialMode="page" initialPageNumber={1} />
+              <div className="max-w-7xl mx-auto">
+                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl">
+                  <EnhancedQuranReader 
+                    initialSurah={1} 
+                    studentId={currentStudent?.id}
+                  />
                 </div>
               </div>
             </div>

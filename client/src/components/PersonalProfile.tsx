@@ -23,6 +23,12 @@ interface PersonalProfileProps {
 }
 
 export function PersonalProfile({ student, onBack, onQuranReader }: PersonalProfileProps) {
+  // Safe access to student properties with fallbacks
+  const memorizedSurahs = student?.memorizedSurahs || [];
+  const studentErrors = student?.errors || [];
+  const studentSessions = student?.sessions || [];
+  const studentSchedules = student?.schedules || [];
+
   // Sample data for demonstration - in real app this would come from the student object
   const todaysClasses = [
     {
@@ -63,7 +69,14 @@ export function PersonalProfile({ student, onBack, onQuranReader }: PersonalProf
     }
   ];
 
-  const recentErrors = [
+  // Use actual student errors if available, otherwise use sample data
+  const recentErrors = studentErrors.length > 0 ? 
+    studentErrors.slice(-3).map(error => ({
+      surah: error.surah || 'غير محدد',
+      ayah: error.ayahNumber || 0,
+      error: error.errorDescription || 'غير محدد',
+      date: error.createdAt || new Date().toISOString().split('T')[0]
+    })) : [
     { surah: "البقرة", ayah: 15, error: "خطأ في التشكيل", date: "2025-01-15" },
     { surah: "الفاتحة", ayah: 7, error: "خطأ في النطق", date: "2025-01-14" },
     { surah: "البقرة", ayah: 8, error: "خطأ في الوقف", date: "2025-01-13" }

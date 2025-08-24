@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
-import { User, BookOpen, Calendar, Clock, Award, Home, LogOut } from 'lucide-react';
+import { User, BookOpen, Calendar, Clock, Award, Home, LogOut, Video, CheckCircle, AlertTriangle, Phone } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -31,7 +31,54 @@ interface StudentDashboardProps {
 export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
   const [isNewStudent, setIsNewStudent] = useState<boolean>(false);
+  const [classAccess, setClassAccess] = useState<any>(null);
+  const [checkingAccess, setCheckingAccess] = useState(false);
   const { toast } = useToast();
+
+  // Check class access periodically
+  useEffect(() => {
+    checkClassAccess();
+    const interval = setInterval(checkClassAccess, 60000); // Check every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const checkClassAccess = async () => {
+    setCheckingAccess(true);
+    try {
+      const response = await fetch('/api/student/class-access');
+      if (response.ok) {
+        const data = await response.json();
+        setClassAccess(data);
+      }
+    } catch (error) {
+      console.error('Error checking class access:', error);
+    } finally {
+      setCheckingAccess(false);
+    }
+  };
+
+  const joinClass = () => {
+    if (classAccess?.canAccess && classAccess.zoomLink) {
+      window.open(classAccess.zoomLink, '_blank');
+      toast({
+        title: '🎓 تم فتح الحصة',
+        description: 'تم فتح رابط الحصة في نافذة جديدة'
+      });
+    } else if (student.schedules?.[0]?.zoomLink) {
+      // Fallback to first schedule's zoom link
+      window.open(student.schedules[0].zoomLink, '_blank');
+      toast({
+        title: '📹 تم فتح رابط الحلقة',
+        description: 'ملاحظة: قد تكون خارج الوقت المحدد'
+      });
+    } else {
+      toast({
+        title: 'خطأ',
+        description: 'لا يوجد رابط متاح للحصة',
+        variant: 'destructive'
+      });
+    }
+  };
 
   useEffect(() => {
     // Load progress from localStorage
@@ -130,6 +177,30 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
             </div>
           </motion.div>
 
+          {/* Class Access Status - Show in header */}
+          {classAccess && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-4 md:mb-0"
+            >
+              <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${
+                classAccess.canAccess 
+                  ? 'bg-green-500/20 text-green-100 border border-green-400/30' 
+                  : 'bg-orange-500/20 text-orange-100 border border-orange-400/30'
+              }`}>
+                {classAccess.canAccess ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <Clock className="h-4 w-4" />
+                )}
+                <span>
+                  {classAccess.canAccess ? 'يمكنك الدخول للحصة الآن!' : classAccess.reason}
+                </span>
+              </div>
+            </motion.div>
+          )}
+
           <div className="flex items-center space-x-2 space-x-reverse flex-wrap gap-2 mt-2 md:mt-0">
             <Button
               onClick={onQuranReader}
@@ -137,6 +208,19 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
             >
               <BookOpen className="ml-1 md:ml-2 h-4 w-4" />
               قارئ القرآن
+            </Button>
+            {/* Enhanced Join Class Button */}
+            <Button
+              onClick={joinClass}
+              disabled={checkingAccess}
+              className={`${
+                classAccess?.canAccess
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-white/20 hover:bg-white/30 text-white'
+              } border-0 px-3 py-2 text-sm md:px-4 md:text-base`}
+            >
+              <Video className="ml-1 md:ml-2 h-4 w-4" />
+              {checkingAccess ? 'جاري التحقق...' : 'دخول الحصة'}
             </Button>
             {onMyCourses && (
               <Button
