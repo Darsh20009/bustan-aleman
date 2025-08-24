@@ -14,9 +14,10 @@ const TafsirView = ({ text, tafsir, ayahNumber }: TafsirViewProps) => {
   const [activeTab, setActiveTab] = useState<string>("quran");
   
   // تحويل الرقم إلى أرقام عربية
-  const toArabicNumeral = (num: number): string => {
+  const toArabicNumeral = (num: number | undefined): string => {
+    if (num === undefined || num === null || isNaN(num)) return '٠';
     const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-    return num.toString().split('').map(digit => arabicNumerals[parseInt(digit)]).join('');
+    return num.toString().split('').map(digit => arabicNumerals[parseInt(digit)] || '٠').join('');
   };
 
   return (
