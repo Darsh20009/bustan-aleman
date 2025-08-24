@@ -201,12 +201,12 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
             </motion.div>
           )}
 
-          <div className="flex items-center space-x-2 space-x-reverse flex-wrap gap-2 mt-2 md:mt-0">
+          <div className="flex items-center gap-2 flex-wrap mt-2 md:mt-0">
             <Button
               onClick={onQuranReader}
               className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
             >
-              <BookOpen className="ml-1 md:ml-2 h-4 w-4" />
+              <BookOpen className="mr-1 md:mr-2 h-4 w-4" />
               قارئ القرآن
             </Button>
             {/* Enhanced Join Class Button */}
@@ -219,7 +219,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                   : 'bg-white/20 hover:bg-white/30 text-white'
               } border-0 px-3 py-2 text-sm md:px-4 md:text-base`}
             >
-              <Video className="ml-1 md:ml-2 h-4 w-4" />
+              <Video className="mr-1 md:mr-2 h-4 w-4" />
               {checkingAccess ? 'جاري التحقق...' : 'دخول الحصة'}
             </Button>
             {onMyCourses && (
@@ -227,7 +227,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                 onClick={onMyCourses}
                 className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
               >
-                <Award className="ml-1 md:ml-2 h-4 w-4" />
+                <Award className="mr-1 md:mr-2 h-4 w-4" />
                 دوراتي
               </Button>
             )}
@@ -236,16 +236,16 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                 onClick={onProfile}
                 className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
               >
-                <User className="ml-1 md:ml-2 h-4 w-4" />
+                <User className="mr-1 md:mr-2 h-4 w-4" />
                 الملف
               </Button>
             )}
             <Button
               onClick={onLogout}
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 px-3 py-2 text-sm md:px-4 md:text-base"
+              className="border-white/50 text-white hover:bg-white/20 hover:border-white/70 px-3 py-2 text-sm md:px-4 md:text-base transition-all duration-200"
             >
-              <LogOut className="ml-1 md:ml-2 h-4 w-4" />
+              <LogOut className="mr-1 md:mr-2 h-4 w-4" />
               خروج
             </Button>
           </div>
