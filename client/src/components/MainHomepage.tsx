@@ -47,7 +47,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               <Button
                 onClick={onRegisterClick}
                 variant="outline"
-                className="border-white/30 text-white hover:bg-white/10 active:bg-white/20 focus:bg-white/10 px-3 md:px-6 py-2 text-sm md:text-base font-bold transition-colors"
+                className="!bg-transparent border-white/30 text-white hover:bg-white/10 active:bg-white/20 focus:bg-white/10 px-3 md:px-6 py-2 text-sm md:text-base font-bold transition-colors"
               >
                 إنشاء حساب
               </Button>
