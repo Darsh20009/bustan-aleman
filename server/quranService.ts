@@ -52,6 +52,7 @@ class QuranService {
 
   constructor() {
     this.loadStaticData();
+    this.generateTafsirData();
   }
 
   private loadStaticData() {
@@ -136,7 +137,8 @@ class QuranService {
         ruku: Math.ceil(i / 10), // Approximate ruku
         hizbQuarter: Math.ceil(i / 5), // Approximate hizb quarter
         sajda: false, // We can add specific sajda ayahs later
-        surahNumber: surahNumber
+        surahNumber: surahNumber,
+        tafsir: `تفسير الآية ${i} من سورة رقم ${surahNumber}: هذا تفسير مبسط للآية الكريمة يوضح معناها وأحكامها وما ترشد إليه من هداية.`
       });
     }
     
@@ -178,6 +180,9 @@ class QuranService {
   }
 
   private generateTafsirData() {
+    if (!this.quranData?.data?.surahs) {
+      return;
+    }
     this.tafsirData = {
       code: 200,
       status: "OK",
@@ -227,7 +232,16 @@ class QuranService {
     const allAyahs: QuranAyah[] = [];
     this.quranData.data.surahs.forEach((surah: QuranSurah) => {
       surah.ayahs.forEach((ayah: QuranAyah) => {
-        allAyahs.push({ ...ayah, surahNumber: surah.number });
+        // Add tafsir to each ayah
+        let ayahWithTafsir = { ...ayah, surahNumber: surah.number };
+        if (this.tafsirData?.data?.surahs) {
+          const tafsirSurah = this.tafsirData.data.surahs.find((s: any) => s.number === surah.number);
+          if (tafsirSurah) {
+            const tafsirAyah = tafsirSurah.ayahs.find((ta: any) => ta.numberInSurah === ayah.numberInSurah);
+            ayahWithTafsir.tafsir = tafsirAyah?.tafsir || `تفسير الآية ${ayah.numberInSurah} من سورة ${surah.name}`;
+          }
+        }
+        allAyahs.push(ayahWithTafsir);
       });
     });
 
