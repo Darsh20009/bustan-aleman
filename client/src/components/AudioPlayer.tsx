@@ -17,7 +17,6 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { useQuery } from '@tanstack/react-query';
-import { type Reciter } from '@shared/schema';
 
 interface AudioPlayerProps {
   surahNumber: number;
@@ -34,15 +33,11 @@ const AudioPlayer = ({ surahNumber, ayahNumber }: AudioPlayerProps) => {
   const [error, setError] = useState<string | null>(null);
   
   // الحصول على قائمة القراء
-  const { data: reciters } = useQuery<Reciter[]>({
-    queryKey: ['/api/reciters'],
+  const { data: reciters } = useQuery<any[]>({
+    queryKey: ['/api/quran/reciters'],
   });
 
-  // الحصول على معلومات القارئ المحدد
-  const { data: reciter } = useQuery<Reciter>({
-    queryKey: ['/api/reciters', selectedReciter],
-    enabled: !!selectedReciter,
-  });
+  const selectedReciterData = reciters?.find(r => r.id.toString() === selectedReciter);
 
   useEffect(() => {
     // إنشاء العنصر الصوتي
@@ -88,7 +83,7 @@ const AudioPlayer = ({ surahNumber, ayahNumber }: AudioPlayerProps) => {
   
   // تحميل الصوت
   const loadAudio = () => {
-    if (!reciter || !audioRef.current) return;
+    if (!selectedReciterData || !audioRef.current) return;
     
     // استخدام واجهة API EveryAyah للقراءات القرآنية
     // هذه الواجهة متاحة للاستخدام العام وتوفر تلاوات من قراء مختلفين

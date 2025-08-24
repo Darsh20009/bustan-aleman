@@ -177,7 +177,7 @@ function App() {
             <div className="p-2 md:p-6">
               <div className="max-w-6xl mx-auto">
                 <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-2xl p-3 md:p-6">
-                  <QuranReader mode="page" pageNumber={1} />
+                  <QuranReader initialMode="page" initialPageNumber={1} />
                 </div>
               </div>
             </div>

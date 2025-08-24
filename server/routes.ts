@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { quranService } from "./quranService";
 import {
   insertCourseSchema,
   insertInstructorSchema,
@@ -299,6 +300,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching schedules:", error);
       res.status(500).json({ message: "Failed to fetch schedules" });
+    }
+  });
+
+  // Quran API routes
+  app.get('/api/quran/surahs', async (req, res) => {
+    try {
+      const surahs = await quranService.getSurahList();
+      res.json(surahs);
+    } catch (error) {
+      console.error("Error fetching surahs:", error);
+      res.status(500).json({ message: "Failed to fetch surahs" });
+    }
+  });
+
+  app.get('/api/quran/surah/:number', async (req, res) => {
+    try {
+      const surahNumber = parseInt(req.params.number);
+      if (isNaN(surahNumber) || surahNumber < 1 || surahNumber > 114) {
+        return res.status(400).json({ message: "Invalid surah number" });
+      }
+      
+      const surah = await quranService.getSurah(surahNumber);
+      if (!surah) {
+        return res.status(404).json({ message: "Surah not found" });
+      }
+      
+      res.json(surah);
+    } catch (error) {
+      console.error("Error fetching surah:", error);
+      res.status(500).json({ message: "Failed to fetch surah" });
+    }
+  });
+
+  app.get('/api/quran/page/:number', async (req, res) => {
+    try {
+      const pageNumber = parseInt(req.params.number);
+      if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > 604) {
+        return res.status(400).json({ message: "Invalid page number" });
+      }
+      
+      const page = await quranService.getPage(pageNumber);
+      if (!page) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      
+      res.json(page);
+    } catch (error) {
+      console.error("Error fetching page:", error);
+      res.status(500).json({ message: "Failed to fetch page" });
+    }
+  });
+
+  app.get('/api/quran/reciters', async (req, res) => {
+    try {
+      const reciters = await quranService.getReciters();
+      res.json(reciters);
+    } catch (error) {
+      console.error("Error fetching reciters:", error);
+      res.status(500).json({ message: "Failed to fetch reciters" });
+    }
+  });
+
+  app.get('/api/quran/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query || query.trim().length < 2) {
+        return res.status(400).json({ message: "Search query must be at least 2 characters" });
+      }
+      
+      const results = await quranService.searchQuran(query);
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching Quran:", error);
+      res.status(500).json({ message: "Failed to search Quran" });
+    }
+  });
+
+  app.get('/api/quran/tafsir/:surah/:ayah', async (req, res) => {
+    try {
+      const surahNumber = parseInt(req.params.surah);
+      const ayahNumber = parseInt(req.params.ayah);
+      
+      if (isNaN(surahNumber) || isNaN(ayahNumber)) {
+        return res.status(400).json({ message: "Invalid surah or ayah number" });
+      }
+      
+      const tafsir = await quranService.getAyahTafsir(surahNumber, ayahNumber);
+      if (!tafsir) {
+        return res.status(404).json({ message: "Tafsir not found" });
+      }
+      
+      res.json({ tafsir });
+    } catch (error) {
+      console.error("Error fetching tafsir:", error);
+      res.status(500).json({ message: "Failed to fetch tafsir" });
     }
   });
 

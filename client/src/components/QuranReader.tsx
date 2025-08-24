@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import TafsirView from "@/components/TafsirView";
 import AudioPlayer from "@/components/AudioPlayer";
+import QuranNavigation from "@/components/QuranNavigation";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Headphones } from "lucide-react";
 
@@ -36,20 +37,27 @@ interface QuranPageData {
 }
 
 interface QuranReaderProps {
-  mode: 'page' | 'surah';
-  pageNumber?: number;
-  surahNumber?: number;
+  initialMode?: 'page' | 'surah';
+  initialPageNumber?: number;
+  initialSurahNumber?: number;
 }
 
-const QuranReader = ({ mode, pageNumber, surahNumber }: QuranReaderProps) => {
+const QuranReader = ({ 
+  initialMode = 'page', 
+  initialPageNumber = 1, 
+  initialSurahNumber = 1 
+}: QuranReaderProps) => {
+  const [mode, setMode] = useState<'page' | 'surah'>(initialMode);
+  const [currentPage, setCurrentPage] = useState(initialPageNumber);
+  const [currentSurah, setCurrentSurah] = useState(initialSurahNumber);
   const [showTafsir, setShowTafsir] = useState(false);
   const [showAudioPlayer, setShowAudioPlayer] = useState(false);
   const [selectedAyah, setSelectedAyah] = useState<Ayah | null>(null);
   
   const { data, isLoading } = useQuery<QuranPageData | Surah>({
     queryKey: mode === 'page' 
-      ? [`/api/quran/page/${pageNumber}`] 
-      : [`/api/quran/surah/${surahNumber}`],
+      ? [`/api/quran/page/${currentPage}`] 
+      : [`/api/quran/surah/${currentSurah}`],
   });
 
   // Convert number to Arabic numeral
