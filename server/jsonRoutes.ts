@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { jsonStorage } from "./jsonStorage";
+import { courseManager } from "./courseSystem";
 import { z } from "zod";
 
 // Extend session data
@@ -344,6 +345,142 @@ export function setupJSONRoutes(app: Express) {
     } catch (error) {
       console.error("Error fetching surah list:", error);
       res.status(500).json({ message: "فشل في جلب قائمة السور" });
+    }
+  });
+
+  // ===== نظام إدارة الدورات =====
+
+  // Get all available courses
+  app.get('/api/courses', (req, res) => {
+    try {
+      const courses = courseManager.getAllCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ message: "فشل في جلب الدورات" });
+    }
+  });
+
+  // Get specific course details
+  app.get('/api/courses/:courseId', (req, res) => {
+    try {
+      const course = courseManager.getCourse(req.params.courseId);
+      if (!course) {
+        return res.status(404).json({ message: "الدورة غير موجودة" });
+      }
+      res.json(course);
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ message: "فشل في جلب بيانات الدورة" });
+    }
+  });
+
+  // Enroll in a course
+  app.post('/api/courses/:courseId/enroll', async (req, res) => {
+    try {
+      const studentId = req.session?.studentId;
+      if (!studentId) {
+        return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
+      }
+
+      const courseId = req.params.courseId;
+      const enrollment = await courseManager.enrollStudent(studentId, courseId);
+      
+      if (!enrollment) {
+        return res.status(404).json({ message: "الدورة غير موجودة" });
+      }
+
+      // إرسال إشعار WhatsApp للأستاذ
+      const course = courseManager.getCourse(courseId);
+      const student = await jsonStorage.getStudent(studentId);
+      
+      if (course && student) {
+        const enrollmentMessage = `
+📚 تسجيل جديد في الدورة 📚
+
+الدورة: ${course.title}
+الطالب: ${student.studentName}
+الهاتف: ${student.phone}
+تاريخ التسجيل: ${new Date().toLocaleString('ar-SA')}
+
+مرحباً بالطالب الجديد! 🎉
+        `.trim();
+
+        console.log(`New enrollment notification: ${enrollmentMessage}`);
+      }
+
+      res.status(201).json({
+        message: "تم التسجيل في الدورة بنجاح! سيتم التواصل معك قريباً",
+        enrollment
+      });
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+      res.status(400).json({ 
+        message: error instanceof Error ? error.message : "فشل في التسجيل" 
+      });
+    }
+  });
+
+  // Get student's enrollments
+  app.get('/api/my-courses', (req, res) => {
+    try {
+      const studentId = req.session?.studentId;
+      if (!studentId) {
+        return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
+      }
+
+      const enrollments = courseManager.getStudentEnrollments(studentId);
+      const coursesWithDetails = enrollments.map(enrollment => {
+        const course = courseManager.getCourse(enrollment.courseId);
+        return {
+          ...enrollment,
+          course
+        };
+      });
+
+      res.json(coursesWithDetails);
+    } catch (error) {
+      console.error("Error fetching student courses:", error);
+      res.status(500).json({ message: "فشل في جلب دوراتك" });
+    }
+  });
+
+  // Update course progress
+  app.post('/api/courses/progress', (req, res) => {
+    try {
+      const studentId = req.session?.studentId;
+      if (!studentId) {
+        return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
+      }
+
+      const { enrollmentId, progress, completedLesson } = req.body;
+      const success = courseManager.updateProgress(enrollmentId, progress, completedLesson);
+      
+      if (!success) {
+        return res.status(404).json({ message: "الالتحاق غير موجود" });
+      }
+
+      res.json({ message: "تم تحديث التقدم بنجاح" });
+    } catch (error) {
+      console.error("Error updating progress:", error);
+      res.status(500).json({ message: "فشل في تحديث التقدم" });
+    }
+  });
+
+  // Add attendance record
+  app.post('/api/courses/attendance', (req, res) => {
+    try {
+      const { enrollmentId, date, attended, notes } = req.body;
+      const success = courseManager.addAttendance(enrollmentId, date, attended, notes);
+      
+      if (!success) {
+        return res.status(404).json({ message: "الالتحاق غير موجود" });
+      }
+
+      res.json({ message: "تم تسجيل الحضور بنجاح" });
+    } catch (error) {
+      console.error("Error recording attendance:", error);
+      res.status(500).json({ message: "فشل في تسجيل الحضور" });
     }
   });
 }

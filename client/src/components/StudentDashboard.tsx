@@ -25,9 +25,10 @@ interface StudentDashboardProps {
   onLogout: () => void;
   onQuranReader: () => void;
   onProfile?: () => void;
+  onMyCourses?: () => void;
 }
 
-export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }: StudentDashboardProps) {
+export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
   const [isNewStudent, setIsNewStudent] = useState<boolean>(false);
   const { toast } = useToast();
@@ -137,6 +138,15 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }
               <BookOpen className="ml-1 md:ml-2 h-4 w-4" />
               قارئ القرآن
             </Button>
+            {onMyCourses && (
+              <Button
+                onClick={onMyCourses}
+                className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 py-2 text-sm md:px-4 md:text-base"
+              >
+                <Award className="ml-1 md:ml-2 h-4 w-4" />
+                دوراتي
+              </Button>
+            )}
             {onProfile && (
               <Button
                 onClick={onProfile}
@@ -151,6 +161,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile }
               variant="outline"
               className="border-white/30 text-white hover:bg-white/10 px-3 py-2 text-sm md:px-4 md:text-base"
             >
+              <LogOut className="ml-1 md:ml-2 h-4 w-4" />
               خروج
             </Button>
           </div>

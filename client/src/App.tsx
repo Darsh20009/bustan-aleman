@@ -9,13 +9,14 @@ import { BustanSplashScreen } from "./components/BustanSplashScreen";
 import { MainHomepage } from "./components/MainHomepage";
 import { AboutUsPage } from "./components/AboutUsPage";
 import { CoursesPage } from "./components/CoursesPage";
+import { MyCoursesPage } from "./components/MyCoursesPage";
 import { RegistrationForm } from "./components/RegistrationForm";
 import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
 import QuranReader from "./components/QuranReader";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'auth' | 'register' | 'dashboard' | 'profile' | 'quran';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'register' | 'dashboard' | 'profile' | 'quran';
 
 interface Student {
   id: string;
@@ -98,6 +99,8 @@ function App() {
           <CoursesPage
             onBack={() => setAppState('home')}
             onRegisterClick={() => setAppState('register')}
+            isLoggedIn={!!currentStudent}
+            currentStudent={currentStudent}
           />
         );
       
@@ -124,6 +127,15 @@ function App() {
             onLogout={handleLogout}
             onQuranReader={() => setAppState('quran')}
             onProfile={() => setAppState('profile')}
+            onMyCourses={() => setAppState('my-courses')}
+          />
+        ) : null;
+
+      case 'my-courses':
+        return currentStudent ? (
+          <MyCoursesPage
+            onBack={() => setAppState('dashboard')}
+            student={currentStudent}
           />
         ) : null;
       
