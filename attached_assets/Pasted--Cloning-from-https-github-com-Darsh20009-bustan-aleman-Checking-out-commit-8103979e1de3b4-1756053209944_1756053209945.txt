@@ -1,0 +1,56 @@
+==> Cloning from https://github.com/Darsh20009/bustan-aleman
+==> Checking out commit 8103979e1de3b4d0bf8421c1b0b315ccd5916ce0 in branch main
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+added 499 packages, and audited 500 packages in 7s
+67 packages are looking for funding
+  run `npm fund` for details
+9 vulnerabilities (1 low, 8 moderate)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+vite v5.4.19 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 10 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2062 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                   2.20 kB │ gzip:   0.86 kB
+../dist/public/assets/index-DFtLvpX3.css   85.21 kB │ gzip:  14.73 kB
+../dist/public/assets/index-Bct8THWV.js   533.97 kB │ gzip: 164.66 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 4.18s
+  dist/index.js  105.4kb
+⚡ Done in 6ms
+==> Uploading build...
+==> Uploaded in 6.6s. Compression took 2.9s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+⚠️  No DATABASE_URL found. Using JSON storage fallback.
+file:///opt/render/project/src/dist/index.js:1003
+  throw new Error("Environment variable REPLIT_DOMAINS not provided");
+        ^
+Error: Environment variable REPLIT_DOMAINS not provided
+    at file:///opt/render/project/src/dist/index.js:1003:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+Node.js v22.16.0
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
