@@ -91,7 +91,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
     const hasNoProgress = !savedProgress;
     const hasNoSessions = !student.sessions || student.sessions.length === 0;
     const isNew = hasNoProgress && hasNoSessions;
-    
+
     if (isNew) {
       setIsNewStudent(true);
       // Show welcome message for new students
@@ -153,6 +153,29 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
 
   const activePayment = getActivePayment();
   const currentSession = getCurrentSession();
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/student-logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        onLogout();
+        toast({
+          title: "تم تسجيل الخروج بنجاح",
+          description: "شكراً لك على استخدام بستان الإيمان"
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      onLogout();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
@@ -241,7 +264,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
               </Button>
             )}
             <Button
-              onClick={onLogout}
+              onClick={handleLogout}
               variant="outline"
               className="border-white/50 text-white hover:bg-white/20 hover:border-white/70 px-3 py-2 text-sm md:px-4 md:text-base transition-all duration-200"
             >
@@ -502,11 +525,11 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                       <h4 className="font-semibold text-gray-800 mb-2">تاريخ انتهاء الاشتراك</h4>
                       <p className="text-gray-700">{activePayment.expiryDate}</p>
-                      
+
                       <div className="mt-4">
                         <Progress 
                           value={(activePayment.sessionsRemaining / activePayment.sessionsIncluded) * 100} 
