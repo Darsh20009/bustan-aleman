@@ -155,7 +155,18 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
   const currentSession = getCurrentSession();
 
   const handleLogout = async () => {
+    console.log('handleLogout called');
     try {
+      // Force logout immediately first
+      onLogout();
+      
+      // Show success message
+      toast({
+        title: "تم تسجيل الخروج بنجاح",
+        description: "شكراً لك على استخدام بستان الإيمان"
+      });
+
+      // Then try to logout from server
       const response = await fetch('/api/student-logout', {
         method: 'POST',
         headers: {
@@ -163,17 +174,10 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
         }
       });
 
-      if (response.ok) {
-        onLogout();
-        toast({
-          title: "تم تسجيل الخروج بنجاح",
-          description: "شكراً لك على استخدام بستان الإيمان"
-        });
-      }
+      console.log('Logout response:', response.status);
     } catch (error) {
       console.error('Logout error:', error);
-      // Force logout even if API call fails
-      onLogout();
+      // Already logged out, so no need to do anything else
     }
   };
 
@@ -264,9 +268,12 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
               </Button>
             )}
             <Button
-              onClick={handleLogout}
+              onClick={() => {
+                console.log('Logout button clicked');
+                handleLogout();
+              }}
               variant="outline"
-              className="border-white/50 text-white hover:bg-white/20 hover:border-white/70 px-3 py-2 text-sm md:px-4 md:text-base transition-all duration-200"
+              className="border-white/50 text-white hover:bg-white/20 hover:border-white/70 px-3 py-2 text-sm md:px-4 md:text-base transition-all duration-200 cursor-pointer"
             >
               <LogOut className="mr-1 md:mr-2 h-4 w-4" />
               خروج
