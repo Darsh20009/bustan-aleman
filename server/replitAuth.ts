@@ -8,12 +8,14 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { storage } from "./storage";
 
-if (!process.env.REPLIT_DOMAINS) {
-  throw new Error("Environment variable REPLIT_DOMAINS not provided");
-}
+// Check if we're running on Replit (presence of REPLIT_DOMAINS or REPL_ID)
+const isReplitEnvironment = process.env.REPLIT_DOMAINS || process.env.REPL_ID;
 
 const getOidcConfig = memoize(
   async () => {
+    if (!isReplitEnvironment) {
+      throw new Error("OIDC not available in non-Replit environment");
+    }
     return await client.discovery(
       new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
       process.env.REPL_ID!
@@ -64,6 +66,26 @@ export async function setupAuth(app: Express) {
   app.use(getSession());
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Only setup Replit authentication if we're in a Replit environment
+  if (!isReplitEnvironment) {
+    console.log("⚠️  Not in Replit environment. Skipping Replit authentication setup.");
+    
+    // Setup basic auth routes for non-Replit environments
+    app.get("/api/login", (req, res) => {
+      res.status(501).json({ message: "Authentication not available in this environment" });
+    });
+
+    app.get("/api/callback", (req, res) => {
+      res.status(501).json({ message: "Authentication not available in this environment" });
+    });
+
+    app.get("/api/logout", (req, res) => {
+      res.status(501).json({ message: "Authentication not available in this environment" });
+    });
+
+    return;
+  }
 
   const config = await getOidcConfig();
 
@@ -121,6 +143,12 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Skip authentication in non-Replit environments
+  if (!isReplitEnvironment) {
+    console.log("⚠️  Authentication skipped in non-Replit environment");
+    return res.status(501).json({ message: "Authentication not available in this environment" });
+  }
+
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
