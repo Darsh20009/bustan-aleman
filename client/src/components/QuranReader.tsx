@@ -96,8 +96,17 @@ const QuranReader = ({
   if (mode === 'surah') {
     const surah = data as Surah;
     return (
-      <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
-        <div className="text-center mb-6 md:mb-8">
+      <div className="w-full">
+        <QuranNavigation
+          currentPage={currentPage}
+          currentSurah={currentSurah}
+          mode={mode}
+          onPageChange={setCurrentPage}
+          onSurahChange={setCurrentSurah}
+          onModeChange={setMode}
+        />
+        <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
+          <div className="text-center mb-6 md:mb-8">
           <div className="relative">
             <div className="absolute inset-0 islamic-pattern rounded-lg opacity-10"></div>
             <div className="py-4 md:py-6 px-2 md:px-4 relative">
@@ -171,7 +180,8 @@ const QuranReader = ({
             </div>
           </div>
         </div>
-      </Card>
+        </Card>
+      </div>
     );
   } else {
     // Page mode
@@ -179,8 +189,17 @@ const QuranReader = ({
     const surahsOnPage = Object.entries(pageData.surahs);
     
     return (
-      <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
-        {/* أزرار التحكم - التفسير ومشغل الصوت */}
+      <div className="w-full">
+        <QuranNavigation
+          currentPage={currentPage}
+          currentSurah={currentSurah}
+          mode={mode}
+          onPageChange={setCurrentPage}
+          onSurahChange={setCurrentSurah}
+          onModeChange={setMode}
+        />
+        <Card className="bg-white rounded-lg shadow-lg w-full max-w-4xl mx-auto p-3 md:p-6 min-h-[calc(100vh-130px)]">
+          {/* أزرار التحكم - التفسير ومشغل الصوت */}
         <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4 md:mb-6 px-2">
           <Button 
             variant={showTafsir ? "default" : "outline"} 
@@ -253,7 +272,8 @@ const QuranReader = ({
             <span className="text-primary text-sm font-amiri">صدق الله العظيم</span>
           </div>
         </div>
-      </Card>
+        </Card>
+      </div>
     );
   }
 };
