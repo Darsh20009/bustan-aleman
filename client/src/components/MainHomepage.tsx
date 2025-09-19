@@ -143,19 +143,30 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               </motion.div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-6 sm:space-x-reverse">
+            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
               <Button
                 onClick={onQuranReader}
                 size="lg"
                 className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl hover:from-emerald-700 hover:to-teal-700 w-full sm:w-auto shadow-xl transform hover:scale-105 transition-all"
+                data-testid="button-quran-reader"
               >
                 <BookOpen className="ml-2 h-5 w-5 md:h-6 md:w-6" />
                 المصحف التفاعلي
               </Button>
               <Button
+                onClick={onCourses}
+                size="lg"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl hover:from-purple-700 hover:to-indigo-700 w-full sm:w-auto shadow-xl transform hover:scale-105 transition-all"
+                data-testid="button-courses"
+              >
+                <GraduationCap className="ml-2 h-5 w-5 md:h-6 md:w-6" />
+                تصفح الدورات
+              </Button>
+              <Button
                 onClick={onRegisterClick}
                 size="lg"
                 className="bg-gradient-to-r from-yellow-400 to-amber-400 text-emerald-800 px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl hover:from-yellow-300 hover:to-amber-300 w-full sm:w-auto shadow-xl transform hover:scale-105 transition-all font-bold"
+                data-testid="button-register"
               >
                 <Sparkles className="ml-2 h-5 w-5 md:h-6 md:w-6" />
                 انطلق في رحلتك
