@@ -10,6 +10,7 @@ import {
   boolean,
   decimal,
   date,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -33,6 +34,7 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   // Additional fields for Islamic education platform
+  role: varchar("role").default("student"), // student, supervisor, admin
   phoneNumber: varchar("phone_number"),
   age: integer("age"),
   educationLevel: varchar("education_level"),
@@ -112,7 +114,7 @@ export const students = pgTable("students", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   studentName: varchar("student_name").notNull(),
-  password: varchar("password").notNull(), // Simple password for students
+  passwordHash: varchar("password_hash").notNull(), // Hashed password for security
   dateOfBirth: date("date_of_birth"),
   grade: varchar("grade"), // الصف الدراسي
   monthlySessionsCount: integer("monthly_sessions_count").default(0),
@@ -186,6 +188,80 @@ export const classSchedules = pgTable("class_schedules", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Educational trips table
+export const trips = pgTable("trips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  tripDate: date("trip_date").notNull(),
+  location: varchar("location").notNull(),
+  capacity: integer("capacity").default(50),
+  currentEnrollments: integer("current_enrollments").default(0),
+  price: integer("price").default(0), // in halalas (smallest SAR unit)
+  imageUrl: varchar("image_url"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Trip enrollments table
+export const tripEnrollments = pgTable("trip_enrollments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  tripId: varchar("trip_id").references(() => trips.id).notNull(),
+  enrollmentDate: timestamp("enrollment_date").defaultNow(),
+  status: varchar("status").default("enrolled"), // enrolled, completed, cancelled
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique("trip_enrollments_user_trip_unique").on(table.userId, table.tripId),
+]);
+
+// Quran notes table - for students to save notes on verses
+export const quranNotes = pgTable("quran_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  ayahNumber: integer("ayah_number").notNull(),
+  note: text("note").notNull(),
+  tags: text("tags"), // JSON string of tags
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quran progress table - to track reading progress
+export const quranProgress = pgTable("quran_progress", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  lastSurah: integer("last_surah").default(1),
+  lastAyah: integer("last_ayah").default(1),
+  bookmarkedVerses: text("bookmarked_verses"), // JSON string of bookmarked verses
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique("quran_progress_student_unique").on(table.studentId),
+]);
+
+// Certificates table - for course completion and achievements
+export const certificates = pgTable("certificates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  issuedAt: timestamp("issued_at").defaultNow(),
+  code: varchar("code").unique().notNull().default(sql`gen_random_uuid()`), // UUID for QR verification
+  grade: varchar("grade"), // ممتاز، جيد جداً، جيد
+  teacherName: varchar("teacher_name"),
+  qrImageDataUrl: text("qr_image_data_url"), // Base64 QR code image
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("certificates_code_idx").on(table.code),
+]);
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
@@ -250,6 +326,34 @@ export const insertClassScheduleSchema = createInsertSchema(classSchedules).omit
   createdAt: true,
 });
 
+export const insertTripSchema = createInsertSchema(trips).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTripEnrollmentSchema = createInsertSchema(tripEnrollments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertQuranNoteSchema = createInsertSchema(quranNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertQuranProgressSchema = createInsertSchema(quranProgress).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertCertificateSchema = createInsertSchema(certificates).omit({
+  id: true,
+  createdAt: true,
+  code: true, // Auto-generated UUID
+});
+
 // Export types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -272,3 +376,14 @@ export type StudentPayment = typeof studentPayments.$inferSelect;
 export type InsertStudentPayment = z.infer<typeof insertStudentPaymentSchema>;
 export type ClassSchedule = typeof classSchedules.$inferSelect;
 export type InsertClassSchedule = z.infer<typeof insertClassScheduleSchema>;
+
+export type Trip = typeof trips.$inferSelect;
+export type InsertTrip = z.infer<typeof insertTripSchema>;
+export type TripEnrollment = typeof tripEnrollments.$inferSelect;
+export type InsertTripEnrollment = z.infer<typeof insertTripEnrollmentSchema>;
+export type QuranNote = typeof quranNotes.$inferSelect;
+export type InsertQuranNote = z.infer<typeof insertQuranNoteSchema>;
+export type QuranProgress = typeof quranProgress.$inferSelect;
+export type InsertQuranProgress = z.infer<typeof insertQuranProgressSchema>;
+export type Certificate = typeof certificates.$inferSelect;
+export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
