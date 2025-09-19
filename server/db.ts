@@ -8,13 +8,16 @@ neonConfig.webSocketConstructor = ws;
 let pool: Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
 
-// Only initialize database if DATABASE_URL is available
-if (process.env.DATABASE_URL) {
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Prioritize external database from Render, then fall back to local DATABASE_URL
+const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
+
+if (databaseUrl) {
+  pool = new Pool({ connectionString: databaseUrl });
   db = drizzle({ client: pool, schema });
-  console.log("✅ Database connection initialized");
+  const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
+  console.log(`✅ Database connection initialized (${dbSource})`);
 } else {
-  console.log("⚠️  No DATABASE_URL found. Using JSON storage fallback.");
+  console.log("⚠️  No database URL found. Using JSON storage fallback.");
 }
 
 export { pool, db };
