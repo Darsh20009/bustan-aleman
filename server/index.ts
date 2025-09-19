@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from 'express-session';
 import { registerRoutes } from "./routes";
 import { setupJSONRoutes } from "./jsonRoutes";
+import { setupAuthRoutes } from "./authRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 
@@ -55,7 +56,10 @@ app.use((req, res, next) => {
   // Run password migration on startup
   await migratePasswords();
   
-  // Setup JSON routes first (our new system)
+  // Setup authentication routes (universal auth system)
+  setupAuthRoutes(app);
+  
+  // Setup JSON routes (legacy student system)
   setupJSONRoutes(app);
   
   const server = await registerRoutes(app);

@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { jsonStorage } from "./jsonStorage";
 import { courseManager } from "./courseSystem";
 import { hashPassword, verifyPassword } from "./authUtils";
+import { requireAuth, requireAdmin, requireSupervisorOrAdmin } from "./authMiddleware";
 import { z } from "zod";
 
 // Extend session data
@@ -142,7 +143,7 @@ export function setupJSONRoutes(app: Express) {
   });
 
   // Get student profile
-  app.get('/api/student/profile', async (req, res) => {
+  app.get('/api/student/profile', requireAuth, async (req, res) => {
     try {
       const studentId = req.session?.studentId;
       if (!studentId) {
@@ -164,7 +165,7 @@ export function setupJSONRoutes(app: Express) {
   });
 
   // Update student progress
-  app.post('/api/student/progress', async (req, res) => {
+  app.post('/api/student/progress', requireAuth, async (req, res) => {
     try {
       const studentId = req.session?.studentId;
       if (!studentId) {
@@ -184,7 +185,7 @@ export function setupJSONRoutes(app: Express) {
   });
 
   // Get student errors
-  app.get('/api/student/errors', async (req, res) => {
+  app.get('/api/student/errors', requireAuth, async (req, res) => {
     try {
       const studentId = req.session?.studentId;
       if (!studentId) {
@@ -239,21 +240,8 @@ export function setupJSONRoutes(app: Express) {
   });
 
   // Get all students (for admin purposes) - REQUIRES ADMIN AUTH
-  app.get('/api/admin/students', async (req, res) => {
+  app.get('/api/admin/students', requireSupervisorOrAdmin, async (req, res) => {
     try {
-      // Basic admin authentication - require secure admin key from environment
-      const adminKey = req.headers['x-admin-key'] || req.headers['authorization'];
-      const validAdminKey = process.env.ADMIN_KEY;
-      
-      if (!validAdminKey) {
-        console.error("ADMIN_KEY environment variable not set - admin endpoints disabled");
-        return res.status(503).json({ message: "الخدمة غير متوفرة" });
-      }
-      
-      if (!adminKey || adminKey !== validAdminKey) {
-        return res.status(401).json({ message: "غير مخول للوصول لهذه البيانات" });
-      }
-      
       const students = await jsonStorage.getAllStudents();
       
       // Sanitize response - never expose password hashes

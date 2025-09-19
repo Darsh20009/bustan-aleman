@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   // Additional fields for Islamic education platform
   role: varchar("role").default("student"), // student, supervisor, admin
+  passwordHash: varchar("password_hash"), // Secure password storage for all roles
   phoneNumber: varchar("phone_number"),
   age: integer("age"),
   educationLevel: varchar("education_level"),

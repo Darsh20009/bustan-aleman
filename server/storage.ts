@@ -38,6 +38,7 @@ import { eq, and, gte, lte, desc } from "drizzle-orm";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, data: Partial<User>): Promise<User>;
   
@@ -111,6 +112,7 @@ export class DatabaseStorage implements IStorage {
         lastName: userData.lastName || null,
         profileImageUrl: userData.profileImageUrl || null,
         role: userData.role || 'student',
+        passwordHash: userData.passwordHash || null,
         phoneNumber: userData.phoneNumber || null,
         age: userData.age || null,
         educationLevel: userData.educationLevel || null,
@@ -137,6 +139,14 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    if (!this.isDbAvailable()) {
+      // Return empty array for JSON storage fallback
+      return [];
+    }
+    return await db!.select().from(users).where(eq(users.isActive, true));
   }
 
   async updateUserProfile(id: string, data: Partial<User>): Promise<User> {
