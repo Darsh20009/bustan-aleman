@@ -3,37 +3,27 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useAuth } from "./hooks/useAuth";
 
-// Import our new components
+// Import our new authentication components
+import { AuthPage } from "./components/AuthPage";
+import { RoleBasedNav } from "./components/RoleBasedNav";
+
+// Import existing components
 import { BustanSplashScreen } from "./components/BustanSplashScreen";
 import { MainHomepage } from "./components/MainHomepage";
 import { AboutUsPage } from "./components/AboutUsPage";
 import { CoursesPage } from "./components/CoursesPage";
 import { MyCoursesPage } from "./components/MyCoursesPage";
-import { RegistrationForm } from "./components/RegistrationForm";
-import { StudentLogin } from "./components/StudentLogin";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
-import QuranReader from "./components/QuranReader";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'register' | 'dashboard' | 'profile' | 'quran';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran';
 
-interface Student {
-  id: string;
-  studentName: string;
-  email: string;
-  memorizedSurahs: string[];
-  currentLevel: string;
-  schedules: any[];
-  errors: any[];
-  sessions: any[];
-  payments: any[];
-}
-
-function App() {
+function AppContent() {
   const [appState, setAppState] = useState<AppState>('splash');
-  const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   // Initialize default students on app start
   useEffect(() => {
@@ -52,36 +42,39 @@ function App() {
     setAppState('home');
   };
 
-  const handleLoginSuccess = (student: Student) => {
-    setCurrentStudent(student);
-    setAppState('dashboard');
-  };
-
-  const handleRegistrationSuccess = () => {
-    // Instead of changing state, just stay on the same page
-    // The user will now be able to login and see their profile
-    setAppState('home');
-  };
-
-  const handleLogout = () => {
-    fetch('/api/student-logout', { method: 'POST' })
-      .then(() => {
-        setCurrentStudent(null);
-        setAppState('home');
-      })
-      .catch(console.error);
-  };
+  // Check if user is authenticated and redirect to appropriate state
+  useEffect(() => {
+    if (isAuthenticated && user && appState === 'auth') {
+      setAppState('dashboard');
+    }
+  }, [isAuthenticated, user, appState]);
 
   const renderCurrentState = () => {
+    // Show loading state while checking authentication
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">جاري التحميل...</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (appState) {
       case 'splash':
         return <BustanSplashScreen onComplete={handleSplashComplete} />;
       
       case 'home':
+        // If authenticated, show role-based navigation instead of homepage
+        if (isAuthenticated && user) {
+          return <RoleBasedNav />;
+        }
         return (
           <MainHomepage
             onLoginClick={() => setAppState('auth')}
-            onRegisterClick={() => setAppState('register')}
+            onRegisterClick={() => setAppState('auth')}
             onQuranReader={() => setAppState('quran')}
             onAboutUs={() => setAppState('about')}
             onCourses={() => setAppState('courses')}
@@ -99,55 +92,38 @@ function App() {
         return (
           <CoursesPage
             onBack={() => setAppState('home')}
-            onRegisterClick={() => setAppState('register')}
-            isLoggedIn={!!currentStudent}
-            currentStudent={currentStudent}
+            onRegisterClick={() => setAppState('auth')}
+            isLoggedIn={isAuthenticated}
+            currentStudent={user?.role === 'student' ? user : null}
           />
         );
       
       case 'auth':
-        return (
-          <StudentLogin
-            onLoginSuccess={handleLoginSuccess}
-            onRegisterClick={() => setAppState('register')}
-          />
-        );
-      
-      case 'register':
-        return (
-          <RegistrationForm
-            onRegistrationSuccess={handleRegistrationSuccess}
-            onBackToHome={() => setAppState('home')}
-          />
-        );
+        // If already authenticated, redirect to appropriate dashboard
+        if (isAuthenticated && user) {
+          return <RoleBasedNav />;
+        }
+        return <AuthPage />;
       
       case 'dashboard':
-        return currentStudent ? (
-          <StudentDashboard
-            student={currentStudent}
-            onLogout={handleLogout}
-            onQuranReader={() => setAppState('quran')}
-            onProfile={() => setAppState('profile')}
-            onMyCourses={() => setAppState('my-courses')}
-          />
-        ) : null;
+        // Use the new role-based navigation instead of old dashboard
+        if (isAuthenticated && user) {
+          return <RoleBasedNav />;
+        } else {
+          return <AuthPage />;
+        }
 
       case 'my-courses':
-        return currentStudent ? (
+        return user?.role === 'student' ? (
           <MyCoursesPage
             onBack={() => setAppState('dashboard')}
-            student={currentStudent}
+            student={user}
           />
-        ) : null;
+        ) : <AuthPage />;
       
       case 'profile':
-        return currentStudent ? (
-          <PersonalProfile
-            student={currentStudent}
-            onBack={() => setAppState('dashboard')}
-            onQuranReader={() => setAppState('quran')}
-          />
-        ) : null;
+        // Temporarily disable profile until updated for new user system
+        return <div className="p-4">Profile page being updated...</div>;
       
       case 'quran':
         return (
@@ -160,14 +136,14 @@ function App() {
                 </h1>
                 <div className="flex items-center space-x-2 md:space-x-4 flex-wrap">
                   <button
-                    onClick={() => currentStudent ? setAppState('dashboard') : setAppState('home')}
+                    onClick={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
                     className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base"
                   >
                     ← العودة
                   </button>
-                  {currentStudent && (
+                  {isAuthenticated && user && (
                     <span className="text-amber-200 text-sm md:text-base">
-                      {currentStudent.studentName}
+                      {user.firstName} {user.lastName}
                     </span>
                   )}
                 </div>
@@ -180,7 +156,7 @@ function App() {
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl">
                   <EnhancedQuranReader 
                     initialSurah={1} 
-                    studentId={currentStudent?.id}
+                    studentId={user?.studentId}
                   />
                 </div>
               </div>
@@ -194,12 +170,18 @@ function App() {
   };
 
   return (
+    <div className="min-h-screen" dir="rtl">
+      <Toaster />
+      {renderCurrentState()}
+    </div>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen" dir="rtl">
-          <Toaster />
-          {renderCurrentState()}
-        </div>
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );
