@@ -3,13 +3,40 @@ import { jsonStorage } from "./jsonStorage";
 import { courseManager } from "./courseSystem";
 import { hashPassword, verifyPassword } from "./authUtils";
 import { requireAuth, requireAdmin, requireSupervisorOrAdmin } from "./authMiddleware";
+import { storage } from "./storage";
 import { z } from "zod";
 
 // Extend session data
 declare module 'express-session' {
   interface SessionData {
     studentId: string;
+    userId?: string;
+    userRole?: 'student' | 'supervisor' | 'admin';
   }
+}
+
+// Helper function to get student data from either storage system
+async function getCurrentStudent(req: any) {
+  const { studentId, userId } = req.session || {};
+  
+  // Try to get from JSON storage first (legacy method)
+  if (studentId) {
+    const students = await jsonStorage.getAllStudents();
+    const student = students.find(s => s.id === studentId && s.isActive);
+    if (student) return student;
+  }
+  
+  // Try to get by userId from database (new method)
+  if (userId) {
+    const user = await storage.getUser(userId);
+    if (user && user.role === 'student') {
+      const students = await jsonStorage.getAllStudents();
+      const student = students.find(s => s.email === user.email && s.isActive);
+      if (student) return student;
+    }
+  }
+  
+  return null;
 }
 
 // Registration schema
@@ -115,11 +142,37 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
 
+      // Get or create user record for session consistency
+      const users = await storage.getAllUsers();
+      let user = users.find(u => u.email === student.email && u.isActive);
+      
+      // Auto-create user record if it doesn't exist (for legacy student compatibility)
+      if (!user) {
+        // Ensure password is properly hashed (legacy passwords should already be hashed)
+        let passwordHash = student.password;
+        if (!student.password.startsWith('$2b$')) {
+          console.log('Legacy password not hashed, hashing now for student:', student.email);
+          passwordHash = await hashPassword(student.password);
+        }
+        
+        user = await storage.upsertUser({
+          email: student.email,
+          firstName: student.studentName?.split(' ')[0] || student.email.split('@')[0],
+          lastName: student.studentName?.split(' ').slice(1).join(' ') || '',
+          role: 'student',
+          passwordHash: passwordHash, // Ensure hashed password
+          isActive: true,
+          registrationCompleted: true,
+        });
+      }
+      
       // Store student session (create session object if it doesn't exist)
       if (!req.session) {
         req.session = {} as any;
       }
       req.session.studentId = student.id;
+      req.session.userId = user.id;
+      req.session.userRole = 'student';
       
       res.json({
         message: "تم تسجيل الدخول بنجاح",
@@ -145,12 +198,7 @@ export function setupJSONRoutes(app: Express) {
   // Get student profile
   app.get('/api/student/profile', requireAuth, async (req, res) => {
     try {
-      const studentId = req.session?.studentId;
-      if (!studentId) {
-        return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
-      }
-
-      const student = await jsonStorage.getStudent(studentId);
+      const student = await getCurrentStudent(req);
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
@@ -205,7 +253,7 @@ export function setupJSONRoutes(app: Express) {
   });
 
   // Add student error
-  app.post('/api/student/errors', async (req, res) => {
+  app.post('/api/student/errors', requireAuth, async (req, res) => {
     try {
       const studentId = req.session?.studentId;
       if (!studentId) {
