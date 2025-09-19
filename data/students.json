@@ -3,7 +3,7 @@
     "id": "yousef_darwish_001",
     "studentName": "يوسف درويش",
     "email": "yousef.darwish@example.com",
-    "password": "182009",
+    "password": "$2b$10$fHbU9iMiKYL/g0JJdYLGQehJiq5ENAI0XdHLOV4somPIswH8S.Joi",
     "phone": "+966532441566",
     "dateOfBirth": "2009-08-18",
     "age": 16,
@@ -142,7 +142,7 @@
     "id": "mohamed_ahmed_001",
     "studentName": "محمد أحمد",
     "email": "mohamed.ahmed@example.com",
-    "password": "123789",
+    "password": "$2b$10$q4ahsapr.paROd.iHLnql.emgNjM6jMXouSY0/AL0rTsw45PKPV2a",
     "phone": "+966532441566",
     "dateOfBirth": "2010-01-01",
     "age": 15,
@@ -192,7 +192,7 @@
   {
     "studentName": "ييي",
     "email": "ma3k.2025@gmail.com",
-    "password": "123456",
+    "password": "$2b$10$fXfAcvPXbtTRYsqiUc1ouO.1L92/MpB7OXfVLlhqDRp1xIluexMzC",
     "phone": "0532441566",
     "dateOfBirth": "2009-08-18",
     "age": 16,
@@ -211,7 +211,7 @@
   {
     "studentName": "ييس",
     "email": "qodratak@outlook.com",
-    "password": "2252222",
+    "password": "$2b$10$p0eERWSTFmyELOwY7rBVguSg.GbHoQXqLN3R.n64w6wQusQ.jBVIi",
     "phone": "0532441566",
     "dateOfBirth": "2008-08-18",
     "age": 17,
@@ -230,7 +230,7 @@
   {
     "studentName": "يي",
     "email": "qodratak@outlook.com",
-    "password": "2252222",
+    "password": "$2b$10$cQMBCLruD3dyobcJu/nsROoOUVRqoAiVrmSgJOCSwwGAsUYIA85Rq",
     "phone": "0532441566",
     "dateOfBirth": "2000-08-20",
     "age": 25,
@@ -249,7 +249,7 @@
   {
     "studentName": "ينت",
     "email": "ma3k.2025@gmail.com",
-    "password": "123456",
+    "password": "$2b$10$T3q1WkMDaggMtrJhzuqWROS7odpRk6VuBVVeIywz/WlEL21LEv0Hi",
     "phone": "+966532441566",
     "dateOfBirth": "2009-08-08",
     "age": 16,
@@ -268,7 +268,7 @@
   {
     "studentName": "ينت",
     "email": "ma3k.2025@gmail.com",
-    "password": "102020",
+    "password": "$2b$10$ymphLIKGI8bm9Jm4bRkmPu2vq0iIXtGYmCj4xbCuMT0azySRq0nP.",
     "phone": "0532441566",
     "dateOfBirth": "2000-02-01",
     "age": 25,
@@ -287,7 +287,7 @@
   {
     "studentName": "يوسف درويش",
     "email": "",
-    "password": "182009",
+    "password": "$2b$10$RDGTbvBaD3/gpt5rQ47KEejlsrTFS5rd6Nhi9v3jimOU.5jcPW00u",
     "phone": "",
     "dateOfBirth": "2009-08-18",
     "age": 20,
@@ -310,7 +310,7 @@
   {
     "studentName": "محمد أحمد",
     "email": "",
-    "password": "123789",
+    "password": "$2b$10$AqK6l8GqqgD5Sbccv/vyMuA2ZR9clJIWZYTR6Av7J5WWDBedFGbWi",
     "phone": "",
     "dateOfBirth": "2010-01-01",
     "age": 20,

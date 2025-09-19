@@ -32,6 +32,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
+import { hashPassword, verifyPassword } from "./authUtils";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 export interface IStorage {
@@ -109,6 +110,7 @@ export class DatabaseStorage implements IStorage {
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
         profileImageUrl: userData.profileImageUrl || null,
+        role: userData.role || 'student',
         phoneNumber: userData.phoneNumber || null,
         age: userData.age || null,
         educationLevel: userData.educationLevel || null,
@@ -310,7 +312,7 @@ export class DatabaseStorage implements IStorage {
       const jsonStudent = await jsonStorage.createStudent({
         studentName: student.studentName || '',
         email: '',
-        password: student.password || '',
+        password: student.passwordHash || '',
         phone: '',
         dateOfBirth: student.dateOfBirth || new Date().toISOString().split('T')[0],
         age: 20,
@@ -331,7 +333,7 @@ export class DatabaseStorage implements IStorage {
         id: jsonStudent.id,
         userId: null,
         studentName: jsonStudent.studentName,
-        password: jsonStudent.password,
+        passwordHash: jsonStudent.password,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
         monthlySessionsCount: 0,
@@ -360,7 +362,7 @@ export class DatabaseStorage implements IStorage {
         id: jsonStudent.id,
         userId: null,
         studentName: jsonStudent.studentName,
-        password: jsonStudent.password,
+        passwordHash: jsonStudent.password,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
         monthlySessionsCount: 0,
@@ -417,7 +419,7 @@ export class DatabaseStorage implements IStorage {
         id: jsonStudent.id,
         userId: null,
         studentName: jsonStudent.studentName,
-        password: jsonStudent.password,
+        passwordHash: jsonStudent.password,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
         monthlySessionsCount: 0,
@@ -433,11 +435,19 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date(),
       };
     }
+    // Get student by name first, then verify password with bcrypt
     const [student] = await db!
       .select()
       .from(students)
-      .where(and(eq(students.studentName, studentName), eq(students.password, password)));
-    return student;
+      .where(eq(students.studentName, studentName));
+    
+    if (!student || !student.passwordHash) {
+      return undefined;
+    }
+    
+    // Verify password against hash
+    const isValidPassword = await verifyPassword(password, student.passwordHash);
+    return isValidPassword ? student : undefined;
   }
 
   // Student session operations

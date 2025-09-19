@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { jsonStorage } from "./jsonStorage";
 import { courseManager } from "./courseSystem";
+import { hashPassword, verifyPassword } from "./authUtils";
 import { z } from "zod";
 
 // Extend session data
@@ -37,9 +38,13 @@ export function setupJSONRoutes(app: Express) {
     try {
       const registrationData = registrationSchema.parse(req.body);
       
+      // Hash password before storing
+      const hashedPassword = await hashPassword(registrationData.password);
+      
       // Create new student
       const student = await jsonStorage.createStudent({
         ...registrationData,
+        password: hashedPassword, // Store hashed password
         memorizedSurahs: [],
         errors: [],
         sessions: [],
@@ -51,7 +56,7 @@ export function setupJSONRoutes(app: Express) {
         isActive: true,
       });
 
-      // Send registration details to WhatsApp
+      // Send registration details to WhatsApp (without password for security)
       const whatsappMessage = `
 🌟 تسجيل طالب جديد في بستان الإيمان 🌟
 
@@ -60,9 +65,9 @@ export function setupJSONRoutes(app: Express) {
 الهاتف: ${student.phone}
 تاريخ الميلاد: ${student.dateOfBirth}
 العمر: ${student.age} سنة
-كلمة السر: ${student.password}
 
 تم التسجيل بنجاح في ${new Date().toLocaleString('ar-SA')}
+سيتم التواصل معك قريباً لتأكيد بيانات الدخول.
       `.trim();
 
       // Create WhatsApp link for user to send the message
@@ -91,15 +96,21 @@ export function setupJSONRoutes(app: Express) {
     try {
       const { identifier, password } = req.body; // Changed from email to identifier
       
-      // Find student by name or email
+      // Find student by name or email first
       const students = await jsonStorage.getAllStudents();
       const student = students.find(s => 
         (s.studentName === identifier || s.email === identifier) && 
-        s.password === password && 
         s.isActive
       );
       
       if (!student) {
+        return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
+      }
+      
+      // Verify password against stored hash
+      const isValidPassword = await verifyPassword(password, student.password);
+      
+      if (!isValidPassword) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
 
@@ -143,7 +154,9 @@ export function setupJSONRoutes(app: Express) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
 
-      res.json(student);
+      // Sanitize response - never expose password hash to client
+      const { password, ...safeStudent } = student;
+      res.json(safeStudent);
     } catch (error) {
       console.error("Error fetching student profile:", error);
       res.status(500).json({ message: "فشل في جلب بيانات الطالب" });
@@ -225,11 +238,31 @@ export function setupJSONRoutes(app: Express) {
     });
   });
 
-  // Get all students (for admin purposes)
+  // Get all students (for admin purposes) - REQUIRES ADMIN AUTH
   app.get('/api/admin/students', async (req, res) => {
     try {
+      // Basic admin authentication - require secure admin key from environment
+      const adminKey = req.headers['x-admin-key'] || req.headers['authorization'];
+      const validAdminKey = process.env.ADMIN_KEY;
+      
+      if (!validAdminKey) {
+        console.error("ADMIN_KEY environment variable not set - admin endpoints disabled");
+        return res.status(503).json({ message: "الخدمة غير متوفرة" });
+      }
+      
+      if (!adminKey || adminKey !== validAdminKey) {
+        return res.status(401).json({ message: "غير مخول للوصول لهذه البيانات" });
+      }
+      
       const students = await jsonStorage.getAllStudents();
-      res.json(students);
+      
+      // Sanitize response - never expose password hashes
+      const sanitizedStudents = students.map(student => {
+        const { password, ...safeStudent } = student;
+        return safeStudent;
+      });
+      
+      res.json(sanitizedStudents);
     } catch (error) {
       console.error("Error fetching all students:", error);
       res.status(500).json({ message: "فشل في جلب قائمة الطلاب" });

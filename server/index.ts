@@ -3,6 +3,7 @@ import session from 'express-session';
 import { registerRoutes } from "./routes";
 import { setupJSONRoutes } from "./jsonRoutes";
 import { setupVite, serveStatic, log } from "./vite";
+import { migratePasswords } from "./passwordMigration";
 
 const app = express();
 app.use(express.json());
@@ -51,6 +52,9 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Run password migration on startup
+  await migratePasswords();
+  
   // Setup JSON routes first (our new system)
   setupJSONRoutes(app);
   
