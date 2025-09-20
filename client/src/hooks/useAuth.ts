@@ -28,7 +28,10 @@ export function useAuth() {
       return response.json();
     },
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: false, // Disable automatic refetching
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    refetchOnMount: false, // Only fetch on first mount
   });
 
   const logout = async () => {
