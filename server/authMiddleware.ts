@@ -3,8 +3,8 @@ import type { Request, Response, NextFunction } from "express";
 // Extend session interface
 declare module 'express-session' {
   interface SessionData {
-    userId: string;
-    userRole: 'student' | 'supervisor' | 'admin';
+    userId?: string;
+    userRole?: 'student' | 'supervisor' | 'admin';
     studentId?: string;
   }
 }

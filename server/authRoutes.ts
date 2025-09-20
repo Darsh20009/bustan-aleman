@@ -66,7 +66,7 @@ export function setupAuthRoutes(app: Express) {
       const user = await storage.upsertUser(userData);
 
       // Create student record (all public registrations are students)
-      await storage.createStudent({
+      const student = await storage.createStudent({
         userId: user.id,
         studentName: `${registrationData.firstName} ${registrationData.lastName}`,
         passwordHash: hashedPassword,
@@ -83,6 +83,14 @@ export function setupAuthRoutes(app: Express) {
         whatsappContact: registrationData.whatsappNumber || "+966532441566", // Use provided WhatsApp or fallback
       });
 
+      // Create session automatically after successful registration
+      if (!req.session) {
+        req.session = {} as any;
+      }
+      req.session.userId = user.id;
+      req.session.userRole = user.role as "student" | "supervisor" | "admin";
+      req.session.studentId = student.id; // For compatibility with legacy routes
+
       res.status(201).json({ 
         message: "تم التسجيل بنجاح!",
         user: {
@@ -91,6 +99,9 @@ export function setupAuthRoutes(app: Express) {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          studentId: student.id,
+          currentLevel: student.currentLevel,
+          memorizedSurahs: student.memorizedSurahs,
         }
       });
     } catch (error) {
