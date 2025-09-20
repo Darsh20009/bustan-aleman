@@ -103,12 +103,44 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
     }
   };
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColors = (category: string) => {
     switch (category) {
-      case 'quran': return 'amber';
-      case 'ramadan': return 'green';
-      case 'fiqh': return 'blue';
-      default: return 'gray';
+      case 'quran': return {
+        border: 'border-islamic-emerald/30 hover:border-islamic-emerald',
+        bg: 'bg-islamic-emerald/10',
+        icon: 'text-islamic-emerald',
+        title: 'text-islamic-emerald',
+        text: 'text-copper-bronze',
+        badge: 'bg-desert-sand text-islamic-emerald',
+        button: 'btn-islamic-gradient'
+      };
+      case 'ramadan': return {
+        border: 'border-islamic-teal/30 hover:border-islamic-teal',
+        bg: 'bg-islamic-teal/10',
+        icon: 'text-islamic-teal',
+        title: 'text-islamic-teal',
+        text: 'text-copper-bronze',
+        badge: 'bg-pearl-cream text-islamic-teal',
+        button: 'bg-gradient-to-r from-islamic-teal to-persian-blue hover:from-islamic-teal/90 hover:to-persian-blue/90 text-white'
+      };
+      case 'fiqh': return {
+        border: 'border-persian-blue/30 hover:border-persian-blue',
+        bg: 'bg-persian-blue/10',
+        icon: 'text-persian-blue',
+        title: 'text-persian-blue',
+        text: 'text-copper-bronze',
+        badge: 'bg-warm-white text-persian-blue',
+        button: 'bg-gradient-to-r from-persian-blue to-royal-gold hover:from-persian-blue/90 hover:to-royal-gold/90 text-white'
+      };
+      default: return {
+        border: 'border-gray-300 hover:border-gray-400',
+        bg: 'bg-gray-100',
+        icon: 'text-gray-600',
+        title: 'text-gray-800',
+        text: 'text-gray-700',
+        badge: 'bg-gray-200 text-gray-800',
+        button: 'bg-gray-600 hover:bg-gray-700 text-white'
+      };
     }
   };
 
@@ -123,19 +155,21 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amber-600 mx-auto"></div>
-          <p className="mt-4 text-amber-800 font-amiri text-xl">جاري تحميل الدورات...</p>
+      <div className="min-h-screen bg-gradient-to-br from-pearl-cream via-desert-sand to-warm-white" dir="rtl">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="islamic-spinner w-16 h-16 mx-auto mb-4"></div>
+            <p className="text-islamic-emerald font-arabic-sans text-lg">جاري تحميل الدورات...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-pearl-cream via-desert-sand to-warm-white" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-800 to-orange-700 text-white">
+      <div className="bg-gradient-to-r from-islamic-emerald via-islamic-teal to-persian-blue text-white shadow-2xl">
         <div className="max-w-7xl mx-auto px-2 md:px-4 py-6">
           <div className="flex justify-between items-center">
             <motion.div
@@ -143,22 +177,23 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-2 md:space-x-4 space-x-reverse"
             >
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center ml-2 md:ml-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-royal-gold to-copper-bronze rounded-full flex items-center justify-center ml-2 md:ml-4 shadow-xl">
                 <BookOpen className="w-6 h-6 md:w-10 md:h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-4xl font-bold font-amiri">
-                  دوراتنا التعليمية
+                <h1 className="text-2xl md:text-4xl font-bold font-arabic-serif bg-gradient-to-r from-white to-pearl-cream bg-clip-text text-transparent">
+                  رحلاتنا التعليمية
                 </h1>
-                <p className="text-amber-200 text-sm md:text-lg">
-                  اختر الدورة المناسبة لك وابدأ رحلة التعلم
+                <p className="text-emerald-100 text-sm md:text-lg font-arabic-sans">
+                  انضم إلى رحلة تعليمية مباركة في بستان الإيمان
                 </p>
               </div>
             </motion.div>
 
             <Button
               onClick={onBack}
-              className="bg-white/20 hover:bg-white/30 text-white border-0 px-4 py-2 text-sm md:px-6 md:text-base"
+              className="btn-islamic-secondary text-islamic-emerald border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans backdrop-blur-sm"
+              data-testid="button-back-to-home"
             >
               <ArrowRight className="ml-2 h-4 w-4" />
               العودة للرئيسية
@@ -176,27 +211,27 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             transition={{ delay: 0.2 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-amber-900 mb-4 font-amiri">
-              الدورات المتاحة
+            <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+              الرحلات التعليمية المتاحة
             </h2>
-            <p className="text-xl text-amber-700 text-center mb-12">
-              رحلة تعليمية حول العالم
+            <p className="text-xl text-copper-bronze text-center mb-12 font-arabic-sans">
+              اختر رحلتك التعليمية وابدأ معنا في بستان الإيمان 🌿
             </p>
 
             {courses.length === 0 ? (
               <div className="text-center py-20">
-                <BookOpen className="w-24 h-24 text-amber-300 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold text-amber-900 mb-4 font-amiri">
-                  لا توجد دورات متاحة حالياً
+                <BookOpen className="w-24 h-24 text-islamic-emerald/40 mx-auto mb-6" />
+                <h2 className="text-3xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+                  لا توجد رحلات متاحة حالياً
                 </h2>
-                <p className="text-xl text-amber-700 mb-8">
-                  نعمل على إضافة دورات جديدة قريباً
+                <p className="text-xl text-copper-bronze mb-8 font-arabic-sans">
+                  🌱 نعمل على إضافة رحلات جديدة قريباً
                 </p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {courses.map((course, index) => {
-                  const colorClass = getCategoryColor(course.category);
+                  const colors = getCategoryColors(course.category);
                   const availableSpots = course.maxStudents - course.currentStudents;
                   
                   return (
@@ -206,67 +241,71 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className={`border-2 border-${colorClass}-200 hover:border-${colorClass}-400 transition-colors h-full`}>
+                      <Card className={`border-2 ${colors.border} transition-all duration-300 h-full hover:shadow-xl bg-white/90 backdrop-blur-sm`}>
                         <CardHeader>
-                          <div className={`w-16 h-16 mx-auto bg-${colorClass}-100 rounded-full flex items-center justify-center mb-4`}>
-                            <BookOpen className={`w-8 h-8 text-${colorClass}-600`} />
+                          <div className={`w-16 h-16 mx-auto ${colors.bg} rounded-full flex items-center justify-center mb-4 shadow-lg`}>
+                            <BookOpen className={`w-8 h-8 ${colors.icon}`} />
                           </div>
-                          <CardTitle className={`text-${colorClass}-800 text-right text-lg`}>
+                          <CardTitle className={`${colors.title} text-right text-lg font-arabic-serif font-bold`}>
                             {course.title}
                           </CardTitle>
-                          <CardDescription className="text-right flex items-center justify-end gap-2">
+                          <CardDescription className="text-right flex items-center justify-end gap-2 font-arabic-sans">
                             <Calendar className="w-4 h-4" />
                             {new Date(course.startDate).toLocaleDateString('ar-SA')}
                           </CardDescription>
                           <div className="flex items-center justify-between text-xs">
-                            <span className={`bg-${colorClass}-100 text-${colorClass}-800 px-2 py-1 rounded-full`}>
+                            <span className={`${colors.badge} px-3 py-1 rounded-full font-arabic-sans font-medium`}>
                               {getLevelText(course.level)}
                             </span>
-                            <span className="text-gray-600">
+                            <span className="text-copper-bronze font-arabic-sans">
                               {course.instructor}
                             </span>
                           </div>
                         </CardHeader>
                         <CardContent>
-                          <p className={`text-sm text-${colorClass}-700 text-right mb-4 line-clamp-3`}>
+                          <p className={`text-sm ${colors.text} text-right mb-4 line-clamp-3 font-arabic-sans leading-relaxed`}>
                             {course.description}
                           </p>
                           
-                          <div className="space-y-2 mb-4 text-xs text-gray-600">
-                            <div className="flex items-center justify-end gap-1">
-                              <Clock className="w-3 h-3" />
+                          <div className="space-y-2 mb-4 text-xs text-copper-bronze font-arabic-sans">
+                            <div className="flex items-center justify-end gap-2">
                               <span>{course.schedule.time} - {course.schedule.duration}</span>
+                              <Clock className="w-3 h-3" />
                             </div>
-                            <div className="flex items-center justify-end gap-1">
+                            <div className="flex items-center justify-end gap-2">
+                              <span>{course.schedule.days.join('، ')}</span>
                               <Calendar className="w-3 h-3" />
-                              <span>{course.schedule.days.join(', ')}</span>
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between mb-4">
-                            <span className="text-xs text-gray-500 flex items-center">
-                              <Users className="w-3 h-3 mr-1" />
-                              {availableSpots > 0 ? `${availableSpots} مقعد متاح` : 'الدورة ممتلئة'}
+                            <span className="text-xs text-copper-bronze flex items-center font-arabic-sans">
+                              <span className="mr-1">{availableSpots > 0 ? `${availableSpots} مقعد متاح` : 'الرحلة مكتملة'}</span>
+                              <Users className="w-3 h-3" />
                             </span>
-                            <span className="text-xs text-green-600 font-semibold">
-                              {course.price > 0 ? `${course.price} ريال` : 'مجاني'}
+                            <span className="text-xs text-islamic-emerald font-semibold font-arabic-sans">
+                              {course.price > 0 ? `${course.price} ريال` : '🎁 مجاني'}
                             </span>
                           </div>
 
                           <Button 
                             onClick={() => handleEnroll(course.id)}
                             disabled={availableSpots <= 0 || enrolling === course.id}
-                            className={`w-full bg-${colorClass}-600 hover:bg-${colorClass}-700 disabled:opacity-50`}
+                            className={`w-full ${colors.button} font-arabic-sans font-bold py-3 text-sm disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-300`}
+                            data-testid={`button-enroll-${course.id}`}
                           >
                             {enrolling === course.id ? (
                               <div className="flex items-center gap-2">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <div className="islamic-spinner w-4 h-4"></div>
                                 جاري التسجيل...
                               </div>
                             ) : availableSpots <= 0 ? (
-                              'الدورة ممتلئة'
+                              '🎓 الرحلة مكتملة'
                             ) : (
-                              'سجل الآن'
+                              <span className="flex items-center gap-2">
+                                <span>✨</span>
+                                <span>انضم للرحلة</span>
+                              </span>
                             )}
                           </Button>
                         </CardContent>
@@ -283,20 +322,28 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="text-center bg-white rounded-xl p-8 shadow-lg"
+            className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-royal-gold/20"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-amber-900 mb-4 font-amiri">
-              ابدأ رحلتك التعليمية معنا
+            <div className="islamic-divider mb-6">
+              <span className="text-royal-gold text-2xl">❋</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+              🌿 ابدأ رحلتك التعليمية في بستان الإيمان
             </h2>
-            <p className="text-lg text-amber-800 mb-8 max-w-2xl mx-auto">
-              انضم إلى آلاف الطلاب الذين يتعلمون القرآن والعلوم الشرعية معنا. رحلة مليئة بالعلم والإيمان تنتظرك.
+            <p className="text-lg text-copper-bronze mb-8 max-w-2xl mx-auto font-arabic-sans leading-relaxed">
+              انضم إلى آلاف الطلاب الذين يتعلمون القرآن والعلوم الشرعية معنا. رحلة مليئة بالعلم والإيمان والبركة تنتظرك.
             </p>
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-12 py-4 text-xl hover:from-amber-700 hover:to-orange-700"
+              className="btn-islamic-gradient text-white px-12 py-4 text-xl font-arabic-sans font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
+              data-testid="button-register-from-courses"
             >
-              سجل في دورة الآن
+              <span className="flex items-center gap-3">
+                <span>🎓</span>
+                <span>سجل في رحلة الآن</span>
+                <span>✨</span>
+              </span>
             </Button>
           </motion.div>
         </div>
