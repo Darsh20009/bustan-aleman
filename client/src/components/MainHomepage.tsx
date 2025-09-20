@@ -14,10 +14,10 @@ interface MainHomepageProps {
 
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-marble-white via-pearl-cream to-desert-sand" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 py-6">
+      <div className="bg-gradient-to-r from-islamic-emerald via-mosque-green to-islamic-teal text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 py-6 bg-[#064e3b]">
           <div className="flex justify-between items-center flex-wrap">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -26,16 +26,16 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
             >
               <div className="relative w-12 h-12 md:w-16 md:h-16 ml-2 md:ml-4">
                 {/* Islamic Pattern Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-amber-300 rounded-full shadow-lg"></div>
-                <div className="absolute inset-1 bg-white/90 rounded-full flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 md:w-10 md:h-10 text-emerald-700" />
+                <div className="absolute inset-0 bg-gradient-to-br from-royal-gold to-antique-gold rounded-full shadow-lg"></div>
+                <div className="absolute inset-1 bg-white/95 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 md:w-10 md:h-10 text-islamic-emerald" />
                 </div>
               </div>
               <div>
-                <h1 className="text-xl md:text-4xl font-bold font-amiri bg-gradient-to-r from-white to-emerald-100 bg-clip-text text-transparent">
+                <h1 className="text-xl md:text-4xl font-bold font-amiri bg-gradient-to-r from-white to-moonlight-silver bg-clip-text text-transparent">
                   بستان الإيمان
                 </h1>
-                <p className="text-emerald-200 text-sm md:text-lg font-medium">
+                <p className="text-moonlight-silver text-sm md:text-lg font-medium">
                   منصة تعليمية إسلامية متطورة مع خدمات مجانية ومدفوعة
                 </p>
               </div>
@@ -52,7 +52,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               <Button
                 onClick={onRegisterClick}
                 variant="outline"
-                className="!bg-gradient-to-r from-yellow-400 to-amber-300 border-0 text-emerald-800 hover:from-yellow-300 hover:to-amber-200 px-3 md:px-6 py-2 text-sm md:text-base font-bold transition-all shadow-lg"
+                className="!bg-gradient-to-r from-royal-gold to-antique-gold border-0 text-islamic-emerald hover:from-antique-gold hover:to-royal-gold px-3 md:px-6 py-2 text-sm md:text-base font-bold transition-all shadow-lg"
               >
                 <Sparkles className="w-4 h-4 ml-1" />
                 ابدأ رحلتك
@@ -61,14 +61,13 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </div>
         </div>
       </div>
-
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-emerald-100 via-teal-100 to-green-100 py-12 md:py-24 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-pearl-cream via-moonlight-silver to-desert-sand py-12 md:py-24 overflow-hidden">
         {/* Islamic Pattern Background */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-emerald-300 rounded-full"></div>
-          <div className="absolute top-20 right-20 w-24 h-24 border-2 border-teal-300 rotate-45"></div>
-          <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-green-300 rounded-full"></div>
+        <div className="absolute inset-0 opacity-15">
+          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-islamic-emerald rounded-full"></div>
+          <div className="absolute top-20 right-20 w-24 h-24 border-2 border-royal-gold rotate-45"></div>
+          <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-islamic-teal rounded-full"></div>
         </div>
         
         <div className="max-w-7xl mx-auto px-2 md:px-4 text-center relative z-10">
@@ -78,10 +77,10 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
             transition={{ duration: 0.8 }}
           >
             <div className="mb-8">
-              <h2 className="text-4xl md:text-7xl font-bold text-emerald-900 mb-4 font-amiri leading-tight">
+              <h2 className="text-4xl md:text-7xl font-bold text-islamic-emerald mb-4 font-amiri leading-tight">
                 رحلات تعليمية ملهمة
               </h2>
-              <p className="text-lg md:text-2xl text-emerald-700 mb-8 max-w-4xl mx-auto leading-relaxed">
+              <p className="text-lg md:text-2xl text-mosque-green mb-8 max-w-4xl mx-auto leading-relaxed">
                 نؤمن أن تعلم القرآن ليس مجرد حفظ، بل هو رحلة روحانية متكاملة
               </p>
             </div>
@@ -94,7 +93,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 transition={{ delay: 0.2 }}
                 className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-islamic-emerald to-islamic-teal flex items-center justify-center">
                   <div className="text-center text-white">
                     <BookOpen className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
@@ -112,7 +111,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 transition={{ delay: 0.4 }}
                 className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-royal-gold to-antique-gold flex items-center justify-center">
                   <div className="text-center text-white">
                     <Heart className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
@@ -175,7 +174,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </motion.div>
         </div>
       </div>
-
       {/* Platform Features */}
       <div className="py-16 md:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-2 md:px-4">
@@ -265,7 +263,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </motion.div>
         </div>
       </div>
-
       {/* Certificates Section */}
       <div className="py-16 md:py-24 bg-gradient-to-br from-amber-50 to-orange-50">
         <div className="max-w-7xl mx-auto px-2 md:px-4">
@@ -332,7 +329,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </motion.div>
         </div>
       </div>
-
       {/* تعرّف على معلمنا */}
       <div className="py-8 md:py-16 bg-gradient-to-br from-amber-50 to-orange-50">
         <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
@@ -361,7 +357,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </Card>
         </div>
       </div>
-
       {/* CTA Section */}
       <div className="py-8 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
@@ -393,7 +388,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </div>
         </div>
       </div>
-
       {/* Footer */}
       <div className="bg-emerald-900 text-white py-8 md:py-12">
         <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">

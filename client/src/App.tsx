@@ -17,9 +17,10 @@ import { CoursesPage } from "./components/CoursesPage";
 import { MyCoursesPage } from "./components/MyCoursesPage";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
+import CertificatesPage from "./components/CertificatesPage";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates';
 
 function AppContent() {
   const [appState, setAppState] = useState<AppState>('splash');
@@ -124,6 +125,13 @@ function AppContent() {
       case 'profile':
         // Temporarily disable profile until updated for new user system
         return <div className="p-4">Profile page being updated...</div>;
+      
+      case 'certificates':
+        if (isAuthenticated && user) {
+          return <CertificatesPage />;
+        } else {
+          return <AuthPage />;
+        }
       
       case 'quran':
         return (
