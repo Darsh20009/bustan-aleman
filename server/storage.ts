@@ -381,7 +381,6 @@ export class DatabaseStorage implements IStorage {
         currentLevel: student.currentLevel || 'beginner',
         notes: student.notes || '',
         zoomLink: student.zoomLink || '',
-        createdAt: new Date().toISOString(),
         isActive: student.isActive ?? true,
       });
       // Convert JSON student to Student type
@@ -401,6 +400,7 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
+        createdAt: new Date(),
         updatedAt: new Date(),
       };
       return convertedStudent;
@@ -429,6 +429,7 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
+        createdAt: new Date(),
         updatedAt: new Date(),
       }));
     }
@@ -456,6 +457,7 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
+        createdAt: new Date(),
         updatedAt: new Date(),
       };
     }
@@ -484,6 +486,7 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
+        createdAt: new Date(),
         updatedAt: new Date(),
       };
     }

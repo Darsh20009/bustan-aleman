@@ -12,8 +12,22 @@ export class BustanTelegramBot {
       throw new Error('TELEGRAM_BOT_TOKEN is required');
     }
     
-    this.bot = new TelegramBot(token, { polling: true });
+    // إعداد البوت مع الخيارات الآمنة
+    this.bot = new TelegramBot(token, { 
+      polling: {
+        interval: 1000,
+        autoStart: true,
+        params: {
+          timeout: 10
+        }
+      },
+      request: {
+        timeout: 60000
+      }
+    });
+    
     this.setupHandlers();
+    this.setupErrorHandling();
     log('🤖 بوت تليجرام بستان الإيمان تم تشغيله بنجاح', 'telegram');
   }
 
@@ -318,6 +332,25 @@ ${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPL_O
         this.userSessions.delete(chatId);
       }
     }
+  }
+
+  // إعداد معالجة الأخطاء
+  private setupErrorHandling() {
+    this.bot.on('error', (error) => {
+      console.error('❌ خطأ في بوت التليجرام:', error);
+      log(`❌ خطأ في البوت: ${error.message}`, 'telegram');
+    });
+
+    this.bot.on('polling_error', (error) => {
+      console.error('❌ خطأ في polling:', error);
+      log(`❌ خطأ في Polling: ${error.message}`, 'telegram');
+    });
+
+    // معالجة الأخطاء غير المتوقعة
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('❌ خطأ غير معالج في Promise:', reason);
+      log(`❌ خطأ غير معالج: ${reason}`, 'telegram');
+    });
   }
 }
 

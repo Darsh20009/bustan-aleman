@@ -197,6 +197,15 @@ class JSONStorage {
     return true;
   }
 
+  // Generic read/write methods for external use
+  async readJSON(filename: string): Promise<any[]> {
+    return this.readFile(filename);
+  }
+
+  async writeJSON(filename: string, data: any[]): Promise<void> {
+    return this.writeFile(filename, data);
+  }
+
   // Initialize with default students (Yousef and Mohamed)
   async initializeDefaultStudents(): Promise<void> {
     const students = await this.readFile<Student>('students.json');

@@ -58,7 +58,8 @@ export function TelegramLoginForm({ onSuccess, onCancel }: TelegramLoginFormProp
   };
 
   const openTelegramBot = () => {
-    window.open('https://t.me/bustan_login_bot', '_blank');
+    // الرابط الصحيح للبوت الذي يعمل في النظام
+    window.open('https://t.me/BustanAlImanEducationBot', '_blank');
   };
 
   return (
