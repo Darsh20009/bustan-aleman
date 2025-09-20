@@ -26,7 +26,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-amber-900 via-orange-800 to-amber-950 flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-islamic-green via-emerald-700 to-warm-gold flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
         
@@ -49,8 +49,8 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
               ease: "easeInOut",
             }}
           >
-            <div className="w-full h-full border-2 border-amber-300 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-amber-300 rounded-full opacity-50"></div>
+            <div className="w-full h-full border-2 border-warm-gold rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-warm-gold rounded-full opacity-50"></div>
             </div>
           </motion.div>
         ))}
@@ -73,7 +73,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                   className="w-40 h-40 mx-auto mb-4"
                 >
-                  <svg viewBox="0 0 240 200" className="w-full h-full text-amber-300">
+                  <svg viewBox="0 0 240 200" className="w-full h-full text-warm-gold">
                     <defs>
                       <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#f59e0b" />

@@ -1,396 +1,348 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { BookOpen, UserPlus, Phone, GraduationCap } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BookOpen, UserPlus, Phone, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 
 const registrationSchema = z.object({
+  firstName: z.string().min(2, "الاسم الأول مطلوب"),
+  lastName: z.string().min(2, "اسم العائلة مطلوب"),
+  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+  password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
+  confirmPassword: z.string(),
   phoneNumber: z.string().min(10, "رقم الهاتف يجب أن يكون على الأقل 10 أرقام"),
-  age: z.number().min(1, "العمر مطلوب"),
-  educationLevel: z.string().min(1, "المستوى التعليمي مطلوب"),
-  quranExperience: z.string().min(1, "خبرة القرآن مطلوبة"),
-  learningGoals: z.string().min(10, "أهداف التعلم يجب أن تكون على الأقل 10 أحرف"),
-  preferredTime: z.string().min(1, "الوقت المفضل مطلوب"),
-  whatsappNumber: z.string().min(10, "رقم الواتساب مطلوب"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "كلمة المرور غير متطابقة",
+  path: ["confirmPassword"],
 });
 
 type RegistrationForm = z.infer<typeof registrationSchema>;
 
 export default function Register() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [step, setStep] = useState(1);
+  const queryClient = useQueryClient();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, setLocation]);
 
   const form = useForm<RegistrationForm>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       phoneNumber: "",
-      age: 0,
-      educationLevel: "",
-      quranExperience: "",
-      learningGoals: "",
-      preferredTime: "",
-      whatsappNumber: "",
     },
   });
 
-  const updateProfileMutation = useMutation({
+  const registerMutation = useMutation({
     mutationFn: async (data: RegistrationForm) => {
-      return apiRequest("PATCH", "/api/user/profile", {
-        ...data,
-        registrationCompleted: true,
+      const { confirmPassword, ...submitData } = data;
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(submitData),
       });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'فشل في التسجيل');
+      }
+
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "تم التسجيل بنجاح",
-        description: "سيتم التواصل معك عبر الواتساب قريباً للتفعيل",
+        title: "تم إنشاء الحساب بنجاح",
+        description: data.message || "مرحباً بك في بستان الإيمان! يمكنك الآن تسجيل الدخول",
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       setLocation("/");
     },
     onError: (error: any) => {
       toast({
         title: "خطأ في التسجيل",
-        description: error.message || "حدث خطأ أثناء التسجيل",
+        description: error.message || "حدث خطأ أثناء إنشاء الحساب",
         variant: "destructive",
       });
     },
   });
 
   const onSubmit = (data: RegistrationForm) => {
-    updateProfileMutation.mutate(data);
+    registerMutation.mutate(data);
   };
 
-  if (!isAuthenticated) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-8 text-center">
-            <BookOpen className="text-6xl text-islamic-green mb-4 mx-auto" size={96} />
-            <h2 className="text-2xl font-bold font-arabic-serif text-islamic-green mb-4">
-              يجب تسجيل الدخول أولاً
-            </h2>
-            <p className="text-gray-600 mb-6">
-              للتسجيل في المنصة، يجب تسجيل الدخول أولاً
-            </p>
-            <Button 
-              onClick={() => window.location.href = "/api/login"}
-              className="btn-islamic-primary w-full mb-4"
-              data-testid="button-login-first"
-            >
-              تسجيل الدخول
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => setLocation("/")}
-              data-testid="button-back-home"
-            >
-              العودة للرئيسية
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري التحقق...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-warm-white p-4">
-      <div className="container mx-auto max-w-2xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-islamic-green rounded-full flex items-center justify-center mx-auto mb-4">
-            <UserPlus className="text-white" size={32} />
-          </div>
-          <h1 className="text-3xl font-bold font-arabic-serif text-islamic-green mb-2">
-            استكمال التسجيل
-          </h1>
-          <p className="text-gray-600">
-            أهلاً {(user as any)?.firstName}، يرجى استكمال بياناتك للتسجيل في المنصة
-          </p>
-        </div>
-
-        {/* Progress Indicator */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-reverse space-x-4">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 1 ? 'bg-islamic-green text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              1
-            </div>
-            <div className={`w-16 h-1 ${step >= 2 ? 'bg-islamic-green' : 'bg-gray-200'}`}></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 2 ? 'bg-islamic-green text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              2
-            </div>
-            <div className={`w-16 h-1 ${step >= 3 ? 'bg-islamic-green' : 'bg-gray-200'}`}></div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              step >= 3 ? 'bg-islamic-green text-white' : 'bg-gray-200 text-gray-600'
-            }`}>
-              3
-            </div>
-          </div>
-          <div className="flex justify-between text-sm text-gray-600 mt-2">
-            <span>البيانات الأساسية</span>
-            <span>الخبرة التعليمية</span>
-            <span>التفضيلات</span>
-          </div>
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card className="islamic-card">
-              <CardContent className="p-6">
-                {step === 1 && (
-                  <div className="space-y-4">
-                    <div className="text-center mb-6">
-                      <Phone className="text-3xl text-islamic-green mb-2 mx-auto" size={48} />
-                      <h2 className="text-xl font-bold font-arabic-serif">البيانات الأساسية</h2>
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name="phoneNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>رقم الهاتف *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="05xxxxxxxx" 
-                              {...field} 
-                              data-testid="input-phone-number"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="age"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>العمر *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="25" 
-                              {...field} 
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                              data-testid="input-age"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="whatsappNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>رقم الواتساب *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="0532441566" 
-                              {...field} 
-                              data-testid="input-whatsapp"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                          <p className="text-sm text-gray-600">
-                            سيتم التواصل معك عبر هذا الرقم للتفعيل
-                          </p>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="space-y-4">
-                    <div className="text-center mb-6">
-                      <GraduationCap className="text-3xl text-warm-gold mb-2 mx-auto" size={48} />
-                      <h2 className="text-xl font-bold font-arabic-serif">الخبرة التعليمية</h2>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="educationLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>المستوى التعليمي *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-education-level">
-                                <SelectValue placeholder="اختر المستوى التعليمي" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="elementary">ابتدائي</SelectItem>
-                              <SelectItem value="middle">متوسط</SelectItem>
-                              <SelectItem value="high">ثانوي</SelectItem>
-                              <SelectItem value="bachelor">جامعي</SelectItem>
-                              <SelectItem value="master">ماجستير</SelectItem>
-                              <SelectItem value="phd">دكتوراه</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="quranExperience"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>خبرة حفظ القرآن *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-quran-experience">
-                                <SelectValue placeholder="اختر مستوى خبرتك" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="none">لا توجد خبرة</SelectItem>
-                              <SelectItem value="beginner">مبتدئ (أقل من 5 سور)</SelectItem>
-                              <SelectItem value="intermediate">متوسط (5-15 سورة)</SelectItem>
-                              <SelectItem value="advanced">متقدم (أكثر من 15 سورة)</SelectItem>
-                              <SelectItem value="hafez">حافظ كامل</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="learningGoals"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>أهداف التعلم *</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="اذكر أهدافك من التسجيل في المنصة وما تود تحقيقه..."
-                              className="min-h-[120px]"
-                              {...field} 
-                              data-testid="textarea-learning-goals"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="space-y-4">
-                    <div className="text-center mb-6">
-                      <BookOpen className="text-3xl text-earth-brown mb-2 mx-auto" size={48} />
-                      <h2 className="text-xl font-bold font-arabic-serif">التفضيلات</h2>
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="preferredTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>الوقت المفضل للدراسة *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-preferred-time">
-                                <SelectValue placeholder="اختر الوقت المناسب" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="morning">الصباح (6-12 ظهراً)</SelectItem>
-                              <SelectItem value="afternoon">بعد الظهر (12-6 مساءً)</SelectItem>
-                              <SelectItem value="evening">المساء (6-10 ليلاً)</SelectItem>
-                              <SelectItem value="night">الليل (10-12 منتصف الليل)</SelectItem>
-                              <SelectItem value="flexible">مرن - حسب الظروف</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="bg-light-beige p-4 rounded-lg">
-                      <h3 className="font-bold mb-2">معلومات التفعيل</h3>
-                      <p className="text-sm text-gray-700 arabic-text">
-                        بعد إكمال التسجيل، سيتم التواصل معك عبر الواتساب على الرقم 
-                        <span className="font-bold text-islamic-green"> 0532441566 </span>
-                        لتفعيل حسابك والبدء في الدورات.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-between">
-              {step > 1 && (
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(step - 1)}
-                  data-testid="button-previous-step"
-                >
-                  السابق
-                </Button>
-              )}
-              
-              <div className="mr-auto">
-                {step < 3 ? (
-                  <Button 
-                    type="button"
-                    onClick={() => setStep(step + 1)}
-                    className="btn-islamic-primary"
-                    data-testid="button-next-step"
-                  >
-                    التالي
-                  </Button>
-                ) : (
-                  <Button 
-                    type="submit" 
-                    className="btn-islamic-primary"
-                    disabled={updateProfileMutation.isPending}
-                    data-testid="button-complete-registration"
-                  >
-                    {updateProfileMutation.isPending ? "جاري الإرسال..." : "إكمال التسجيل"}
-                  </Button>
-                )}
+    <div className="min-h-screen bg-warm-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Card className="islamic-card">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-islamic-green rounded-full flex items-center justify-center">
+                <UserPlus className="text-white" size={32} />
               </div>
             </div>
-          </form>
-        </Form>
+            <CardTitle className="text-2xl font-bold font-arabic-serif text-islamic-green">
+              إنشاء حساب جديد
+            </CardTitle>
+            <p className="text-gray-600 mt-2">
+              انضم إلى بستان الإيمان لتعلم القرآن الكريم والعلوم الشرعية
+            </p>
+          </CardHeader>
+          
+          <CardContent className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>الاسم الأول</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User size={16} className="absolute right-3 top-3 text-gray-400" />
+                            <Input 
+                              placeholder="محمد"
+                              className="pr-10"
+                              {...field} 
+                              data-testid="input-first-name"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <div className="text-center mt-6">
-          <Button 
-            variant="ghost"
-            onClick={() => setLocation("/")}
-            data-testid="button-cancel-registration"
-          >
-            إلغاء والعودة للرئيسية
-          </Button>
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>اسم العائلة</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <User size={16} className="absolute right-3 top-3 text-gray-400" />
+                            <Input 
+                              placeholder="أحمد"
+                              className="pr-10"
+                              {...field} 
+                              data-testid="input-last-name"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>البريد الإلكتروني</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Input 
+                            type="email"
+                            placeholder="example@email.com"
+                            className="pr-10"
+                            {...field} 
+                            data-testid="input-email"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>رقم الهاتف</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Phone size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Input 
+                            placeholder="05xxxxxxxx"
+                            className="pr-10"
+                            {...field} 
+                            data-testid="input-phone"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>كلمة المرور</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Input 
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            className="pr-10 pl-10"
+                            {...field} 
+                            data-testid="input-password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                            data-testid="button-toggle-password"
+                          >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>تأكيد كلمة المرور</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Input 
+                            type={showConfirmPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            className="pr-10 pl-10"
+                            {...field} 
+                            data-testid="input-confirm-password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            data-testid="button-toggle-confirm-password"
+                          >
+                            {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit"
+                  className="btn-islamic-primary w-full py-3 text-lg font-semibold"
+                  disabled={registerMutation.isPending}
+                  data-testid="button-register"
+                >
+                  <UserPlus className="ml-2" size={20} />
+                  {registerMutation.isPending ? "جاري إنشاء الحساب..." : "إنشاء الحساب"}
+                </Button>
+              </form>
+            </Form>
+            
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                لديك حساب بالفعل؟{" "}
+                <button 
+                  onClick={() => setLocation("/login")}
+                  className="text-islamic-green hover:underline font-semibold"
+                  data-testid="link-login"
+                >
+                  سجل دخولك من هنا
+                </button>
+              </p>
+            </div>
+
+            <div className="border-t pt-6">
+              <div className="text-center">
+                <button 
+                  onClick={() => setLocation("/")}
+                  className="text-gray-500 hover:text-islamic-green transition-colors"
+                  data-testid="link-back-home"
+                >
+                  العودة للصفحة الرئيسية
+                </button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Features Section */}
+        <div className="mt-8 grid grid-cols-1 gap-4">
+          <Card className="islamic-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-reverse space-x-3">
+                <BookOpen className="text-islamic-green" size={24} />
+                <div>
+                  <h3 className="font-semibold">حفظ القرآن الكريم</h3>
+                  <p className="text-sm text-gray-600">ابدأ رحلتك في حفظ القرآن</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="islamic-card">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-reverse space-x-3">
+                <UserPlus className="text-warm-gold" size={24} />
+                <div>
+                  <h3 className="font-semibold">الدورات التعليمية</h3>
+                  <p className="text-sm text-gray-600">انضم للدورات الإسلامية المتميزة</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

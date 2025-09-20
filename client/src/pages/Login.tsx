@@ -1,19 +1,81 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
-import { BookOpen, LogIn } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { BookOpen, LogIn, Eye, EyeOff } from "lucide-react";
+import { z } from "zod";
+
+const loginSchema = z.object({
+  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+  password: z.string().min(1, "كلمة المرور مطلوبة"),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       setLocation("/");
     }
   }, [isAuthenticated, setLocation]);
+
+  const form = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginForm) => {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'فشل في تسجيل الدخول');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "نجح تسجيل الدخول",
+        description: data.message || "مرحباً بك في بستان الإيمان",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setLocation("/");
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ في تسجيل الدخول",
+        description: error.message || "تحقق من بياناتك وحاول مرة أخرى",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: LoginForm) => {
+    loginMutation.mutate(data);
+  };
 
   if (isLoading) {
     return (
@@ -45,20 +107,75 @@ export default function Login() {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            <div className="text-center">
+            <div className="text-center mb-6">
               <p className="text-gray-700 mb-6 arabic-text">
                 سجل دخولك للوصول إلى دوراتك وتتبع تقدمك في حفظ القرآن الكريم
               </p>
-              
-              <Button 
-                onClick={() => window.location.href = "/api/login"}
-                className="btn-islamic-primary w-full py-3 text-lg font-semibold"
-                data-testid="button-login"
-              >
-                <LogIn className="ml-2" size={20} />
-                تسجيل الدخول
-              </Button>
             </div>
+
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>البريد الإلكتروني</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="email"
+                          placeholder="example@email.com"
+                          {...field} 
+                          data-testid="input-email"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>كلمة المرور</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            {...field} 
+                            data-testid="input-password"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                            data-testid="button-toggle-password"
+                          >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button 
+                  type="submit"
+                  className="btn-islamic-primary w-full py-3 text-lg font-semibold"
+                  disabled={loginMutation.isPending}
+                  data-testid="button-login"
+                >
+                  <LogIn className="ml-2" size={20} />
+                  {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+                </Button>
+              </form>
+            </Form>
             
             <div className="text-center">
               <p className="text-sm text-gray-600">
