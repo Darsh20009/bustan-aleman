@@ -86,6 +86,26 @@ export interface IStorage {
   createStudentSession(session: InsertStudentSession): Promise<StudentSession>;
   getStudentSessions(studentId: string): Promise<StudentSession[]>;
   
+  // Student progress operations
+  getQuranProgress(studentId: string): Promise<QuranProgress | undefined>;
+  createQuranProgress(progress: InsertQuranProgress): Promise<QuranProgress>;
+  updateQuranProgress(studentId: string, updates: Partial<QuranProgress>): Promise<QuranProgress>;
+  
+  // Student note operations
+  createStudentNote(note: InsertStudentNote): Promise<StudentNote>;
+  getStudentNotes(studentId: string): Promise<StudentNote[]>;
+  
+  // Certificate operations
+  createCertificate(certificate: InsertCertificate): Promise<Certificate>;
+  getCertificate(id: string): Promise<Certificate | undefined>;
+  getCertificateByToken(token: string): Promise<Certificate | undefined>;
+  getStudentCertificates(studentId: string): Promise<Certificate[]>;
+  getAllCertificates(): Promise<Certificate[]>;
+  
+  // Additional student operations
+  updateStudent(id: string, updates: Partial<Student>): Promise<Student>;
+  updateStudentMemorization(userId: string, memorization: Array<{surah: number, ayat: number[]}>): Promise<void>;
+  
   // Student error operations
   createStudentError(error: InsertStudentError): Promise<StudentError>;
   getStudentErrors(studentId: string): Promise<StudentError[]>;
@@ -600,6 +620,131 @@ export class DatabaseStorage implements IStorage {
       .from(classSchedules)
       .where(eq(classSchedules.studentId, studentId))
       .orderBy(classSchedules.dayOfWeek);
+  }
+
+  // Student progress operations
+  async getQuranProgress(studentId: string): Promise<QuranProgress | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [progress] = await db!.select().from(quranProgress).where(eq(quranProgress.studentId, studentId));
+    return progress;
+  }
+
+  async createQuranProgress(progress: InsertQuranProgress): Promise<QuranProgress> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newProgress] = await db!.insert(quranProgress).values(progress).returning();
+    return newProgress;
+  }
+
+  async updateQuranProgress(studentId: string, updates: Partial<QuranProgress>): Promise<QuranProgress> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updatedProgress] = await db!.update(quranProgress).set(updates).where(eq(quranProgress.studentId, studentId)).returning();
+    return updatedProgress;
+  }
+
+  // Student note operations
+  async createStudentNote(note: InsertStudentNote): Promise<StudentNote> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newNote] = await db!.insert(studentNotes).values(note).returning();
+    return newNote;
+  }
+
+  async getStudentNotes(studentId: string): Promise<StudentNote[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(studentNotes).where(eq(studentNotes.studentId, studentId)).orderBy(desc(studentNotes.createdAt));
+  }
+
+  // Certificate operations
+  async createCertificate(certificate: InsertCertificate): Promise<Certificate> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newCertificate] = await db!.insert(certificates).values(certificate).returning();
+    return newCertificate;
+  }
+
+  async getCertificate(id: string): Promise<Certificate | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [certificate] = await db!.select().from(certificates).where(eq(certificates.id, id));
+    return certificate;
+  }
+
+  async getCertificateByToken(token: string): Promise<Certificate | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [certificate] = await db!.select().from(certificates).where(eq(certificates.verificationToken, token));
+    return certificate;
+  }
+
+  async getStudentCertificates(studentId: string): Promise<Certificate[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(certificates).where(eq(certificates.studentId, studentId)).orderBy(desc(certificates.issuedAt));
+  }
+
+  async getAllCertificates(): Promise<Certificate[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(certificates).orderBy(desc(certificates.issuedAt));
+  }
+
+  // Additional student operations
+  async updateStudent(id: string, updates: Partial<Student>): Promise<Student> {
+    if (!this.isDbAvailable()) {
+      // Fallback to JSON storage for development
+      const studentsData = await jsonStorage.readJSON('data/students.json');
+      const studentIndex = studentsData.findIndex((s: any) => s.id === id);
+      
+      if (studentIndex === -1) {
+        throw new Error("Student not found");
+      }
+      
+      studentsData[studentIndex] = { ...studentsData[studentIndex], ...updates };
+      await jsonStorage.writeJSON('data/students.json', studentsData);
+      return studentsData[studentIndex];
+    }
+    
+    const [updatedStudent] = await db!.update(students).set(updates).where(eq(students.id, id)).returning();
+    return updatedStudent;
+  }
+
+  async updateStudentMemorization(userId: string, memorization: Array<{surah: number, ayat: number[]}>): Promise<void> {
+    if (!this.isDbAvailable()) {
+      // Fallback to JSON storage for development
+      const studentsData = await jsonStorage.readJSON('data/students.json');
+      const studentIndex = studentsData.findIndex((s: any) => s.userId === userId);
+      
+      if (studentIndex !== -1) {
+        studentsData[studentIndex].memorizedSurahs = JSON.stringify(memorization);
+        await jsonStorage.writeJSON('data/students.json', studentsData);
+      }
+      return;
+    }
+    
+    // Update student record with memorization data
+    const student = await this.getAllStudents().then(students => 
+      students.find(s => s.userId === userId)
+    );
+    
+    if (student) {
+      await db!.update(students)
+        .set({ memorizedSurahs: JSON.stringify(memorization) })
+        .where(eq(students.id, student.id));
+    }
   }
 }
 

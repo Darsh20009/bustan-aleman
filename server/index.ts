@@ -3,6 +3,7 @@ import session from 'express-session';
 import { registerRoutes } from "./routes";
 import { setupJSONRoutes } from "./jsonRoutes";
 import { setupAuthRoutes } from "./authRoutes";
+import { setupAdditionalRoutes } from "./additionalRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 
@@ -58,6 +59,9 @@ app.use((req, res, next) => {
   
   // Setup authentication routes (universal auth system)
   setupAuthRoutes(app);
+  
+  // Setup additional routes (student progress, supervisor management, certificates)
+  setupAdditionalRoutes(app);
   
   // Setup JSON routes (legacy student system)
   setupJSONRoutes(app);
