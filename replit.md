@@ -2,6 +2,13 @@
 
 This is an Islamic education platform called "Bustan Al-Iman" (بستان الإيمان) built as a full-stack web application. The platform provides Quran memorization courses, Islamic jurisprudence (fiqh) education, and Ramadan educational programs. It features user authentication, course enrollment, instructor profiles, and progress tracking for Islamic studies.
 
+## Project Status
+- **Import Date**: September 20, 2025
+- **Status**: Successfully imported from GitHub and configured for Replit environment
+- **Development Server**: Running on port 5000 with hot reload
+- **Deployment**: Configured for autoscale deployment
+- **Database**: Using in-memory storage for development, PostgreSQL ready for production
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
