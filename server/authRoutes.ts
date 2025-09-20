@@ -10,7 +10,8 @@ const userRegistrationSchema = z.object({
   email: z.string().email("بريد إلكتروني صالح مطلوب"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   phoneNumber: z.string().min(10, "رقم الهاتف مطلوب"),
-  role: z.enum(["student", "supervisor", "admin"]).default("student"),
+  // Role is always 'student' for public registration - supervisors/admins must be created separately
+  role: z.literal("student").default("student"),
   // Optional fields for students
   age: z.number().min(5).max(100).optional(),
   educationLevel: z.string().optional(),
@@ -44,12 +45,12 @@ export function setupAuthRoutes(app: Express) {
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
       
-      // Create new user with hashed password
+      // Create new user with hashed password (always as student for security)
       const userData = {
         email: registrationData.email,
         firstName: registrationData.firstName,
         lastName: registrationData.lastName,
-        role: registrationData.role,
+        role: "student" as const, // Force role to student for public registration
         passwordHash: hashedPassword,
         phoneNumber: registrationData.phoneNumber,
         age: registrationData.age,
@@ -64,25 +65,23 @@ export function setupAuthRoutes(app: Express) {
 
       const user = await storage.upsertUser(userData);
 
-      // For students, also create a student record with hashed password
-      if (registrationData.role === 'student') {
-        await storage.createStudent({
-          userId: user.id,
-          studentName: `${registrationData.firstName} ${registrationData.lastName}`,
-          passwordHash: hashedPassword,
-          dateOfBirth: null,
-          grade: null,
-          monthlySessionsCount: 0,
-          monthlyPrice: "0",
-          isPaid: false,
-          isActive: true,
-          memorizedSurahs: "[]",
-          currentLevel: "beginner",
-          notes: "طالب جديد",
-          zoomLink: null,
-          whatsappContact: "+966532441566",
-        });
-      }
+      // Create student record (all public registrations are students)
+      await storage.createStudent({
+        userId: user.id,
+        studentName: `${registrationData.firstName} ${registrationData.lastName}`,
+        passwordHash: hashedPassword,
+        dateOfBirth: null,
+        grade: null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: true,
+        memorizedSurahs: "[]",
+        currentLevel: "beginner",
+        notes: "طالب جديد",
+        zoomLink: null,
+        whatsappContact: registrationData.whatsappNumber || "+966532441566", // Use provided WhatsApp or fallback
+      });
 
       res.status(201).json({ 
         message: "تم التسجيل بنجاح!",
@@ -145,7 +144,7 @@ export function setupAuthRoutes(app: Express) {
         req.session = {} as any;
       }
       req.session.userId = user.id;
-      req.session.userRole = user.role;
+      req.session.userRole = user.role as "student" | "supervisor" | "admin";
       
       // Get additional data based on role
       let additionalData = {};

@@ -53,116 +53,133 @@ export function AuthForm({ mode, onSubmit, onToggleMode, loading, error }: AuthF
   const isLogin = mode === 'login';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 px-4">
-      <Card className="w-full max-w-2xl">
+    <div className="min-h-screen flex items-center justify-center gradient-islamic px-4 relative">
+      <div className="islamic-pattern-overlay"></div>
+      <Card className="w-full max-w-2xl bg-marble-white shadow-2xl border-0 relative z-10 ornamental-border">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-green-800">
+          <div className="mx-auto w-20 h-20 bg-royal-gold rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <svg className="w-10 h-10 text-midnight-navy" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+          </div>
+          <CardTitle className="text-3xl font-bold text-islamic-emerald mb-2 font-arabic-serif">
             {isLogin ? 'تسجيل الدخول' : 'تسجيل جديد'}
           </CardTitle>
-          <p className="text-gray-600 mt-2">
+          <p className="text-midnight-navy mt-2 font-arabic-sans text-lg">
             {isLogin 
               ? 'مرحباً بك في بستان الإيمان' 
-              : 'انضم إلى بستان الإيمان لتعلم القرآن الكريم'}
+              : 'انضم إلى بستان الإيمان لتعلم القرآن الكريم والعلوم الشرعية'}
           </p>
+          <div className="islamic-divider">
+            <span className="text-royal-gold text-2xl">✦</span>
+          </div>
         </CardHeader>
         
         <CardContent>
           {error && (
-            <Alert className="mb-4 border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700">
-                {error}
+            <Alert className="mb-6 border-red-300 bg-red-50 shadow-md">
+              <AlertDescription className="text-red-800 font-arabic-sans text-right" dir="rtl">
+                ❌ {error}
               </AlertDescription>
             </Alert>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName">الاسم الأول *</Label>
+                    <Label htmlFor="firstName" className="text-islamic-emerald font-medium font-arabic-sans">الاسم الأول *</Label>
                     <Input
                       id="firstName"
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => handleChange('firstName', e.target.value)}
                       required={!isLogin}
-                      className="text-right"
+                      className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
                       dir="rtl"
+                      data-testid="input-firstName"
+                      placeholder="أدخل اسمك الأول"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="lastName">اسم العائلة *</Label>
+                    <Label htmlFor="lastName" className="text-islamic-emerald font-medium font-arabic-sans">اسم العائلة *</Label>
                     <Input
                       id="lastName"
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => handleChange('lastName', e.target.value)}
                       required={!isLogin}
-                      className="text-right"
+                      className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
                       dir="rtl"
+                      data-testid="input-lastName"
+                      placeholder="أدخل اسم العائلة"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="role">نوع الحساب *</Label>
-                  <Select value={formData.role} onValueChange={(value) => handleChange('role', value)}>
-                    <SelectTrigger className="text-right" dir="rtl">
-                      <SelectValue placeholder="اختر نوع الحساب" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="student">طالب</SelectItem>
-                      <SelectItem value="supervisor">مشرف</SelectItem>
-                      <SelectItem value="admin">مدير</SelectItem>
-                    </SelectContent>
-                  </Select>
+                {/* Role selection removed for security - all public registrations are students */}
+                <div className="bg-desert-sand/30 border border-royal-gold/20 rounded-lg p-4 text-center">
+                  <p className="text-islamic-emerald font-arabic-sans font-medium">
+                    🎓 سيتم تسجيلك كطالب
+                  </p>
+                  <p className="text-sm text-copper-bronze mt-1 font-arabic-sans">
+                    للحصول على صلاحيات مشرف أو مدير، يرجى التواصل مع الإدارة
+                  </p>
                 </div>
               </>
             )}
 
             <div>
-              <Label htmlFor="email">البريد الإلكتروني *</Label>
+              <Label htmlFor="email" className="text-islamic-emerald font-medium font-arabic-sans">البريد الإلكتروني *</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 required
-                className="text-right"
+                className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
                 dir="rtl"
+                data-testid="input-email"
                 placeholder="example@email.com"
               />
             </div>
 
             <div>
-              <Label htmlFor="password">كلمة المرور *</Label>
+              <Label htmlFor="password" className="text-islamic-emerald font-medium font-arabic-sans">كلمة المرور *</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => handleChange('password', e.target.value)}
                 required
-                className="text-right"
+                className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
                 dir="rtl"
+                data-testid="input-password"
                 minLength={isLogin ? 1 : 8}
-                placeholder={isLogin ? "" : "8 أحرف على الأقل"}
+                placeholder={isLogin ? "أدخل كلمة المرور" : "8 أحرف على الأقل"}
               />
+              {!isLogin && (
+                <p className="text-sm text-copper-bronze mt-1 text-right font-arabic-sans">
+                  يجب أن تحتوي على 8 أحرف على الأقل
+                </p>
+              )}
             </div>
 
             {!isLogin && (
               <>
                 <div>
-                  <Label htmlFor="phoneNumber">رقم الهاتف *</Label>
+                  <Label htmlFor="phoneNumber" className="text-islamic-emerald font-medium font-arabic-sans">رقم الهاتف *</Label>
                   <Input
                     id="phoneNumber"
                     type="tel"
                     value={formData.phoneNumber}
                     onChange={(e) => handleChange('phoneNumber', e.target.value)}
                     required={!isLogin}
-                    className="text-right"
+                    className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
                     dir="rtl"
+                    data-testid="input-phoneNumber"
                     placeholder="+966xxxxxxxxx"
                   />
                 </div>
@@ -256,26 +273,44 @@ export function AuthForm({ mode, onSubmit, onToggleMode, loading, error }: AuthF
 
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              className="w-full btn-islamic-gradient text-white py-4 text-lg font-bold font-arabic-sans shadow-xl hover:shadow-2xl transition-all duration-300"
               disabled={loading}
+              data-testid={isLogin ? "button-login" : "button-register"}
             >
-              {loading 
-                ? 'جاري المعالجة...' 
-                : isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'
-              }
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span className="islamic-pulse">{isLogin ? 'جاري تسجيل الدخول...' : 'جاري التسجيل...'}</span>
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-2xl">{isLogin ? '🔐' : '✨'}</span>
+                  <span>{isLogin ? 'تسجيل الدخول' : 'إنشاء حساب جديد'}</span>
+                </span>
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              {isLogin ? 'ليس لديك حساب؟' : 'لديك حساب بالفعل؟'}
-              <button
-                onClick={onToggleMode}
-                className="mr-2 text-green-600 hover:text-green-700 font-medium"
-              >
-                {isLogin ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}
-              </button>
-            </p>
+          <div className="islamic-divider">
+            <span className="text-royal-gold text-xl">✧</span>
+          </div>
+          
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={onToggleMode}
+              className="text-islamic-emerald hover:text-islamic-teal font-medium transition-all duration-300 font-arabic-sans text-lg hover:scale-105 transform"
+              data-testid={isLogin ? "button-switch-to-register" : "button-switch-to-login"}
+            >
+              <span className="ml-2">{isLogin ? '🌱' : '🎓'}</span>
+              {isLogin 
+                ? 'لا تملك حساباً؟ سجل الآن' 
+                : 'لديك حساب بالفعل؟ سجل الدخول'}
+            </button>
+          </div>
+          
+          <div className="text-center mt-6 text-sm text-copper-bronze font-arabic-sans">
+            🌿 بستان الإيمان • منصة تعليمية إسلامية شاملة 🌿
           </div>
         </CardContent>
       </Card>
