@@ -1,30 +1,59 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Play, Volume2, RotateCcw, CheckCircle, Search, Bookmark, Settings, Pause, SkipBack, SkipForward, Plus, Minus } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { motion } from "framer-motion";
+import { BookOpen, Play, Volume2, RotateCcw, CheckCircle, Search, Bookmark, Settings, Pause, SkipBack, SkipForward, Plus, Minus, FileText, Save, Star, Calendar, Clock } from "lucide-react";
 import { useState, useRef } from "react";
+import type { QuranNote, QuranProgress } from "@shared/schema";
 
 export default function Quran() {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [currentSurah, setCurrentSurah] = useState(1);
-  const [memorizedVerses, setMemorizedVerses] = useState(285); // Sample data
   const [currentAyah, setCurrentAyah] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReader, setSelectedReader] = useState("maher");
   const [isPlaying, setIsPlaying] = useState(false);
   const [fontSize, setFontSize] = useState(24);
-  const [bookmarks, setBookmarks] = useState<{surah: number, ayah: number}[]>([
-    { surah: 2, ayah: 255 }, // آية الكرسي
-    { surah: 36, ayah: 1 },  // سورة يس
-  ]);
   const [showTafseer, setShowTafseer] = useState(false);
+  const [noteText, setNoteText] = useState("");
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Fetch user's notes
+  const { data: allNotes = [], isLoading: notesLoading } = useQuery<QuranNote[]>({
+    queryKey: ["/api/student/notes"],
+    enabled: isAuthenticated
+  });
+
+  // Find current note for this ayah
+  const currentNote = allNotes.find(note => note.surahNumber === currentSurah && note.ayahNumber === currentAyah);
+
+  // Mock progress data (since there's no GET endpoint for progress)
+  const userProgress = { lastSurah: currentSurah, lastAyah: currentAyah, bookmarkedVerses: '[]' };
+  const progressLoading = false;
+
+  // Bookmarks from progress data (with error handling)
+  let bookmarks = [];
+  try {
+    bookmarks = userProgress?.bookmarkedVerses ? JSON.parse(userProgress.bookmarkedVerses) : [];
+  } catch (e) {
+    console.warn('Error parsing bookmarked verses:', e);
+    bookmarks = [];
+  }
+  const memorizedVerses = allNotes.filter(note => note.tags?.includes('محفوظ')).length || 0;
 
   // Complete Quran Surahs list (showing key surahs)
   const surahs = [
@@ -63,7 +92,7 @@ export default function Quran() {
   ];
 
   const selectedSurah = surahs.find(s => s.number === currentSurah) || surahs[0];
-  const progress = memorizedVerses > 0 ? (memorizedVerses / 6236) * 100 : 0; // Total Quran verses
+  const progressPercentage = memorizedVerses > 0 ? (memorizedVerses / 6236) * 100 : 0; // Total Quran verses
   const memorizedSurahs = Math.floor(memorizedVerses / 100); // Better calculation
 
   const filteredSurahs = surahs.filter(surah => 
@@ -72,18 +101,79 @@ export default function Quran() {
     surah.number.toString().includes(searchTerm)
   );
 
+  // Update progress mutation (using student progress endpoint)
+  const updateProgressMutation = useMutation({
+    mutationFn: async (data: { lastSurah: number; lastAyah: number; bookmarkedVerses?: string }) => {
+      const response = await fetch(`/api/student/progress`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      return response.json();
+    },
+    onError: (error) => {
+      toast({ title: "خطأ في حفظ التقدم", description: "لم يتم حفظ التقدم، حاول مرة أخرى", variant: "destructive" });
+    }
+  });
+
+  // Save note mutation (using student notes endpoint)
+  const saveNoteMutation = useMutation({
+    mutationFn: async (data: { surahNumber: number; ayahNumber: number; note: string; tags?: string }) => {
+      const response = await fetch(`/api/student/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/student/notes"] });
+      setNoteText("");
+      setIsNoteDialogOpen(false);
+      toast({ title: "تم حفظ الملاحظة بنجاح", description: "تم إضافة ملاحظتك للآية" });
+    },
+    onError: (error) => {
+      toast({ title: "خطأ في حفظ الملاحظة", description: "لم يتم حفظ الملاحظة، حاول مرة أخرى", variant: "destructive" });
+    }
+  });
+
   const toggleBookmark = () => {
     const bookmark = { surah: currentSurah, ayah: currentAyah };
-    const exists = bookmarks.some(b => b.surah === bookmark.surah && b.ayah === bookmark.ayah);
+    const currentBookmarks = bookmarks || [];
+    const exists = currentBookmarks.some((b: any) => b.surah === bookmark.surah && b.ayah === bookmark.ayah);
     
+    let newBookmarks;
     if (exists) {
-      setBookmarks(bookmarks.filter(b => !(b.surah === bookmark.surah && b.ayah === bookmark.ayah)));
+      newBookmarks = currentBookmarks.filter((b: any) => !(b.surah === bookmark.surah && b.ayah === bookmark.ayah));
     } else {
-      setBookmarks([...bookmarks, bookmark]);
+      newBookmarks = [...currentBookmarks, bookmark];
     }
+    
+    updateProgressMutation.mutate({
+      lastSurah: currentSurah,
+      lastAyah: currentAyah,
+      bookmarkedVerses: JSON.stringify(newBookmarks)
+    });
   };
 
-  const isBookmarked = bookmarks.some(b => b.surah === currentSurah && b.ayah === currentAyah);
+  const saveNote = () => {
+    if (!noteText.trim()) return;
+    
+    saveNoteMutation.mutate({
+      surahNumber: currentSurah,
+      ayahNumber: currentAyah,
+      note: noteText.trim()
+    });
+  };
+
+  const updateProgress = () => {
+    updateProgressMutation.mutate({
+      lastSurah: currentSurah,
+      lastAyah: currentAyah
+    });
+  };
+
+  const isBookmarked = bookmarks?.some((b: any) => b.surah === currentSurah && b.ayah === currentAyah) || false;
 
   const playAudio = () => {
     if (audioRef.current) {
@@ -242,57 +332,73 @@ export default function Quran() {
           {/* Progress Overview */}
           <section className="py-12 bg-light-beige">
             <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <Card className="islamic-card text-center">
-                  <CardContent className="p-6">
-                    <BookOpen className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                    <h3 className="text-2xl font-bold text-islamic-green mb-2">
-                      {memorizedVerses}
-                    </h3>
-                    <p className="text-gray-600">الآيات المحفوظة</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="islamic-card text-center">
-                  <CardContent className="p-6">
-                    <CheckCircle className="text-3xl text-warm-gold mb-4 mx-auto" size={48} />
-                    <h3 className="text-2xl font-bold text-warm-gold mb-2">
-                      {memorizedSurahs}
-                    </h3>
-                    <p className="text-gray-600">السور المحفوظة</p>
-                  </CardContent>
-                </Card>
-                
-                <Card className="islamic-card text-center">
-                  <CardContent className="p-6">
-                    <Bookmark className="text-3xl text-earth-brown mb-4 mx-auto" size={48} />
-                    <h3 className="text-2xl font-bold text-earth-brown mb-2">
-                      {bookmarks.length}
-                    </h3>
-                    <p className="text-gray-600">العلامات المرجعية</p>
-                  </CardContent>
-                </Card>
+              {notesLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  {[...Array(4)].map((_, i) => (
+                    <Card key={i} className="islamic-card text-center">
+                      <CardContent className="p-6">
+                        <div className="islamic-spinner w-12 h-12 mx-auto mb-4"></div>
+                        <div className="h-8 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-100 rounded"></div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <Card className="islamic-card text-center">
+                      <CardContent className="p-6">
+                        <BookOpen className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
+                        <h3 className="text-2xl font-bold text-islamic-green mb-2">
+                          {memorizedVerses}
+                        </h3>
+                        <p className="text-gray-600">الآيات المحفوظة</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="islamic-card text-center">
+                      <CardContent className="p-6">
+                        <CheckCircle className="text-3xl text-warm-gold mb-4 mx-auto" size={48} />
+                        <h3 className="text-2xl font-bold text-warm-gold mb-2">
+                          {memorizedSurahs}
+                        </h3>
+                        <p className="text-gray-600">السور المحفوظة</p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="islamic-card text-center">
+                      <CardContent className="p-6">
+                        <Bookmark className="text-3xl text-earth-brown mb-4 mx-auto" size={48} />
+                        <h3 className="text-2xl font-bold text-earth-brown mb-2">
+                          {bookmarks.length}
+                        </h3>
+                        <p className="text-gray-600">العلامات المرجعية</p>
+                      </CardContent>
+                    </Card>
 
-                <Card className="islamic-card text-center">
-                  <CardContent className="p-6">
-                    <RotateCcw className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                    <h3 className="text-2xl font-bold text-islamic-green mb-2">
-                      {Math.round(progress)}%
-                    </h3>
-                    <p className="text-gray-600">التقدم الإجمالي</p>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-bold mb-4">تقدم الحفظ</h3>
-                  <Progress value={progress} className="mb-2" />
-                  <p className="text-sm text-gray-600">
-                    لقد حفظت {memorizedVerses} آية من أصل 6,236 آية في القرآن الكريم
-                  </p>
-                </CardContent>
-              </Card>
+                    <Card className="islamic-card text-center">
+                      <CardContent className="p-6">
+                        <RotateCcw className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
+                        <h3 className="text-2xl font-bold text-islamic-green mb-2">
+                          {Math.round(progressPercentage)}%
+                        </h3>
+                        <p className="text-gray-600">التقدم الإجمالي</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <Card>
+                    <CardContent className="p-6">
+                      <h3 className="text-xl font-bold mb-4">تقدم الحفظ</h3>
+                      <Progress value={progressPercentage} className="mb-2" />
+                      <p className="text-sm text-gray-600">
+                        لقد حفظت {memorizedVerses} آية من أصل 6,236 آية في القرآن الكريم
+                      </p>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
           </section>
 
@@ -330,17 +436,21 @@ export default function Quran() {
                     <div className="flex justify-center gap-2 mb-6 flex-wrap">
                       <Button 
                         variant="outline" 
-                        onClick={() => setCurrentAyah(Math.max(1, currentAyah - 1))}
+                        onClick={() => {
+                          setCurrentAyah(Math.max(1, currentAyah - 1));
+                          updateProgress();
+                        }}
                         disabled={currentAyah === 1}
+                        className="btn-islamic-secondary"
                         data-testid="button-previous-ayah"
                       >
                         <SkipBack size={16} />
+                        السابق
                       </Button>
                       
                       <Button 
-                        variant="outline" 
                         onClick={playAudio}
-                        className="flex items-center gap-2"
+                        className="btn-islamic-gradient flex items-center gap-2 px-6"
                         data-testid="button-play-audio"
                       >
                         {isPlaying ? <Pause size={16} /> : <Play size={16} />}
@@ -349,22 +459,78 @@ export default function Quran() {
                       
                       <Button 
                         variant="outline" 
-                        onClick={() => setCurrentAyah(Math.min(selectedSurah.verses, currentAyah + 1))}
+                        onClick={() => {
+                          setCurrentAyah(Math.min(selectedSurah.verses, currentAyah + 1));
+                          updateProgress();
+                        }}
                         disabled={currentAyah === selectedSurah.verses}
+                        className="btn-islamic-secondary"
                         data-testid="button-next-ayah"
                       >
+                        التالي
                         <SkipForward size={16} />
                       </Button>
                       
                       <Button 
                         variant="outline" 
                         onClick={toggleBookmark}
-                        className={`flex items-center gap-2 ${isBookmarked ? 'bg-warm-gold text-white' : ''}`}
+                        disabled={updateProgressMutation.isPending}
+                        className={`flex items-center gap-2 ${isBookmarked ? 'bg-royal-gold text-white border-royal-gold' : 'btn-islamic-secondary'}`}
                         data-testid="button-bookmark"
                       >
                         <Bookmark size={16} />
-                        {isBookmarked ? "محفوظة" : "حفظ"}
+                        {isBookmarked ? "★ محفوظة" : "🔖 حفظ"}
                       </Button>
+                      
+                      {/* Note Button */}
+                      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            className={`flex items-center gap-2 ${currentNote ? 'bg-islamic-emerald text-white border-islamic-emerald' : 'btn-islamic-secondary'}`}
+                            data-testid="button-add-note"
+                          >
+                            <FileText size={16} />
+                            {currentNote ? "📝 ملاحظة" : "➕ ملاحظة"}
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md" dir="rtl">
+                          <DialogHeader>
+                            <DialogTitle className="font-arabic-serif text-islamic-emerald">
+                              ملاحظة على الآية {currentAyah} من {selectedSurah.arabicName}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            {currentNote && (
+                              <div className="bg-islamic-emerald/10 p-4 rounded-lg">
+                                <h4 className="font-bold text-islamic-emerald mb-2">ملاحظة محفوظة:</h4>
+                                <p className="text-copper-bronze font-arabic-sans">{currentNote.note}</p>
+                              </div>
+                            )}
+                            <Textarea
+                              placeholder="اكتب ملاحظتك على هذه الآية..."
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              className="min-h-[100px] font-arabic-sans"
+                              data-testid="textarea-note"
+                            />
+                            <div className="flex gap-2">
+                              <Button 
+                                onClick={saveNote}
+                                disabled={!noteText.trim() || saveNoteMutation.isPending}
+                                className="btn-islamic-gradient flex-1"
+                                data-testid="button-save-note"
+                              >
+                                {saveNoteMutation.isPending ? (
+                                  <><div className="islamic-spinner w-4 h-4 mr-2"></div> جاري الحفظ...</>
+                                ) : (
+                                  <><Save size={16} className="mr-2" /> حفظ الملاحظة</>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
 
                     {/* Tafseer Section */}
@@ -377,22 +543,52 @@ export default function Quran() {
                       </div>
                     )}
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <Button 
-                        className="btn-islamic-primary py-4 text-lg"
-                        onClick={() => setMemorizedVerses(prev => prev + 1)}
+                        className="btn-islamic-gradient py-4 text-lg font-arabic-sans"
+                        onClick={() => {
+                          saveNoteMutation.mutate({
+                            surahNumber: currentSurah,
+                            ayahNumber: currentAyah,
+                            note: `حفظت هـه الآية في ${new Date().toLocaleDateString('ar-SA')}`,
+                            tags: JSON.stringify(['محفوظ'])
+                          });
+                        }}
+                        disabled={saveNoteMutation.isPending}
                         data-testid="button-mark-memorized"
                       >
                         <CheckCircle className="ml-2" size={20} />
-                        حفظت هذه الآية
+                        ✨ حفظت هذه الآية
                       </Button>
                       <Button 
                         variant="outline" 
-                        className="py-4 text-lg"
+                        className="btn-islamic-secondary py-4 text-lg font-arabic-sans"
+                        onClick={() => {
+                          // Go to a random memorized verse for review
+                          const memorizedNotes = allNotes.filter(note => note.tags?.includes('محفوظ'));
+                          if (memorizedNotes.length > 0) {
+                            const randomNote = memorizedNotes[Math.floor(Math.random() * memorizedNotes.length)];
+                            setCurrentSurah(randomNote.surahNumber);
+                            setCurrentAyah(randomNote.ayahNumber);
+                          }
+                        }}
                         data-testid="button-review-memorized"
                       >
                         <RotateCcw className="ml-2" size={20} />
-                        مراجعة المحفوظ
+                        🔄 مراجعة المحفوظ
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="btn-islamic-secondary py-4 text-lg font-arabic-sans"
+                        onClick={() => {
+                          setCurrentAyah(Math.min(selectedSurah.verses, currentAyah + 1));
+                          updateProgress();
+                        }}
+                        disabled={currentAyah === selectedSurah.verses}
+                        data-testid="button-continue-reading"
+                      >
+                        <BookOpen className="ml-2" size={20} />
+                        📚 متابعة القراءة
                       </Button>
                     </div>
                   </CardContent>
@@ -409,10 +605,11 @@ export default function Quran() {
               </h2>
               
               <Tabs defaultValue="all" className="max-w-6xl mx-auto">
-                <TabsList className="grid grid-cols-3 w-full mb-8" data-testid="surah-tabs">
+                <TabsList className="grid grid-cols-4 w-full mb-8" data-testid="surah-tabs">
                   <TabsTrigger value="all">جميع السور</TabsTrigger>
                   <TabsTrigger value="bookmarks">العلامات المرجعية</TabsTrigger>
                   <TabsTrigger value="memorized">المحفوظة</TabsTrigger>
+                  <TabsTrigger value="notes">الملاحظات</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="all">
@@ -451,32 +648,153 @@ export default function Quran() {
                 
                 <TabsContent value="bookmarks">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {bookmarks.map((bookmark, index) => {
+                    {bookmarks && bookmarks.length > 0 ? bookmarks.map((bookmark: any, index: number) => {
                       const surah = surahs.find(s => s.number === bookmark.surah);
                       return (
-                        <Card key={index} className="islamic-card cursor-pointer" onClick={() => {
-                          setCurrentSurah(bookmark.surah);
-                          setCurrentAyah(bookmark.ayah);
-                        }}>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h3 className="font-bold">{surah?.arabicName}</h3>
-                                <p className="text-gray-600">الآية {bookmark.ayah}</p>
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="islamic-card cursor-pointer hover:shadow-xl transition-all duration-300 border-royal-gold/20" 
+                                onClick={() => {
+                                  setCurrentSurah(bookmark.surah);
+                                  setCurrentAyah(bookmark.ayah);
+                                  updateProgress();
+                                }}
+                                data-testid={`bookmark-${index}`}>
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h3 className="font-bold text-islamic-emerald font-arabic-serif">{surah?.arabicName}</h3>
+                                  <p className="text-copper-bronze font-arabic-sans">الآية {bookmark.ayah}</p>
+                                  <p className="text-xs text-gray-500 mt-1">{surah?.revelation}</p>
+                                </div>
+                                <div className="text-center">
+                                  <Bookmark className="text-royal-gold mb-1" size={24} />
+                                  <p className="text-xs text-royal-gold font-bold">محفوظة</p>
+                                </div>
                               </div>
-                              <Bookmark className="text-warm-gold" size={20} />
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
                       );
-                    })}
+                    }) : (
+                      <div className="col-span-full text-center py-12">
+                        <Bookmark className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-600 mb-2 font-arabic-serif">لا توجد علامات مرجعية</h3>
+                        <p className="text-gray-500 font-arabic-sans">ابدأ بحفظ الآيات المهمة لك</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
                 
                 <TabsContent value="memorized">
-                  <div className="text-center py-8">
-                    <CheckCircle className="text-6xl text-islamic-green mb-4 mx-auto" size={96} />
-                    <p className="text-gray-600">سيتم عرض السور المحفوظة هنا</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {allNotes && allNotes.length > 0 ? allNotes.filter(note => note.tags?.includes('محفوظ')).map((note, index) => {
+                      const surah = surahs.find(s => s.number === note.surahNumber);
+                      return (
+                        <motion.div
+                          key={note.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="islamic-card cursor-pointer hover:shadow-xl transition-all duration-300 border-islamic-emerald/20" 
+                                onClick={() => {
+                                  setCurrentSurah(note.surahNumber);
+                                  setCurrentAyah(note.ayahNumber);
+                                  updateProgress();
+                                }}
+                                data-testid={`memorized-${index}`}>
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-islamic-emerald font-arabic-serif">{surah?.arabicName}</h3>
+                                  <p className="text-copper-bronze font-arabic-sans">الآية {note.ayahNumber}</p>
+                                  <p className="text-sm text-gray-600 mt-2 font-arabic-sans line-clamp-2">{note.note}</p>
+                                  <p className="text-xs text-gray-400 mt-2 flex items-center">
+                                    <Calendar className="w-3 h-3 mr-1" />
+                                    {note.createdAt ? new Date(note.createdAt).toLocaleDateString('ar-SA') : ''}
+                                  </p>
+                                </div>
+                                <div className="text-center">
+                                  <Star className="text-islamic-emerald mb-1" size={24} />
+                                  <p className="text-xs text-islamic-emerald font-bold">محفوظ</p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    }) : (
+                      <div className="col-span-full text-center py-12">
+                        <Star className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-600 mb-2 font-arabic-serif">لا توجد آيات محفوظة</h3>
+                        <p className="text-gray-500 font-arabic-sans">ابدأ بحفظ بعض الآيات وستظهر هنا</p>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="notes">
+                  <div className="grid grid-cols-1 gap-4">
+                    {allNotes && allNotes.length > 0 ? allNotes.map((note, index) => {
+                      const surah = surahs.find(s => s.number === note.surahNumber);
+                      const isMemorized = note.tags?.includes('محفوظ');
+                      return (
+                        <motion.div
+                          key={note.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                        >
+                          <Card className="islamic-card cursor-pointer hover:shadow-lg transition-all duration-300" 
+                                onClick={() => {
+                                  setCurrentSurah(note.surahNumber);
+                                  setCurrentAyah(note.ayahNumber);
+                                  updateProgress();
+                                }}
+                                data-testid={`note-${index}`}>
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-lg font-arabic-serif text-islamic-emerald">
+                                    {surah?.arabicName} - الآية {note.ayahNumber}
+                                  </CardTitle>
+                                  <p className="text-sm text-copper-bronze">{surah?.name}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {isMemorized && <Star className="text-islamic-emerald" size={16} />}
+                                  <FileText className="text-royal-gold" size={16} />
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <p className="text-gray-700 font-arabic-sans leading-relaxed mb-3">{note.note}</p>
+                              <div className="flex justify-between items-center text-xs text-gray-500">
+                                <div className="flex items-center">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {note.createdAt ? new Date(note.createdAt).toLocaleDateString('ar-SA') : ''}
+                                </div>
+                                {isMemorized && (
+                                  <span className="bg-islamic-emerald/10 text-islamic-emerald px-2 py-1 rounded-full">
+                                    محفوظ
+                                  </span>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    }) : (
+                      <div className="text-center py-12">
+                        <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold text-gray-600 mb-2 font-arabic-serif">لا توجد ملاحظات</h3>
+                        <p className="text-gray-500 font-arabic-sans">ابدأ بإضافة ملاحظات على الآيات</p>
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
