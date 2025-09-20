@@ -9,6 +9,10 @@ import {
   studentErrors,
   studentPayments,
   classSchedules,
+  supervisors,
+  studentNotes,
+  certificates,
+  quranProgress,
   type User,
   type UpsertUser,
   type Course,
@@ -29,6 +33,14 @@ import {
   type InsertStudentPayment,
   type ClassSchedule,
   type InsertClassSchedule,
+  type Supervisor,
+  type InsertSupervisor,
+  type StudentNote,
+  type InsertStudentNote,
+  type Certificate,
+  type InsertCertificate,
+  type QuranProgress,
+  type InsertQuranProgress,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";

@@ -243,6 +243,33 @@ export const quranProgress = pgTable("quran_progress", {
   unique("quran_progress_student_unique").on(table.studentId),
 ]);
 
+// Supervisors table - for supervisor management
+export const supervisors = pgTable("supervisors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id),
+  name: varchar("name").notNull(),
+  whatsappNumber: varchar("whatsapp_number").notNull(),
+  zoomLink: varchar("zoom_link"),
+  specialization: varchar("specialization"), // Quran, Fiqh, General
+  experience: text("experience"),
+  qualifications: text("qualifications"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Student notes table - for supervisor notes on students
+export const studentNotes = pgTable("student_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  authorId: varchar("author_id").references(() => users.id).notNull(), // Who wrote the note
+  note: text("note").notNull(),
+  noteType: varchar("note_type").default("general"), // general, behavioral, academic, attendance
+  isPrivate: boolean("is_private").default(false), // Visible to parents or not
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Certificates table - for course completion and achievements
 export const certificates = pgTable("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -253,14 +280,18 @@ export const certificates = pgTable("certificates", {
   descriptionAr: text("description_ar"),
   descriptionEn: text("description_en"),
   issuedAt: timestamp("issued_at").defaultNow(),
+  issuedBy: varchar("issued_by").references(() => users.id), // Supervisor who issued
   code: varchar("code").unique().notNull().default(sql`gen_random_uuid()`), // UUID for QR verification
   grade: varchar("grade"), // ممتاز، جيد جداً، جيد
   teacherName: varchar("teacher_name"),
   qrImageDataUrl: text("qr_image_data_url"), // Base64 QR code image
+  verificationToken: varchar("verification_token").unique().notNull().default(sql`gen_random_uuid()`), // For QR verification
+  status: varchar("status").default("valid"), // valid, revoked, expired
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("certificates_code_idx").on(table.code),
+  index("certificates_verification_token_idx").on(table.verificationToken),
 ]);
 
 // Create insert schemas
@@ -349,10 +380,23 @@ export const insertQuranProgressSchema = createInsertSchema(quranProgress).omit(
   updatedAt: true,
 });
 
+export const insertSupervisorSchema = createInsertSchema(supervisors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudentNoteSchema = createInsertSchema(studentNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCertificateSchema = createInsertSchema(certificates).omit({
   id: true,
   createdAt: true,
   code: true, // Auto-generated UUID
+  verificationToken: true, // Auto-generated UUID
 });
 
 // Export types
@@ -386,5 +430,9 @@ export type QuranNote = typeof quranNotes.$inferSelect;
 export type InsertQuranNote = z.infer<typeof insertQuranNoteSchema>;
 export type QuranProgress = typeof quranProgress.$inferSelect;
 export type InsertQuranProgress = z.infer<typeof insertQuranProgressSchema>;
+export type Supervisor = typeof supervisors.$inferSelect;
+export type InsertSupervisor = z.infer<typeof insertSupervisorSchema>;
+export type StudentNote = typeof studentNotes.$inferSelect;
+export type InsertStudentNote = z.infer<typeof insertStudentNoteSchema>;
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
