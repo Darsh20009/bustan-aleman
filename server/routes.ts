@@ -3,6 +3,8 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { quranService } from "./quranService";
+import bcrypt from "bcrypt";
+import { telegramBot } from "./telegramBot";
 import {
   insertCourseSchema,
   insertInstructorSchema,
@@ -398,6 +400,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Telegram login verification route
+  app.post('/api/telegram/login', async (req, res) => {
+    try {
+      const { code } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ message: "كود تسجيل الدخول مطلوب" });
+      }
+      
+      if (!telegramBot) {
+        return res.status(503).json({ message: "خدمة التليجرام غير متاحة حالياً" });
+      }
+      
+      const user = telegramBot.verifyLoginCode(code.toUpperCase());
+      
+      if (!user) {
+        return res.status(401).json({ message: "كود تسجيل الدخول غير صحيح أو منتهي الصلاحية" });
+      }
+      
+      res.json({ 
+        message: "تم تسجيل الدخول بنجاح",
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          role: user.role,
+          phoneNumber: user.phoneNumber,
+          age: user.age
+        }
+      });
+    } catch (error) {
+      console.error("خطأ في تسجيل الدخول عبر التليجرام:", error);
+      res.status(500).json({ message: "حدث خطأ في النظام" });
+    }
+  });
+
+  // Check telegram bot status
+  app.get('/api/telegram/status', async (req, res) => {
+    try {
+      const status = telegramBot ? 'active' : 'inactive';
+      res.json({ 
+        status,
+        message: status === 'active' ? 'بوت التليجرام يعمل بنجاح' : 'بوت التليجرام غير متاح'
+      });
+    } catch (error) {
+      res.status(500).json({ message: "خطأ في التحقق من حالة البوت" });
+    }
+  });
+
   // Seed data route (for development)
   app.post('/api/seed', async (req, res) => {
     try {
@@ -481,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Yousef Darwish
       const yousefStudent = await storage.createStudent({
         studentName: "يوسف درويش",
-        password: "182009",
+        passwordHash: await bcrypt.hash("182009", 10),
         dateOfBirth: "2009-08-18",
         grade: "الثاني الثانوي",
         monthlySessionsCount: 16,
@@ -562,7 +614,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create Mohamed Ahmed
       const mohamedStudent = await storage.createStudent({
         studentName: "محمد أحمد",
-        password: "123789",
+        passwordHash: await bcrypt.hash("123789", 10),
         dateOfBirth: "2010-01-01", // Default date
         grade: "غير محدد",
         monthlySessionsCount: 8,

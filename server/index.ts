@@ -6,6 +6,7 @@ import { setupAuthRoutes } from "./authRoutes";
 import { setupAdditionalRoutes } from "./additionalRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
+import { initializeTelegramBot } from "./telegramBot";
 
 const app = express();
 app.use(express.json());
@@ -56,6 +57,9 @@ app.use((req, res, next) => {
 (async () => {
   // Run password migration on startup
   await migratePasswords();
+  
+  // Initialize Telegram Bot
+  initializeTelegramBot();
   
   // Setup authentication routes (universal auth system)
   setupAuthRoutes(app);

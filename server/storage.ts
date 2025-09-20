@@ -117,6 +117,20 @@ export interface IStorage {
   // Class schedule operations
   createClassSchedule(schedule: InsertClassSchedule): Promise<ClassSchedule>;
   getStudentSchedules(studentId: string): Promise<ClassSchedule[]>;
+
+  // Telegram operations
+  getUserByTelegramId(telegramId: string): Promise<User | undefined>;
+  createTelegramUser(userData: {
+    telegramId: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    age: number;
+    email: string;
+    role: string;
+    isActive: boolean;
+    registrationCompleted: boolean;
+  }): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -387,7 +401,6 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
-        createdAt: new Date(jsonStudent.createdAt),
         updatedAt: new Date(),
       };
       return convertedStudent;
@@ -416,7 +429,6 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
-        createdAt: new Date(jsonStudent.createdAt),
         updatedAt: new Date(),
       }));
     }
@@ -432,7 +444,7 @@ export class DatabaseStorage implements IStorage {
         id: jsonStudent.id,
         userId: null,
         studentName: jsonStudent.studentName,
-        password: jsonStudent.password,
+        passwordHash: jsonStudent.password,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
         monthlySessionsCount: 0,
@@ -444,7 +456,6 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
-        createdAt: new Date(jsonStudent.createdAt),
         updatedAt: new Date(),
       };
     }
@@ -473,7 +484,6 @@ export class DatabaseStorage implements IStorage {
         notes: jsonStudent.notes || null,
         zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
-        createdAt: new Date(jsonStudent.createdAt),
         updatedAt: new Date(),
       };
     }
@@ -499,10 +509,10 @@ export class DatabaseStorage implements IStorage {
         id: `session_${Date.now()}`,
         studentId: session.studentId,
         sessionNumber: session.sessionNumber,
-        sessionDate: typeof session.sessionDate === 'string' ? session.sessionDate : session.sessionDate.toISOString().split('T')[0],
+        sessionDate: typeof session.sessionDate === 'string' ? session.sessionDate : new Date().toISOString().split('T')[0],
         sessionTime: session.sessionTime || null,
         evaluationGrade: session.evaluationGrade || null,
-        nextSessionDate: session.nextSessionDate ? (typeof session.nextSessionDate === 'string' ? session.nextSessionDate : session.nextSessionDate.toISOString().split('T')[0]) : null,
+        nextSessionDate: session.nextSessionDate ? (typeof session.nextSessionDate === 'string' ? session.nextSessionDate : new Date().toISOString().split('T')[0]) : null,
         newMaterial: session.newMaterial || null,
         reviewMaterial: session.reviewMaterial || null,
         notes: session.notes || null,
@@ -537,7 +547,7 @@ export class DatabaseStorage implements IStorage {
         errorType: error.errorType ?? 'recitation',
         errorDescription: error.errorDescription || null,
         isResolved: error.isResolved ?? false,
-        resolvedDate: error.resolvedDate ? (typeof error.resolvedDate === 'string' ? error.resolvedDate : error.resolvedDate.toISOString().split('T')[0]) : null,
+        resolvedDate: error.resolvedDate ? (typeof error.resolvedDate === 'string' ? error.resolvedDate : new Date().toISOString().split('T')[0]) : null,
         createdAt: new Date(),
       };
       return errorData;
@@ -570,7 +580,7 @@ export class DatabaseStorage implements IStorage {
         subscriptionPeriod: payment.subscriptionPeriod ?? 'monthly',
         sessionsIncluded: payment.sessionsIncluded,
         sessionsRemaining: payment.sessionsRemaining,
-        expiryDate: payment.expiryDate ? (typeof payment.expiryDate === 'string' ? payment.expiryDate : payment.expiryDate.toISOString().split('T')[0]) : null,
+        expiryDate: payment.expiryDate ? (typeof payment.expiryDate === 'string' ? payment.expiryDate : new Date().toISOString().split('T')[0]) : null,
         status: payment.status ?? 'active',
         notes: payment.notes || null,
         createdAt: new Date(),
@@ -745,6 +755,47 @@ export class DatabaseStorage implements IStorage {
         .set({ memorizedSurahs: JSON.stringify(memorization) })
         .where(eq(students.id, student.id));
     }
+  }
+
+  // Telegram operations
+  async getUserByTelegramId(telegramId: string): Promise<User | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    // Search by email field which stores telegram user data
+    const telegramEmail = `${telegramId}@telegram.user`;
+    const [user] = await db!.select().from(users).where(eq(users.email, telegramEmail));
+    return user;
+  }
+
+  async createTelegramUser(userData: {
+    telegramId: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    age: number;
+    email: string;
+    role: string;
+    isActive: boolean;
+    registrationCompleted: boolean;
+  }): Promise<User> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available for telegram user creation");
+    }
+    
+    const newUser: UpsertUser = {
+      email: userData.email,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      phoneNumber: userData.phoneNumber,
+      age: userData.age,
+      role: userData.role,
+      isActive: userData.isActive,
+      registrationCompleted: userData.registrationCompleted,
+    };
+    
+    const [user] = await db!.insert(users).values(newUser).returning();
+    return user;
   }
 }
 
