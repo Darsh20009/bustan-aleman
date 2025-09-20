@@ -9,8 +9,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useLocation } from "wouter";
 import { useToast } from '../hooks/use-toast';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, LogIn, UserPlus, Sparkles, Eye, EyeOff, User, Mail, Phone, Users } from 'lucide-react';
+import { BookOpen, LogIn, UserPlus, Sparkles, Eye, EyeOff, User, Mail, Phone, Users, MessageCircle } from 'lucide-react';
 import { z } from "zod";
+import { TelegramLoginForm } from './TelegramLoginForm';
 
 const loginSchema = z.object({
   email: z.string().email("بريد إلكتروني صالح مطلوب"),
@@ -39,7 +40,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register' | 'replit'>('register');
+  const [mode, setMode] = useState<'login' | 'register' | 'replit' | 'telegram'>('register');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
@@ -154,6 +155,19 @@ export function AuthPage() {
     registerMutation.mutate(data);
   };
 
+  const handleTelegramSuccess = (user: any) => {
+    toast({
+      title: "نجح تسجيل الدخول عبر التليجرام",
+      description: `مرحباً ${user.firstName} ${user.lastName}`,
+    });
+    
+    // Store user in local state temporarily
+    localStorage.setItem('telegramUser', JSON.stringify(user));
+    
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    setLocation("/");
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
@@ -167,24 +181,32 @@ export function AuthPage() {
 
   const renderModeSelector = () => (
     <div className="flex justify-center mb-6">
-      <div className="flex bg-gray-100 rounded-lg p-1">
+      <div className="flex bg-gray-100 rounded-lg p-1 flex-wrap">
+        <button
+          onClick={() => setMode('telegram')}
+          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'telegram' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600'}`}
+          data-testid="button-mode-telegram"
+        >
+          <MessageCircle className="w-4 h-4 inline ml-1" />
+          تليجرام
+        </button>
         <button
           onClick={() => setMode('replit')}
-          className={`px-4 py-2 rounded-md transition-all ${mode === 'replit' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
+          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'replit' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
           data-testid="button-mode-replit"
         >
           Replit Auth
         </button>
         <button
           onClick={() => setMode('login')}
-          className={`px-4 py-2 rounded-md transition-all ${mode === 'login' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
+          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'login' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
           data-testid="button-mode-login"
         >
           تسجيل الدخول
         </button>
         <button
           onClick={() => setMode('register')}
-          className={`px-4 py-2 rounded-md transition-all ${mode === 'register' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
+          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'register' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
           data-testid="button-mode-register"
         >
           تسجيل جديد
@@ -204,13 +226,15 @@ export function AuthPage() {
               </div>
             </div>
             <CardTitle className="text-3xl font-bold text-emerald-800 mb-2 font-amiri">
-              {mode === 'login' ? 'تسجيل الدخول' : mode === 'register' ? 'تسجيل جديد' : 'مرحباً بك'}
+              {mode === 'login' ? 'تسجيل الدخول' : mode === 'register' ? 'تسجيل جديد' : mode === 'telegram' ? 'تسجيل الدخول عبر التليجرام' : 'مرحباً بك'}
             </CardTitle>
             <p className="text-emerald-600 mt-2 text-lg">
               {mode === 'login' 
                 ? 'مرحباً بك في بستان الإيمان' 
                 : mode === 'register'
                 ? 'انضم إلى بستان الإيمان لتعلم القرآن الكريم'
+                : mode === 'telegram'
+                ? 'استخدم بوت التليجرام للحصول على كود تسجيل دخول آمن'
                 : 'اختر طريقة تسجيل الدخول المفضلة لك'}
             </p>
             <div className="flex justify-center my-4">
@@ -221,6 +245,13 @@ export function AuthPage() {
           <CardContent className="space-y-6">
             {renderModeSelector()}
             
+            {mode === 'telegram' && (
+              <TelegramLoginForm 
+                onSuccess={handleTelegramSuccess}
+                onCancel={() => setMode('replit')}
+              />
+            )}
+
             {mode === 'replit' && (
               <div className="text-center">
                 <p className="text-emerald-700 mb-6 leading-relaxed">
