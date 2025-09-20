@@ -112,7 +112,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 transition={{ delay: 0.4 }}
                 className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center">
                   <div className="text-center text-white">
                     <Heart className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
@@ -156,7 +156,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               <Button
                 onClick={onCourses}
                 size="lg"
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl hover:from-purple-700 hover:to-indigo-700 w-full sm:w-auto shadow-xl transform hover:scale-105 transition-all"
+                className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl hover:from-amber-700 hover:to-orange-700 w-full sm:w-auto shadow-xl transform hover:scale-105 transition-all"
                 data-testid="button-courses"
               >
                 <GraduationCap className="ml-2 h-5 w-5 md:h-6 md:w-6" />
