@@ -14,7 +14,7 @@ import { z } from "zod";
 import { TelegramLoginForm } from './TelegramLoginForm';
 
 const loginSchema = z.object({
-  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+  phoneNumber: z.string().min(10, "رقم الجوال مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
@@ -57,7 +57,7 @@ export function AuthPage() {
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      phoneNumber: "",
       password: "",
     },
   });
@@ -271,19 +271,20 @@ export function AuthPage() {
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                   <FormField
                     control={loginForm.control}
-                    name="email"
+                    name="phoneNumber"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          البريد الإلكتروني
+                          <Phone className="w-4 h-4" />
+                          رقم الجوال
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            type="email"
-                            placeholder="example@email.com"
+                            type="tel"
+                            placeholder="0532441566"
                             {...field} 
-                            data-testid="input-email"
+                            data-testid="input-phone-number"
+                            dir="ltr"
                           />
                         </FormControl>
                         <FormMessage />
