@@ -168,16 +168,7 @@ export function AuthPage() {
     setLocation("/");
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحقق من حالة تسجيل الدخول...</p>
-        </div>
-      </div>
-    );
-  }
+  // لا نحتاج لإظهار شاشة تحميل هنا - نعرض نموذج التسجيل مباشرة
 
   const renderModeSelector = () => (
     <div className="flex justify-center mb-6">

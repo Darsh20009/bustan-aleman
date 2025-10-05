@@ -28,10 +28,12 @@ export function useAuth() {
       return response.json();
     },
     retry: false,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: false, // Disable automatic refetching
-    refetchOnWindowFocus: false, // Disable refetch on window focus
-    refetchOnMount: false, // Only fetch on first mount
+    staleTime: Infinity, // لا تعتبر البيانات قديمة أبداً
+    gcTime: Infinity, // احتفظ بالبيانات في الذاكرة
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const logout = async () => {

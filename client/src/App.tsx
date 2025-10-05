@@ -51,17 +51,8 @@ function AppContent() {
   }, [isAuthenticated, user, appState]);
 
   const renderCurrentState = () => {
-    // Show loading state while checking authentication
-    if (isLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">جاري التحميل...</p>
-          </div>
-        </div>
-      );
-    }
+    // لا نعرض شاشة تحميل مطولة - فقط نتابع مع الحالة الحالية
+    // هذا يمنع الحلقة اللانهائية
 
     switch (appState) {
       case 'splash':
