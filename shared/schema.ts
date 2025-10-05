@@ -215,26 +215,6 @@ export const quizAttempts = pgTable("quiz_attempts", {
   antiCheatLog: text("anti_cheat_log"), // JSON string for monitoring
 });
 
-// Certificates table
-export const certificates = pgTable("certificates", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  studentId: varchar("student_id").references(() => students.id).notNull(),
-  courseId: varchar("course_id").references(() => courses.id),
-  quizAttemptId: varchar("quiz_attempt_id").references(() => quizAttempts.id),
-  code: varchar("code").unique().notNull(), // unique certificate code
-  titleAr: varchar("title_ar").notNull(),
-  titleEn: varchar("title_en"),
-  descriptionAr: text("description_ar"),
-  descriptionEn: text("description_en"),
-  grade: varchar("grade").notNull(), // ممتاز، جيد جداً، إلخ
-  teacherName: varchar("teacher_name").notNull(),
-  issuedAt: timestamp("issued_at").defaultNow(),
-  issuedBy: varchar("issued_by").references(() => users.id),
-  qrImageDataUrl: text("qr_image_data_url"),
-  verificationToken: varchar("verification_token").unique(),
-  status: varchar("status").default("valid"), // valid, revoked, expired
-});
-
 // Session access control table
 export const sessionAccess = pgTable("session_access", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
