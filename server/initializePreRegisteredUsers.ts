@@ -36,32 +36,33 @@ export async function initializePreRegisteredUsers() {
   try {
     console.log("🔐 Initializing pre-registered users...");
     const allUsers = await storage.getAllUsers();
-    
+
     for (const preUser of preRegisteredUsers) {
       try {
         const existingUser = allUsers.find(u => u.phoneNumber === preUser.phoneNumber);
-        
+
         if (!existingUser) {
-          const hashedPassword = await hashPassword(preUser.password);
-          
+          // Store password as plain text temporarily for pre-registered users
+          // It will be hashed on first successful login
           const userData = {
             email: `${preUser.phoneNumber}@bustan.local`,
             firstName: preUser.name.split(' ')[0],
             lastName: preUser.name.split(' ').slice(1).join(' ') || preUser.name,
             role: preUser.role,
-            passwordHash: hashedPassword,
+            passwordHash: preUser.password, // Store as plain text initially
             phoneNumber: preUser.phoneNumber,
             isActive: true,
             registrationCompleted: true,
           };
 
           const user = await storage.upsertUser(userData);
-          
+
+          // Create student record for student users
           if (preUser.role === 'student') {
-            await storage.createStudent({
+            const student = await storage.createStudent({
               userId: user.id,
               studentName: preUser.name,
-              passwordHash: hashedPassword,
+              passwordHash: preUser.password, // Use plain text initially
               dateOfBirth: null,
               grade: null,
               monthlySessionsCount: 0,
@@ -86,7 +87,7 @@ export async function initializePreRegisteredUsers() {
               isActive: true,
             });
           }
-          
+
           console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.phoneNumber})`);
         } else {
           console.log(`ℹ️  User already exists: ${preUser.name} (${preUser.phoneNumber})`);

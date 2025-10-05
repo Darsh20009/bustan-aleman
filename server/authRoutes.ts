@@ -135,7 +135,19 @@ export function setupAuthRoutes(app: Express) {
       let isValidPassword = false;
       
       if (user.passwordHash) {
-        isValidPassword = await verifyPassword(password, user.passwordHash);
+        // Check if passwordHash is already hashed or plain text
+        if (user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2a$')) {
+          isValidPassword = await verifyPassword(password, user.passwordHash);
+        } else {
+          // Plain text password for pre-registered users
+          isValidPassword = password === user.passwordHash;
+          
+          // If valid, hash it for future use
+          if (isValidPassword) {
+            const hashedPassword = await hashPassword(password);
+            await storage.upsertUser({ ...user, passwordHash: hashedPassword });
+          }
+        }
       } else {
         // For legacy students, check against student record
         if (user.role === 'student') {
@@ -143,7 +155,11 @@ export function setupAuthRoutes(app: Express) {
           const student = students.find(s => s.userId === user.id);
           
           if (student && student.passwordHash) {
-            isValidPassword = await verifyPassword(password, student.passwordHash);
+            if (student.passwordHash.startsWith('$2b$') || student.passwordHash.startsWith('$2a$')) {
+              isValidPassword = await verifyPassword(password, student.passwordHash);
+            } else {
+              isValidPassword = password === student.passwordHash;
+            }
           }
         }
       }

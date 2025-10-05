@@ -1,35 +1,35 @@
 
 [
   {
-    "id": "sheikh_ahmad_abu_mazen",
-    "name": "أحمد أبو مازن",
     "phoneNumber": "0549947386",
     "password": "0549947386",
     "role": "supervisor",
-    "isActive": true
+    "firstName": "أحمد",
+    "lastName": "الشيخ",
+    "email": "sheikh.ahmed@bustan.sa"
   },
   {
-    "id": "student_yousef",
-    "name": "يوسف درويش",
     "phoneNumber": "0532441566",
     "password": "0532441566",
     "role": "student",
-    "isActive": true
+    "firstName": "يوسف",
+    "lastName": "الطالب",
+    "email": "youssef.student@bustan.sa"
   },
   {
-    "id": "student_ahmad",
-    "name": "أحمد",
     "phoneNumber": "0532449303",
     "password": "0532449303",
     "role": "student",
-    "isActive": true
+    "firstName": "أحمد",
+    "lastName": "الطالب",
+    "email": "ahmed.student@bustan.sa"
   },
   {
-    "id": "student_mahmoud",
-    "name": "محمود",
     "phoneNumber": "0598765966",
     "password": "0598765966",
     "role": "student",
-    "isActive": true
+    "firstName": "محمود",
+    "lastName": "الطالب",
+    "email": "mahmoud.student@bustan.sa"
   }
 ]
