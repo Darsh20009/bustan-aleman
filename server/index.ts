@@ -7,6 +7,7 @@ import { setupAdditionalRoutes } from "./additionalRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
+import { initializePreRegisteredUsers } from "./initializePreRegisteredUsers";
 
 const app = express();
 app.use(express.json());
@@ -57,6 +58,9 @@ app.use((req, res, next) => {
 (async () => {
   // Run password migration on startup
   await migratePasswords();
+  
+  // Initialize pre-registered users
+  await initializePreRegisteredUsers();
   
   // Initialize Telegram Bot
   initializeTelegramBot();

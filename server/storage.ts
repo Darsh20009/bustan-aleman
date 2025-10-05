@@ -117,6 +117,11 @@ export interface IStorage {
   // Class schedule operations
   createClassSchedule(schedule: InsertClassSchedule): Promise<ClassSchedule>;
   getStudentSchedules(studentId: string): Promise<ClassSchedule[]>;
+  
+  // Supervisor operations
+  createSupervisor(supervisor: InsertSupervisor): Promise<Supervisor>;
+  getSupervisors(): Promise<Supervisor[]>;
+  getSupervisor(id: string): Promise<Supervisor | undefined>;
 
   // Telegram operations
   getUserByTelegramId(telegramId: string): Promise<User | undefined>;
@@ -633,6 +638,43 @@ export class DatabaseStorage implements IStorage {
       .from(classSchedules)
       .where(eq(classSchedules.studentId, studentId))
       .orderBy(classSchedules.dayOfWeek);
+  }
+
+  // Supervisor operations
+  async createSupervisor(supervisor: InsertSupervisor): Promise<Supervisor> {
+    if (!this.isDbAvailable()) {
+      const supervisorData: Supervisor = {
+        id: `supervisor_${Date.now()}`,
+        userId: supervisor.userId || null,
+        name: supervisor.name,
+        whatsappNumber: supervisor.whatsappNumber,
+        zoomLink: supervisor.zoomLink || null,
+        specialization: supervisor.specialization || null,
+        experience: supervisor.experience || null,
+        qualifications: supervisor.qualifications || null,
+        isActive: supervisor.isActive ?? true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return supervisorData;
+    }
+    const [newSupervisor] = await db!.insert(supervisors).values(supervisor).returning();
+    return newSupervisor;
+  }
+
+  async getSupervisors(): Promise<Supervisor[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(supervisors).where(eq(supervisors.isActive, true));
+  }
+
+  async getSupervisor(id: string): Promise<Supervisor | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [supervisor] = await db!.select().from(supervisors).where(eq(supervisors.id, id));
+    return supervisor;
   }
 
   // Student progress operations

@@ -22,7 +22,7 @@ const userRegistrationSchema = z.object({
 });
 
 const loginSchema = z.object({
-  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+  identifier: z.string().min(1, "رقم الجوال أو البريد الإلكتروني مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
@@ -119,11 +119,13 @@ export function setupAuthRoutes(app: Express) {
   // Universal user login
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { email, password } = loginSchema.parse(req.body);
+      const { identifier, password } = loginSchema.parse(req.body);
       
-      // Find user by email
+      // Find user by email OR phone number
       const users = await storage.getAllUsers();
-      const user = users.find((u: any) => u.email === email && u.isActive);
+      const user = users.find((u: any) => 
+        (u.email === identifier || u.phoneNumber === identifier) && u.isActive
+      );
       
       if (!user) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
