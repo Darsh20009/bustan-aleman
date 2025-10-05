@@ -22,7 +22,7 @@ const userRegistrationSchema = z.object({
 });
 
 const loginSchema = z.object({
-  identifier: z.string().min(1, "رقم الجوال أو البريد الإلكتروني مطلوب"),
+  phoneNumber: z.string().min(10, "رقم الجوال مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
 });
 
@@ -119,12 +119,12 @@ export function setupAuthRoutes(app: Express) {
   // Universal user login
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { identifier, password } = loginSchema.parse(req.body);
+      const { phoneNumber, password } = loginSchema.parse(req.body);
       
-      // Find user by email OR phone number
+      // Find user by phone number
       const users = await storage.getAllUsers();
       const user = users.find((u: any) => 
-        (u.email === identifier || u.phoneNumber === identifier) && u.isActive
+        u.phoneNumber === phoneNumber && u.isActive
       );
       
       if (!user) {

@@ -189,6 +189,79 @@ export const classSchedules = pgTable("class_schedules", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Quizzes/Exams table for courses
+export const quizzes = pgTable("quizzes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  passingScore: integer("passing_score").default(75), // percentage
+  timeLimit: integer("time_limit"), // minutes
+  questions: text("questions"), // JSON string
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Quiz attempts table
+export const quizAttempts = pgTable("quiz_attempts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  quizId: varchar("quiz_id").references(() => quizzes.id).notNull(),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  score: integer("score").notNull(), // percentage
+  answers: text("answers"), // JSON string
+  passed: boolean("passed").default(false),
+  attemptDate: timestamp("attempt_date").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  antiCheatLog: text("anti_cheat_log"), // JSON string for monitoring
+});
+
+// Certificates table
+export const certificates = pgTable("certificates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id),
+  quizAttemptId: varchar("quiz_attempt_id").references(() => quizAttempts.id),
+  code: varchar("code").unique().notNull(), // unique certificate code
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  grade: varchar("grade").notNull(), // ممتاز، جيد جداً، إلخ
+  teacherName: varchar("teacher_name").notNull(),
+  issuedAt: timestamp("issued_at").defaultNow(),
+  issuedBy: varchar("issued_by").references(() => users.id),
+  qrImageDataUrl: text("qr_image_data_url"),
+  verificationToken: varchar("verification_token").unique(),
+  status: varchar("status").default("valid"), // valid, revoked, expired
+});
+
+// Session access control table
+export const sessionAccess = pgTable("session_access", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  scheduleId: varchar("schedule_id").references(() => classSchedules.id).notNull(),
+  sessionDate: date("session_date").notNull(),
+  startTime: varchar("start_time").notNull(),
+  endTime: varchar("end_time").notNull(),
+  zoomLink: varchar("zoom_link").notNull(),
+  isEnabled: boolean("is_enabled").default(false),
+  enabledBy: varchar("enabled_by").references(() => users.id),
+  enabledAt: timestamp("enabled_at"),
+});
+
+// Student daily assignments table
+export const dailyAssignments = pgTable("daily_assignments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  assignmentDate: date("assignment_date").notNull(),
+  memorization: text("memorization"), // New verses to memorize
+  review: text("review"), // Verses to review
+  mistakes: text("mistakes"), // JSON string of today's mistakes
+  notes: text("notes"),
+  assignedBy: varchar("assigned_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Educational trips table
 export const trips = pgTable("trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

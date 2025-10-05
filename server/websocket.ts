@@ -1,3 +1,4 @@
+
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 
@@ -16,14 +17,14 @@ class WebSocketService {
     this.wss = new WebSocketServer({ server, path: '/ws' });
 
     this.wss.on('connection', (ws: WebSocket, req) => {
-      console.log('New WebSocket connection');
+      console.log('🔌 New WebSocket connection');
 
       ws.on('message', (message: string) => {
         try {
           const data = JSON.parse(message.toString());
           this.handleMessage(ws, data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('❌ Error parsing WebSocket message:', error);
         }
       });
 
@@ -32,7 +33,7 @@ class WebSocketService {
       });
 
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
       });
     });
 
@@ -49,17 +50,26 @@ class WebSocketService {
       case 'student_update':
         this.broadcastToSupervisors(payload);
         break;
-      case 'supervisor_update':
-        this.sendToStudent(payload.studentId, payload);
+      case 'new_student_registration':
+        this.notifySheikhOfNewStudent(payload);
         break;
-      case 'session_control':
-        this.handleSessionControl(payload);
+      case 'assignment_update':
+        this.sendToStudent(payload.studentId, {
+          type: 'assignment_updated',
+          data: payload
+        });
+        break;
+      case 'session_enable':
+        this.handleSessionEnable(payload);
         break;
       case 'error_notification':
-        this.broadcastToSupervisors(payload);
+        this.broadcastToSupervisors({
+          type: 'student_error',
+          data: payload
+        });
         break;
       default:
-        console.log('Unknown message type:', type);
+        console.log('⚠️ Unknown message type:', type);
     }
   }
 
@@ -73,7 +83,7 @@ class WebSocketService {
       studentId,
     });
 
-    console.log(`User ${userId} authenticated as ${role}`);
+    console.log(`✅ User ${userId} authenticated as ${role}`);
     
     ws.send(JSON.stringify({
       type: 'auth_success',
@@ -85,13 +95,13 @@ class WebSocketService {
     this.clients.forEach((client, userId) => {
       if (client.ws === ws) {
         this.clients.delete(userId);
-        console.log(`User ${userId} disconnected`);
+        console.log(`👋 User ${userId} disconnected`);
       }
     });
   }
 
   private broadcastToSupervisors(payload: any) {
-    this.clients.forEach((client, userId) => {
+    this.clients.forEach((client) => {
       if (client.role === 'supervisor' || client.role === 'admin') {
         client.ws.send(JSON.stringify({
           type: 'student_notification',
@@ -102,36 +112,34 @@ class WebSocketService {
   }
 
   private sendToStudent(studentId: string, payload: any) {
-    this.clients.forEach((client, userId) => {
+    this.clients.forEach((client) => {
       if (client.studentId === studentId) {
-        client.ws.send(JSON.stringify({
-          type: 'supervisor_notification',
-          payload
-        }));
+        client.ws.send(JSON.stringify(payload));
       }
     });
   }
 
-  private handleSessionControl(payload: any) {
-    const { studentId, action, data } = payload;
+  private handleSessionEnable(payload: any) {
+    const { studentId, sessionData } = payload;
     this.sendToStudent(studentId, {
-      type: 'session_control',
-      action,
-      data
+      type: 'session_enabled',
+      data: sessionData
     });
   }
 
+  // Public methods for external use
   public notifySheikhOfNewStudent(studentData: any) {
     this.broadcastToSupervisors({
       type: 'new_student',
-      student: studentData
+      student: studentData,
+      timestamp: new Date().toISOString()
     });
   }
 
-  public notifyStudentOfUpdate(studentId: string, updateData: any) {
+  public notifyStudentOfAssignment(studentId: string, assignment: any) {
     this.sendToStudent(studentId, {
-      type: 'profile_update',
-      data: updateData
+      type: 'new_assignment',
+      data: assignment
     });
   }
 
@@ -139,6 +147,13 @@ class WebSocketService {
     this.sendToStudent(studentId, {
       type: 'session_enabled',
       data: sessionData
+    });
+  }
+
+  public notifyStudentOfCertificate(studentId: string, certificate: any) {
+    this.sendToStudent(studentId, {
+      type: 'certificate_issued',
+      data: certificate
     });
   }
 }

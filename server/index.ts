@@ -75,6 +75,14 @@ app.use((req, res, next) => {
   // Setup JSON routes (legacy student system)
   setupJSONRoutes(app);
   
+  // Setup Sheikh routes (session management, assignments)
+  const { setupSheikhRoutes } = await import("./sheikhRoutes");
+  setupSheikhRoutes(app);
+  
+  // Setup Course routes (enrollments, quizzes, certificates)
+  const { setupCourseRoutes } = await import("./courseRoutes");
+  setupCourseRoutes(app);
+  
   const server = await registerRoutes(app);
   
   // Initialize WebSocket server
