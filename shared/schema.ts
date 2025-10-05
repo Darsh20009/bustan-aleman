@@ -270,11 +270,80 @@ export const studentNotes = pgTable("student_notes", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Course modules/content table
+export const courseModules = pgTable("course_modules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  contentAr: text("content_ar"), // Module content in Arabic
+  contentEn: text("content_en"), // Module content in English
+  orderIndex: integer("order_index").notNull().default(0), // Module order in course
+  videoUrl: varchar("video_url"), // Optional video link
+  documentUrl: varchar("document_url"), // Optional document link
+  duration: integer("duration"), // Duration in minutes
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Exam questions table
+export const examQuestions = pgTable("exam_questions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  questionAr: text("question_ar").notNull(),
+  questionEn: text("question_en"),
+  optionsAr: text("options_ar").notNull(), // JSON array of options in Arabic
+  optionsEn: text("options_en"), // JSON array of options in English
+  correctAnswer: integer("correct_answer").notNull(), // Index of correct option (0-based)
+  explanation: text("explanation"), // Explanation for the correct answer
+  points: integer("points").default(1), // Points for this question
+  orderIndex: integer("order_index").notNull().default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Student exam attempts table
+export const examAttempts = pgTable("exam_attempts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  answers: text("answers").notNull(), // JSON object mapping question ID to answer index
+  score: integer("score").notNull(), // Total score achieved
+  totalPoints: integer("total_points").notNull(), // Total possible points
+  percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(), // Percentage score
+  passed: boolean("passed").notNull().default(false), // true if >= 75%
+  startTime: timestamp("start_time").notNull(),
+  submitTime: timestamp("submit_time").notNull(),
+  timeTaken: integer("time_taken"), // Time taken in seconds
+  certificateIssued: boolean("certificate_issued").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Session access control - controls when students can access session links
+export const sessionAccessControl = pgTable("session_access_control", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  sessionDate: date("session_date").notNull(),
+  sessionTime: varchar("session_time").notNull(), // e.g., "4:00 PM"
+  zoomLink: varchar("zoom_link"),
+  isEnabled: boolean("is_enabled").default(false), // Sheikh controls this
+  enabledAt: timestamp("enabled_at"), // When sheikh enabled access
+  enabledBy: varchar("enabled_by").references(() => users.id), // Sheikh who enabled
+  expiresAt: timestamp("expires_at"), // Optional expiry time
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Certificates table - for course completion and achievements
 export const certificates = pgTable("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   courseId: varchar("course_id").references(() => courses.id),
+  examAttemptId: varchar("exam_attempt_id").references(() => examAttempts.id), // Link to exam attempt
   titleAr: varchar("title_ar").notNull(),
   titleEn: varchar("title_en"),
   descriptionAr: text("description_ar"),
@@ -282,7 +351,9 @@ export const certificates = pgTable("certificates", {
   issuedAt: timestamp("issued_at").defaultNow(),
   issuedBy: varchar("issued_by").references(() => users.id), // Supervisor who issued
   code: varchar("code").unique().notNull().default(sql`gen_random_uuid()`), // UUID for QR verification
+  certificateNumber: varchar("certificate_number").unique().notNull().default(sql`gen_random_uuid()`), // Unique certificate number
   grade: varchar("grade"), // ممتاز، جيد جداً، جيد
+  score: integer("score"), // Exam score if from exam
   teacherName: varchar("teacher_name"),
   qrImageDataUrl: text("qr_image_data_url"), // Base64 QR code image
   verificationToken: varchar("verification_token").unique().notNull().default(sql`gen_random_uuid()`), // For QR verification
@@ -292,6 +363,7 @@ export const certificates = pgTable("certificates", {
 }, (table) => [
   index("certificates_code_idx").on(table.code),
   index("certificates_verification_token_idx").on(table.verificationToken),
+  index("certificates_number_idx").on(table.certificateNumber),
 ]);
 
 // Create insert schemas
@@ -392,11 +464,34 @@ export const insertStudentNoteSchema = createInsertSchema(studentNotes).omit({
   updatedAt: true,
 });
 
+export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExamQuestionSchema = createInsertSchema(examQuestions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertExamAttemptSchema = createInsertSchema(examAttempts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSessionAccessControlSchema = createInsertSchema(sessionAccessControl).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCertificateSchema = createInsertSchema(certificates).omit({
   id: true,
   createdAt: true,
   code: true, // Auto-generated UUID
   verificationToken: true, // Auto-generated UUID
+  certificateNumber: true, // Auto-generated UUID
 });
 
 // Export types
@@ -434,5 +529,13 @@ export type Supervisor = typeof supervisors.$inferSelect;
 export type InsertSupervisor = z.infer<typeof insertSupervisorSchema>;
 export type StudentNote = typeof studentNotes.$inferSelect;
 export type InsertStudentNote = z.infer<typeof insertStudentNoteSchema>;
+export type CourseModule = typeof courseModules.$inferSelect;
+export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+export type ExamQuestion = typeof examQuestions.$inferSelect;
+export type InsertExamQuestion = z.infer<typeof insertExamQuestionSchema>;
+export type ExamAttempt = typeof examAttempts.$inferSelect;
+export type InsertExamAttempt = z.infer<typeof insertExamAttemptSchema>;
+export type SessionAccessControl = typeof sessionAccessControl.$inferSelect;
+export type InsertSessionAccessControl = z.infer<typeof insertSessionAccessControlSchema>;
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;

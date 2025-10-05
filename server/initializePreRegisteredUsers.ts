@@ -34,61 +34,70 @@ const preRegisteredUsers = [
 
 export async function initializePreRegisteredUsers() {
   try {
+    console.log("🔐 Initializing pre-registered users...");
     const allUsers = await storage.getAllUsers();
     
     for (const preUser of preRegisteredUsers) {
-      const existingUser = allUsers.find(u => u.phoneNumber === preUser.phoneNumber);
-      
-      if (!existingUser) {
-        const hashedPassword = await hashPassword(preUser.password);
+      try {
+        const existingUser = allUsers.find(u => u.phoneNumber === preUser.phoneNumber);
         
-        const userData = {
-          email: `${preUser.phoneNumber}@bustan.local`,
-          firstName: preUser.name.split(' ')[0],
-          lastName: preUser.name.split(' ').slice(1).join(' ') || preUser.name,
-          role: preUser.role,
-          passwordHash: hashedPassword,
-          phoneNumber: preUser.phoneNumber,
-          isActive: true,
-          registrationCompleted: true,
-        };
-
-        const user = await storage.upsertUser(userData);
-        
-        if (preUser.role === 'student') {
-          await storage.createStudent({
-            userId: user.id,
-            studentName: preUser.name,
+        if (!existingUser) {
+          const hashedPassword = await hashPassword(preUser.password);
+          
+          const userData = {
+            email: `${preUser.phoneNumber}@bustan.local`,
+            firstName: preUser.name.split(' ')[0],
+            lastName: preUser.name.split(' ').slice(1).join(' ') || preUser.name,
+            role: preUser.role,
             passwordHash: hashedPassword,
-            dateOfBirth: null,
-            grade: null,
-            monthlySessionsCount: 0,
-            monthlyPrice: "0",
-            isPaid: false,
+            phoneNumber: preUser.phoneNumber,
             isActive: true,
-            memorizedSurahs: "[]",
-            currentLevel: "beginner",
-            notes: "طالب مسجل مسبقاً",
-            zoomLink: null,
-            whatsappContact: preUser.phoneNumber,
-          });
-        } else if (preUser.role === 'supervisor') {
-          await storage.createSupervisor({
-            userId: user.id,
-            name: preUser.name,
-            whatsappNumber: preUser.phoneNumber,
-            zoomLink: null,
-            specialization: "القرآن الكريم",
-            experience: "شيخ معتمد",
-            qualifications: "إجازة في القرآن الكريم",
-            isActive: true,
-          });
+            registrationCompleted: true,
+          };
+
+          const user = await storage.upsertUser(userData);
+          
+          if (preUser.role === 'student') {
+            await storage.createStudent({
+              userId: user.id,
+              studentName: preUser.name,
+              passwordHash: hashedPassword,
+              dateOfBirth: null,
+              grade: null,
+              monthlySessionsCount: 0,
+              monthlyPrice: "0",
+              isPaid: false,
+              isActive: true,
+              memorizedSurahs: "[]",
+              currentLevel: "beginner",
+              notes: "طالب مسجل مسبقاً",
+              zoomLink: null,
+              whatsappContact: preUser.phoneNumber,
+            });
+          } else if (preUser.role === 'supervisor') {
+            await storage.createSupervisor({
+              userId: user.id,
+              name: preUser.name,
+              whatsappNumber: preUser.phoneNumber,
+              zoomLink: null,
+              specialization: "القرآن الكريم",
+              experience: "شيخ معتمد",
+              qualifications: "إجازة في القرآن الكريم",
+              isActive: true,
+            });
+          }
+          
+          console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.phoneNumber})`);
+        } else {
+          console.log(`ℹ️  User already exists: ${preUser.name} (${preUser.phoneNumber})`);
         }
-        
-        console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.phoneNumber})`);
+      } catch (userError) {
+        console.error(`Error initializing user ${preUser.name}:`, userError);
       }
     }
+    console.log("✅ Pre-registered users initialization completed");
   } catch (error) {
     console.error("Error initializing pre-registered users:", error);
+    console.log("⚠️  Continuing without database initialization");
   }
 }
