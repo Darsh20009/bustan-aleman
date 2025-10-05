@@ -41,7 +41,10 @@ export function AuthForm({ mode, onSubmit, onToggleMode, loading, error }: AuthF
     e.preventDefault();
     
     const submitData = mode === 'login' 
-      ? { email: formData.email, password: formData.password }
+      ? { 
+          identifier: formData.phoneNumber || formData.email, // Support phone OR email
+          password: formData.password 
+        }
       : {
           ...formData,
           age: formData.age ? parseInt(formData.age) : undefined,
@@ -131,20 +134,37 @@ export function AuthForm({ mode, onSubmit, onToggleMode, loading, error }: AuthF
               </>
             )}
 
-            <div>
-              <Label htmlFor="email" className="text-islamic-emerald font-medium font-arabic-sans">البريد الإلكتروني *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleChange('email', e.target.value)}
-                required
-                className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
-                dir="rtl"
-                data-testid="input-email"
-                placeholder="example@email.com"
-              />
-            </div>
+            {isLogin ? (
+              <div>
+                <Label htmlFor="phoneNumber" className="text-islamic-emerald font-medium font-arabic-sans">رقم الجوال *</Label>
+                <Input
+                  id="phoneNumber"
+                  type="tel"
+                  value={formData.phoneNumber}
+                  onChange={(e) => handleChange('phoneNumber', e.target.value)}
+                  required
+                  className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
+                  dir="rtl"
+                  data-testid="input-phoneNumber"
+                  placeholder="0532441566"
+                />
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="email" className="text-islamic-emerald font-medium font-arabic-sans">البريد الإلكتروني *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  required
+                  className="text-right border-royal-gold/30 focus:border-islamic-emerald bg-pearl-cream"
+                  dir="rtl"
+                  data-testid="input-email"
+                  placeholder="example@email.com"
+                />
+              </div>
+            )}
 
             <div>
               <Label htmlFor="password" className="text-islamic-emerald font-medium font-arabic-sans">كلمة المرور *</Label>

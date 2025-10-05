@@ -8,6 +8,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { initializePreRegisteredUsers } from "./initializePreRegisteredUsers";
+import { wsService } from "./websocket";
 
 const app = express();
 app.use(express.json());
@@ -75,6 +76,9 @@ app.use((req, res, next) => {
   setupJSONRoutes(app);
   
   const server = await registerRoutes(app);
+  
+  // Initialize WebSocket server
+  wsService.initialize(server);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
