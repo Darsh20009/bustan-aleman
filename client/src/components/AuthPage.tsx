@@ -40,7 +40,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'register' | 'replit' | 'telegram'>('register');
+  const [mode, setMode] = useState<'login' | 'register' | 'replit' | 'telegram'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isAuthenticated, isLoading } = useAuth();
@@ -170,41 +170,7 @@ export function AuthPage() {
 
   // لا نحتاج لإظهار شاشة تحميل هنا - نعرض نموذج التسجيل مباشرة
 
-  const renderModeSelector = () => (
-    <div className="flex justify-center mb-6">
-      <div className="flex bg-gray-100 rounded-lg p-1 flex-wrap">
-        <button
-          onClick={() => setMode('telegram')}
-          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'telegram' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600'}`}
-          data-testid="button-mode-telegram"
-        >
-          <MessageCircle className="w-4 h-4 inline ml-1" />
-          تليجرام
-        </button>
-        <button
-          onClick={() => setMode('replit')}
-          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'replit' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
-          data-testid="button-mode-replit"
-        >
-          Replit Auth
-        </button>
-        <button
-          onClick={() => setMode('login')}
-          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'login' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
-          data-testid="button-mode-login"
-        >
-          تسجيل الدخول
-        </button>
-        <button
-          onClick={() => setMode('register')}
-          className={`px-3 py-2 rounded-md transition-all text-sm ${mode === 'register' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
-          data-testid="button-mode-register"
-        >
-          تسجيل جديد
-        </button>
-      </div>
-    </div>
-  );
+  const renderModeSelector = () => null; // Hidden - only using pre-registered users with phone login
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 flex items-center justify-center p-4" dir="rtl">

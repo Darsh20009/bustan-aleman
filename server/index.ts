@@ -7,7 +7,6 @@ import { setupAdditionalRoutes } from "./additionalRoutes";
 import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
-import { initializePreRegisteredUsers } from "./initializePreRegisteredUsers";
 import { wsService } from "./websocket";
 
 const app = express();
@@ -60,8 +59,7 @@ app.use((req, res, next) => {
   // Run password migration on startup
   await migratePasswords();
   
-  // Initialize pre-registered users
-  await initializePreRegisteredUsers();
+  // Note: Pre-registered users are now initialized in routes.ts using phone auth
   
   // Initialize Telegram Bot
   initializeTelegramBot();

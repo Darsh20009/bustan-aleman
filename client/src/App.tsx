@@ -23,7 +23,8 @@ import EnhancedQuranReader from "./components/EnhancedQuranReader";
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates';
 
 function AppContent() {
-  const [appState, setAppState] = useState<AppState>('splash');
+  // TODO: Splash screen disabled temporarily - needs debugging
+  const [appState, setAppState] = useState<AppState>('home');
   const { user, isAuthenticated, isLoading } = useAuth();
 
   // Initialize default students on app start

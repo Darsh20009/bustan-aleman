@@ -3,7 +3,17 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
+// Configure WebSocket to accept self-signed certificates in development
+class CustomWebSocket extends ws {
+  constructor(address: string | URL, protocols?: string | string[]) {
+    super(address, protocols, {
+      rejectUnauthorized: false  // Accept self-signed certificates
+    });
+  }
+}
+
+neonConfig.webSocketConstructor = CustomWebSocket as any;
+neonConfig.pipelineConnect = false;
 
 let pool: Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
