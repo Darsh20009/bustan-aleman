@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupPhoneAuth, isPhoneAuthenticated, isTeacher, initializePreregisteredUsers } from "./phoneAuth";
 import { quranService } from "./quranService";
 import bcrypt from "bcrypt";
 import { telegramBot } from "./telegramBot";
@@ -18,25 +18,16 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Setup phone authentication
+  setupPhoneAuth(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Initialize pre-registered users
+  await initializePreregisteredUsers();
 
   // User profile routes
-  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user/profile', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       const userData = req.body;
       
       const updatedUser = await storage.updateUserProfile(userId, userData);
@@ -71,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/courses', isAuthenticated, async (req, res) => {
+  app.post('/api/courses', isPhoneAuthenticated, async (req, res) => {
     try {
       const courseData = insertCourseSchema.parse(req.body);
       const course = await storage.createCourse(courseData);
@@ -107,9 +98,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enrollment routes
-  app.post('/api/enrollments', isAuthenticated, async (req: any, res) => {
+  app.post('/api/enrollments', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       const enrollmentData = insertEnrollmentSchema.parse({
         ...req.body,
         userId,
@@ -123,9 +114,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/user/enrollments', isAuthenticated, async (req: any, res) => {
+  app.get('/api/user/enrollments', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.session as any).userId;
       const enrollments = await storage.getUserEnrollments(userId);
       res.json(enrollments);
     } catch (error) {
@@ -146,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/contact', isAuthenticated, async (req, res) => {
+  app.get('/api/contact', isPhoneAuthenticated, async (req, res) => {
     try {
       const messages = await storage.getContactMessages();
       res.json(messages);

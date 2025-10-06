@@ -391,6 +391,19 @@ export const sessionAccessControl = pgTable("session_access_control", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Messages table - for real-time chat between teacher and students
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").references(() => users.id).notNull(),
+  receiverId: varchar("receiver_id").references(() => users.id), // null for group messages
+  content: text("content").notNull(),
+  messageType: varchar("message_type").default("text"), // text, image, file
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  isGroupMessage: boolean("is_group_message").default(false), // For broadcasting to all students
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Certificates table - for course completion and achievements
 export const certificates = pgTable("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -547,6 +560,11 @@ export const insertCertificateSchema = createInsertSchema(certificates).omit({
   certificateNumber: true, // Auto-generated UUID
 });
 
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Export types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -592,3 +610,5 @@ export type SessionAccessControl = typeof sessionAccessControl.$inferSelect;
 export type InsertSessionAccessControl = z.infer<typeof insertSessionAccessControlSchema>;
 export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
+export type Message = typeof messages.$inferSelect;
+export type InsertMessage = z.infer<typeof insertMessageSchema>;

@@ -53,6 +53,8 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, data: Partial<User>): Promise<User>;
+  getUserByPhone(phoneNumber: string): Promise<User | undefined>;
+  createUserWithPhone(data: { firstName: string; phoneNumber: string; passwordHash: string; role: string }): Promise<User>;
   
   // Course operations
   getCourses(): Promise<Course[]>;
@@ -209,6 +211,35 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [user] = await db!
+      .select()
+      .from(users)
+      .where(eq(users.phoneNumber, phoneNumber));
+    return user;
+  }
+
+  async createUserWithPhone(data: { firstName: string; phoneNumber: string; passwordHash: string; role: string }): Promise<User> {
+    if (!this.isDbAvailable()) {
+      throw new Error("User creation not available in JSON mode");
+    }
+    const [user] = await db!
+      .insert(users)
+      .values({
+        firstName: data.firstName,
+        phoneNumber: data.phoneNumber,
+        passwordHash: data.passwordHash,
+        role: data.role,
+        isActive: true,
+        registrationCompleted: true,
+      })
       .returning();
     return user;
   }

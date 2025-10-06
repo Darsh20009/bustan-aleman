@@ -1,0 +1,26 @@
+[
+  {
+    "name": "يوسف",
+    "phoneNumber": "0532441566",
+    "password": "0532441566",
+    "role": "student"
+  },
+  {
+    "name": "أحمد أبو مازن",
+    "phoneNumber": "0549947386",
+    "password": "0549947386",
+    "role": "teacher"
+  },
+  {
+    "name": "أحمد",
+    "phoneNumber": "0532449303",
+    "password": "0532449303",
+    "role": "student"
+  },
+  {
+    "name": "محمود",
+    "phoneNumber": "0598765966",
+    "password": "0598765966",
+    "role": "student"
+  }
+]
