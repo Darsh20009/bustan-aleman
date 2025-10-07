@@ -98,7 +98,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 <div className="absolute inset-0 bg-gradient-to-br from-islamic-emerald to-islamic-teal flex items-center justify-center">
                   <div className="text-center text-white">
                     <BookOpen className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                   </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-4 md:p-6">
@@ -116,7 +115,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 <div className="absolute inset-0 bg-gradient-to-br from-royal-gold to-antique-gold flex items-center justify-center">
                   <div className="text-center text-white">
                     <Heart className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                   </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-4 md:p-6">
@@ -134,7 +132,6 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
                   <div className="text-center text-white">
                     <GraduationCap className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
                   </div>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent text-white p-4 md:p-6">
@@ -166,7 +163,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               <Button
                 onClick={onRegisterClick}
                 size="lg"
-                className="bg-gradient-to-r from-antique-gold to-royal-gold text-islamic-emerald font-arabic-serif font-bold px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl w-full sm:w-auto shadow-2xl transform hover:scale-110 transition-all hover:shadow-3xl border border-islamic-emerald/20 islamic-pulse"
+                className="bg-gradient-to-r from-antique-gold to-royal-gold text-[#fbfbf8] font-arabic-serif font-bold px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl w-full sm:w-auto shadow-2xl transform hover:scale-110 transition-all hover:shadow-3xl border border-islamic-emerald/20 islamic-pulse"
                 data-testid="button-register"
               >
                 <Sparkles className="ml-2 h-5 w-5 md:h-6 md:w-6" />
