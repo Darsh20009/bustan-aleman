@@ -19,8 +19,9 @@ import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
 import CertificatesPage from "./components/CertificatesPage";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
+import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements';
 
 function AppContent() {
   // TODO: Splash screen disabled temporarily - needs debugging
@@ -121,6 +122,13 @@ function AppContent() {
       case 'certificates':
         if (isAuthenticated && user) {
           return <CertificatesPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'announcements':
+        if (isAuthenticated && user) {
+          return <AnnouncementsPage />;
         } else {
           return <AuthPage />;
         }

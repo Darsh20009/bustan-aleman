@@ -2,35 +2,141 @@ import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked } from 'lucide-react';
 
 interface NavItem {
   title: string;
   path: string;
   description: string;
+  icon: React.ComponentType<any>;
+  gradient: string;
 }
 
 const roleNavigation = {
   student: [
-    { title: 'لوحة التحكم', path: '/dashboard', description: 'عرض التقدم والجلسات' },
-    { title: 'قراءة القرآن', path: '/quran', description: 'قراءة القرآن مع الملاحظات' },
-    { title: 'الدورات', path: '/courses', description: 'الدورات المتاحة والمسجلة' },
-    { title: 'الرحلات التعليمية', path: '/trips', description: 'الرحلات الدينية والتعليمية' },
-    { title: 'الشهادات', path: '/certificates', description: 'شهادات الإنجاز الخاصة بك' },
+    { 
+      title: 'لوحة التحكم', 
+      path: '/dashboard', 
+      description: 'عرض التقدم والجلسات', 
+      icon: BookMarked,
+      gradient: 'from-emerald-500 to-teal-500'
+    },
+    { 
+      title: 'المصحف التفاعلي', 
+      path: '/quran', 
+      description: 'قراءة القرآن مع الملاحظات والتفسير', 
+      icon: BookOpen,
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      title: 'استكشف الدورات', 
+      path: '/courses', 
+      description: 'تصفح واستكشف الدورات المتاحة', 
+      icon: GraduationCap,
+      gradient: 'from-purple-500 to-pink-500'
+    },
+    { 
+      title: 'الرحلات التعليمية', 
+      path: '/trips', 
+      description: 'رحلات دينية وتعليمية ملهمة', 
+      icon: MapPin,
+      gradient: 'from-amber-500 to-orange-500'
+    },
+    { 
+      title: 'شهاداتي', 
+      path: '/certificates', 
+      description: 'شهادات الإنجاز والتقدير', 
+      icon: Award,
+      gradient: 'from-rose-500 to-red-500'
+    },
+    { 
+      title: 'الإعلانات والأخبار', 
+      path: '/announcements', 
+      description: 'آخر الأخبار والإعلانات من المشرف', 
+      icon: Bell,
+      gradient: 'from-indigo-500 to-violet-500'
+    },
   ],
   supervisor: [
-    { title: 'لوحة المشرف', path: '/supervisor', description: 'إدارة الطلاب والجلسات' },
-    { title: 'الطلاب', path: '/supervisor/students', description: 'متابعة تقدم الطلاب' },
-    { title: 'الجلسات', path: '/supervisor/sessions', description: 'جدولة وإدارة الجلسات' },
-    { title: 'إصدار الشهادات', path: '/supervisor/certificates', description: 'إنشاء وإصدار الشهادات' },
-    { title: 'التقارير', path: '/supervisor/reports', description: 'تقارير الأداء والتقدم' },
+    { 
+      title: 'لوحة المشرف', 
+      path: '/supervisor', 
+      description: 'إدارة الطلاب والجلسات', 
+      icon: BookMarked,
+      gradient: 'from-emerald-500 to-teal-500'
+    },
+    { 
+      title: 'الطلاب', 
+      path: '/supervisor/students', 
+      description: 'متابعة تقدم الطلاب', 
+      icon: GraduationCap,
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      title: 'الجلسات', 
+      path: '/supervisor/sessions', 
+      description: 'جدولة وإدارة الجلسات', 
+      icon: BookOpen,
+      gradient: 'from-purple-500 to-pink-500'
+    },
+    { 
+      title: 'إصدار الشهادات', 
+      path: '/supervisor/certificates', 
+      description: 'إنشاء وإصدار الشهادات', 
+      icon: Award,
+      gradient: 'from-amber-500 to-orange-500'
+    },
+    { 
+      title: 'التقارير', 
+      path: '/supervisor/reports', 
+      description: 'تقارير الأداء والتقدم', 
+      icon: BookMarked,
+      gradient: 'from-rose-500 to-red-500'
+    },
   ],
   admin: [
-    { title: 'لوحة الإدارة', path: '/admin', description: 'إدارة شاملة للنظام' },
-    { title: 'المستخدمون', path: '/admin/users', description: 'إدارة جميع المستخدمين' },
-    { title: 'الدورات', path: '/admin/courses', description: 'إدارة الدورات التعليمية' },
-    { title: 'الرحلات', path: '/admin/trips', description: 'إدارة الرحلات التعليمية' },
-    { title: 'المشرفين', path: '/admin/supervisors', description: 'إدارة المشرفين والأذونات' },
-    { title: 'النظام', path: '/admin/system', description: 'إعدادات النظام والأمان' },
+    { 
+      title: 'لوحة الإدارة', 
+      path: '/admin', 
+      description: 'إدارة شاملة للنظام', 
+      icon: BookMarked,
+      gradient: 'from-emerald-500 to-teal-500'
+    },
+    { 
+      title: 'المستخدمون', 
+      path: '/admin/users', 
+      description: 'إدارة جميع المستخدمين', 
+      icon: GraduationCap,
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      title: 'الدورات', 
+      path: '/admin/courses', 
+      description: 'إدارة الدورات التعليمية', 
+      icon: BookOpen,
+      gradient: 'from-purple-500 to-pink-500'
+    },
+    { 
+      title: 'الرحلات', 
+      path: '/admin/trips', 
+      description: 'إدارة الرحلات التعليمية', 
+      icon: MapPin,
+      gradient: 'from-amber-500 to-orange-500'
+    },
+    { 
+      title: 'المشرفين', 
+      path: '/admin/supervisors', 
+      description: 'إدارة المشرفين والأذونات', 
+      icon: Award,
+      gradient: 'from-rose-500 to-red-500'
+    },
+    { 
+      title: 'النظام', 
+      path: '/admin/system', 
+      description: 'إعدادات النظام والأمان', 
+      icon: Bell,
+      gradient: 'from-indigo-500 to-violet-500'
+    },
   ]
 };
 
@@ -92,13 +198,16 @@ export function RoleBasedNav() {
   }[user.role];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-green-800">بستان الإيمان</h1>
+              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mr-3">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">بستان الإيمان</h1>
             </div>
             
             <div className="flex items-center space-x-4 space-x-reverse">
@@ -123,44 +232,58 @@ export function RoleBasedNav() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            مرحباً {user.firstName}
+        <div className="mb-12 text-center">
+          <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
+            مرحباً {user.firstName} 🌟
           </h2>
-          <p className="text-gray-600">
-            اختر من القائمة أدناه للبدء في رحلتك التعليمية
+          <p className="text-gray-600 text-lg">
+            ابدأ رحلتك التعليمية المباركة من هنا
           </p>
         </div>
 
         {/* Navigation Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {navigation.map((item, index) => (
-            <Card 
-              key={index} 
-              className="hover:shadow-lg transition-shadow duration-200 cursor-pointer group"
-              onClick={() => window.location.href = item.path}
-            >
-              <CardHeader>
-                <CardTitle className="text-xl text-green-800 group-hover:text-green-900">
-                  {item.title}
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent>
-                <p className="text-gray-600">{item.description}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {navigation.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <Card 
+                key={index} 
+                className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm hover:scale-105"
+                onClick={() => window.location.href = item.path}
+                data-testid={`nav-card-${index}`}
+              >
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${item.gradient} opacity-10 group-hover:opacity-20 transition-opacity rounded-full -mr-16 -mt-16`}></div>
                 
-                <Button 
-                  className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.location.href = item.path;
-                  }}
-                >
-                  الدخول
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-xl text-gray-800 group-hover:text-gray-900 mb-2">
+                        {item.title}
+                      </CardTitle>
+                    </div>
+                    <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" />
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <p className="text-gray-600 mb-4">{item.description}</p>
+                  
+                  <Button 
+                    className={`w-full bg-gradient-to-r ${item.gradient} hover:opacity-90 text-white shadow-md`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.location.href = item.path;
+                    }}
+                    data-testid={`button-nav-${index}`}
+                  >
+                    انطلق الآن
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Quick Stats for Students */}
