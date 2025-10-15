@@ -18,13 +18,22 @@ neonConfig.pipelineConnect = false;
 let pool: Pool | null = null;
 let db: ReturnType<typeof drizzle> | null = null;
 
-// Prioritize external database from Render, then fall back to local DATABASE_URL
-const databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
+// Build Aiven database URL from individual secrets if available
+let databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
+
+if (process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
+    process.env.AIVEN_DB_NAME && process.env.AIVEN_DB_USER && 
+    process.env.AIVEN_DB_PASSWORD) {
+  // Construct Aiven PostgreSQL connection string with SSL mode require
+  databaseUrl = `postgresql://${process.env.AIVEN_DB_USER}:${process.env.AIVEN_DB_PASSWORD}@${process.env.AIVEN_DB_HOST}:${process.env.AIVEN_DB_PORT}/${process.env.AIVEN_DB_NAME}?sslmode=require`;
+  console.log(`🔗 Connecting to Aiven database at ${process.env.AIVEN_DB_HOST}:${process.env.AIVEN_DB_PORT}`);
+}
 
 if (databaseUrl) {
   pool = new Pool({ connectionString: databaseUrl });
   db = drizzle({ client: pool, schema });
-  const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
+  const dbSource = databaseUrl.includes('aivencloud.com') ? "Aiven Cloud" : 
+                   process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
   console.log(`✅ Database connection initialized (${dbSource})`);
 } else {
   console.log("⚠️  No database URL found. Using JSON storage fallback.");
