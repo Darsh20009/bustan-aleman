@@ -1,9 +1,13 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
+import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
+import pg from 'pg';
+import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
+import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-// Configure WebSocket to accept self-signed certificates in development
+const { Pool: PgPool } = pg;
+
+// Configure WebSocket to accept self-signed certificates in development (for Neon)
 class CustomWebSocket extends ws {
   constructor(address: string | URL, protocols?: string | string[]) {
     super(address, protocols, {
@@ -15,26 +19,52 @@ class CustomWebSocket extends ws {
 neonConfig.webSocketConstructor = CustomWebSocket as any;
 neonConfig.pipelineConnect = false;
 
-let pool: Pool | null = null;
-let db: ReturnType<typeof drizzle> | null = null;
+let pool: any = null;
+let db: any = null;
 
 // Build Aiven database URL from individual secrets if available
 let databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
+let useAiven = false;
 
-if (process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
+// TEMPORARY: Disable Aiven due to connection issues (ECONNRESET)
+// TODO: Enable Aiven after configuring firewall/IP whitelist in Aiven console
+const ENABLE_AIVEN = false; // Set to true after fixing Aiven connection
+
+if (ENABLE_AIVEN && process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
     process.env.AIVEN_DB_NAME && process.env.AIVEN_DB_USER && 
     process.env.AIVEN_DB_PASSWORD) {
-  // Construct Aiven PostgreSQL connection string with SSL mode require
-  databaseUrl = `postgresql://${process.env.AIVEN_DB_USER}:${process.env.AIVEN_DB_PASSWORD}@${process.env.AIVEN_DB_HOST}:${process.env.AIVEN_DB_PORT}/${process.env.AIVEN_DB_NAME}?sslmode=require`;
+  useAiven = true;
   console.log(`🔗 Connecting to Aiven database at ${process.env.AIVEN_DB_HOST}:${process.env.AIVEN_DB_PORT}`);
 }
 
-if (databaseUrl) {
-  pool = new Pool({ connectionString: databaseUrl });
-  db = drizzle({ client: pool, schema });
-  const dbSource = databaseUrl.includes('aivencloud.com') ? "Aiven Cloud" : 
-                   process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
+if (useAiven) {
+  // Use pg driver for Aiven with SSL configuration
+  const pgPool = new PgPool({
+    host: process.env.AIVEN_DB_HOST,
+    port: parseInt(process.env.AIVEN_DB_PORT || '10370'),
+    database: process.env.AIVEN_DB_NAME,
+    user: process.env.AIVEN_DB_USER,
+    password: process.env.AIVEN_DB_PASSWORD,
+    ssl: {
+      rejectUnauthorized: false  // For development - in production use CA certificate
+    },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+  pool = pgPool;
+  db = drizzlePg(pgPool, { schema });
+  console.log(`✅ Database connection initialized (Aiven Cloud)`);
+} else if (databaseUrl) {
+  // Use Neon driver for other databases
+  const neonPool = new NeonPool({ connectionString: databaseUrl });
+  pool = neonPool;
+  db = drizzleNeon(neonPool, { schema });
+  const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
   console.log(`✅ Database connection initialized (${dbSource})`);
+  if (!ENABLE_AIVEN && process.env.AIVEN_DB_HOST) {
+    console.log(`⚠️  Aiven database available but disabled. Set ENABLE_AIVEN=true in server/db.ts after fixing connection.`);
+  }
 } else {
   console.log("⚠️  No database URL found. Using JSON storage fallback.");
 }

@@ -3,12 +3,32 @@
 ## Overview
 A comprehensive Islamic education platform built with Express.js, React, TypeScript, and PostgreSQL. The platform provides Quran memorization courses, teacher-student interaction, and educational content management.
 
-## Project Status (October 6, 2025)
+## Project Status (October 15, 2025)
 - **Platform**: بستان الإيمان (Garden of Faith)
 - **Status**: Phone-based authentication system implemented ✅
 - **Development Server**: Running successfully on port 5000
-- **Database**: PostgreSQL with Drizzle ORM (production-ready)
+- **Database**: PostgreSQL with Drizzle ORM (Local - Helium)
+- **Aiven Database**: Configured but disabled due to connection issues (see notes below)
 - **Authentication**: Custom phone-based auth with pre-registered users
+
+## Recent Changes (October 15, 2025)
+
+### Aiven Database Integration Attempt ⚠️
+- **Added**: Aiven PostgreSQL credentials stored securely in Secrets
+- **Issue**: Connection fails with `ECONNRESET` error  
+- **Root Cause**: Likely firewall/IP whitelist restrictions in Aiven
+- **Current Status**: Using local PostgreSQL database (Helium)
+- **Action Required**: 
+  1. Log into Aiven Console
+  2. Navigate to PostgreSQL service → Settings → IP Whitelist
+  3. Add `0.0.0.0/0` (for testing) or specific Replit IPs
+  4. Enable Aiven by setting `ENABLE_AIVEN = true` in `server/db.ts`
+
+### Database Connection Layer Enhanced ✅
+- **Added**: Dual driver support (Neon + pg)
+- **Added**: Automatic Aiven detection from environment variables
+- **Added**: SSL configuration for Aiven (rejectUnauthorized: false for dev)
+- **Updated**: drizzle.config.ts to support Aiven credentials
 
 ## Recent Changes (October 6, 2025)
 
