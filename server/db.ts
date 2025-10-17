@@ -26,9 +26,8 @@ let db: any = null;
 let databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
 let useAiven = false;
 
-// TEMPORARY: Disable Aiven due to connection issues (ECONNRESET)
-// TODO: Enable Aiven after configuring firewall/IP whitelist in Aiven console
-const ENABLE_AIVEN = false; // Set to true after fixing Aiven connection
+// Enable Aiven PostgreSQL database connection
+const ENABLE_AIVEN = true;
 
 if (ENABLE_AIVEN && process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
     process.env.AIVEN_DB_NAME && process.env.AIVEN_DB_USER && 
