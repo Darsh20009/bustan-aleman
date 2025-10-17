@@ -128,8 +128,51 @@ class JSONStorage {
   }
 
   async authenticateStudent(email: string, password: string): Promise<Student | null> {
-    const students = await this.readFile<Student>('students.json');
-    return students.find(s => s.email === email && s.password === password && s.isActive) || null;
+    try {
+      const bcrypt = await import('bcrypt');
+      const students = await this.readFile<Student>('students.json');
+      
+      for (const student of students) {
+        if (student.email === email && student.isActive) {
+          const isHashedPassword = student.password.startsWith('$2b$') || 
+                                   student.password.startsWith('$2a$') || 
+                                   student.password.startsWith('$2y$');
+          
+          if (isHashedPassword) {
+            try {
+              const isValid = await bcrypt.compare(password, student.password);
+              if (isValid) return student;
+            } catch (error) {
+              console.error('❌ Bcrypt comparison error:', error);
+              return null;
+            }
+          } else {
+            if (student.password === password) {
+              console.log(`🔒 Upgrading plaintext password to bcrypt hash for student: ${student.studentName}`);
+              try {
+                const hashedPassword = await bcrypt.hash(password, 10);
+                const updated = await this.updateStudent(student.id, { password: hashedPassword });
+                if (!updated) {
+                  console.error('❌ Failed to persist hashed password for student:', student.studentName);
+                  return null;
+                }
+                student.password = hashedPassword;
+                console.log(`✅ Successfully upgraded password for student: ${student.studentName}`);
+                return student;
+              } catch (error) {
+                console.error('❌ Password upgrade error for student', student.studentName, ':', error);
+                return null;
+              }
+            }
+          }
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('❌ Authentication error:', error);
+      return null;
+    }
   }
 
   async updateStudent(id: string, updates: Partial<Student>): Promise<Student | null> {

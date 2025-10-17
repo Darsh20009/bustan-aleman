@@ -28,6 +28,8 @@ app.use(session({
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
+  const method = req.method;
+  const userId = (req.session as any)?.userId;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
 
   const originalResJson = res.json;
@@ -39,13 +41,22 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      let logLine = `${method} ${path} ${res.statusCode} in ${duration}ms`;
+      
+      if (userId) {
+        logLine += ` [user:${userId.slice(0, 8)}]`;
+      }
+      
+      if (duration > 1000) {
+        logLine += ` ⚠️ SLOW`;
+      }
+      
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
 
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
+      if (logLine.length > 120) {
+        logLine = logLine.slice(0, 119) + "…";
       }
 
       log(logLine);
