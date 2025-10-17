@@ -26,8 +26,8 @@ let db: any = null;
 let databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
 let useAiven = false;
 
-// Enable Aiven PostgreSQL database connection
-const ENABLE_AIVEN = true;
+// Enable Aiven PostgreSQL database connection (disabled until secrets are verified)
+const ENABLE_AIVEN = false;
 
 if (ENABLE_AIVEN && process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
     process.env.AIVEN_DB_NAME && process.env.AIVEN_DB_USER && 
