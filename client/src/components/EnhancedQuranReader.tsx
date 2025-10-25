@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -190,9 +190,30 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   const [bookmarkedAyahs, setBookmarkedAyahs] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Use ref to track audio without triggering re-renders
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Stop audio helper function - no dependencies to avoid infinite loops
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setCurrentAudio(prev => {
+      if (prev) {
+        prev.pause();
+      }
+      return null;
+    });
+    setIsPlaying(false);
+  }, []);
 
   // Load Surah data
   const loadSurah = useCallback(async (surahNumber: number) => {
+    // Stop any playing audio when switching surahs
+    stopAudio();
+    
     setLoading(true);
     try {
       const surahInfo = SURAH_NAMES.find(s => s.number === surahNumber);
@@ -253,7 +274,7 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, stopAudio]);
 
   useEffect(() => {
     loadSurah(initialSurah);
@@ -263,9 +284,12 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
     if (!currentSurah) return;
     
     try {
+      // Stop previous audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
       if (currentAudio) {
         currentAudio.pause();
-        setCurrentAudio(null);
       }
 
       setIsPlaying(true);
@@ -293,6 +317,7 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       const audio = new Audio();
       audio.src = data.data.audio;
       
+      audioRef.current = audio;
       setCurrentAudio(audio);
       
       audio.playbackRate = playbackSpeed[0];
@@ -306,6 +331,7 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
         } else {
           setIsPlaying(false);
           setCurrentAudio(null);
+          audioRef.current = null;
         }
       });
       
@@ -381,6 +407,27 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       currentAudio.volume = volume[0] / 100;
     }
   }, [playbackSpeed, volume, currentAudio]);
+
+  // Cleanup audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Stop audio when reciter changes
+  useEffect(() => {
+    if (isPlaying) {
+      stopAudio();
+      toast({
+        title: 'تم تغيير القارئ',
+        description: 'اضغط على زر التشغيل للاستماع بصوت القارئ الجديد',
+      });
+    }
+  }, [selectedReciter, stopAudio, toast, isPlaying]);
 
   if (loading) {
     return (
