@@ -47,18 +47,131 @@ interface EnhancedQuranReaderProps {
 }
 
 const RECITERS = [
-  { id: 'abdulbasit', name: 'عبد الباسط عبد الصمد', style: 'مجود' },
-  { id: 'maher', name: 'ماهر المعيقلي', style: 'مرتل' },
-  { id: 'sudais', name: 'عبد الرحمن السديس', style: 'مرتل' },
-  { id: 'ajamy', name: 'أحمد العجمي', style: 'مجود' },
-  { id: 'hussary', name: 'محمود خليل الحصري', style: 'معلم' },
+  { id: 'ar.alafasy', name: 'مشاري العفاسي', style: 'مرتل', apiId: 'ar.alafasy' },
+  { id: 'ar.abdulbasitmurattal', name: 'عبد الباسط عبد الصمد', style: 'مرتل', apiId: 'ar.abdulbasitmurattal' },
+  { id: 'ar.abdulsamad', name: 'عبد الباسط عبد الصمد', style: 'مجود', apiId: 'ar.abdulsamad' },
+  { id: 'ar.shaatree', name: 'أبو بكر الشاطري', style: 'مرتل', apiId: 'ar.shaatree' },
+  { id: 'ar.hanirifai', name: 'هاني الرفاعي', style: 'مرتل', apiId: 'ar.hanirifai' },
+  { id: 'ar.husary', name: 'محمود خليل الحصري', style: 'معلم', apiId: 'ar.husary' },
+  { id: 'ar.minshawi', name: 'محمد صديق المنشاوي', style: 'مجود', apiId: 'ar.minshawi' },
+  { id: 'ar.sudais', name: 'عبد الرحمن السديس', style: 'مرتل', apiId: 'ar.sudais' },
 ];
 
 const SURAH_NAMES = [
   { number: 1, name: 'الفاتحة', englishName: 'Al-Fatiha', numberOfAyahs: 7 },
   { number: 2, name: 'البقرة', englishName: 'Al-Baqarah', numberOfAyahs: 286 },
   { number: 3, name: 'آل عمران', englishName: 'Aal-E-Imran', numberOfAyahs: 200 },
-  // Add more surahs as needed
+  { number: 4, name: 'النساء', englishName: 'An-Nisa', numberOfAyahs: 176 },
+  { number: 5, name: 'المائدة', englishName: 'Al-Maidah', numberOfAyahs: 120 },
+  { number: 6, name: 'الأنعام', englishName: 'Al-Anam', numberOfAyahs: 165 },
+  { number: 7, name: 'الأعراف', englishName: 'Al-Araf', numberOfAyahs: 206 },
+  { number: 8, name: 'الأنفال', englishName: 'Al-Anfal', numberOfAyahs: 75 },
+  { number: 9, name: 'التوبة', englishName: 'At-Tawbah', numberOfAyahs: 129 },
+  { number: 10, name: 'يونس', englishName: 'Yunus', numberOfAyahs: 109 },
+  { number: 11, name: 'هود', englishName: 'Hud', numberOfAyahs: 123 },
+  { number: 12, name: 'يوسف', englishName: 'Yusuf', numberOfAyahs: 111 },
+  { number: 13, name: 'الرعد', englishName: 'Ar-Rad', numberOfAyahs: 43 },
+  { number: 14, name: 'إبراهيم', englishName: 'Ibrahim', numberOfAyahs: 52 },
+  { number: 15, name: 'الحجر', englishName: 'Al-Hijr', numberOfAyahs: 99 },
+  { number: 16, name: 'النحل', englishName: 'An-Nahl', numberOfAyahs: 128 },
+  { number: 17, name: 'الإسراء', englishName: 'Al-Isra', numberOfAyahs: 111 },
+  { number: 18, name: 'الكهف', englishName: 'Al-Kahf', numberOfAyahs: 110 },
+  { number: 19, name: 'مريم', englishName: 'Maryam', numberOfAyahs: 98 },
+  { number: 20, name: 'طه', englishName: 'Taha', numberOfAyahs: 135 },
+  { number: 21, name: 'الأنبياء', englishName: 'Al-Anbiya', numberOfAyahs: 112 },
+  { number: 22, name: 'الحج', englishName: 'Al-Hajj', numberOfAyahs: 78 },
+  { number: 23, name: 'المؤمنون', englishName: 'Al-Muminun', numberOfAyahs: 118 },
+  { number: 24, name: 'النور', englishName: 'An-Nur', numberOfAyahs: 64 },
+  { number: 25, name: 'الفرقان', englishName: 'Al-Furqan', numberOfAyahs: 77 },
+  { number: 26, name: 'الشعراء', englishName: 'Ash-Shuara', numberOfAyahs: 227 },
+  { number: 27, name: 'النمل', englishName: 'An-Naml', numberOfAyahs: 93 },
+  { number: 28, name: 'القصص', englishName: 'Al-Qasas', numberOfAyahs: 88 },
+  { number: 29, name: 'العنكبوت', englishName: 'Al-Ankabut', numberOfAyahs: 69 },
+  { number: 30, name: 'الروم', englishName: 'Ar-Rum', numberOfAyahs: 60 },
+  { number: 31, name: 'لقمان', englishName: 'Luqman', numberOfAyahs: 34 },
+  { number: 32, name: 'السجدة', englishName: 'As-Sajdah', numberOfAyahs: 30 },
+  { number: 33, name: 'الأحزاب', englishName: 'Al-Ahzab', numberOfAyahs: 73 },
+  { number: 34, name: 'سبأ', englishName: 'Saba', numberOfAyahs: 54 },
+  { number: 35, name: 'فاطر', englishName: 'Fatir', numberOfAyahs: 45 },
+  { number: 36, name: 'يس', englishName: 'Ya-Sin', numberOfAyahs: 83 },
+  { number: 37, name: 'الصافات', englishName: 'As-Saffat', numberOfAyahs: 182 },
+  { number: 38, name: 'ص', englishName: 'Sad', numberOfAyahs: 88 },
+  { number: 39, name: 'الزمر', englishName: 'Az-Zumar', numberOfAyahs: 75 },
+  { number: 40, name: 'غافر', englishName: 'Ghafir', numberOfAyahs: 85 },
+  { number: 41, name: 'فصلت', englishName: 'Fussilat', numberOfAyahs: 54 },
+  { number: 42, name: 'الشورى', englishName: 'Ash-Shura', numberOfAyahs: 53 },
+  { number: 43, name: 'الزخرف', englishName: 'Az-Zukhruf', numberOfAyahs: 89 },
+  { number: 44, name: 'الدخان', englishName: 'Ad-Dukhan', numberOfAyahs: 59 },
+  { number: 45, name: 'الجاثية', englishName: 'Al-Jathiya', numberOfAyahs: 37 },
+  { number: 46, name: 'الأحقاف', englishName: 'Al-Ahqaf', numberOfAyahs: 35 },
+  { number: 47, name: 'محمد', englishName: 'Muhammad', numberOfAyahs: 38 },
+  { number: 48, name: 'الفتح', englishName: 'Al-Fath', numberOfAyahs: 29 },
+  { number: 49, name: 'الحجرات', englishName: 'Al-Hujurat', numberOfAyahs: 18 },
+  { number: 50, name: 'ق', englishName: 'Qaf', numberOfAyahs: 45 },
+  { number: 51, name: 'الذاريات', englishName: 'Adh-Dhariyat', numberOfAyahs: 60 },
+  { number: 52, name: 'الطور', englishName: 'At-Tur', numberOfAyahs: 49 },
+  { number: 53, name: 'النجم', englishName: 'An-Najm', numberOfAyahs: 62 },
+  { number: 54, name: 'القمر', englishName: 'Al-Qamar', numberOfAyahs: 55 },
+  { number: 55, name: 'الرحمن', englishName: 'Ar-Rahman', numberOfAyahs: 78 },
+  { number: 56, name: 'الواقعة', englishName: 'Al-Waqiah', numberOfAyahs: 96 },
+  { number: 57, name: 'الحديد', englishName: 'Al-Hadid', numberOfAyahs: 29 },
+  { number: 58, name: 'المجادلة', englishName: 'Al-Mujadila', numberOfAyahs: 22 },
+  { number: 59, name: 'الحشر', englishName: 'Al-Hashr', numberOfAyahs: 24 },
+  { number: 60, name: 'الممتحنة', englishName: 'Al-Mumtahanah', numberOfAyahs: 13 },
+  { number: 61, name: 'الصف', englishName: 'As-Saf', numberOfAyahs: 14 },
+  { number: 62, name: 'الجمعة', englishName: 'Al-Jumuah', numberOfAyahs: 11 },
+  { number: 63, name: 'المنافقون', englishName: 'Al-Munafiqun', numberOfAyahs: 11 },
+  { number: 64, name: 'التغابن', englishName: 'At-Taghabun', numberOfAyahs: 18 },
+  { number: 65, name: 'الطلاق', englishName: 'At-Talaq', numberOfAyahs: 12 },
+  { number: 66, name: 'التحريم', englishName: 'At-Tahrim', numberOfAyahs: 12 },
+  { number: 67, name: 'الملك', englishName: 'Al-Mulk', numberOfAyahs: 30 },
+  { number: 68, name: 'القلم', englishName: 'Al-Qalam', numberOfAyahs: 52 },
+  { number: 69, name: 'الحاقة', englishName: 'Al-Haqqah', numberOfAyahs: 52 },
+  { number: 70, name: 'المعارج', englishName: 'Al-Maarij', numberOfAyahs: 44 },
+  { number: 71, name: 'نوح', englishName: 'Nuh', numberOfAyahs: 28 },
+  { number: 72, name: 'الجن', englishName: 'Al-Jinn', numberOfAyahs: 28 },
+  { number: 73, name: 'المزمل', englishName: 'Al-Muzzammil', numberOfAyahs: 20 },
+  { number: 74, name: 'المدثر', englishName: 'Al-Muddaththir', numberOfAyahs: 56 },
+  { number: 75, name: 'القيامة', englishName: 'Al-Qiyamah', numberOfAyahs: 40 },
+  { number: 76, name: 'الإنسان', englishName: 'Al-Insan', numberOfAyahs: 31 },
+  { number: 77, name: 'المرسلات', englishName: 'Al-Mursalat', numberOfAyahs: 50 },
+  { number: 78, name: 'النبأ', englishName: 'An-Naba', numberOfAyahs: 40 },
+  { number: 79, name: 'النازعات', englishName: 'An-Naziat', numberOfAyahs: 46 },
+  { number: 80, name: 'عبس', englishName: 'Abasa', numberOfAyahs: 42 },
+  { number: 81, name: 'التكوير', englishName: 'At-Takwir', numberOfAyahs: 29 },
+  { number: 82, name: 'الإنفطار', englishName: 'Al-Infitar', numberOfAyahs: 19 },
+  { number: 83, name: 'المطففين', englishName: 'Al-Mutaffifin', numberOfAyahs: 36 },
+  { number: 84, name: 'الإنشقاق', englishName: 'Al-Inshiqaq', numberOfAyahs: 25 },
+  { number: 85, name: 'البروج', englishName: 'Al-Buruj', numberOfAyahs: 22 },
+  { number: 86, name: 'الطارق', englishName: 'At-Tariq', numberOfAyahs: 17 },
+  { number: 87, name: 'الأعلى', englishName: 'Al-Ala', numberOfAyahs: 19 },
+  { number: 88, name: 'الغاشية', englishName: 'Al-Ghashiyah', numberOfAyahs: 26 },
+  { number: 89, name: 'الفجر', englishName: 'Al-Fajr', numberOfAyahs: 30 },
+  { number: 90, name: 'البلد', englishName: 'Al-Balad', numberOfAyahs: 20 },
+  { number: 91, name: 'الشمس', englishName: 'Ash-Shams', numberOfAyahs: 15 },
+  { number: 92, name: 'الليل', englishName: 'Al-Layl', numberOfAyahs: 21 },
+  { number: 93, name: 'الضحى', englishName: 'Ad-Duhaa', numberOfAyahs: 11 },
+  { number: 94, name: 'الشرح', englishName: 'Ash-Sharh', numberOfAyahs: 8 },
+  { number: 95, name: 'التين', englishName: 'At-Tin', numberOfAyahs: 8 },
+  { number: 96, name: 'العلق', englishName: 'Al-Alaq', numberOfAyahs: 19 },
+  { number: 97, name: 'القدر', englishName: 'Al-Qadr', numberOfAyahs: 5 },
+  { number: 98, name: 'البينة', englishName: 'Al-Bayyinah', numberOfAyahs: 8 },
+  { number: 99, name: 'الزلزلة', englishName: 'Az-Zalzalah', numberOfAyahs: 8 },
+  { number: 100, name: 'العاديات', englishName: 'Al-Adiyat', numberOfAyahs: 11 },
+  { number: 101, name: 'القارعة', englishName: 'Al-Qariah', numberOfAyahs: 11 },
+  { number: 102, name: 'التكاثر', englishName: 'At-Takathur', numberOfAyahs: 8 },
+  { number: 103, name: 'العصر', englishName: 'Al-Asr', numberOfAyahs: 3 },
+  { number: 104, name: 'الهمزة', englishName: 'Al-Humazah', numberOfAyahs: 9 },
+  { number: 105, name: 'الفيل', englishName: 'Al-Fil', numberOfAyahs: 5 },
+  { number: 106, name: 'قريش', englishName: 'Quraysh', numberOfAyahs: 4 },
+  { number: 107, name: 'الماعون', englishName: 'Al-Maun', numberOfAyahs: 7 },
+  { number: 108, name: 'الكوثر', englishName: 'Al-Kawthar', numberOfAyahs: 3 },
+  { number: 109, name: 'الكافرون', englishName: 'Al-Kafirun', numberOfAyahs: 6 },
+  { number: 110, name: 'النصر', englishName: 'An-Nasr', numberOfAyahs: 3 },
+  { number: 111, name: 'المسد', englishName: 'Al-Masad', numberOfAyahs: 5 },
+  { number: 112, name: 'الإخلاص', englishName: 'Al-Ikhlas', numberOfAyahs: 4 },
+  { number: 113, name: 'الفلق', englishName: 'Al-Falaq', numberOfAyahs: 5 },
+  { number: 114, name: 'الناس', englishName: 'An-Nas', numberOfAyahs: 6 }
 ];
 
 export default function EnhancedQuranReader({ initialSurah = 1, studentId }: EnhancedQuranReaderProps) {
@@ -68,7 +181,7 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playbackSpeed, setPlaybackSpeed] = useState([1]);
   const [volume, setVolume] = useState([50]);
-  const [selectedReciter, setSelectedReciter] = useState('abdulbasit');
+  const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
   const [isAutoPlay, setIsAutoPlay] = useState(false);
   const [isRepeatMode, setIsRepeatMode] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -82,71 +195,59 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   const loadSurah = useCallback(async (surahNumber: number) => {
     setLoading(true);
     try {
-      // Simulate API call - in real app, fetch from Quran API
-      const mockSurah: Surah = {
-        number: surahNumber,
-        name: SURAH_NAMES.find(s => s.number === surahNumber)?.name || 'السورة',
-        englishName: SURAH_NAMES.find(s => s.number === surahNumber)?.englishName || 'Surah',
-        numberOfAyahs: SURAH_NAMES.find(s => s.number === surahNumber)?.numberOfAyahs || 0,
-        ayahs: []
-      };
-
-      // Generate mock ayahs based on surah
-      if (surahNumber === 1) {
-        mockSurah.ayahs = [
-          { 
-            number: 1, 
-            text: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-            translation: 'In the name of Allah, the Entirely Merciful, the Especially Merciful.',
-            tafsir: 'بسم الله: أي أبدأ قراءتي مستعيناً باسم الله، والرحمن الرحيم اسمان من أسماء الله الحسنى، والرحمن أبلغ من الرحيم.'
-          },
-          { 
-            number: 2, 
-            text: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-            translation: '[All] praise is [due] to Allah, Lord of the worlds -',
-            tafsir: 'الحمد لله: أي الثناء الكامل لله وحده، رب العالمين: أي خالق جميع المخلوقات ومالكها ومدبر أمورها.'
-          },
-          { 
-            number: 3, 
-            text: 'الرَّحْمَٰنِ الرَّحِيمِ',
-            translation: 'The Entirely Merciful, the Especially Merciful,',
-            tafsir: 'الرحمن الرحيم: وصفان يدلان على سعة رحمة الله تعالى بخلقه في الدنيا والآخرة.'
-          },
-          { 
-            number: 4, 
-            text: 'مَالِكِ يَوْمِ الدِّينِ',
-            translation: 'Sovereign of the Day of Recompense.',
-            tafsir: 'مالك يوم الدين: أي صاحب السلطان النافذ يوم القيامة، وهو يوم الجزاء والحساب.'
-          },
-          { 
-            number: 5, 
-            text: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
-            translation: 'It is You we worship and You we ask for help.',
-            tafsir: 'إياك نعبد: أي نخصك وحدك بالعبادة، وإياك نستعين: نطلب العون منك وحدك في جميع أمورنا.'
-          },
-          { 
-            number: 6, 
-            text: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
-            translation: 'Guide us to the straight path -',
-            tafsir: 'اهدنا الصراط المستقيم: أي وفقنا للطريق القويم الذي لا اعوجاج فيه، وهو دين الإسلام.'
-          },
-          { 
-            number: 7, 
-            text: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
-            translation: 'The path of those upon whom You have bestowed favor, not of those who have evoked [Your] anger or of those who are astray.',
-            tafsir: 'صراط الذين أنعمت عليهم: طريق المؤمنين من الأنبياء والصالحين، غير المغضوب عليهم: وهم اليهود، ولا الضالين: وهم النصارى.'
-          }
-        ];
+      const surahInfo = SURAH_NAMES.find(s => s.number === surahNumber);
+      if (!surahInfo) {
+        throw new Error('السورة غير موجودة');
       }
 
-      setCurrentSurah(mockSurah);
+      // Fetch Quran text in Arabic (Uthmani script) with English translation and Arabic tafsir
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surahNumber}/editions/quran-uthmani,en.sahih,ar.muyassar`
+      );
+      
+      if (!response.ok) {
+        throw new Error('فشل تحميل البيانات');
+      }
+
+      const data = await response.json();
+      
+      if (data.code !== 200 || !data.data || data.data.length < 3) {
+        throw new Error('بيانات غير صحيحة');
+      }
+
+      const arabicData = data.data[0]; // Arabic text (Uthmani)
+      const translationData = data.data[1]; // English translation
+      const tafsirData = data.data[2]; // Arabic tafsir (simplified)
+
+      // Build ayahs array
+      const ayahs: QuranAyah[] = arabicData.ayahs.map((ayah: any, index: number) => ({
+        number: ayah.numberInSurah,
+        text: ayah.text,
+        translation: translationData.ayahs[index]?.text || '',
+        tafsir: tafsirData.ayahs[index]?.text || ''
+      }));
+
+      const surah: Surah = {
+        number: surahNumber,
+        name: surahInfo.name,
+        englishName: surahInfo.englishName,
+        numberOfAyahs: surahInfo.numberOfAyahs,
+        ayahs
+      };
+
+      setCurrentSurah(surah);
       setCurrentAyah(0);
+      
+      toast({
+        title: '✅ تم تحميل السورة',
+        description: `${surah.name} - ${surah.numberOfAyahs} آية`,
+      });
       
     } catch (error) {
       console.error('Error loading surah:', error);
       toast({
         title: 'خطأ في تحميل السورة',
-        description: 'لم نتمكن من تحميل السورة المطلوبة',
+        description: 'لم نتمكن من تحميل السورة المطلوبة. تأكد من اتصالك بالإنترنت.',
         variant: 'destructive'
       });
     } finally {
@@ -170,15 +271,27 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       setIsPlaying(true);
       setCurrentAyah(ayahIndex);
 
-      // Simulate audio loading
-      const audio = new Audio();
       const ayahNumber = ayahIndex + 1;
-      
-      // Mock audio URL - replace with real API
       const surahStr = currentSurah.number.toString().padStart(3, '0');
       const ayahStr = ayahNumber.toString().padStart(3, '0');
       
-      audio.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${surahStr}${ayahStr}.mp3`;
+      // Fetch audio URL from AlQuran API
+      const response = await fetch(
+        `https://api.alquran.cloud/v1/ayah/${currentSurah.number}:${ayahNumber}/${selectedReciter}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch audio');
+      }
+
+      const data = await response.json();
+      
+      if (data.code !== 200 || !data.data?.audio) {
+        throw new Error('No audio available');
+      }
+
+      const audio = new Audio();
+      audio.src = data.data.audio;
       
       setCurrentAudio(audio);
       
@@ -198,9 +311,10 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       
       await audio.play();
       
+      const reciterName = RECITERS.find(r => r.id === selectedReciter)?.name || '';
       toast({
         title: '🎵 بدء التلاوة',
-        description: `الآية ${ayahNumber} من سورة ${currentSurah.name}`,
+        description: `الآية ${ayahNumber} من سورة ${currentSurah.name} - ${reciterName}`,
       });
       
     } catch (error) {
@@ -208,7 +322,7 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       setIsPlaying(false);
       toast({
         title: 'خطأ في التشغيل',
-        description: 'لم نتمكن من تشغيل التلاوة',
+        description: 'لم نتمكن من تشغيل التلاوة. تأكد من اتصالك بالإنترنت.',
         variant: 'destructive'
       });
     }
