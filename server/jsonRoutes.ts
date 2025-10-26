@@ -18,14 +18,14 @@ declare module 'express-session' {
 // Helper function to get student data from either storage system
 async function getCurrentStudent(req: any) {
   const { studentId, userId } = req.session || {};
-  
+
   // Try to get from JSON storage first (legacy method)
   if (studentId) {
     const students = await jsonStorage.getAllStudents();
     const student = students.find(s => s.id === studentId && s.isActive);
     if (student) return student;
   }
-  
+
   // Try to get by userId from database (new method)
   if (userId) {
     const user = await storage.getUser(userId);
@@ -35,7 +35,7 @@ async function getCurrentStudent(req: any) {
       if (student) return student;
     }
   }
-  
+
   return null;
 }
 
@@ -50,14 +50,71 @@ const registrationSchema = z.object({
 });
 
 export function setupJSONRoutes(app: Express) {
-  // Initialize default students
+  // Initialize default students endpoint
   app.post('/api/init-data', async (req, res) => {
     try {
-      await jsonStorage.initializeDefaultStudents();
-      res.json({ message: "Default students initialized successfully" });
+      await jsonStorage.initDefaultStudents();
+      res.json({ message: 'Default students initialized successfully' });
     } catch (error) {
-      console.error("Error initializing data:", error);
-      res.status(500).json({ message: "Failed to initialize data" });
+      console.error('Error initializing default students:', error);
+      res.status(500).json({ message: 'Failed to initialize default students' });
+    }
+  });
+
+  // Sync JSON students to database
+  app.post('/api/sync-students-to-db', async (req, res) => {
+    try {
+      const jsonStudents = await jsonStorage.getAllStudents();
+      let syncedCount = 0;
+
+      for (const jsonStudent of jsonStudents) {
+        // Check if user exists
+        const users = await storage.getAllUsers();
+        let user = users.find((u: any) => u.phoneNumber === jsonStudent.phone);
+
+        // Create user if doesn't exist
+        if (!user) {
+          user = await storage.createUserWithPhone({
+            firstName: jsonStudent.studentName.split(' ')[0] || jsonStudent.studentName,
+            phoneNumber: jsonStudent.phone || '+966532441566',
+            passwordHash: jsonStudent.password,
+            role: 'student',
+          });
+        }
+
+        // Check if student record exists
+        const students = await storage.getAllStudents();
+        const existingStudent = students.find(s => s.userId === user.id);
+
+        if (!existingStudent) {
+          // Create student record
+          await storage.createStudent({
+            userId: user.id,
+            studentName: jsonStudent.studentName,
+            passwordHash: jsonStudent.password,
+            dateOfBirth: jsonStudent.dateOfBirth,
+            grade: jsonStudent.grade || null,
+            monthlySessionsCount: 0,
+            monthlyPrice: "0",
+            isPaid: false,
+            isActive: jsonStudent.isActive,
+            memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs || []),
+            currentLevel: jsonStudent.currentLevel || 'beginner',
+            notes: jsonStudent.notes || null,
+            zoomLink: jsonStudent.zoomLink || null,
+            whatsappContact: jsonStudent.phone || '+966532441566',
+          });
+          syncedCount++;
+        }
+      }
+
+      res.json({ 
+        message: `تم مزامنة ${syncedCount} طالب إلى قاعدة البيانات`,
+        syncedCount 
+      });
+    } catch (error) {
+      console.error('Error syncing students:', error);
+      res.status(500).json({ message: 'فشل في مزامنة البيانات' });
     }
   });
 
@@ -65,10 +122,10 @@ export function setupJSONRoutes(app: Express) {
   app.post('/api/register', async (req, res) => {
     try {
       const registrationData = registrationSchema.parse(req.body);
-      
+
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
-      
+
       // Create new student
       const student = await jsonStorage.createStudent({
         ...registrationData,
@@ -100,7 +157,7 @@ export function setupJSONRoutes(app: Express) {
 
       // Create WhatsApp link for user to send the message
       const whatsappLink = `https://wa.me/966549947386?text=${encodeURIComponent(whatsappMessage)}`;
-      
+
       console.log(`Sending to +966549947386: ${whatsappMessage}`);
 
       res.status(201).json({ 
@@ -123,21 +180,21 @@ export function setupJSONRoutes(app: Express) {
   app.post('/api/student-login', async (req, res) => {
     try {
       const { identifier, password } = req.body; // Changed from email to identifier
-      
+
       // Find student by name or email first
       const students = await jsonStorage.getAllStudents();
       const student = students.find(s => 
         (s.studentName === identifier || s.email === identifier) && 
         s.isActive
       );
-      
+
       if (!student) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
-      
+
       // Verify password against stored hash
       const isValidPassword = await verifyPassword(password, student.password);
-      
+
       if (!isValidPassword) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
@@ -145,7 +202,7 @@ export function setupJSONRoutes(app: Express) {
       // Get or create user record for session consistency
       const users = await storage.getAllUsers();
       let user = users.find(u => u.email === student.email && u.isActive);
-      
+
       // Auto-create user record if it doesn't exist (for legacy student compatibility)
       if (!user) {
         // Ensure password is properly hashed (legacy passwords should already be hashed)
@@ -154,7 +211,7 @@ export function setupJSONRoutes(app: Express) {
           console.log('Legacy password not hashed, hashing now for student:', student.email);
           passwordHash = await hashPassword(student.password);
         }
-        
+
         user = await storage.upsertUser({
           email: student.email,
           firstName: student.studentName?.split(' ')[0] || student.email.split('@')[0],
@@ -165,7 +222,7 @@ export function setupJSONRoutes(app: Express) {
           registrationCompleted: true,
         });
       }
-      
+
       // Store student session (create session object if it doesn't exist)
       if (!req.session) {
         req.session = {} as any;
@@ -173,7 +230,7 @@ export function setupJSONRoutes(app: Express) {
       req.session.studentId = student.id;
       req.session.userId = user.id;
       req.session.userRole = 'student';
-      
+
       res.json({
         message: "تم تسجيل الدخول بنجاح",
         student: {
@@ -221,10 +278,10 @@ export function setupJSONRoutes(app: Express) {
       }
 
       const { memorizedVerses, currentSurah, mistakes } = req.body;
-      
+
       // This would update the student's local progress
       // For now, we'll just store it in localStorage on the client side
-      
+
       res.json({ message: "تم حفظ التقدم بنجاح" });
     } catch (error) {
       console.error("Error updating progress:", error);
@@ -261,7 +318,7 @@ export function setupJSONRoutes(app: Express) {
       }
 
       const { surah, ayahNumber, errorType, errorDescription } = req.body;
-      
+
       const error = await jsonStorage.addStudentError(studentId, {
         surah,
         ayahNumber,
@@ -291,13 +348,13 @@ export function setupJSONRoutes(app: Express) {
   app.get('/api/admin/students', requireSupervisorOrAdmin, async (req, res) => {
     try {
       const students = await jsonStorage.getAllStudents();
-      
+
       // Sanitize response - never expose password hashes
       const sanitizedStudents = students.map(student => {
         const { password, ...safeStudent } = student;
         return safeStudent;
       });
-      
+
       res.json(sanitizedStudents);
     } catch (error) {
       console.error("Error fetching all students:", error);
@@ -319,7 +376,7 @@ export function setupJSONRoutes(app: Express) {
       }
 
       const { sessionsRequested } = req.body;
-      
+
       const renewalMessage = `
 🔄 طلب تجديد اشتراك 🔄
 
@@ -344,7 +401,7 @@ export function setupJSONRoutes(app: Express) {
   app.get('/api/quran/surah/:surahNumber', async (req, res) => {
     try {
       const surahNumber = parseInt(req.params.surahNumber);
-      
+
       if (isNaN(surahNumber) || surahNumber < 1 || surahNumber > 114) {
         return res.status(400).json({ message: "رقم السورة غير صحيح" });
       }
@@ -352,13 +409,13 @@ export function setupJSONRoutes(app: Express) {
       // Load Quran data
       const fs = await import('fs').then(m => m.promises);
       const path = await import('path');
-      
+
       const quranDataPath = path.join(process.cwd(), 'client/src/assets/quran-data.json');
       const quranDataRaw = await fs.readFile(quranDataPath, 'utf-8');
       const quranData = JSON.parse(quranDataRaw);
-      
+
       const surah = quranData.data.surahs.find((s: any) => s.number === surahNumber);
-      
+
       if (!surah) {
         return res.status(404).json({ message: "السورة غير موجودة" });
       }
@@ -373,7 +430,7 @@ export function setupJSONRoutes(app: Express) {
   app.get('/api/quran/page/:pageNumber', async (req, res) => {
     try {
       const pageNumber = parseInt(req.params.pageNumber);
-      
+
       if (isNaN(pageNumber) || pageNumber < 1 || pageNumber > 604) {
         return res.status(400).json({ message: "رقم الصفحة غير صحيح" });
       }
@@ -381,14 +438,14 @@ export function setupJSONRoutes(app: Express) {
       // Load Quran data
       const fs = await import('fs').then(m => m.promises);
       const path = await import('path');
-      
+
       const quranDataPath = path.join(process.cwd(), 'client/src/assets/quran-data.json');
       const quranDataRaw = await fs.readFile(quranDataPath, 'utf-8');
       const quranData = JSON.parse(quranDataRaw);
-      
+
       // Filter ayahs by page number
       const pageAyahs: any = {};
-      
+
       quranData.data.surahs.forEach((surah: any) => {
         const surahAyahs = surah.ayahs.filter((ayah: any) => ayah.page === pageNumber);
         if (surahAyahs.length > 0) {
@@ -416,11 +473,11 @@ export function setupJSONRoutes(app: Express) {
       // Load Surah list
       const fs = await import('fs').then(m => m.promises);
       const path = await import('path');
-      
+
       const surahListPath = path.join(process.cwd(), 'client/src/assets/surah-list.json');
       const surahListRaw = await fs.readFile(surahListPath, 'utf-8');
       const surahList = JSON.parse(surahListRaw);
-      
+
       res.json(surahList.data);
     } catch (error) {
       console.error("Error fetching surah list:", error);
@@ -465,7 +522,7 @@ export function setupJSONRoutes(app: Express) {
 
       const courseId = req.params.courseId;
       const enrollment = await courseManager.enrollStudent(studentId, courseId);
-      
+
       if (!enrollment) {
         return res.status(404).json({ message: "الدورة غير موجودة" });
       }
@@ -473,7 +530,7 @@ export function setupJSONRoutes(app: Express) {
       // إرسال إشعار WhatsApp للأستاذ
       const course = courseManager.getCourse(courseId);
       const student = await jsonStorage.getStudent(studentId);
-      
+
       if (course && student) {
         const enrollmentMessage = `
 📚 تسجيل جديد في الدورة 📚
@@ -535,7 +592,7 @@ export function setupJSONRoutes(app: Express) {
 
       const { enrollmentId, progress, completedLesson } = req.body;
       const success = courseManager.updateProgress(enrollmentId, progress, completedLesson);
-      
+
       if (!success) {
         return res.status(404).json({ message: "الالتحاق غير موجود" });
       }
@@ -552,7 +609,7 @@ export function setupJSONRoutes(app: Express) {
     try {
       const { enrollmentId, date, attended, notes } = req.body;
       const success = courseManager.addAttendance(enrollmentId, date, attended, notes);
-      
+
       if (!success) {
         return res.status(404).json({ message: "الالتحاق غير موجود" });
       }
@@ -642,7 +699,7 @@ export function setupJSONRoutes(app: Express) {
     for (const schedule of sortedSchedules) {
       const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
       const classStart = startHour * 60 + startMinute;
-      
+
       if (schedule.dayOfWeek > currentDay || 
           (schedule.dayOfWeek === currentDay && classStart > currentTime)) {
         return {
