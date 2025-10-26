@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 interface QuranAyah {
   number: number;
@@ -188,7 +189,7 @@ const SURAH_NAMES = [
   { number: 114, name: 'الناس', englishName: 'An-Nas', numberOfAyahs: 6 }
 ];
 
-export default function EnhancedQuranReader({ initialSurah = 1, studentId }: EnhancedQuranReaderProps) {
+export default function EnhancedQuranReader({ initialSurah = 1, studentId: propStudentId }: EnhancedQuranReaderProps) {
   const [currentSurah, setCurrentSurah] = useState<Surah | null>(null);
   const [currentAyah, setCurrentAyah] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -208,6 +209,10 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { user } = useAuth();
+  
+  // استخدام studentId من المستخدم المسجل دخوله أو من props
+  const studentId = user?.studentId || propStudentId;
 
   // Load word highlights from backend
   const { data: savedHighlights } = useQuery<WordHighlight[]>({
@@ -412,10 +417,12 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   const saveWordNote = () => {
     if (!selectedWord) return;
     
+    console.log('Saving note with studentId:', studentId, 'user:', user);
+    
     if (!studentId) {
       toast({
-        title: 'تسجيل الدخول مطلوب',
-        description: 'يجب تسجيل الدخول لحفظ الملاحظات',
+        title: 'خطأ في الحفظ',
+        description: user ? 'لم يتم العثور على معرف الطالب، يرجى تسجيل الخروج والدخول مرة أخرى' : 'يجب تسجيل الدخول لحفظ الملاحظات',
         variant: 'destructive'
       });
       return;
