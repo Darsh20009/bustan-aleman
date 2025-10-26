@@ -20,12 +20,14 @@ import { PersonalProfile } from "./components/PersonalProfile";
 import CertificatesPage from "./components/CertificatesPage";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
+import QuranStats from "./pages/QuranStats";
+import MemorizationPage from "./pages/MemorizationPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization'];
   return validStates.includes(path as AppState);
 };
 
@@ -177,6 +179,50 @@ function AppContent() {
             </div>
           </div>
         );
+      
+      case 'quran-stats':
+        if (isAuthenticated && user) {
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4">
+                <div className="max-w-6xl mx-auto flex justify-between items-center">
+                  <h1 className="text-xl md:text-2xl font-bold">إحصائيات القراءة</h1>
+                  <button
+                    onClick={() => setAppState('dashboard')}
+                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors"
+                  >
+                    ← العودة
+                  </button>
+                </div>
+              </div>
+              <QuranStats />
+            </div>
+          );
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'memorization':
+        if (isAuthenticated && user) {
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4">
+                <div className="max-w-6xl mx-auto flex justify-between items-center">
+                  <h1 className="text-xl md:text-2xl font-bold">متابعة الحفظ</h1>
+                  <button
+                    onClick={() => setAppState('dashboard')}
+                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors"
+                  >
+                    ← العودة
+                  </button>
+                </div>
+              </div>
+              <MemorizationPage />
+            </div>
+          );
+        } else {
+          return <AuthPage />;
+        }
       
       case 'quran':
         return (
