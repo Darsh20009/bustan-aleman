@@ -16,6 +16,8 @@ import {
   quranWordHighlights,
   quranMemorization,
   quranReadingStats,
+  quranAyahMarkers,
+  quranRecitationAttempts,
   type User,
   type UpsertUser,
   type Course,
@@ -50,6 +52,10 @@ import {
   type InsertQuranMemorization,
   type QuranReadingStats,
   type InsertQuranReadingStats,
+  type QuranAyahMarker,
+  type InsertQuranAyahMarker,
+  type QuranRecitationAttempt,
+  type InsertQuranRecitationAttempt,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -166,6 +172,16 @@ export interface IStorage {
   createOrUpdateReadingStats(stats: InsertQuranReadingStats): Promise<QuranReadingStats>;
   getStudentReadingStats(studentId: string, startDate?: string, endDate?: string): Promise<QuranReadingStats[]>;
   getTodayReadingStats(studentId: string): Promise<QuranReadingStats | undefined>;
+  
+  // Quran ayah markers operations
+  createAyahMarker(marker: InsertQuranAyahMarker): Promise<QuranAyahMarker>;
+  getStudentAyahMarkers(studentId: string): Promise<QuranAyahMarker[]>;
+  updateAyahMarker(id: string, updates: Partial<InsertQuranAyahMarker>): Promise<QuranAyahMarker>;
+  deleteAyahMarker(id: string): Promise<void>;
+  
+  // Quran recitation attempts operations
+  createRecitationAttempt(attempt: InsertQuranRecitationAttempt): Promise<QuranRecitationAttempt>;
+  getStudentRecitationAttempts(studentId: string): Promise<QuranRecitationAttempt[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1061,6 +1077,53 @@ export class DatabaseStorage implements IStorage {
       ));
     
     return stats;
+  }
+
+  // Quran ayah markers operations
+  async createAyahMarker(marker: InsertQuranAyahMarker): Promise<QuranAyahMarker> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newMarker] = await db!.insert(quranAyahMarkers).values(marker).returning();
+    return newMarker;
+  }
+
+  async getStudentAyahMarkers(studentId: string): Promise<QuranAyahMarker[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(quranAyahMarkers).where(eq(quranAyahMarkers.studentId, studentId));
+  }
+
+  async updateAyahMarker(id: string, updates: Partial<InsertQuranAyahMarker>): Promise<QuranAyahMarker> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(quranAyahMarkers).set(updates).where(eq(quranAyahMarkers.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAyahMarker(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(quranAyahMarkers).where(eq(quranAyahMarkers.id, id));
+  }
+
+  // Quran recitation attempts operations
+  async createRecitationAttempt(attempt: InsertQuranRecitationAttempt): Promise<QuranRecitationAttempt> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newAttempt] = await db!.insert(quranRecitationAttempts).values(attempt).returning();
+    return newAttempt;
+  }
+
+  async getStudentRecitationAttempts(studentId: string): Promise<QuranRecitationAttempt[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(quranRecitationAttempts).where(eq(quranRecitationAttempts.studentId, studentId));
   }
 }
 

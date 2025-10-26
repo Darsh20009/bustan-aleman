@@ -4,6 +4,8 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "./hooks/useAuth";
+import { Route, Switch, Redirect } from "wouter";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 // Import our new authentication components
 import { AuthPage } from "./components/AuthPage";
@@ -22,12 +24,13 @@ import EnhancedQuranReader from "./components/EnhancedQuranReader";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import QuranStats from "./pages/QuranStats";
 import MemorizationPage from "./pages/MemorizationPage";
+import QuranWorkspace from "./pages/QuranWorkspace";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace'];
   return validStates.includes(path as AppState);
 };
 
@@ -203,6 +206,9 @@ function AppContent() {
           return <AuthPage />;
         }
       
+      case 'quran-workspace':
+        return <QuranWorkspace />;
+      
       case 'memorization':
         if (isAuthenticated && user) {
           return (
@@ -281,9 +287,11 @@ function AppContent() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AppContent />
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <AppContent />
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

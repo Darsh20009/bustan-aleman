@@ -18,6 +18,8 @@ import {
   insertQuranWordHighlightSchema,
   insertQuranMemorizationSchema,
   insertQuranReadingStatsSchema,
+  insertQuranAyahMarkerSchema,
+  insertQuranRecitationAttemptSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -897,6 +899,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching today's reading stats:", error);
       res.status(500).json({ message: "Failed to fetch today's reading stats" });
+    }
+  });
+
+  // Quran page route - fetch verses for a specific Mushaf page
+  app.get('/api/quran/page/:pageNumber', async (req, res) => {
+    try {
+      const pageNumber = parseInt(req.params.pageNumber);
+      if (pageNumber < 1 || pageNumber > 604) {
+        return res.status(400).json({ message: "Invalid page number" });
+      }
+      
+      // Fetch page data from AlQuran Cloud API or use cached data
+      const pageData = await quranService.getPage(pageNumber);
+      
+      if (!pageData) {
+        return res.status(404).json({ message: "Page not found" });
+      }
+      
+      // Transform the data to match the expected format for the Mushaf reader
+      const verses = [];
+      for (const surahNumber in pageData.surahs) {
+        const surahData = pageData.surahs[surahNumber];
+        surahData.ayahs.forEach((ayah: any) => {
+          verses.push({
+            text: ayah.text,
+            number: ayah.number,
+            numberInSurah: ayah.numberInSurah,
+            surahNumber: parseInt(surahNumber),
+            surahName: surahData.name,
+          });
+        });
+      }
+      
+      res.json({ verses });
+    } catch (error) {
+      console.error("Error fetching Quran page:", error);
+      res.status(500).json({ message: "Failed to fetch Quran page" });
+    }
+  });
+
+  // Quran stats summary route - returns aggregate statistics
+  app.get('/api/quran/stats/:studentId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Ensure user can only access their own stats
+      if (userId !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      // Get all reading stats
+      const readingStats = await storage.getStudentReadingStats(studentId);
+      const memorization = await storage.getStudentMemorization(studentId);
+      const markers = await storage.getStudentAyahMarkers(studentId);
+      
+      // Calculate aggregate stats
+      const totalPages = readingStats.reduce((sum, stat) => sum + (stat.pagesRead || 0), 0);
+      const totalMinutes = readingStats.reduce((sum, stat) => sum + (stat.minutesSpent || 0), 0);
+      const memorizedAyahs = memorization.reduce((sum, m) => {
+        return sum + (m.toAyah - m.fromAyah + 1);
+      }, 0);
+      
+      const activeMarkers = markers.filter(m => m.isActive).length;
+      
+      // Calculate mastery level (simple formula based on various factors)
+      const masteryLevel = Math.min(100, Math.round(
+        (memorizedAyahs / 62.36) + // Out of 6236 total ayahs, weighted as percentage
+        (totalPages / 6.04) +       // Out of 604 total pages, weighted as percentage
+        (totalMinutes / 100)        // Time spent contributes to mastery
+      ));
+      
+      res.json({
+        pagesRead: totalPages,
+        memorizedAyahs,
+        minutesSpent: totalMinutes,
+        masteryLevel,
+        activeBookmarks: activeMarkers,
+      });
+    } catch (error) {
+      console.error("Error fetching Quran stats:", error);
+      res.status(500).json({ message: "Failed to fetch Quran stats" });
+    }
+  });
+
+  // Quran markers route - get all markers for a student
+  app.get('/api/quran/markers/:studentId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Ensure user can only access their own markers
+      if (userId !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      const markers = await storage.getStudentAyahMarkers(studentId);
+      res.json(markers);
+    } catch (error) {
+      console.error("Error fetching Quran markers:", error);
+      res.status(500).json({ message: "Failed to fetch Quran markers" });
+    }
+  });
+
+  // Create ayah marker
+  app.post('/api/quran/markers', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const markerData = insertQuranAyahMarkerSchema.parse({ 
+        ...req.body, 
+        studentId: userId 
+      });
+      const marker = await storage.createAyahMarker(markerData);
+      res.json(marker);
+    } catch (error) {
+      console.error("Error creating ayah marker:", error);
+      res.status(400).json({ message: "Invalid marker data" });
+    }
+  });
+
+  // Update ayah marker
+  app.patch('/api/quran/markers/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Verify ownership before updating
+      const markers = await storage.getStudentAyahMarkers(userId);
+      const marker = markers.find(m => m.id === id);
+      if (!marker) {
+        return res.status(404).json({ message: "Marker not found or unauthorized" });
+      }
+      
+      const updates = insertQuranAyahMarkerSchema.partial().parse(req.body);
+      const updatedMarker = await storage.updateAyahMarker(id, updates);
+      res.json(updatedMarker);
+    } catch (error) {
+      console.error("Error updating ayah marker:", error);
+      res.status(400).json({ message: "Invalid marker data" });
+    }
+  });
+
+  // Delete ayah marker
+  app.delete('/api/quran/markers/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Verify ownership before deleting
+      const markers = await storage.getStudentAyahMarkers(userId);
+      const marker = markers.find(m => m.id === id);
+      if (!marker) {
+        return res.status(404).json({ message: "Marker not found or unauthorized" });
+      }
+      
+      await storage.deleteAyahMarker(id);
+      res.json({ message: "Marker deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting ayah marker:", error);
+      res.status(500).json({ message: "Failed to delete marker" });
     }
   });
 

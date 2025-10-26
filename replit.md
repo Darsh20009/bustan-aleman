@@ -11,7 +11,17 @@
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a unified design system with a core color palette of Green (#10B981), White (#FFFFFF), and Orange (#F97316). All UI elements, including headers, content sections, and interactive components, are centered and adhere to this palette for a consistent, Islamic aesthetic. The Quran reader includes an enhanced dark mode with a green/black theme for improved readability. Typography predominantly uses emerald and orange shades, eliminating gray text for brand consistency. The design supports RTL for Arabic language.
+The platform features a unified design system with a core color palette of Green (#10B981), White (#FFFFFF), and Orange (#F97316). All UI elements, including headers, content sections, and interactive components, are centered and adhere to this palette for a consistent, Islamic aesthetic. 
+
+**Major Redesign (October 2025):**
+- Full dark mode support via ThemeProvider (SSR-safe) across all components
+- Mushaf-style Quran reader with 604-page layout (canonical Quran pagination)
+- Single-page workspace architecture with persistent navigation and collapsible panels
+- Per-ayah state tracking (markers, notes, memorization, recitation attempts)
+- Enhanced database schema with quranAyahMarkers and quranRecitationAttempts tables
+- Secure authenticated API routes for Quran stats, markers, and page data
+
+Typography predominantly uses emerald and orange shades, eliminating gray text for brand consistency. The design supports RTL for Arabic language.
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Vite for fast development, shadcn/ui and Radix UI for accessible components, TanStack Query for server state, Wouter for routing, and Tailwind CSS for styling.
