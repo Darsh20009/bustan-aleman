@@ -714,6 +714,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Quran word highlights routes
+  app.get('/api/quran/highlights/:studentId', async (req, res) => {
+    try {
+      const { studentId } = req.params;
+      const highlights = await storage.getAllWordHighlights(studentId);
+      res.json(highlights);
+    } catch (error) {
+      console.error("Error fetching word highlights:", error);
+      res.status(500).json({ message: "Failed to fetch word highlights" });
+    }
+  });
+
+  app.post('/api/quran/highlights', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const highlightData = insertQuranWordHighlightSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      const highlight = await storage.createWordHighlight(highlightData);
+      res.status(201).json(highlight);
+    } catch (error) {
+      console.error("Error creating word highlight:", error);
+      res.status(500).json({ message: "Failed to create word highlight" });
+    }
+  });
+
+  app.delete('/api/quran/highlights/:surahNumber/:ayahNumber/:wordIndex', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { surahNumber, ayahNumber, wordIndex } = req.params;
+      await storage.deleteWordHighlightByLocation(
+        userId,
+        parseInt(surahNumber),
+        parseInt(ayahNumber),
+        parseInt(wordIndex)
+      );
+      res.json({ message: "Word highlight deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting word highlight:", error);
+      res.status(500).json({ message: "Failed to delete word highlight" });
+    }
+  });
+
   app.post('/api/quran/word-highlights', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;

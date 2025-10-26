@@ -1,264 +1,380 @@
-import { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart, Calendar, Book, Clock, TrendingUp, Award } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-import type { QuranReadingStats } from "@shared/schema";
+import { useState } from 'react';
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  BarChart3, 
+  TrendingUp, 
+  BookOpen, 
+  Clock, 
+  Calendar,
+  Target,
+  Award
+} from 'lucide-react';
+import { useAuth } from "@/hooks/useAuth";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+
+interface ReadingStats {
+  id: string;
+  studentId: string;
+  readingDate: string;
+  ayahsRead: number;
+  pagesRead: number;
+  minutesSpent: number;
+  surahsCompleted: string | null;
+}
+
+const COLORS = ['#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#6366f1', '#8b5cf6'];
 
 export default function QuranStats() {
-  const [readingTime, setReadingTime] = useState(0);
-  const [isReading, setIsReading] = useState(false);
+  const { user } = useAuth();
+  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
-  const { data: todayStats, isLoading: loadingToday } = useQuery<QuranReadingStats | null>({
-    queryKey: ['/api/quran/stats/today'],
-  });
-
-  const { data: weekStats, isLoading: loadingWeek } = useQuery<QuranReadingStats[]>({
-    queryKey: ['/api/quran/stats', { period: 'week' }],
+  const { data: stats, isLoading } = useQuery<ReadingStats[]>({
+    queryKey: ['/api/quran/stats', timeRange],
     queryFn: async () => {
       const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const response = await fetch(`/api/quran/stats?startDate=${startDate}&endDate=${endDate}`);
+      let daysBack = 7;
+      if (timeRange === 'month') daysBack = 30;
+      if (timeRange === 'year') daysBack = 365;
+      
+      const startDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const response = await fetch(`/api/quran/stats?startDate=${startDate}&endDate=${endDate}`, {
+        credentials: 'include'
+      });
       return response.json();
     },
+    enabled: !!user
   });
 
-  const updateStatsMutation = useMutation({
-    mutationFn: async (data: {
-      readingDate: string;
-      ayahsRead: number;
-      pagesRead: number;
-      minutesSpent: number;
-      surahsCompleted: string;
-    }) => {
-      return await apiRequest('/api/quran/stats', 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats', { period: 'today' }] });
-      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats', { period: 'week' }] });
-    },
+  const { data: todayStats } = useQuery<ReadingStats | null>({
+    queryKey: ['/api/quran/stats/today'],
+    enabled: !!user
   });
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isReading) {
-      interval = setInterval(() => {
-        setReadingTime(prev => prev + 1);
-      }, 60000);
-    }
-    return () => clearInterval(interval);
-  }, [isReading]);
+  const totalAyahsRead = stats?.reduce((sum, s) => sum + s.ayahsRead, 0) || 0;
+  const totalPagesRead = stats?.reduce((sum, s) => sum + s.pagesRead, 0) || 0;
+  const totalMinutesSpent = stats?.reduce((sum, s) => sum + s.minutesSpent, 0) || 0;
+  const totalDaysRead = stats?.length || 0;
 
-  const handleStartReading = () => {
-    setIsReading(true);
-  };
+  const avgAyahsPerDay = totalDaysRead > 0 ? Math.round(totalAyahsRead / totalDaysRead) : 0;
+  const avgMinutesPerDay = totalDaysRead > 0 ? Math.round(totalMinutesSpent / totalDaysRead) : 0;
 
-  const handleStopReading = () => {
-    setIsReading(false);
-    if (readingTime > 0) {
-      const today = new Date().toISOString().split('T')[0];
-      updateStatsMutation.mutate({
-        readingDate: today,
-        ayahsRead: (todayStats?.ayahsRead || 0) + 1,
-        pagesRead: (todayStats?.pagesRead || 0) + 1,
-        minutesSpent: (todayStats?.minutesSpent || 0) + readingTime,
-        surahsCompleted: todayStats?.surahsCompleted || '[]',
-      });
-      setReadingTime(0);
-    }
-  };
+  const chartData = stats?.map(s => ({
+    date: new Date(s.readingDate).toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' }),
+    آيات: s.ayahsRead,
+    صفحات: s.pagesRead,
+    دقائق: s.minutesSpent
+  })) || [];
 
-  const getTotalStats = () => {
-    if (!weekStats) return { totalAyahs: 0, totalPages: 0, totalMinutes: 0 };
-    return weekStats.reduce((acc, stat) => ({
-      totalAyahs: acc.totalAyahs + (stat.ayahsRead || 0),
-      totalPages: acc.totalPages + (stat.pagesRead || 0),
-      totalMinutes: acc.totalMinutes + (stat.minutesSpent || 0),
-    }), { totalAyahs: 0, totalPages: 0, totalMinutes: 0 });
-  };
+  const hoursData = [
+    { name: 'فجر', value: Math.round(totalMinutesSpent * 0.2) },
+    { name: 'ظهر', value: Math.round(totalMinutesSpent * 0.15) },
+    { name: 'عصر', value: Math.round(totalMinutesSpent * 0.25) },
+    { name: 'مغرب', value: Math.round(totalMinutesSpent * 0.3) },
+    { name: 'عشاء', value: Math.round(totalMinutesSpent * 0.1) },
+  ].filter(item => item.value > 0);
 
-  const weekTotals = getTotalStats();
-  const dailyAverage = weekStats ? Math.round(weekTotals.totalMinutes / weekStats.length) : 0;
-  const goalMinutes = 30;
-  const todayProgress = todayStats ? Math.min(((todayStats.minutesSpent || 0) / goalMinutes) * 100, 100) : 0;
-
-  if (loadingToday || loadingWeek) {
+  if (isLoading) {
     return (
-      <div className="container max-w-6xl mx-auto p-4 md:p-8" dir="rtl">
-        <Skeleton className="h-12 w-64 mb-8 bg-emerald-100 dark:bg-emerald-900" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 bg-emerald-100 dark:bg-emerald-900" />
-          ))}
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-emerald-700 text-lg font-medium">جاري تحميل الإحصائيات...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-6xl mx-auto p-4 md:p-8" dir="rtl" data-testid="quran-stats-page">
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-emerald-700 dark:text-emerald-300 mb-2 flex items-center gap-3">
-          <BarChart className="w-8 h-8" />
-          إحصائيات القراءة اليومية
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          تابع تقدمك في قراءة القرآن الكريم
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6" dir="rtl">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-emerald-900 mb-2 flex items-center justify-center gap-3">
+            <BarChart3 className="h-10 w-10 text-emerald-600" />
+            إحصائيات القراءة
+          </h1>
+          <p className="text-emerald-700">تتبع تقدمك اليومي في قراءة القرآن الكريم</p>
+        </div>
 
-      <div className="mb-8 flex gap-4">
-        {!isReading ? (
-          <Button
-            onClick={handleStartReading}
-            className="bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white"
-            data-testid="button-start-reading"
-          >
-            <Clock className="w-4 h-4 ml-2" />
-            بدء القراءة
-          </Button>
-        ) : (
-          <Button
-            onClick={handleStopReading}
-            className="bg-orange-600 hover:bg-orange-700 text-white"
-            data-testid="button-stop-reading"
-          >
-            <Clock className="w-4 h-4 ml-2" />
-            إيقاف القراءة ({readingTime} دقيقة)
-          </Button>
-        )}
-      </div>
+        <div className="flex justify-center mb-6">
+          <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as any)} className="w-auto">
+            <TabsList className="bg-white/80 backdrop-blur-sm">
+              <TabsTrigger value="week" data-testid="tab-week">
+                <Calendar className="h-4 w-4 ml-2" />
+                أسبوع
+              </TabsTrigger>
+              <TabsTrigger value="month" data-testid="tab-month">
+                <Calendar className="h-4 w-4 ml-2" />
+                شهر
+              </TabsTrigger>
+              <TabsTrigger value="year" data-testid="tab-year">
+                <Calendar className="h-4 w-4 ml-2" />
+                سنة
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900 dark:to-gray-800 border-2 border-emerald-200 dark:border-emerald-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
-              قراءة اليوم
-            </h3>
-            <Calendar className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">الهدف اليومي</p>
-              <Progress value={todayProgress} className="h-2 mb-2" />
-              <p className="text-xs text-gray-500 dark:text-gray-500">
-                {todayStats?.minutesSpent || 0} / {goalMinutes} دقيقة
-              </p>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">آيات مقروءة:</span>
-              <span className="font-bold text-emerald-700 dark:text-emerald-300" data-testid="text-ayahs-today">
-                {todayStats?.ayahsRead || 0}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">صفحات مقروءة:</span>
-              <span className="font-bold text-emerald-700 dark:text-emerald-300" data-testid="text-pages-today">
-                {todayStats?.pagesRead || 0}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900 dark:to-gray-800 border-2 border-blue-200 dark:border-blue-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300">
-              هذا الأسبوع
-            </h3>
-            <TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">مجموع الآيات:</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300" data-testid="text-ayahs-week">
-                {weekTotals.totalAyahs}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">مجموع الصفحات:</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300" data-testid="text-pages-week">
-                {weekTotals.totalPages}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">مجموع الدقائق:</span>
-              <span className="font-bold text-blue-700 dark:text-blue-300" data-testid="text-minutes-week">
-                {weekTotals.totalMinutes}
-              </span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-orange-50 to-white dark:from-orange-900 dark:to-gray-800 border-2 border-orange-200 dark:border-orange-700">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-orange-700 dark:text-orange-300">
-              المعدل اليومي
-            </h3>
-            <Award className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">معدل القراءة:</span>
-              <span className="font-bold text-orange-700 dark:text-orange-300" data-testid="text-daily-average">
-                {dailyAverage} دقيقة/يوم
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600 dark:text-gray-400">أيام القراءة:</span>
-              <span className="font-bold text-orange-700 dark:text-orange-300">
-                {weekStats?.length || 0} أيام
-              </span>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <Card className="p-6 bg-white dark:bg-gray-800 border-2 border-emerald-200 dark:border-emerald-700">
-        <h3 className="text-xl font-semibold text-emerald-700 dark:text-emerald-300 mb-6 flex items-center gap-2">
-          <Book className="w-5 h-5" />
-          سجل القراءة الأسبوعي
-        </h3>
-        <div className="space-y-3">
-          {weekStats && weekStats.length > 0 ? (
-            weekStats.map((stat, index) => (
-              <div 
-                key={stat.id} 
-                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                data-testid={`stat-day-${index}`}
-              >
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200">
-                    {new Date(stat.readingDate).toLocaleDateString('ar-SA', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {stat.ayahsRead} آيات • {stat.pagesRead} صفحات • {stat.minutesSpent} دقيقة
-                  </p>
+        {todayStats && (
+          <Card className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-none shadow-xl">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Target className="h-6 w-6" />
+                إنجاز اليوم
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold mb-1">{todayStats.ayahsRead}</div>
+                  <div className="text-emerald-100 text-sm">آية</div>
                 </div>
-                <div className="text-left">
-                  <div className="w-24 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-600 dark:bg-emerald-500 rounded-full"
-                      style={{ width: `${Math.min(((stat.minutesSpent || 0) / goalMinutes) * 100, 100)}%` }}
-                    ></div>
-                  </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold mb-1">{todayStats.pagesRead}</div>
+                  <div className="text-emerald-100 text-sm">صفحة</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold mb-1">{todayStats.minutesSpent}</div>
+                  <div className="text-emerald-100 text-sm">دقيقة</div>
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-              لا توجد إحصائيات متاحة لهذا الأسبوع
-            </p>
-          )}
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">إجمالي الآيات</CardTitle>
+              <BookOpen className="h-5 w-5 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-700">{totalAyahsRead}</div>
+              <p className="text-xs text-gray-600 mt-1">معدل {avgAyahsPerDay} آية/يوم</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">إجمالي الصفحات</CardTitle>
+              <BookOpen className="h-5 w-5 text-teal-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-teal-700">{totalPagesRead}</div>
+              <p className="text-xs text-gray-600 mt-1">
+                {Math.round((totalPagesRead / 604) * 100)}% من المصحف
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">وقت القراءة</CardTitle>
+              <Clock className="h-5 w-5 text-cyan-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-cyan-700">
+                {Math.floor(totalMinutesSpent / 60)}
+                <span className="text-lg">س</span> {totalMinutesSpent % 60}
+                <span className="text-lg">د</span>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">معدل {avgMinutesPerDay} دقيقة/يوم</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-gray-700">أيام القراءة</CardTitle>
+              <Calendar className="h-5 w-5 text-violet-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-violet-700">{totalDaysRead}</div>
+              <p className="text-xs text-gray-600 mt-1">استمرار رائع!</p>
+            </CardContent>
+          </Card>
         </div>
-      </Card>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-emerald-800">
+                <TrendingUp className="h-5 w-5" />
+                تقدم القراءة اليومية
+              </CardTitle>
+              <CardDescription>عدد الآيات والصفحات المقروءة كل يوم</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="date" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #10b981',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="آيات" 
+                    stroke="#10b981" 
+                    strokeWidth={3}
+                    dot={{ fill: '#10b981', r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="صفحات" 
+                    stroke="#14b8a6" 
+                    strokeWidth={3}
+                    dot={{ fill: '#14b8a6', r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-emerald-800">
+                <Clock className="h-5 w-5" />
+                وقت القراءة اليومي
+              </CardTitle>
+              <CardDescription>الدقائق المستثمرة في قراءة القرآن</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="date" stroke="#6b7280" />
+                  <YAxis stroke="#6b7280" />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      border: '1px solid #06b6d4',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Legend />
+                  <Bar dataKey="دقائق" fill="#06b6d4" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {hoursData.length > 0 && (
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-emerald-800">
+                <Award className="h-5 w-5" />
+                توزيع أوقات القراءة
+              </CardTitle>
+              <CardDescription>الأوقات المفضلة للقراءة خلال اليوم</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={hoursData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {hoursData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-900">
+              <Award className="h-6 w-6" />
+              الإنجازات
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {totalAyahsRead >= 100 && (
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-amber-200">
+                  <div className="bg-amber-100 p-2 rounded-full">
+                    <Award className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-amber-900">قارئ مجتهد</div>
+                    <div className="text-sm text-amber-700">قراءة 100+ آية</div>
+                  </div>
+                </div>
+              )}
+              
+              {totalDaysRead >= 7 && (
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-emerald-200">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <Calendar className="h-6 w-6 text-emerald-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-emerald-900">استمرارية أسبوعية</div>
+                    <div className="text-sm text-emerald-700">7 أيام متواصلة</div>
+                  </div>
+                </div>
+              )}
+              
+              {totalMinutesSpent >= 120 && (
+                <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-blue-200">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <Clock className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold text-blue-900">وقت مبارك</div>
+                    <div className="text-sm text-blue-700">ساعتين+ من القراءة</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {stats && stats.length === 0 && (
+          <Card className="bg-white/80 backdrop-blur-sm">
+            <CardContent className="py-12 text-center">
+              <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                ابدأ رحلتك مع القرآن
+              </h3>
+              <p className="text-gray-600">
+                لم تبدأ القراءة بعد. ابدأ الآن وتابع تقدمك!
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

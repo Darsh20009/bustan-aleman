@@ -151,8 +151,10 @@ export interface IStorage {
   // Quran word highlights operations
   createWordHighlight(highlight: InsertQuranWordHighlight): Promise<QuranWordHighlight>;
   getWordHighlights(studentId: string, surahNumber: number, ayahNumber: number): Promise<QuranWordHighlight[]>;
+  getAllWordHighlights(studentId: string): Promise<QuranWordHighlight[]>;
   updateWordHighlight(id: string, updates: Partial<InsertQuranWordHighlight>): Promise<QuranWordHighlight>;
   deleteWordHighlight(id: string): Promise<void>;
+  deleteWordHighlightByLocation(studentId: string, surahNumber: number, ayahNumber: number, wordIndex: number): Promise<void>;
   
   // Quran memorization operations
   createMemorization(memorization: InsertQuranMemorization): Promise<QuranMemorization>;
@@ -934,6 +936,32 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     await db!.delete(quranWordHighlights).where(eq(quranWordHighlights.id, id));
+  }
+
+  async getAllWordHighlights(studentId: string): Promise<QuranWordHighlight[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(quranWordHighlights)
+      .where(eq(quranWordHighlights.studentId, studentId))
+      .orderBy(desc(quranWordHighlights.createdAt));
+  }
+
+  async deleteWordHighlightByLocation(
+    studentId: string,
+    surahNumber: number,
+    ayahNumber: number,
+    wordIndex: number
+  ): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(quranWordHighlights).where(and(
+      eq(quranWordHighlights.studentId, studentId),
+      eq(quranWordHighlights.surahNumber, surahNumber),
+      eq(quranWordHighlights.ayahNumber, ayahNumber),
+      eq(quranWordHighlights.wordIndex, wordIndex)
+    ));
   }
 
   // Quran memorization operations
