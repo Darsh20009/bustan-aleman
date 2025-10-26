@@ -41,19 +41,19 @@
   --font-mono: 'Courier New', monospace;
   --radius: 0.75rem;
   
-  /* Enhanced Islamic theme colors */
-  --islamic-emerald: hsl(160, 55%, 30%);
-  --islamic-teal: hsl(185, 60%, 35%);
-  --royal-gold: hsl(45, 75%, 65%);
-  --antique-gold: hsl(40, 85%, 70%);
-  --persian-blue: hsl(210, 65%, 25%);
-  --mosque-green: hsl(145, 50%, 25%);
-  --desert-sand: hsl(35, 45%, 82%);
-  --marble-white: hsl(48, 30%, 98%);
-  --pearl-cream: hsl(48, 25%, 96%);
-  --midnight-navy: hsl(215, 35%, 15%);
-  --copper-bronze: hsl(25, 65%, 58%);
-  --moonlight-silver: hsl(210, 15%, 85%);
+  /* Enhanced Islamic theme colors - Unified Green, White, Orange Palette */
+  --islamic-emerald: hsl(160, 65%, 35%);
+  --islamic-teal: hsl(160, 65%, 35%);
+  --royal-gold: hsl(30, 90%, 60%);
+  --antique-gold: hsl(30, 90%, 60%);
+  --persian-blue: hsl(160, 65%, 35%);
+  --mosque-green: hsl(160, 65%, 35%);
+  --desert-sand: hsl(0, 0%, 100%);
+  --marble-white: hsl(0, 0%, 100%);
+  --pearl-cream: hsl(0, 0%, 100%);
+  --midnight-navy: hsl(160, 65%, 35%);
+  --copper-bronze: hsl(30, 90%, 60%);
+  --moonlight-silver: hsl(0, 0%, 100%);
   
   /* Backward compatibility aliases */
   --islamic-green: var(--islamic-emerald);
