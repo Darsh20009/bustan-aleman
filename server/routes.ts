@@ -939,6 +939,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get page number for a specific surah:ayah
+  app.get('/api/quran/surah/:surahNumber/ayah/:ayahNumber/page', async (req, res) => {
+    try {
+      const surahNumber = parseInt(req.params.surahNumber);
+      const ayahNumber = parseInt(req.params.ayahNumber);
+      
+      // Use quranService to find the page
+      const pageNumber = await quranService.getPageForAyah(surahNumber, ayahNumber);
+      
+      if (pageNumber) {
+        res.json({ page: pageNumber });
+      } else {
+        res.status(404).json({ message: "Ayah not found" });
+      }
+    } catch (error) {
+      console.error("Error finding page for ayah:", error);
+      res.status(500).json({ message: "Failed to find page" });
+    }
+  });
+
   // Quran stats summary route - returns aggregate statistics
   app.get('/api/quran/stats/:studentId', isPhoneAuthenticated, async (req: any, res) => {
     try {
@@ -1058,6 +1078,204 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting ayah marker:", error);
       res.status(500).json({ message: "Failed to delete marker" });
+    }
+  });
+
+  // Word Highlights Routes
+  app.get('/api/quran/word-highlights', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { surahNumber, ayahNumber, wordIndex } = req.query;
+      
+      if (surahNumber && ayahNumber && wordIndex !== undefined) {
+        const highlights = await storage.getWordHighlights(userId, parseInt(surahNumber), parseInt(ayahNumber));
+        const filtered = highlights.filter(h => h.wordIndex === parseInt(wordIndex));
+        return res.json(filtered);
+      }
+      
+      const highlights = await storage.getAllWordHighlights(userId);
+      res.json(highlights);
+    } catch (error) {
+      console.error("Error fetching word highlights:", error);
+      res.status(500).json({ message: "Failed to fetch word highlights" });
+    }
+  });
+
+  app.post('/api/quran/word-highlights', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const highlightData = insertQuranWordHighlightSchema.parse({
+        ...req.body,
+        studentId: userId
+      });
+      const highlight = await storage.createWordHighlight(highlightData);
+      res.json(highlight);
+    } catch (error) {
+      console.error("Error creating word highlight:", error);
+      res.status(400).json({ message: "Invalid highlight data" });
+    }
+  });
+
+  app.patch('/api/quran/word-highlights/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = insertQuranWordHighlightSchema.partial().parse(req.body);
+      const highlight = await storage.updateWordHighlight(id, updates);
+      res.json(highlight);
+    } catch (error) {
+      console.error("Error updating word highlight:", error);
+      res.status(400).json({ message: "Invalid highlight data" });
+    }
+  });
+
+  app.delete('/api/quran/word-highlights/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteWordHighlight(id);
+      res.json({ message: "Highlight deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting word highlight:", error);
+      res.status(500).json({ message: "Failed to delete highlight" });
+    }
+  });
+
+  // Recitation Attempts Routes
+  app.post('/api/quran/recitation-attempts', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const attemptData = insertQuranRecitationAttemptSchema.parse({
+        ...req.body,
+        studentId: userId
+      });
+      const attempt = await storage.createRecitationAttempt(attemptData);
+      res.json(attempt);
+    } catch (error) {
+      console.error("Error creating recitation attempt:", error);
+      res.status(400).json({ message: "Invalid attempt data" });
+    }
+  });
+
+  // Analytics Routes
+  app.get('/api/quran/analytics', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      
+      const readingStats = await storage.getStudentReadingStats(userId);
+      const memorization = await storage.getStudentMemorization(userId);
+      const recitationAttempts = await storage.getStudentRecitationAttempts(userId);
+      
+      const totalAyahsRead = readingStats.reduce((sum, stat) => sum + (stat.ayahsRead || 0), 0);
+      const totalPagesRead = readingStats.reduce((sum, stat) => sum + (stat.pagesRead || 0), 0);
+      const totalMinutes = readingStats.reduce((sum, stat) => sum + (stat.minutesSpent || 0), 0);
+      
+      const memorizedAyahs = memorization.reduce((sum, m) => {
+        return sum + (m.toAyah - m.fromAyah + 1);
+      }, 0);
+      
+      const reviewedAyahs = memorization.filter(m => m.status === 'reviewing').reduce((sum, m) => {
+        return sum + (m.toAyah - m.fromAyah + 1);
+      }, 0);
+      
+      const completedSurahs = memorization.filter(m => m.status === 'completed').length;
+      
+      const totalRecitationAttempts = recitationAttempts.length;
+      const averageAccuracy = recitationAttempts.length > 0 
+        ? Math.round(recitationAttempts.reduce((sum, a) => sum + (a.score || 0), 0) / recitationAttempts.length)
+        : 0;
+      
+      res.json({
+        totalAyahsRead,
+        totalPagesRead,
+        totalMinutes,
+        currentStreak: 0, // Would need daily activity tracking
+        longestStreak: 0, // Would need historical tracking
+        averageDaily: totalAyahsRead / Math.max(1, readingStats.length),
+        memorizedAyahs,
+        reviewedAyahs,
+        completedSurahs,
+        totalRecitationAttempts,
+        averageAccuracy
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  app.get('/api/quran/weekly-progress', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const endDate = new Date();
+      const startDate = new Date(endDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+      
+      const stats = await storage.getStudentReadingStats(
+        userId,
+        startDate.toISOString().split('T')[0],
+        endDate.toISOString().split('T')[0]
+      );
+      
+      const daysOfWeek = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const progress = daysOfWeek.map((day, index) => {
+        const date = new Date(startDate.getTime() + index * 24 * 60 * 60 * 1000);
+        const dayStats = stats.find(s => s.readingDate && new Date(s.readingDate).toDateString() === date.toDateString());
+        return {
+          day,
+          ayahs: dayStats?.ayahsRead || 0,
+          minutes: dayStats?.minutesSpent || 0
+        };
+      });
+      
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching weekly progress:", error);
+      res.status(500).json({ message: "Failed to fetch weekly progress" });
+    }
+  });
+
+  app.get('/api/quran/recent-activity', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      
+      const recentStats = await storage.getStudentReadingStats(userId);
+      const recentMemorization = await storage.getStudentMemorization(userId);
+      
+      const activities = [
+        ...recentStats.slice(0, 5).map(s => ({
+          title: 'قراءة',
+          description: `قرأت ${s.ayahsRead} آية في ${s.minutesSpent} دقيقة`,
+          time: s.readingDate ? new Date(s.readingDate).toLocaleDateString('ar') : 'اليوم'
+        })),
+        ...recentMemorization.slice(0, 5).map(m => ({
+          title: 'حفظ',
+          description: `حفظ من الآية ${m.fromAyah} إلى ${m.toAyah}`,
+          time: m.createdAt ? new Date(m.createdAt).toLocaleDateString('ar') : 'حديثاً'
+        }))
+      ];
+      
+      res.json(activities.slice(0, 10));
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+      res.status(500).json({ message: "Failed to fetch recent activity" });
+    }
+  });
+
+  // Reciters List
+  app.get('/api/quran/reciters', async (req, res) => {
+    try {
+      const reciters = [
+        { id: "1", name: "عبد الباسط عبد الصمد" },
+        { id: "2", name: "ماهر المعيقلي" },
+        { id: "3", name: "محمود خليل الحصري" },
+        { id: "4", name: "مشاري راشد العفاسي" },
+        { id: "5", name: "سعد الغامدي" },
+        { id: "6", name: "عبد الرحمن السديس" },
+        { id: "7", name: "سعود الشريم" },
+        { id: "8", name: "أحمد العجمي" }
+      ];
+      res.json(reciters);
+    } catch (error) {
+      console.error("Error fetching reciters:", error);
+      res.status(500).json({ message: "Failed to fetch reciters" });
     }
   });
 

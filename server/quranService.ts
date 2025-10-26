@@ -305,6 +305,16 @@ class QuranService {
     const ayah = surah.ayahs.find((a: any) => a.numberInSurah === ayahNumber);
     return ayah?.tafsir || null;
   }
+
+  async getPageForAyah(surahNumber: number, ayahNumber: number): Promise<number | null> {
+    if (!this.quranData?.data?.surahs) return null;
+    
+    const surah = this.quranData.data.surahs.find((s: QuranSurah) => s.number === surahNumber);
+    if (!surah) return null;
+
+    const ayah = surah.ayahs.find((a: QuranAyah) => a.numberInSurah === ayahNumber);
+    return ayah?.page || null;
+  }
 }
 
 export const quranService = new QuranService();
