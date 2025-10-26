@@ -13,6 +13,9 @@ import {
   studentNotes,
   certificates,
   quranProgress,
+  quranWordHighlights,
+  quranMemorization,
+  quranReadingStats,
   type User,
   type UpsertUser,
   type Course,
@@ -41,6 +44,12 @@ import {
   type InsertCertificate,
   type QuranProgress,
   type InsertQuranProgress,
+  type QuranWordHighlight,
+  type InsertQuranWordHighlight,
+  type QuranMemorization,
+  type InsertQuranMemorization,
+  type QuranReadingStats,
+  type InsertQuranReadingStats,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -138,6 +147,23 @@ export interface IStorage {
     isActive: boolean;
     registrationCompleted: boolean;
   }): Promise<User>;
+  
+  // Quran word highlights operations
+  createWordHighlight(highlight: InsertQuranWordHighlight): Promise<QuranWordHighlight>;
+  getWordHighlights(studentId: string, surahNumber: number, ayahNumber: number): Promise<QuranWordHighlight[]>;
+  updateWordHighlight(id: string, updates: Partial<InsertQuranWordHighlight>): Promise<QuranWordHighlight>;
+  deleteWordHighlight(id: string): Promise<void>;
+  
+  // Quran memorization operations
+  createMemorization(memorization: InsertQuranMemorization): Promise<QuranMemorization>;
+  getStudentMemorization(studentId: string): Promise<QuranMemorization[]>;
+  updateMemorization(id: string, updates: Partial<InsertQuranMemorization>): Promise<QuranMemorization>;
+  deleteMemorization(id: string): Promise<void>;
+  
+  // Quran reading statistics operations
+  createOrUpdateReadingStats(stats: InsertQuranReadingStats): Promise<QuranReadingStats>;
+  getStudentReadingStats(studentId: string, startDate?: string, endDate?: string): Promise<QuranReadingStats[]>;
+  getTodayReadingStats(studentId: string): Promise<QuranReadingStats | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -872,6 +898,141 @@ export class DatabaseStorage implements IStorage {
     
     const [user] = await db!.insert(users).values(newUser).returning();
     return user;
+  }
+
+  // Quran word highlights operations
+  async createWordHighlight(highlight: InsertQuranWordHighlight): Promise<QuranWordHighlight> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newHighlight] = await db!.insert(quranWordHighlights).values(highlight).returning();
+    return newHighlight;
+  }
+
+  async getWordHighlights(studentId: string, surahNumber: number, ayahNumber: number): Promise<QuranWordHighlight[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(quranWordHighlights)
+      .where(and(
+        eq(quranWordHighlights.studentId, studentId),
+        eq(quranWordHighlights.surahNumber, surahNumber),
+        eq(quranWordHighlights.ayahNumber, ayahNumber)
+      ));
+  }
+
+  async updateWordHighlight(id: string, updates: Partial<InsertQuranWordHighlight>): Promise<QuranWordHighlight> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(quranWordHighlights).set(updates).where(eq(quranWordHighlights.id, id)).returning();
+    return updated;
+  }
+
+  async deleteWordHighlight(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(quranWordHighlights).where(eq(quranWordHighlights.id, id));
+  }
+
+  // Quran memorization operations
+  async createMemorization(memorization: InsertQuranMemorization): Promise<QuranMemorization> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newMem] = await db!.insert(quranMemorization).values(memorization).returning();
+    return newMem;
+  }
+
+  async getStudentMemorization(studentId: string): Promise<QuranMemorization[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(quranMemorization)
+      .where(eq(quranMemorization.studentId, studentId))
+      .orderBy(desc(quranMemorization.createdAt));
+  }
+
+  async updateMemorization(id: string, updates: Partial<InsertQuranMemorization>): Promise<QuranMemorization> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(quranMemorization).set(updates).where(eq(quranMemorization.id, id)).returning();
+    return updated;
+  }
+
+  async deleteMemorization(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(quranMemorization).where(eq(quranMemorization.id, id));
+  }
+
+  // Quran reading statistics operations
+  async createOrUpdateReadingStats(stats: InsertQuranReadingStats): Promise<QuranReadingStats> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    // Check if stats already exist for this student and date
+    const existing = await db!.select().from(quranReadingStats)
+      .where(and(
+        eq(quranReadingStats.studentId, stats.studentId),
+        eq(quranReadingStats.readingDate, stats.readingDate)
+      ));
+    
+    if (existing.length > 0) {
+      // Update existing stats
+      const [updated] = await db!.update(quranReadingStats)
+        .set({
+          ayahsRead: stats.ayahsRead,
+          pagesRead: stats.pagesRead,
+          minutesSpent: stats.minutesSpent,
+          surahsCompleted: stats.surahsCompleted,
+        })
+        .where(eq(quranReadingStats.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      // Create new stats
+      const [newStats] = await db!.insert(quranReadingStats).values(stats).returning();
+      return newStats;
+    }
+  }
+
+  async getStudentReadingStats(studentId: string, startDate?: string, endDate?: string): Promise<QuranReadingStats[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    let query = db!.select().from(quranReadingStats)
+      .where(eq(quranReadingStats.studentId, studentId))
+      .$dynamic();
+    
+    if (startDate && endDate) {
+      query = query.where(and(
+        gte(quranReadingStats.readingDate, startDate),
+        lte(quranReadingStats.readingDate, endDate)
+      ));
+    }
+    
+    return await query.orderBy(desc(quranReadingStats.readingDate));
+  }
+
+  async getTodayReadingStats(studentId: string): Promise<QuranReadingStats | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    
+    const today = new Date().toISOString().split('T')[0];
+    const [stats] = await db!.select().from(quranReadingStats)
+      .where(and(
+        eq(quranReadingStats.studentId, studentId),
+        eq(quranReadingStats.readingDate, today)
+      ));
+    
+    return stats;
   }
 }
 
