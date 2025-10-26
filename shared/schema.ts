@@ -404,6 +404,51 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Quran word highlights table - for highlighting and annotating individual words
+export const quranWordHighlights = pgTable("quran_word_highlights", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  ayahNumber: integer("ayah_number").notNull(),
+  wordIndex: integer("word_index").notNull(), // Position of word in ayah (0-based)
+  wordText: varchar("word_text").notNull(), // The actual word text for reference
+  highlightColor: varchar("highlight_color").default("red"), // red, yellow, blue, green
+  note: text("note"), // Optional note for this word
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quran memorization tracking table - tracks which ayahs are being memorized and review progress
+export const quranMemorization = pgTable("quran_memorization", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  fromAyah: integer("from_ayah").notNull(),
+  toAyah: integer("to_ayah").notNull(),
+  status: varchar("status").default("in_progress"), // in_progress, completed, reviewing
+  masteryLevel: integer("mastery_level").default(0), // 0-100
+  lastReviewed: timestamp("last_reviewed"),
+  reviewCount: integer("review_count").default(0),
+  mistakes: text("mistakes"), // JSON string of common mistakes
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Quran reading statistics table - tracks daily reading and progress
+export const quranReadingStats = pgTable("quran_reading_stats", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  readingDate: date("reading_date").notNull(),
+  ayahsRead: integer("ayahs_read").default(0),
+  pagesRead: integer("pages_read").default(0),
+  minutesSpent: integer("minutes_spent").default(0),
+  surahsCompleted: text("surahs_completed"), // JSON array of surah numbers completed today
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique("quran_reading_stats_student_date_unique").on(table.studentId, table.readingDate),
+]);
+
 // Certificates table - for course completion and achievements
 export const certificates = pgTable("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -565,6 +610,23 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertQuranWordHighlightSchema = createInsertSchema(quranWordHighlights).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertQuranMemorizationSchema = createInsertSchema(quranMemorization).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertQuranReadingStatsSchema = createInsertSchema(quranReadingStats).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Export types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -612,3 +674,9 @@ export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type QuranWordHighlight = typeof quranWordHighlights.$inferSelect;
+export type InsertQuranWordHighlight = z.infer<typeof insertQuranWordHighlightSchema>;
+export type QuranMemorization = typeof quranMemorization.$inferSelect;
+export type InsertQuranMemorization = z.infer<typeof insertQuranMemorizationSchema>;
+export type QuranReadingStats = typeof quranReadingStats.$inferSelect;
+export type InsertQuranReadingStats = z.infer<typeof insertQuranReadingStatsSchema>;
