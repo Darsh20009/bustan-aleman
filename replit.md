@@ -16,6 +16,16 @@ A comprehensive Islamic education platform built with Express.js, React, TypeScr
 
 ## Recent Changes (October 26, 2025)
 
+### Splash Screen Activation ✅
+- **Re-enabled Splash Screen** (previously disabled):
+  - ✅ Animated Quran book opening sequence with green pages
+  - ✅ Duration: 6.5 seconds (auto-advance) with "تخطي" skip button
+  - ✅ Updated all colors to match unified design (green, orange, white)
+  - ✅ Background: Gradient from emerald to orange
+  - ✅ Arabic text with Islamic verses (Bismillah, Al-Hamdulillah)
+  - ✅ Loading progress bar with orange accent
+  - ✅ Smooth animations and transitions
+
 ### Design System Unification ✅
 - **Color Palette Simplification**:
   - ✅ Unified all colors to three-color palette: Green (#10B981), White (#FFFFFF), Orange (#F97316)
