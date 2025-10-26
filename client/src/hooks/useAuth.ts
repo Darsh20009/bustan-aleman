@@ -20,11 +20,11 @@ export function useAuth() {
       const response = await fetch('/api/auth/user', {
         credentials: 'include'
       });
-      
+
       if (!response.ok) {
         throw new Error('Not authenticated');
       }
-      
+
       const userData = await response.json();
       console.log('[useAuth] User data received:', userData);
       return userData;
@@ -44,14 +44,43 @@ export function useAuth() {
         method: 'POST',
         credentials: 'include'
       });
-      
+
       // Clear query cache and refetch
       refetch();
-      
+
       // Redirect to home page
       window.location.href = '/';
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  };
+
+  // Ensure studentId is extracted from user data
+  const login = async (phoneNumber: string, password: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ phoneNumber, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'فشل في تسجيل الدخول');
+      }
+
+      const data = await response.json();
+      console.log('[useAuth] Login data received:', data.user);
+      setUser(data.user);
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,5 +93,6 @@ export function useAuth() {
     isAdmin: user?.role === 'admin',
     logout,
     refetch,
+    login, // Added login function to the return object
   };
 }

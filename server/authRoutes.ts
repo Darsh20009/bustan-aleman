@@ -187,9 +187,10 @@ export function setupAuthRoutes(app: Express) {
             currentLevel: student.currentLevel,
             memorizedSurahs: student.memorizedSurahs,
           };
-          console.log('[auth] Student found, studentId:', student.id);
+          console.log('[auth] Student found, studentId:', student.id, 'for userId:', user.id);
         } else {
-          console.log('[auth] WARNING: No student record found for user:', user.id);
+          console.log('[auth] WARNING: No student record found for userId:', user.id);
+          console.log('[auth] All students:', students.map(s => ({ id: s.id, userId: s.userId, name: s.studentName })));
         }
       }
 
@@ -201,6 +202,7 @@ export function setupAuthRoutes(app: Express) {
           firstName: user.firstName,
           lastName: user.lastName,
           role: user.role,
+          phoneNumber: user.phoneNumber,
           ...additionalData,
         }
       };
@@ -260,7 +262,7 @@ export function setupAuthRoutes(app: Express) {
         ...additionalData,
       };
 
-      console.log('[auth] Sending user data:', JSON.stringify(responseData, null, 2));
+      console.log('[auth] Sending user data with studentId:', additionalData);
 
       res.json(responseData);
     } catch (error) {
