@@ -179,7 +179,7 @@ export function setupAuthRoutes(app: Express) {
       let additionalData: any = {};
 
       if (user.role === 'student') {
-        const students = await storage.getStudents();
+        const students = await storage.getAllStudents();
         let student = students.find(s => s.userId === user.id);
 
         // If no student record exists, create one automatically
@@ -189,10 +189,18 @@ export function setupAuthRoutes(app: Express) {
           const newStudentData = {
             userId: user.id,
             studentName: user.firstName || 'طالب جديد',
-            phoneNumber: user.phoneNumber || '',
-            currentLevel: 'المستوى الأول',
-            memorizedSurahs: '[]',
+            passwordHash: user.passwordHash || '',
+            dateOfBirth: null,
+            grade: null,
+            monthlySessionsCount: 0,
+            monthlyPrice: "0",
+            isPaid: false,
             isActive: true,
+            memorizedSurahs: '[]',
+            currentLevel: 'المستوى الأول',
+            notes: null,
+            zoomLink: null,
+            whatsappContact: user.phoneNumber || '+966532441566',
           };
 
           student = await storage.createStudent(newStudentData);
@@ -254,7 +262,7 @@ export function setupAuthRoutes(app: Express) {
       let additionalData: any = {};
 
       if (user.role === 'student') {
-        const students = await storage.getStudents();
+        const students = await storage.getAllStudents();
         let student = students.find(s => s.userId === user.id);
 
         // If no student record exists, create one automatically
@@ -264,10 +272,18 @@ export function setupAuthRoutes(app: Express) {
           const newStudentData = {
             userId: user.id,
             studentName: user.firstName || 'طالب جديد',
-            phoneNumber: user.phoneNumber || '',
-            currentLevel: 'المستوى الأول',
-            memorizedSurahs: '[]',
+            passwordHash: user.passwordHash || '',
+            dateOfBirth: null,
+            grade: null,
+            monthlySessionsCount: 0,
+            monthlyPrice: "0",
+            isPaid: false,
             isActive: true,
+            memorizedSurahs: '[]',
+            currentLevel: 'المستوى الأول',
+            notes: null,
+            zoomLink: null,
+            whatsappContact: user.phoneNumber || '+966532441566',
           };
 
           student = await storage.createStudent(newStudentData);
