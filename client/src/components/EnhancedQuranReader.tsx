@@ -218,11 +218,24 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   // Save word highlight mutation
   const saveHighlightMutation = useMutation({
     mutationFn: async (highlight: Omit<WordHighlight, 'id'>) => {
-      return apiRequest('POST', '/api/quran/highlights', highlight);
+      return apiRequest('POST', '/api/quran/highlights', {
+        ...highlight,
+        studentId
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/quran/highlights', studentId] });
-      toast({ title: '✅ تم حفظ التحديد والملاحظة' });
+      toast({ 
+        title: '✅ تم الحفظ بنجاح',
+        description: 'تم حفظ الملاحظة للكلمة'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: '❌ خطأ في الحفظ',
+        description: error?.message || 'حدث خطأ أثناء حفظ الملاحظة',
+        variant: 'destructive'
+      });
     }
   });
 
@@ -397,7 +410,16 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
   };
 
   const saveWordNote = () => {
-    if (!selectedWord || !studentId) return;
+    if (!selectedWord) return;
+    
+    if (!studentId) {
+      toast({
+        title: 'تسجيل الدخول مطلوب',
+        description: 'يجب تسجيل الدخول لحفظ الملاحظات',
+        variant: 'destructive'
+      });
+      return;
+    }
     
     const key = `${selectedWord.surah}-${selectedWord.ayah}-${selectedWord.index}`;
     const highlight: WordHighlight = {
@@ -405,11 +427,16 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
       ayahNumber: selectedWord.ayah,
       wordIndex: selectedWord.index,
       wordText: selectedWord.text,
-      note: wordNote
+      note: wordNote.trim()
     };
     
+    // Update local state immediately for better UX
     setHighlightedWords(prev => new Map(prev).set(key, highlight));
+    
+    // Save to backend
     saveHighlightMutation.mutate(highlight);
+    
+    // Close dialog and reset
     setSelectedWord(null);
     setWordNote('');
   };
@@ -851,11 +878,21 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
               )}
               <Button
                 onClick={saveWordNote}
+                disabled={!wordNote.trim() || saveHighlightMutation.isPending}
                 className={isDarkMode ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-emerald-600 hover:bg-emerald-700'}
                 data-testid="button-save-note"
               >
-                <StickyNote className="h-4 w-4 ml-1" />
-                حفظ
+                {saveHighlightMutation.isPending ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white ml-1"></div>
+                    جاري الحفظ...
+                  </>
+                ) : (
+                  <>
+                    <StickyNote className="h-4 w-4 ml-1" />
+                    حفظ
+                  </>
+                )}
               </Button>
             </div>
           </div>
