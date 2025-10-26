@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Play, 
@@ -815,6 +815,9 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId }: Enh
             <DialogTitle className={isDarkMode ? 'text-gray-100' : ''}>
               إضافة ملاحظة للكلمة: {selectedWord?.text}
             </DialogTitle>
+            <DialogDescription className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
+              أضف ملاحظة لمساعدتك على تذكر معنى أو حكم هذه الكلمة
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Textarea
