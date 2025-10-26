@@ -31,20 +31,20 @@ export function setupAuthRoutes(app: Express) {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const registrationData = userRegistrationSchema.parse(req.body);
-      
+
       // Check if email already exists
       const existingUsers = await storage.getAllUsers();
       const emailExists = existingUsers.some((user: any) => user.email === registrationData.email);
-      
+
       if (emailExists) {
-        return res.status(409).json({ 
-          message: "البريد الإلكتروني مُستخدم بالفعل" 
+        return res.status(409).json({
+          message: "البريد الإلكتروني مُستخدم بالفعل"
         });
       }
 
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
-      
+
       // Create new user with hashed password (always as student for security)
       const userData = {
         email: registrationData.email,
@@ -91,7 +91,7 @@ export function setupAuthRoutes(app: Express) {
       req.session.userRole = user.role as "student" | "supervisor" | "admin";
       req.session.studentId = student.id; // For compatibility with legacy routes
 
-      res.status(201).json({ 
+      res.status(201).json({
         message: "تم التسجيل بنجاح!",
         user: {
           id: user.id,
@@ -106,7 +106,7 @@ export function setupAuthRoutes(app: Express) {
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "بيانات غير صحيحة",
           errors: error.errors.map(e => e.message)
         });
@@ -120,20 +120,20 @@ export function setupAuthRoutes(app: Express) {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { phoneNumber, password } = loginSchema.parse(req.body);
-      
+
       // Find user by phone number
       const users = await storage.getAllUsers();
-      const user = users.find((u: any) => 
+      const user = users.find((u: any) =>
         u.phoneNumber === phoneNumber && u.isActive
       );
-      
+
       if (!user) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
 
       // Verify password against user's stored hash
       let isValidPassword = false;
-      
+
       if (user.passwordHash) {
         // Check if passwordHash is already hashed or plain text
         if (user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2a$')) {
@@ -141,7 +141,7 @@ export function setupAuthRoutes(app: Express) {
         } else {
           // Plain text password for pre-registered users
           isValidPassword = password === user.passwordHash;
-          
+
           // If valid, hash it for future use
           if (isValidPassword) {
             const hashedPassword = await hashPassword(password);
@@ -153,7 +153,7 @@ export function setupAuthRoutes(app: Express) {
         if (user.role === 'student') {
           const students = await storage.getAllStudents();
           const student = students.find(s => s.userId === user.id);
-          
+
           if (student && student.passwordHash) {
             if (student.passwordHash.startsWith('$2b$') || student.passwordHash.startsWith('$2a$')) {
               isValidPassword = await verifyPassword(password, student.passwordHash);
@@ -163,7 +163,7 @@ export function setupAuthRoutes(app: Express) {
           }
         }
       }
-      
+
       if (!isValidPassword) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
@@ -174,23 +174,38 @@ export function setupAuthRoutes(app: Express) {
       }
       req.session.userId = user.id;
       req.session.userRole = user.role as "student" | "supervisor" | "admin";
-      
+
       // Get additional data based on role
-      let additionalData = {};
+      let additionalData: any = {};
+
       if (user.role === 'student') {
-        const students = await storage.getAllStudents();
-        const student = students.find(s => s.userId === user.id);
+        const students = await storage.getStudents();
+        let student = students.find(s => s.userId === user.id);
+
+        // If no student record exists, create one automatically
+        if (!student) {
+          console.log('[auth] No student record found for userId:', user.id, 'Creating new student record...');
+
+          const newStudentData = {
+            userId: user.id,
+            studentName: user.firstName || 'طالب جديد',
+            phoneNumber: user.phoneNumber || '',
+            currentLevel: 'المستوى الأول',
+            memorizedSurahs: '[]',
+            isActive: true,
+          };
+
+          student = await storage.createStudent(newStudentData);
+          console.log('[auth] Created student record with id:', student.id);
+        }
+
         if (student) {
-          req.session.studentId = student.id; // For compatibility with legacy routes
           additionalData = {
             studentId: student.id,
             currentLevel: student.currentLevel,
             memorizedSurahs: student.memorizedSurahs,
           };
-          console.log('[auth] Student found, studentId:', student.id, 'for userId:', user.id);
-        } else {
-          console.log('[auth] WARNING: No student record found for userId:', user.id);
-          console.log('[auth] All students:', students.map(s => ({ id: s.id, userId: s.userId, name: s.studentName })));
+          console.log('[auth] Student data loaded, studentId:', student.id, 'for userId:', user.id);
         }
       }
 
@@ -212,7 +227,7 @@ export function setupAuthRoutes(app: Express) {
       res.json(loginResponse);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "بيانات غير صحيحة",
           errors: error.errors.map(e => e.message)
         });
@@ -236,13 +251,30 @@ export function setupAuthRoutes(app: Express) {
       }
 
       // Get additional data based on role
-      let additionalData = {};
+      let additionalData: any = {};
+
       if (user.role === 'student') {
-        const students = await storage.getAllStudents();
-        const student = students.find(s => s.userId === user.id);
+        const students = await storage.getStudents();
+        let student = students.find(s => s.userId === user.id);
+
+        // If no student record exists, create one automatically
+        if (!student) {
+          console.log('[auth/user] No student record found for userId:', user.id, 'Creating new student record...');
+
+          const newStudentData = {
+            userId: user.id,
+            studentName: user.firstName || 'طالب جديد',
+            phoneNumber: user.phoneNumber || '',
+            currentLevel: 'المستوى الأول',
+            memorizedSurahs: '[]',
+            isActive: true,
+          };
+
+          student = await storage.createStudent(newStudentData);
+          console.log('[auth/user] Created student record with id:', student.id);
+        }
+
         if (student) {
-          // Store studentId in session for future use
-          req.session.studentId = student.id;
           additionalData = {
             studentId: student.id,
             currentLevel: student.currentLevel,
@@ -262,7 +294,7 @@ export function setupAuthRoutes(app: Express) {
         ...additionalData,
       };
 
-      console.log('[auth] Sending user data with studentId:', additionalData);
+      console.log('[auth/user] Sending user data with studentId:', additionalData.studentId);
 
       res.json(responseData);
     } catch (error) {
