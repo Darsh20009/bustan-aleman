@@ -37,8 +37,8 @@ export default function QuranStats() {
       return await apiRequest('/api/quran/stats', 'POST', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats/today'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats', { period: 'today' }] });
+      queryClient.invalidateQueries({ queryKey: ['/api/quran/stats', { period: 'week' }] });
     },
   });
 
