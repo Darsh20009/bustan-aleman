@@ -25,7 +25,9 @@ export function useAuth() {
         throw new Error('Not authenticated');
       }
       
-      return response.json();
+      const userData = await response.json();
+      console.log('[useAuth] User data received:', userData);
+      return userData;
     },
     retry: false,
     staleTime: Infinity, // لا تعتبر البيانات قديمة أبداً

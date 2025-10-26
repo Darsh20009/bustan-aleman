@@ -187,10 +187,13 @@ export function setupAuthRoutes(app: Express) {
             currentLevel: student.currentLevel,
             memorizedSurahs: student.memorizedSurahs,
           };
+          console.log('[auth] Student found, studentId:', student.id);
+        } else {
+          console.log('[auth] WARNING: No student record found for user:', user.id);
         }
       }
 
-      res.json({
+      const loginResponse = {
         message: "تم تسجيل الدخول بنجاح",
         user: {
           id: user.id,
@@ -200,7 +203,11 @@ export function setupAuthRoutes(app: Express) {
           role: user.role,
           ...additionalData,
         }
-      });
+      };
+
+      console.log('[auth] Login response:', JSON.stringify(loginResponse, null, 2));
+
+      res.json(loginResponse);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -232,6 +239,8 @@ export function setupAuthRoutes(app: Express) {
         const students = await storage.getAllStudents();
         const student = students.find(s => s.userId === user.id);
         if (student) {
+          // Store studentId in session for future use
+          req.session.studentId = student.id;
           additionalData = {
             studentId: student.id,
             currentLevel: student.currentLevel,
@@ -240,7 +249,7 @@ export function setupAuthRoutes(app: Express) {
         }
       }
 
-      res.json({
+      const responseData = {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
@@ -249,7 +258,11 @@ export function setupAuthRoutes(app: Express) {
         phoneNumber: user.phoneNumber,
         registrationCompleted: user.registrationCompleted,
         ...additionalData,
-      });
+      };
+
+      console.log('[auth] Sending user data:', JSON.stringify(responseData, null, 2));
+
+      res.json(responseData);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "خطأ في جلب بيانات المستخدم" });
