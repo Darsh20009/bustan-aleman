@@ -21,7 +21,13 @@ import CertificatesPage from "./components/CertificatesPage";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips';
+
+// Helper function to check if a path is a valid AppState
+const isValidAppState = (path: string): path is AppState => {
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips'];
+  return validStates.includes(path as AppState);
+};
 
 function AppContent() {
   const [appState, setAppState] = useState<AppState>('splash');
@@ -62,7 +68,17 @@ function AppContent() {
       case 'home':
         // If authenticated, show role-based navigation instead of homepage
         if (isAuthenticated && user) {
-          return <RoleBasedNav />;
+          return <RoleBasedNav onNavigate={(path) => {
+            // If it's a valid app state, use state navigation
+            if (isValidAppState(path)) {
+              setAppState(path);
+            } else {
+              // For other paths (like supervisor/students), use URL navigation
+              // Ensure path has leading slash
+              const fullPath = path.startsWith('/') ? path : `/${path}`;
+              window.location.href = fullPath;
+            }
+          }} />;
         }
         return (
           <MainHomepage
@@ -94,14 +110,28 @@ function AppContent() {
       case 'auth':
         // If already authenticated, redirect to appropriate dashboard
         if (isAuthenticated && user) {
-          return <RoleBasedNav />;
+          return <RoleBasedNav onNavigate={(path) => {
+            if (isValidAppState(path)) {
+              setAppState(path);
+            } else {
+              const fullPath = path.startsWith('/') ? path : `/${path}`;
+              window.location.href = fullPath;
+            }
+          }} />;
         }
         return <AuthPage />;
       
       case 'dashboard':
         // Use the new role-based navigation instead of old dashboard
         if (isAuthenticated && user) {
-          return <RoleBasedNav />;
+          return <RoleBasedNav onNavigate={(path) => {
+            if (isValidAppState(path)) {
+              setAppState(path);
+            } else {
+              const fullPath = path.startsWith('/') ? path : `/${path}`;
+              window.location.href = fullPath;
+            }
+          }} />;
         } else {
           return <AuthPage />;
         }
@@ -131,6 +161,22 @@ function AppContent() {
         } else {
           return <AuthPage />;
         }
+      
+      case 'trips':
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center p-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-amber-800 mb-4">الرحلات التعليمية</h1>
+              <p className="text-gray-600 text-lg mb-8">قريباً - جاري العمل على هذه الصفحة</p>
+              <button
+                onClick={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              >
+                العودة للرئيسية
+              </button>
+            </div>
+          </div>
+        );
       
       case 'quran':
         return (
