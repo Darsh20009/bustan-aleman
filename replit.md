@@ -1,204 +1,7 @@
 # بستان الإيمان (Bustan Al-Iman) - Islamic Education Platform
 
 ## Overview
-A comprehensive Islamic education platform built with Express.js, React, TypeScript, and PostgreSQL. The platform provides Quran memorization courses, teacher-student interaction, and educational content management.
-
-## Project Status (October 26, 2025)
-- **Platform**: بستان الإيمان (Garden of Faith)
-- **Status**: Production-ready with enhanced security ✅
-- **Development Server**: Running successfully on port 5000
-- **Database**: PostgreSQL with Drizzle ORM (Local - Helium)
-- **Security**: Bcrypt password hashing with automatic upgrade ✅
-- **Monitoring**: Enhanced API logging with performance tracking ✅
-- **Authentication**: Custom phone-based auth with pre-registered users
-- **Quran Integration**: Full Quran with 114 surahs, translations, tafsir, and audio ✅
-- **Design System**: Unified color palette (Green, White, Orange) with centered layout ✅
-- **Dark Mode**: Green/Black theme for Quran reader ✅
-
-## Recent Changes (October 26, 2025)
-
-### Quran Reader Major Enhancement ✅
-- **Enhanced Dark Mode**:
-  - ✅ Updated dark theme to green/black palette instead of blue tones
-  - ✅ Background: Pure black with subtle emerald tints
-  - ✅ Primary color: Emerald green (#10B981)
-  - ✅ Better contrast and readability in night mode
-  - ✅ Matches Islamic aesthetic with natural earth tones
-
-- **Redesigned Quran Reader Interface**:
-  - ✅ Beautiful gradient backgrounds (white to emerald in light mode, dark gray in dark mode)
-  - ✅ Enhanced card styling with emerald borders and shadows
-  - ✅ Improved surah headers with decorative elements and BookMarked icons
-  - ✅ Larger, more readable text (text-2xl for Quran text)
-  - ✅ Better verse number display with circular emerald badges
-  - ✅ Smooth hover effects on ayahs (emerald highlight)
-  - ✅ Elegant separators between surahs with gradient lines
-  - ✅ Professional "صدق الله العظيم" badge with gradient background
-
-- **New Database Tables for Advanced Features**:
-  - ✅ `quranWordHighlights`: Store word-level highlights and notes
-    - Supports highlighting individual words within ayahs
-    - Color coding (red, yellow, blue, green)
-    - Per-word annotations
-  - ✅ `quranMemorization`: Track memorization progress
-    - Range-based tracking (from ayah X to ayah Y)
-    - Mastery levels (0-100)
-    - Review scheduling
-    - Mistake tracking
-  - ✅ `quranReadingStats`: Daily reading statistics
-    - Ayahs and pages read per day
-    - Time spent reading
-    - Completed surahs tracking
-
-## Recent Changes (October 26, 2025 - Earlier)
-
-### Student Dashboard Enhancement ✅
-- **Enhanced Student Profile Display**:
-  - ✅ Added StudentProfileHeader component with personalized welcome banner
-  - ✅ Profile info showing name, age, and level
-  - ✅ Stats cards for enrolled courses, certificates, and memorized surahs
-  - ✅ Creative news and announcements section with beautiful cards
-  - ✅ Quick action buttons for Quran, announcements, and trips
-  - ✅ Gradient backgrounds matching main homepage design
-
-- **Navigation System Improvements**:
-  - ✅ Fixed navigation issues with AppState validation
-  - ✅ Added getSafeMemorizedSurahs with error handling for JSON parsing
-  - ✅ Implemented React.useMemo for performance optimization
-  - ✅ Hybrid navigation supporting both AppState and URL navigation
-  - ✅ Proper path handling for supervisor/admin routes
-
-- **Safety & Performance**:
-  - ✅ JSON.parse error protection prevents crashes from malformed data
-  - ✅ Memoization reduces unnecessary re-renders
-  - ✅ Graceful fallback for missing data
-
-### Splash Screen Activation ✅
-- **Re-enabled Splash Screen** (previously disabled):
-  - ✅ Animated Quran book opening sequence with green pages
-  - ✅ Duration: 6.5 seconds (auto-advance) with "تخطي" skip button
-  - ✅ Updated all colors to match unified design (green, orange, white)
-  - ✅ Background: Gradient from emerald to orange
-  - ✅ Arabic text with Islamic verses (Bismillah, Al-Hamdulillah)
-  - ✅ Loading progress bar with orange accent
-  - ✅ Smooth animations and transitions
-
-### Design System Unification ✅
-- **Color Palette Simplification**:
-  - ✅ Unified all colors to three-color palette: Green (#10B981), White (#FFFFFF), Orange (#F97316)
-  - ✅ Replaced all gray, purple, blue, and other colors with green/orange variants
-  - ✅ Updated CSS variables in `client/src/index.css` for consistency
-  - ✅ Removed gradient overlays with black, using green/orange tones instead
-
-- **Layout Improvements**:
-  - ✅ Centered header navigation (logo, title, buttons)
-  - ✅ All content sections now have centered alignment
-  - ✅ Hero cards (3 journey cards) alternate green/orange colors
-  - ✅ Platform features use consistent green/orange icon backgrounds
-  - ✅ Certificate section badges follow same color scheme
-
-- **Typography & Content**:
-  - ✅ All text uses emerald-600/700 or orange-600/700 shades
-  - ✅ Removed all gray text colors for better brand consistency
-  - ✅ White backgrounds throughout for clean, modern look
-
-## Recent Changes (October 25, 2025)
-
-### Quran Integration - Complete Implementation ✅
-- **API Integration**: 
-  - ✅ Integrated AlQuran.Cloud API for authentic Quranic text
-  - ✅ Added all 114 surahs with complete metadata
-  - ✅ Fetching Arabic text (Uthmani script) from live API
-  - ✅ English translations (Sahih International) for all verses
-  - ✅ Arabic Tafsir (Simplified) for every ayah
-  
-- **Audio Features**:
-  - ✅ Support for 8 renowned reciters:
-    - مشاري العفاسي (Mishary Al-Afasy)
-    - عبد الباسط عبد الصمد - مرتل (Abdul Basit - Murattal)
-    - عبد الباسط عبد الصمد - مجود (Abdul Basit - Mujawwad)
-    - أبو بكر الشاطري (Abu Bakr Al-Shatri)
-    - هاني الرفاعي (Hani Al-Rifai)
-    - محمود خليل الحصري (Mahmoud Khalil Al-Hussary)
-    - محمد صديق المنشاوي (Mohamed Siddiq Al-Minshawi)
-    - عبد الرحمن السديس (Abdul Rahman Al-Sudais)
-  - ✅ Dynamic audio loading from API per reciter selection
-  - ✅ Auto-play, repeat, and continuous playback features
-  - ✅ Proper audio cleanup prevents overlapping playback
-  - ✅ Memory leak prevention on component unmount
-  
-- **User Experience**:
-  - ✅ Full Surah selector with all 114 chapters
-  - ✅ Real-time loading indicators
-  - ✅ Error handling with user-friendly Arabic messages
-  - ✅ Network error recovery suggestions
-  - ✅ Smooth surah/reciter switching without audio overlap
-
-## Recent Changes (October 17, 2025)
-
-### Security & Performance Enhancements ✅
-- **Password Security**: 
-  - ✅ Implemented automatic bcrypt password upgrade for legacy accounts
-  - ✅ Guaranteed bcrypt hashing with proper failure handling  
-  - ✅ Denies access if password hashing/persistence fails (no plaintext logins)
-  - ✅ Detailed logging for password upgrade operations
-  
-- **Database Connection**:
-  - ✅ Configured for local PostgreSQL (Helium) with safe fallback
-  - ✅ Updated `drizzle.config.ts` to use DATABASE_URL
-  - ✅ Database schema synced successfully
-  
-- **Monitoring & Logging**:
-  - ✅ Enhanced API logging with user tracking `[user:xxx]`
-  - ✅ Performance monitoring with slow request warnings (>1s)
-  - ✅ Detailed request logs: method, path, status, duration, user, response
-  - ✅ Log truncation at 120 chars for better readability
-
-## Recent Changes (October 15, 2025)
-
-### Aiven Database Integration Attempt ⚠️
-- **Added**: Aiven PostgreSQL credentials stored securely in Secrets
-- **Issue**: Connection fails with `ECONNRESET` error  
-- **Root Cause**: Likely firewall/IP whitelist restrictions in Aiven
-- **Current Status**: Using local PostgreSQL database (Helium)
-- **Action Required**: 
-  1. Log into Aiven Console
-  2. Navigate to PostgreSQL service → Settings → IP Whitelist
-  3. Add `0.0.0.0/0` (for testing) or specific Replit IPs
-  4. Enable Aiven by setting `ENABLE_AIVEN = true` in `server/db.ts`
-
-### Database Connection Layer Enhanced ✅
-- **Added**: Dual driver support (Neon + pg)
-- **Added**: Automatic Aiven detection from environment variables
-- **Added**: SSL configuration for Aiven (rejectUnauthorized: false for dev)
-- **Updated**: drizzle.config.ts to support Aiven credentials
-
-## Recent Changes (October 6, 2025)
-
-### Authentication System Migration ✅
-- **Replaced** Replit Auth with custom phone-based authentication
-- **Implemented** secure password hashing using bcrypt
-- **Created** pre-registered user system (no public registration)
-- **Session management** working with PostgreSQL-backed sessions
-
-### Database & Users ✅
-- **Pre-registered Users**:
-  - **Teacher**: Ahmed Abu Mazen (0549947386) - role: teacher
-  - **Students**:
-    - Yousef (0532441566) - role: student
-    - Ahmed (0532449303) - role: student  
-    - Mahmoud (0598765966) - role: student
-- **Password**: Phone number is used as initial password
-- **Database Connection**: Fixed SSL certificate issues with Neon serverless
-
-### Real-time Communication ✅
-- **WebSocket server** initialized on `/ws` for teacher-student chat
-- **Messages table** added to schema for real-time messaging
-- **Database errors resolved** by accepting self-signed certificates in development
-
-### Known Issues 🔍
-- **Splash screen disabled temporarily** (TODO: debug animation timing issue)
-- **WebSocket HMR warning** (Vite dev server - doesn't affect functionality)
+بستان الإيمان (Bustan Al-Iman) is a comprehensive Islamic education platform designed to provide Quran memorization courses, facilitate teacher-student interaction, and manage educational content. Built with Express.js, React, TypeScript, and PostgreSQL, the platform aims to offer a rich, secure, and user-friendly learning experience. It features full Quran integration with translations, tafsir, and audio recitations, along with advanced tracking for memorization and reading statistics. The platform prioritizes a unified Islamic-themed design and robust security measures.
 
 ## User Preferences
 - Communication: Simple, everyday language in Arabic
@@ -207,137 +10,57 @@ A comprehensive Islamic education platform built with Express.js, React, TypeScr
 
 ## System Architecture
 
-### Frontend Stack
-- **React 18 + TypeScript**: Type-safe component development
-- **Vite**: Fast dev server with HMR
-- **shadcn/ui + Radix UI**: Accessible component library
-- **TanStack Query v5**: Server state management
-- **Wouter**: Lightweight routing
-- **Tailwind CSS**: Islamic-themed design (green, gold, white palette)
-- **RTL Support**: Full Arabic language support
+### UI/UX Decisions
+The platform features a unified design system with a core color palette of Green (#10B981), White (#FFFFFF), and Orange (#F97316). All UI elements, including headers, content sections, and interactive components, are centered and adhere to this palette for a consistent, Islamic aesthetic. The Quran reader includes an enhanced dark mode with a green/black theme for improved readability. Typography predominantly uses emerald and orange shades, eliminating gray text for brand consistency. The design supports RTL for Arabic language.
 
-### Backend Stack  
-- **Express.js**: RESTful API server
-- **PostgreSQL + Drizzle ORM**: Type-safe database operations
-- **Custom Phone Auth**: Session-based authentication with bcrypt
-- **WebSocket**: Real-time teacher-student communication
-- **Neon Serverless**: Cloud PostgreSQL driver
+### Technical Implementations
+-   **Frontend**: React 18 with TypeScript, Vite for fast development, shadcn/ui and Radix UI for accessible components, TanStack Query for server state, Wouter for routing, and Tailwind CSS for styling.
+-   **Backend**: Express.js for RESTful APIs, PostgreSQL with Drizzle ORM for type-safe database operations, and a custom phone-based authentication system with bcrypt for secure password hashing.
+-   **Real-time Communication**: WebSocket server (`ws`) is implemented on `/ws` for teacher-student chat, with messages stored in a dedicated database table.
+-   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using PostgreSQL-backed Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin).
+-   **Quran Integration**: Comprehensive integration with AlQuran.Cloud API for 114 surahs, Arabic text (Uthmani), English translations (Sahih International), Arabic Tafsir, and audio recitations from 8 renowned reciters. Features dynamic audio loading, auto-play, repeat, and continuous playback.
+-   **Database**: PostgreSQL is used with Drizzle ORM. Local development uses a local PostgreSQL instance (Helium), while production targets Neon Serverless. Supports automatic bcrypt password upgrades for legacy accounts.
 
-### Database Schema (PostgreSQL)
-```typescript
-// Core tables:
-- users: Pre-registered users with phone authentication
-- messages: Real-time chat between teachers and students
-- courses: Islamic education courses
-- instructors: Teacher profiles and qualifications
-- enrollments: Student course registrations
-- sessions: Express session storage
-```
+### Feature Specifications
+-   **Quran Reader**: Displays Quran text, translations, tafsir, and allows selection of various reciters with audio playback. Includes features for word-level highlights and notes, memorization progress tracking (range-based, mastery levels, review scheduling), and daily reading statistics.
+-   **Student Dashboard**: Personalised welcome, profile information, stats cards (enrolled courses, certificates, memorized surahs), news/announcements, and quick action buttons.
+-   **Splash Screen**: Animated Quran book opening sequence with a green/orange theme and loading progress.
 
-### Authentication Flow
-1. **Login**: Phone number + password (initially same as phone)
-2. **Session**: PostgreSQL-backed Express sessions (7-day TTL)
-3. **Authorization**: Role-based access (teacher/student/admin)
-4. **Password Security**: bcrypt hashing (10 rounds)
-
-### API Endpoints
-```
-POST /api/auth/login         - Phone-based login
-GET  /api/auth/user          - Get current user
-POST /api/auth/logout        - Logout and destroy session
-POST /api/init-data          - Initialize default data
-```
-
-## Development Guidelines
-
-### Database Changes
-- Never change primary key types (serial ↔ varchar breaks existing data)
-- Use `npm run db:push --force` to sync schema safely
-- Check existing schema before making changes
-
-### Code Conventions
-- Phone numbers: 10 digits starting with '05' (Palestinian format)
-- All UI text: Arabic (RTL)
-- Password hashing: Always use bcrypt
-- Session secrets: Store in environment variables
-
-### Testing Credentials
-```
-Teacher Login:
-Phone: 0549947386
-Password: 0549947386
-
-Student Login (Yousef):
-Phone: 0532441566  
-Password: 0532441566
-```
+### System Design Choices
+-   **Type Safety**: Achieved across the stack using TypeScript and Drizzle ORM.
+-   **Performance**: Utilizes `React.useMemo` for frontend optimization and enhanced API logging with performance monitoring on the backend.
+-   **Security**: Bcrypt password hashing, automatic password upgrades, detailed logging for security operations, and secure session management.
+-   **Scalability**: Designed for stateless web app deployment, targeting autoscale environments.
 
 ## External Dependencies
 
 ### Core Framework
-- `@neondatabase/serverless` - PostgreSQL driver
-- `drizzle-orm` - Type-safe ORM
-- `express` + `express-session` - Web server and sessions
-- `react` + `@tanstack/react-query` - Frontend framework
+-   `@neondatabase/serverless`: PostgreSQL driver
+-   `drizzle-orm`: Type-safe ORM
+-   `express`: Web server
+-   `express-session`: Session management for Express
+-   `react`: Frontend framework
+-   `@tanstack/react-query`: Server state management for React
 
 ### Authentication & Security
-- `bcrypt` - Password hashing
-- `connect-pg-simple` - PostgreSQL session store
-- `ws` - WebSocket server for real-time features
+-   `bcrypt`: Password hashing library
+-   `connect-pg-simple`: PostgreSQL store for Express sessions
+-   `ws`: WebSocket server implementation
 
 ### UI & Styling
-- `@radix-ui/*` - Accessible UI primitives
-- `tailwindcss` - Utility CSS framework
-- `lucide-react` - Icon library
-- `framer-motion` - Animations
+-   `@radix-ui/*`: Accessible UI primitives
+-   `tailwindcss`: Utility-first CSS framework
+-   `lucide-react`: Icon library
+-   `framer-motion`: Animation library
 
 ### Forms & Validation
-- `react-hook-form` + `@hookform/resolvers`
-- `zod` + `drizzle-zod` - Schema validation
+-   `react-hook-form`: Form management library
+-   `@hookform/resolvers`: Validation resolvers for React Hook Form
+-   `zod`: Schema declaration and validation library
+-   `drizzle-zod`: Zod integration for Drizzle ORM schemas
 
 ### Development Tools
-- `vite` - Build tool
-- `typescript` - Type safety
-- `drizzle-kit` - Database migrations
-- `tsx` - TypeScript execution
-
-## File Structure
-```
-client/                    # React frontend
-  src/
-    components/           # UI components
-    hooks/               # React hooks (useAuth, etc.)
-    lib/                 # Utilities (queryClient)
-    pages/               # Page components
-server/                   # Express backend
-  db.ts                  # Database connection
-  phoneAuth.ts           # Phone authentication logic
-  routes.ts              # API routes
-  storage.ts             # Database operations
-  index.ts               # Server entry point
-shared/
-  schema.ts              # Shared database schema
-```
-
-## Next Steps (TODO)
-1. ✅ Fix database SSL certificate issues
-2. ✅ Implement phone-based authentication
-3. ✅ Create pre-registered users
-4. ✅ Integrate Quran reader with recitations (Complete - 114 surahs, translations, tafsir, 8 reciters)
-5. 🔄 Debug splash screen animation issue
-6. 📋 Implement teacher dashboard
-7. 📋 Implement student portal
-8. 📋 Build course management system
-9. 📋 Add exam system with anti-cheat
-10. 📋 Implement certificate generation
-11. 📋 Add session access control
-
-## Deployment Configuration
-- **Target**: Autoscale (stateless web app)
-- **Port**: 5000 (frontend + backend on same port)
-- **Database**: PostgreSQL (Neon serverless)
-- **Environment**: Production-ready with secure sessions
-
----
-**Last Updated**: October 17, 2025
-**Platform**: بستان الإيمان - منصة تعليمية إسلامية متطورة
+-   `vite`: Next-generation frontend tooling
+-   `typescript`: Superset of JavaScript for type safety
+-   `drizzle-kit`: Database migration and schema management for Drizzle ORM
+-   `tsx`: TypeScript execution environment
