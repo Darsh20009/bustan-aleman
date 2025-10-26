@@ -449,6 +449,48 @@ export const quranReadingStats = pgTable("quran_reading_stats", {
   unique("quran_reading_stats_student_date_unique").on(table.studentId, table.readingDate),
 ]);
 
+// Quran ayah markers table - for marking individual ayahs for memorization or review
+export const quranAyahMarkers = pgTable("quran_ayah_markers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  ayahNumber: integer("ayah_number").notNull(),
+  markerType: varchar("marker_type", { enum: ['memorization', 'review', 'bookmark', 'completed'] }).notNull(),
+  markerColor: varchar("marker_color", { enum: ['blue', 'green', 'yellow', 'red', 'orange'] }).default("blue"),
+  isActive: boolean("is_active").default(true),
+  priority: integer("priority").default(0), // for ordering markers
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("quran_ayah_markers_student_idx").on(table.studentId),
+  index("quran_ayah_markers_surah_ayah_idx").on(table.surahNumber, table.ayahNumber),
+  unique("quran_ayah_markers_unique").on(table.studentId, table.surahNumber, table.ayahNumber, table.markerType),
+]);
+
+// Quran recitation attempts table - tracks recitation practice and corrections
+export const quranRecitationAttempts = pgTable("quran_recitation_attempts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  fromAyah: integer("from_ayah").notNull(),
+  toAyah: integer("to_ayah").notNull(),
+  attemptDate: timestamp("attempt_date").defaultNow(),
+  totalAyahs: integer("total_ayahs").notNull(),
+  correctAyahs: integer("correct_ayahs").default(0),
+  mistakes: text("mistakes"), // JSON array of mistakes {ayahNumber, type, description}
+  score: integer("score"), // percentage score 0-100
+  duration: integer("duration"), // duration in seconds
+  isCompleted: boolean("is_completed").default(false),
+  mode: varchar("mode", { enum: ['practice', 'test', 'review'] }).default("practice"),
+  feedback: text("feedback"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("quran_recitation_attempts_student_idx").on(table.studentId),
+  index("quran_recitation_attempts_date_idx").on(table.attemptDate),
+  index("quran_recitation_attempts_student_surah_date_idx").on(table.studentId, table.surahNumber, table.attemptDate),
+]);
+
 // Certificates table - for course completion and achievements
 export const certificates = pgTable("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -627,6 +669,26 @@ export const insertQuranReadingStatsSchema = createInsertSchema(quranReadingStat
   createdAt: true,
 });
 
+export const ayahMarkerTypeEnum = z.enum(['memorization', 'review', 'bookmark', 'completed']);
+export const ayahMarkerColorEnum = z.enum(['blue', 'green', 'yellow', 'red', 'orange']);
+export const recitationModeEnum = z.enum(['practice', 'test', 'review']);
+
+export const insertQuranAyahMarkerSchema = createInsertSchema(quranAyahMarkers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  markerType: ayahMarkerTypeEnum,
+  markerColor: ayahMarkerColorEnum.optional(),
+});
+
+export const insertQuranRecitationAttemptSchema = createInsertSchema(quranRecitationAttempts).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  mode: recitationModeEnum.optional(),
+});
+
 // Export types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -680,3 +742,7 @@ export type QuranMemorization = typeof quranMemorization.$inferSelect;
 export type InsertQuranMemorization = z.infer<typeof insertQuranMemorizationSchema>;
 export type QuranReadingStats = typeof quranReadingStats.$inferSelect;
 export type InsertQuranReadingStats = z.infer<typeof insertQuranReadingStatsSchema>;
+export type QuranAyahMarker = typeof quranAyahMarkers.$inferSelect;
+export type InsertQuranAyahMarker = z.infer<typeof insertQuranAyahMarkerSchema>;
+export type QuranRecitationAttempt = typeof quranRecitationAttempts.$inferSelect;
+export type InsertQuranRecitationAttempt = z.infer<typeof insertQuranRecitationAttemptSchema>;

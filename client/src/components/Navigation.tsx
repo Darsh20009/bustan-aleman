@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { BookOpen, Menu, User, LogOut } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,7 @@ export default function Navigation() {
   );
 
   return (
-    <nav className="bg-white shadow-lg sticky top-0 z-50">
+    <nav className="bg-white dark:bg-gray-900 shadow-lg sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
@@ -57,10 +58,10 @@ export default function Navigation() {
                 <BookOpen className="text-white" size={24} />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-islamic-green font-arabic-serif">
+                <h2 className="text-xl font-bold text-islamic-green dark:text-islamic-green font-arabic-serif">
                   بستان الإيمان
                 </h2>
-                <p className="text-sm text-gray-600">منصة التعليم الإسلامي</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">منصة التعليم الإسلامي</p>
               </div>
             </div>
           </Link>
@@ -72,6 +73,7 @@ export default function Navigation() {
 
           {/* Auth Buttons */}
           <div className="flex items-center space-x-reverse space-x-4">
+            <ThemeToggle />
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

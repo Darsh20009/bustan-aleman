@@ -21,20 +21,20 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-screen bg-warm-white dark:bg-gray-950 transition-colors">
       <Navigation />
       
       {/* Welcome Section */}
-      <section className="hero-section">
-        <div className="islamic-pattern-overlay"></div>
+      <section className="hero-section dark:bg-gradient-to-b dark:from-gray-900 dark:to-gray-800">
+        <div className="islamic-pattern-overlay dark:opacity-30"></div>
         <div className="hero-content container mx-auto px-4">
           <h1 
-            className="text-4xl md:text-5xl font-bold font-arabic-serif mb-6"
+            className="text-4xl md:text-5xl font-bold font-arabic-serif mb-6 text-white dark:text-white"
             data-testid="welcome-title"
           >
             أهلاً وسهلاً {(user as any)?.firstName || 'بك'}
           </h1>
-          <p className="text-xl mb-8 opacity-90">
+          <p className="text-xl mb-8 opacity-90 text-white dark:text-gray-200">
             في بستان الإيمان - رحلتك نحو التعلم والإيمان تبدأ من هنا
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
@@ -57,42 +57,42 @@ export default function Home() {
       </section>
 
       {/* Dashboard Stats */}
-      <section className="py-12 bg-light-beige">
+      <section className="py-12 bg-light-beige dark:bg-gray-900 transition-colors">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="islamic-card text-center">
+            <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-6">
-                <BookOpen className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-islamic-green mb-2">
+                <BookOpen className="text-3xl text-islamic-green dark:text-green-400 mb-4 mx-auto" size={48} />
+                <h3 className="text-2xl font-bold text-islamic-green dark:text-green-400 mb-2">
                   {Array.isArray(enrollments) ? enrollments.length : 0}
                 </h3>
-                <p className="text-gray-600">الدورات المسجلة</p>
+                <p className="text-gray-600 dark:text-gray-300">الدورات المسجلة</p>
               </CardContent>
             </Card>
             
-            <Card className="islamic-card text-center">
+            <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-6">
-                <Calendar className="text-3xl text-warm-gold mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-warm-gold mb-2">
+                <Calendar className="text-3xl text-warm-gold dark:text-yellow-400 mb-4 mx-auto" size={48} />
+                <h3 className="text-2xl font-bold text-warm-gold dark:text-yellow-400 mb-2">
                   {Array.isArray(courses) ? courses.filter((c: any) => new Date(c.startDate) > new Date()).length : 0}
                 </h3>
-                <p className="text-gray-600">الدورات القادمة</p>
+                <p className="text-gray-600 dark:text-gray-300">الدورات القادمة</p>
               </CardContent>
             </Card>
             
-            <Card className="islamic-card text-center">
+            <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-6">
-                <Trophy className="text-3xl text-earth-brown mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-earth-brown mb-2">0</h3>
-                <p className="text-gray-600">الإنجازات</p>
+                <Trophy className="text-3xl text-earth-brown dark:text-orange-400 mb-4 mx-auto" size={48} />
+                <h3 className="text-2xl font-bold text-earth-brown dark:text-orange-400 mb-2">0</h3>
+                <p className="text-gray-600 dark:text-gray-300">الإنجازات</p>
               </CardContent>
             </Card>
             
-            <Card className="islamic-card text-center">
+            <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-6">
-                <Users className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-islamic-green mb-2">50+</h3>
-                <p className="text-gray-600">زملاء الدراسة</p>
+                <Users className="text-3xl text-islamic-green dark:text-green-400 mb-4 mx-auto" size={48} />
+                <h3 className="text-2xl font-bold text-islamic-green dark:text-green-400 mb-2">50+</h3>
+                <p className="text-gray-600 dark:text-gray-300">زملاء الدراسة</p>
               </CardContent>
             </Card>
           </div>
@@ -100,10 +100,10 @@ export default function Home() {
       </section>
 
       {/* My Enrollments */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-950 transition-colors">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold font-arabic-serif text-islamic-green">
+            <h2 className="text-3xl font-bold font-arabic-serif text-islamic-green dark:text-green-400">
               دوراتي المسجلة
             </h2>
             <Button 
