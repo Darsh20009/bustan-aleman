@@ -24,8 +24,7 @@ import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements';
 
 function AppContent() {
-  // TODO: Splash screen disabled temporarily - needs debugging
-  const [appState, setAppState] = useState<AppState>('home');
+  const [appState, setAppState] = useState<AppState>('splash');
   const { user, isAuthenticated, isLoading } = useAuth();
 
   // Initialize default students on app start
