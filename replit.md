@@ -13,8 +13,44 @@ A comprehensive Islamic education platform built with Express.js, React, TypeScr
 - **Authentication**: Custom phone-based auth with pre-registered users
 - **Quran Integration**: Full Quran with 114 surahs, translations, tafsir, and audio ✅
 - **Design System**: Unified color palette (Green, White, Orange) with centered layout ✅
+- **Dark Mode**: Green/Black theme for Quran reader ✅
 
 ## Recent Changes (October 26, 2025)
+
+### Quran Reader Major Enhancement ✅
+- **Enhanced Dark Mode**:
+  - ✅ Updated dark theme to green/black palette instead of blue tones
+  - ✅ Background: Pure black with subtle emerald tints
+  - ✅ Primary color: Emerald green (#10B981)
+  - ✅ Better contrast and readability in night mode
+  - ✅ Matches Islamic aesthetic with natural earth tones
+
+- **Redesigned Quran Reader Interface**:
+  - ✅ Beautiful gradient backgrounds (white to emerald in light mode, dark gray in dark mode)
+  - ✅ Enhanced card styling with emerald borders and shadows
+  - ✅ Improved surah headers with decorative elements and BookMarked icons
+  - ✅ Larger, more readable text (text-2xl for Quran text)
+  - ✅ Better verse number display with circular emerald badges
+  - ✅ Smooth hover effects on ayahs (emerald highlight)
+  - ✅ Elegant separators between surahs with gradient lines
+  - ✅ Professional "صدق الله العظيم" badge with gradient background
+
+- **New Database Tables for Advanced Features**:
+  - ✅ `quranWordHighlights`: Store word-level highlights and notes
+    - Supports highlighting individual words within ayahs
+    - Color coding (red, yellow, blue, green)
+    - Per-word annotations
+  - ✅ `quranMemorization`: Track memorization progress
+    - Range-based tracking (from ayah X to ayah Y)
+    - Mastery levels (0-100)
+    - Review scheduling
+    - Mistake tracking
+  - ✅ `quranReadingStats`: Daily reading statistics
+    - Ayahs and pages read per day
+    - Time spent reading
+    - Completed surahs tracking
+
+## Recent Changes (October 26, 2025 - Earlier)
 
 ### Student Dashboard Enhancement ✅
 - **Enhanced Student Profile Display**:
