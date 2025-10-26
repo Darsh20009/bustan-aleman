@@ -15,6 +15,9 @@ import {
   insertStudentErrorSchema,
   insertStudentPaymentSchema,
   insertClassScheduleSchema,
+  insertQuranWordHighlightSchema,
+  insertQuranMemorizationSchema,
+  insertQuranReadingStatsSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -707,6 +710,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating students:", error);
       res.status(500).json({ message: "Failed to create students" });
+    }
+  });
+
+  // Quran word highlights routes
+  app.post('/api/quran/word-highlights', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const highlightData = insertQuranWordHighlightSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      const highlight = await storage.createWordHighlight(highlightData);
+      res.status(201).json(highlight);
+    } catch (error) {
+      console.error("Error creating word highlight:", error);
+      res.status(500).json({ message: "Failed to create word highlight" });
+    }
+  });
+
+  app.get('/api/quran/word-highlights/:surahNumber/:ayahNumber', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { surahNumber, ayahNumber } = req.params;
+      const highlights = await storage.getWordHighlights(userId, parseInt(surahNumber), parseInt(ayahNumber));
+      res.json(highlights);
+    } catch (error) {
+      console.error("Error fetching word highlights:", error);
+      res.status(500).json({ message: "Failed to fetch word highlights" });
+    }
+  });
+
+  app.patch('/api/quran/word-highlights/:id', isPhoneAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const highlight = await storage.updateWordHighlight(id, updates);
+      res.json(highlight);
+    } catch (error) {
+      console.error("Error updating word highlight:", error);
+      res.status(500).json({ message: "Failed to update word highlight" });
+    }
+  });
+
+  app.delete('/api/quran/word-highlights/:id', isPhoneAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteWordHighlight(id);
+      res.json({ message: "Word highlight deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting word highlight:", error);
+      res.status(500).json({ message: "Failed to delete word highlight" });
+    }
+  });
+
+  // Quran memorization routes
+  app.post('/api/quran/memorization', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const memorizationData = insertQuranMemorizationSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      const memorization = await storage.createMemorization(memorizationData);
+      res.status(201).json(memorization);
+    } catch (error) {
+      console.error("Error creating memorization:", error);
+      res.status(500).json({ message: "Failed to create memorization" });
+    }
+  });
+
+  app.get('/api/quran/memorization', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const memorizations = await storage.getStudentMemorization(userId);
+      res.json(memorizations);
+    } catch (error) {
+      console.error("Error fetching memorization:", error);
+      res.status(500).json({ message: "Failed to fetch memorization" });
+    }
+  });
+
+  app.patch('/api/quran/memorization/:id', isPhoneAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const memorization = await storage.updateMemorization(id, updates);
+      res.json(memorization);
+    } catch (error) {
+      console.error("Error updating memorization:", error);
+      res.status(500).json({ message: "Failed to update memorization" });
+    }
+  });
+
+  app.delete('/api/quran/memorization/:id', isPhoneAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteMemorization(id);
+      res.json({ message: "Memorization deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting memorization:", error);
+      res.status(500).json({ message: "Failed to delete memorization" });
+    }
+  });
+
+  // Quran reading statistics routes
+  app.post('/api/quran/stats', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const statsData = insertQuranReadingStatsSchema.parse({
+        ...req.body,
+        studentId: userId,
+      });
+      const stats = await storage.createOrUpdateReadingStats(statsData);
+      res.status(201).json(stats);
+    } catch (error) {
+      console.error("Error creating reading stats:", error);
+      res.status(500).json({ message: "Failed to create reading stats" });
+    }
+  });
+
+  app.get('/api/quran/stats', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { startDate, endDate } = req.query;
+      const stats = await storage.getStudentReadingStats(
+        userId,
+        startDate as string,
+        endDate as string
+      );
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching reading stats:", error);
+      res.status(500).json({ message: "Failed to fetch reading stats" });
+    }
+  });
+
+  app.get('/api/quran/stats/today', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const stats = await storage.getTodayReadingStats(userId);
+      res.json(stats || null);
+    } catch (error) {
+      console.error("Error fetching today's reading stats:", error);
+      res.status(500).json({ message: "Failed to fetch today's reading stats" });
     }
   });
 
