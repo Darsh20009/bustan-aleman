@@ -450,10 +450,33 @@ export function AuthPage() {
             )}
 
             <div className="border-t border-emerald-200 pt-6">
-              <div className="text-center">
+              <div className="text-center space-y-3">
+                {mode === 'login' ? (
+                  <p className="text-emerald-600">
+                    ليس لديك حساب؟{' '}
+                    <button
+                      onClick={() => setMode('register')}
+                      className="text-emerald-700 hover:text-emerald-900 font-semibold underline"
+                      data-testid="link-register"
+                    >
+                      إنشاء حساب جديد
+                    </button>
+                  </p>
+                ) : mode === 'register' ? (
+                  <p className="text-emerald-600">
+                    لديك حساب؟{' '}
+                    <button
+                      onClick={() => setMode('login')}
+                      className="text-emerald-700 hover:text-emerald-900 font-semibold underline"
+                      data-testid="link-login"
+                    >
+                      تسجيل الدخول
+                    </button>
+                  </p>
+                ) : null}
                 <button 
                   onClick={() => window.location.href = "/"}
-                  className="text-emerald-500 hover:text-emerald-700 transition-colors"
+                  className="text-emerald-500 hover:text-emerald-700 transition-colors block w-full"
                   data-testid="link-back-home"
                 >
                   العودة للصفحة الرئيسية
