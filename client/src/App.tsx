@@ -259,22 +259,11 @@ function AppContent() {
             </div>
             
             {/* Enhanced Quran Reader Container */}
-            <div className="p-2 md:p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl shadow-2xl border-4 border-amber-600 overflow-hidden">
-                  <div className="bg-gradient-to-r from-emerald-700 to-green-600 p-2 border-b-2 border-amber-500">
-                    <div className="text-center">
-                      <span className="text-amber-200 text-sm font-arabic" style={{ fontFamily: 'Amiri, serif' }}>
-                        ﷽
-                      </span>
-                    </div>
-                  </div>
-                  <EnhancedMushafReader 
-                    initialPage={1} 
-                    mode="read"
-                  />
-                </div>
-              </div>
+            <div className="h-full">
+              <EnhancedMushafReader 
+                initialPage={1} 
+                mode="read"
+              />
             </div>
           </div>
         );

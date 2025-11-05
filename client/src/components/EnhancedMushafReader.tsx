@@ -51,6 +51,8 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
     };
   }>({
     queryKey: ['/api/quran/page', currentPage],
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
   });
 
   const totalPages = 604;
@@ -261,7 +263,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
               </div>
             )}
 
-            <Card className="overflow-hidden shadow-2xl border-4 border-amber-300 dark:border-amber-900 bg-white dark:bg-gray-900">
+            <Card className="overflow-hidden shadow-lg border-0 bg-white dark:bg-gray-900">
               <CardContent className="p-6 md:p-12">
                 {/* Page Header */}
                 <div className="text-center mb-8 pb-4 border-b-2 border-amber-200 dark:border-amber-800">
@@ -286,68 +288,54 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 </div>
 
                 {/* Page Content */}
-                {isLoading ? (
-                  <div className="text-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 dark:border-emerald-400 mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">جاري تحميل الصفحة...</p>
-                  </div>
-                ) : (
-                  <div 
-                    className="quran-text font-arabic-serif leading-loose text-justify space-y-2"
-                    style={{ 
-                      fontSize: `${fontSize}px`,
-                      lineHeight: '2.5em',
-                      color: 'var(--foreground)'
-                    }}
-                  >
-                    {pageData?.verses?.map((verse, index) => {
-                      const words = verse.text.split(' ');
-                      return (
-                        <div 
-                          key={index}
-                          className="inline-block mb-2"
-                          onMouseEnter={() => setCurrentAyahForAudio(verse.numberInSurah)}
-                        >
-                          <span className="inline hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-1 rounded transition-colors">
-                            {currentMode === 'memorize' ? (
-                              words.map((word, wordIndex) => (
-                                <WordNotes
-                                  key={wordIndex}
-                                  surahNumber={verse.surahNumber}
-                                  ayahNumber={verse.numberInSurah}
-                                  wordIndex={wordIndex}
-                                  wordText={word}
-                                >
-                                  {word}{' '}
-                                </WordNotes>
-                              ))
-                            ) : (
-                              verse.text
-                            )}
-                            <span className="text-emerald-600 dark:text-emerald-400 mx-2">
-                              ﴿{verse.numberInSurah}﴾
-                            </span>
-                          </span>
-                          {currentMode === 'memorize' && (
-                            <div className="inline-block mr-2">
-                              <MemorizationMarkers
+                <div 
+                  className="quran-text font-arabic-serif leading-loose text-justify space-y-2"
+                  style={{ 
+                    fontSize: `${fontSize}px`,
+                    lineHeight: '2.5em',
+                    color: 'var(--foreground)'
+                  }}
+                >
+                  {pageData?.verses?.map((verse, index) => {
+                    const words = verse.text.split(' ');
+                    return (
+                      <div 
+                        key={index}
+                        className="inline-block mb-2"
+                        onMouseEnter={() => setCurrentAyahForAudio(verse.numberInSurah)}
+                      >
+                        <span className="inline hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-1 rounded transition-colors">
+                          {currentMode === 'memorize' ? (
+                            words.map((word, wordIndex) => (
+                              <WordNotes
+                                key={wordIndex}
                                 surahNumber={verse.surahNumber}
                                 ayahNumber={verse.numberInSurah}
-                              />
-                            </div>
+                                wordIndex={wordIndex}
+                                wordText={word}
+                              >
+                                {word}{' '}
+                              </WordNotes>
+                            ))
+                          ) : (
+                            verse.text
                           )}
-                        </div>
-                      );
-                    })}
-                    
-                    {!pageData?.verses && (
-                      <div className="text-center py-20 text-muted-foreground">
-                        <p className="text-2xl mb-4">الصفحة {currentPage}</p>
-                        <p>يتم تحميل محتوى الصفحة من API القرآن الكريم</p>
+                          <span className="text-emerald-600 dark:text-emerald-400 mx-2">
+                            ﴿{verse.numberInSurah}﴾
+                          </span>
+                        </span>
+                        {currentMode === 'memorize' && (
+                          <div className="inline-block mr-2">
+                            <MemorizationMarkers
+                              surahNumber={verse.surahNumber}
+                              ayahNumber={verse.numberInSurah}
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
 
                 {/* Page Footer */}
                 <div className="mt-8 pt-4 border-t-2 border-amber-200 dark:border-amber-800 text-center">
