@@ -142,10 +142,10 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="h-full flex flex-col bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Top Controls */}
-      <div className="bg-white dark:bg-gray-900 border-b shadow-md">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 border-b-4 border-amber-400 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Page Navigation */}
             <div className="flex items-center gap-2">
@@ -155,9 +155,9 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
                 data-testid="button-prev-page"
-                className="hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </Button>
               
               <div className="flex items-center gap-2">
@@ -165,12 +165,12 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                   type="number"
                   value={currentPage}
                   onChange={(e) => handlePageJump(parseInt(e.target.value) || 1)}
-                  className="w-20 text-center"
+                  className="w-20 text-center bg-white/90 border-white text-emerald-800 font-bold"
                   min={1}
                   max={totalPages}
                   data-testid="input-page-number"
                 />
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                <span className="text-sm text-white font-semibold whitespace-nowrap">
                   من {totalPages}
                 </span>
               </div>
@@ -181,9 +181,9 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
                 data-testid="button-next-page"
-                className="hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </Button>
             </div>
 
@@ -196,7 +196,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="sm"
                 onClick={() => setCurrentMode(currentMode === 'memorize' ? 'read' : 'memorize')}
                 data-testid="button-memorize-mode"
-                className="gap-2"
+                className={`gap-2 ${currentMode === 'memorize' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white/20 hover:bg-white/30 border-white/40 text-white'}`}
               >
                 <BookMarked className="h-4 w-4" />
                 <span className="hidden md:inline">وضع الحفظ</span>
@@ -207,7 +207,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="sm"
                 onClick={() => setCurrentMode('recite')}
                 data-testid="button-recite-mode"
-                className="gap-2"
+                className={`gap-2 ${currentMode === 'recite' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white/20 hover:bg-white/30 border-white/40 text-white'}`}
               >
                 <Eye className="h-4 w-4" />
                 <span className="hidden md:inline">وضع التلاوة</span>
@@ -221,10 +221,11 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="icon"
                 onClick={() => setFontSize(prev => Math.max(14, prev - 2))}
                 data-testid="button-zoom-out"
+                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-muted-foreground w-12 text-center">
+              <span className="text-sm text-white font-semibold w-12 text-center">
                 {fontSize}px
               </span>
               <Button
@@ -232,6 +233,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="icon"
                 onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
                 data-testid="button-zoom-in"
+                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -263,37 +265,27 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
               </div>
             )}
 
-            <Card className="overflow-hidden shadow-lg border-0 bg-white dark:bg-gray-900">
-              <CardContent className="p-6 md:p-12">
-                {/* Page Header */}
-                <div className="text-center mb-8 pb-4 border-b-2 border-amber-200 dark:border-amber-800">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="text-base md:text-lg px-3 md:px-4 py-2 bg-emerald-50 dark:bg-emerald-950">
-                      الجزء {Math.ceil(currentPage / 20)}
-                    </Badge>
-                    <div className="text-center flex-1">
-                      <div className="text-2xl md:text-3xl font-arabic-serif text-emerald-700 dark:text-emerald-300 mb-2">
-                        بسم الله الرحمن الرحيم
-                      </div>
-                      {pageData?.surahInfo && (
-                        <div className="text-lg text-muted-foreground">
-                          {pageData.surahInfo.name}
-                        </div>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="text-base md:text-lg px-3 md:px-4 py-2 bg-emerald-50 dark:bg-emerald-950">
-                      صفحة {currentPage}
-                    </Badge>
+            <Card className="overflow-hidden shadow-2xl border-2 border-emerald-200 bg-white dark:bg-gray-900">
+              <CardContent className="p-8 md:p-16">
+                {/* Page Header - مبسط وجميل */}
+                <div className="text-center mb-6 pb-6 border-b-2 border-emerald-300">
+                  <div className="text-3xl md:text-4xl font-arabic-serif text-emerald-700 dark:text-emerald-300 mb-3">
+                    بسم الله الرحمن الرحيم
                   </div>
+                  {pageData?.surahInfo && (
+                    <div className="text-xl text-emerald-600 font-semibold">
+                      {pageData.surahInfo.name}
+                    </div>
+                  )}
                 </div>
 
                 {/* Page Content */}
                 <div 
-                  className="quran-text font-arabic-serif leading-loose text-justify space-y-2"
+                  className="quran-text font-arabic-serif leading-loose text-center space-y-3"
                   style={{ 
                     fontSize: `${fontSize}px`,
-                    lineHeight: '2.5em',
-                    color: 'var(--foreground)'
+                    lineHeight: '2.8em',
+                    color: '#065f46'
                   }}
                 >
                   {pageData?.verses?.map((verse, index) => {
@@ -338,19 +330,24 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 </div>
 
                 {/* Page Footer */}
-                <div className="mt-8 pt-4 border-t-2 border-amber-200 dark:border-amber-800 text-center">
-                  <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
-                    <span>الحزب {Math.ceil(currentPage / 10)}</span>
-                    <span>•</span>
-                    <span>الربع {Math.ceil(currentPage / 5)}</span>
+                <div className="mt-8 pt-6 border-t-2 border-emerald-300 text-center">
+                  <div className="flex justify-center items-center gap-6">
+                    <Badge className="bg-emerald-100 text-emerald-800 px-4 py-2">
+                      الجزء {Math.ceil(currentPage / 20)}
+                    </Badge>
+                    <Badge className="bg-emerald-100 text-emerald-800 px-4 py-2">
+                      صفحة {currentPage}
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Page Navigation Hint */}
-            <div className="mt-4 text-center text-sm text-muted-foreground">
-              <p>استخدم الأسهم ← → أو الأزرار أعلاه للتنقل بين الصفحات</p>
+            <div className="mt-6 text-center">
+              <p className="text-emerald-700 dark:text-emerald-300 font-semibold">
+                ← استخدم الأزرار أعلاه أو الأسهم للتنقل →
+              </p>
             </div>
           </motion.div>
         </AnimatePresence>
