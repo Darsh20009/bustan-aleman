@@ -6,6 +6,8 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { SheikhDashboard } from './SheikhDashboard';
+import { SupervisorDashboard } from './SupervisorDashboard';
 
 interface NavItem {
   title: string;
@@ -454,14 +456,16 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           <StudentProfileHeader user={user} onNavigate={handleNavigation} />
         )}
 
-        {user.role !== 'student' && (
-          <div className="mb-12 text-center">
-            <h2 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-3">
-              مرحباً {user.firstName} 🌟
-            </h2>
-            <p className="text-gray-600 text-lg">
-              ابدأ رحلتك التعليمية المباركة من هنا
-            </p>
+        {/* Supervisor/Sheikh Dashboard */}
+        {(user.role === 'supervisor' || user.role === 'teacher') && (
+          <div className="mb-8">
+            <SheikhDashboard />
+          </div>
+        )}
+
+        {user.role === 'admin' && (
+          <div className="mb-8">
+            <SupervisorDashboard />
           </div>
         )}
 
