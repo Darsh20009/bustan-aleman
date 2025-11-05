@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,7 +27,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-islamic-green via-emerald-700 to-warm-gold flex items-center justify-center overflow-hidden">
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
 
@@ -49,8 +50,8 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
               ease: "easeInOut",
             }}
           >
-            <div className="w-full h-full border-2 border-warm-gold rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-warm-gold rounded-full opacity-50"></div>
+            <div className="w-full h-full border-2 border-emerald-300 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-emerald-300 rounded-full opacity-50"></div>
             </div>
           </motion.div>
         ))}
@@ -73,12 +74,12 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                   className="w-40 h-40 mx-auto mb-4"
                 >
-                  <svg viewBox="0 0 240 200" className="w-full h-full text-warm-gold">
+                  <svg viewBox="0 0 240 200" className="w-full h-full text-white">
                     <defs>
                       <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="hsla(123, 97%, 14%, 1.00)" />
-                        <stop offset="50%" stopColor="#126509ff" />
-                        <stop offset="100%" stopColor="#065935ff" />
+                        <stop offset="0%" stopColor="#059669" />
+                        <stop offset="50%" stopColor="#047857" />
+                        <stop offset="100%" stopColor="#065f46" />
                       </linearGradient>
                       <linearGradient id="pageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor="#fffbeb" />
@@ -96,7 +97,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                       <motion.path
                         d="M20 50 L20 170 Q20 175 25 175 L115 175 Q118 175 118 172 L118 53 Q118 50 115 50 Z"
                         fill="url(#pageGradient)"
-                        stroke="#d97706"
+                        stroke="#059669"
                         strokeWidth="2"
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: showLogo ? 1 : 0 }}
@@ -110,12 +111,12 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                         animate={{ opacity: currentPhase >= 1 ? 1 : 0 }}
                         transition={{ delay: 1 }}
                       >
-                        <text x="70" y="70" textAnchor="middle" fill="#92400e" fontSize="8" fontFamily="serif">بِسْمِ اللَّهِ</text>
-                        <text x="70" y="85" textAnchor="middle" fill="#92400e" fontSize="8" fontFamily="serif">الرَّحْمَنِ الرَّحِيمِ</text>
-                        <line x1="30" y1="95" x2="110" y2="95" stroke="#d97706" strokeWidth="1" opacity="0.6" />
-                        <line x1="30" y1="105" x2="110" y2="105" stroke="#d97706" strokeWidth="1" opacity="0.4" />
-                        <line x1="30" y1="115" x2="110" y2="115" stroke="#d97706" strokeWidth="1" opacity="0.4" />
-                        <line x1="30" y1="125" x2="110" y2="125" stroke="#d97706" strokeWidth="1" opacity="0.4" />
+                        <text x="70" y="70" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">بِسْمِ اللَّهِ</text>
+                        <text x="70" y="85" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">الرَّحْمَنِ الرَّحِيمِ</text>
+                        <line x1="30" y1="95" x2="110" y2="95" stroke="#059669" strokeWidth="1" opacity="0.6" />
+                        <line x1="30" y1="105" x2="110" y2="105" stroke="#059669" strokeWidth="1" opacity="0.4" />
+                        <line x1="30" y1="115" x2="110" y2="115" stroke="#059669" strokeWidth="1" opacity="0.4" />
+                        <line x1="30" y1="125" x2="110" y2="125" stroke="#059669" strokeWidth="1" opacity="0.4" />
                       </motion.g>
                     </motion.g>
 
@@ -128,7 +129,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                       <motion.path
                         d="M122 50 L217 50 Q220 50 220 53 L220 172 Q220 175 217 175 L125 175 Q122 175 122 172 Z"
                         fill="url(#pageGradient)"
-                        stroke="#d97706"
+                        stroke="#059669"
                         strokeWidth="2"
                         initial={{ scaleX: 0 }}
                         animate={{ scaleX: showLogo ? 1 : 0 }}
@@ -142,12 +143,12 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                         animate={{ opacity: currentPhase >= 2 ? 1 : 0 }}
                         transition={{ delay: 1.5 }}
                       >
-                        <text x="170" y="70" textAnchor="middle" fill="#92400e" fontSize="8" fontFamily="serif">الْحَمْدُ لِلَّهِ</text>
-                        <text x="170" y="85" textAnchor="middle" fill="#92400e" fontSize="8" fontFamily="serif">رَبِّ الْعَالَمِينَ</text>
-                        <line x1="130" y1="95" x2="210" y2="95" stroke="#d97706" strokeWidth="1" opacity="0.6" />
-                        <line x1="130" y1="105" x2="210" y2="105" stroke="#d97706" strokeWidth="1" opacity="0.4" />
-                        <line x1="130" y1="115" x2="210" y2="115" stroke="#d97706" strokeWidth="1" opacity="0.4" />
-                        <line x1="130" y1="125" x2="210" y2="125" stroke="#d97706" strokeWidth="1" opacity="0.4" />
+                        <text x="170" y="70" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">الْحَمْدُ لِلَّهِ</text>
+                        <text x="170" y="85" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">رَبِّ الْعَالَمِينَ</text>
+                        <line x1="130" y1="95" x2="210" y2="95" stroke="#059669" strokeWidth="1" opacity="0.6" />
+                        <line x1="130" y1="105" x2="210" y2="105" stroke="#059669" strokeWidth="1" opacity="0.4" />
+                        <line x1="130" y1="115" x2="210" y2="115" stroke="#059669" strokeWidth="1" opacity="0.4" />
+                        <line x1="130" y1="125" x2="210" y2="125" stroke="#059669" strokeWidth="1" opacity="0.4" />
                       </motion.g>
                     </motion.g>
 
@@ -185,7 +186,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   initial={{ y: 30, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.7, duration: 0.8 }}
-                  className="text-2xl text-blue-200 mb-4"
+                  className="text-2xl text-emerald-100 mb-4"
                   style={{ fontFamily: 'Amiri, serif' }}
                 >
                   Garden of Faith
@@ -195,7 +196,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.9, duration: 0.8 }}
-                  className="text-lg text-blue-100"
+                  className="text-lg text-emerald-50"
                   style={{ fontFamily: 'Amiri, serif' }}
                 >
                   منصة تحفيظ القرآن الكريم الإبداعية
@@ -215,7 +216,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
             >
               <div className="relative">
                 <motion.p
-                  className="text-amber-200 mb-4 text-lg"
+                  className="text-emerald-100 mb-4 text-lg"
                   style={{ fontFamily: 'Amiri, serif' }}
                 >
                   {currentPhase === 1 && "جاري فتح المصحف الشريف..."}
@@ -223,9 +224,9 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   {currentPhase === 3 && "مرحباً بك في رحلة الحفظ..."}
                 </motion.p>
 
-                <div className="w-64 h-2 bg-amber-800 rounded-full mx-auto overflow-hidden">
+                <div className="w-64 h-2 bg-emerald-900 rounded-full mx-auto overflow-hidden">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-amber-400 to-orange-300 rounded-full"
+                    className="h-full bg-gradient-to-r from-emerald-300 to-emerald-400 rounded-full"
                     initial={{ width: 0 }}
                     animate={{ 
                       width: currentPhase === 1 ? '33%' : 
@@ -240,7 +241,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
                   {[0, 1, 2].map((dot) => (
                     <motion.div
                       key={`dot-${dot}`}
-                      className="w-3 h-3 bg-amber-300 rounded-full"
+                      className="w-3 h-3 bg-emerald-300 rounded-full"
                       animate={{
                         scale: [1, 1.5, 1],
                         opacity: [0.5, 1, 0.5],
@@ -265,7 +266,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
         animate={{ opacity: 0.7 }}
         whileHover={{ opacity: 1 }}
         onClick={onComplete}
-        className="absolute bottom-6 right-6 text-amber-300 text-sm hover:text-white transition-colors"
+        className="absolute bottom-6 right-6 text-emerald-200 text-sm hover:text-white transition-colors"
       >
         تخطي ←
       </motion.button>
