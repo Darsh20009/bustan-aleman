@@ -67,63 +67,80 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Run password migration on startup
-  await migratePasswords();
+  try {
+    // Run password migration on startup
+    await migratePasswords();
+    console.log("✅ Password migration completed");
+    
+    // Note: Pre-registered users are now initialized in routes.ts using phone auth
+    
+    // Initialize Telegram Bot
+    initializeTelegramBot();
+    console.log("✅ Telegram bot initialized");
+    
+    // Setup authentication routes (universal auth system)
+    setupAuthRoutes(app);
+    console.log("✅ Auth routes setup");
+    
+    // Setup additional routes (student progress, supervisor management, certificates)
+    setupAdditionalRoutes(app);
+    console.log("✅ Additional routes setup");
+    
+    // Setup JSON routes (legacy student system)
+    setupJSONRoutes(app);
+    console.log("✅ JSON routes setup");
+    
+    // Setup Sheikh routes (session management, assignments)
+    const { setupSheikhRoutes } = await import("./sheikhRoutes");
+    setupSheikhRoutes(app);
+    console.log("✅ Sheikh routes setup");
+    
+    // Setup Course routes (enrollments, quizzes, certificates)
+    const { setupCourseRoutes } = await import("./courseRoutes");
+    setupCourseRoutes(app);
+    console.log("✅ Course routes setup");
+    
+    console.log("🔄 Starting registerRoutes...");
+    const server = await registerRoutes(app);
+    console.log("✅ Routes registered");
   
-  // Note: Pre-registered users are now initialized in routes.ts using phone auth
-  
-  // Initialize Telegram Bot
-  initializeTelegramBot();
-  
-  // Setup authentication routes (universal auth system)
-  setupAuthRoutes(app);
-  
-  // Setup additional routes (student progress, supervisor management, certificates)
-  setupAdditionalRoutes(app);
-  
-  // Setup JSON routes (legacy student system)
-  setupJSONRoutes(app);
-  
-  // Setup Sheikh routes (session management, assignments)
-  const { setupSheikhRoutes } = await import("./sheikhRoutes");
-  setupSheikhRoutes(app);
-  
-  // Setup Course routes (enrollments, quizzes, certificates)
-  const { setupCourseRoutes } = await import("./courseRoutes");
-  setupCourseRoutes(app);
-  
-  const server = await registerRoutes(app);
-  
-  // Initialize WebSocket server
-  wsService.initialize(server);
+    // Initialize WebSocket server
+    wsService.initialize(server);
+    console.log("✅ WebSocket initialized");
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      res.status(status).json({ message });
+      throw err;
+    });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+    // importantly only setup vite in development and after
+    // setting up all the other routes so the catch-all route
+    // doesn't interfere with the other routes
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+      console.log("✅ Vite setup completed");
+    } else {
+      serveStatic(app);
+      console.log("✅ Static files serving");
+    }
+
+    // ALWAYS serve the app on the port specified in the environment variable PORT
+    // Other ports are firewalled. Default to 5000 if not specified.
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
+    const port = parseInt(process.env.PORT || '5000', 10);
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
+    });
+  } catch (error) {
+    console.error("❌ Fatal error during server startup:", error);
+    process.exit(1);
   }
-
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
 })();

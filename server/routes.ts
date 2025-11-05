@@ -23,11 +23,14 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  console.log("🔄 registerRoutes: Setting up phone auth...");
   // Setup phone authentication
   setupPhoneAuth(app);
 
+  console.log("🔄 registerRoutes: Initializing pre-registered users...");
   // Initialize pre-registered users
   await initializePreregisteredUsers();
+  console.log("✅ registerRoutes: Pre-registered users initialized");
 
   // User profile routes
   app.patch('/api/user/profile', isPhoneAuthenticated, async (req: any, res) => {

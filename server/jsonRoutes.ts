@@ -50,11 +50,10 @@ const registrationSchema = z.object({
 });
 
 export function setupJSONRoutes(app: Express) {
-  // Initialize default students endpoint
+  // Initialize default students endpoint (DISABLED - pre-registered users are now initialized via phoneAuth)
   app.post('/api/init-data', async (req, res) => {
     try {
-      await jsonStorage.initDefaultStudents();
-      res.json({ message: 'Default students initialized successfully' });
+      res.json({ message: 'Default students initialization is handled by phoneAuth system' });
     } catch (error) {
       console.error('Error initializing default students:', error);
       res.status(500).json({ message: 'Failed to initialize default students' });

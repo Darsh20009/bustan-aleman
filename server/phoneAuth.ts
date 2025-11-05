@@ -21,9 +21,12 @@ export function getPhoneSession() {
 // Initialize pre-registered users in database
 export async function initializePreregisteredUsers() {
   try {
+    console.log(`🔄 Initializing ${preregisteredUsers.length} pre-registered users...`);
     for (const user of preregisteredUsers) {
+      console.log(`🔄 Checking user: ${user.name} (${user.phoneNumber})`);
       // Check if user already exists by phone number
       const existingUser = await storage.getUserByPhone(user.phoneNumber);
+      console.log(`  ${existingUser ? '✓ User exists' : '✗ User not found, creating...'}`);
       
       if (!existingUser) {
         // Hash password
@@ -39,8 +42,10 @@ export async function initializePreregisteredUsers() {
         console.log(`✅ Created pre-registered user: ${user.name} (${user.phoneNumber})`);
       }
     }
+    console.log("✅ All pre-registered users initialized");
   } catch (error) {
-    console.error("Error initializing pre-registered users:", error);
+    console.error("❌ Error initializing pre-registered users:", error);
+    throw error;
   }
 }
 

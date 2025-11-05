@@ -3,6 +3,7 @@ import {
   index,
   jsonb,
   pgTable,
+  pgSchema,
   timestamp,
   varchar,
   text,
@@ -15,8 +16,10 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+const bustanSchema = pgSchema("bustan");
+
 // Session storage table (required for Replit Auth)
-export const sessions = pgTable(
+export const sessions = bustanSchema.table(
   "sessions",
   {
     sid: varchar("sid").primaryKey(),
@@ -27,7 +30,7 @@ export const sessions = pgTable(
 );
 
 // User storage table (required for Replit Auth)
-export const users = pgTable("users", {
+export const users = bustanSchema.table("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
   firstName: varchar("first_name"),
@@ -50,7 +53,7 @@ export const users = pgTable("users", {
 });
 
 // Courses table
-export const courses = pgTable("courses", {
+export const courses = bustanSchema.table("courses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   titleAr: varchar("title_ar").notNull(),
   titleEn: varchar("title_en"),
@@ -70,7 +73,7 @@ export const courses = pgTable("courses", {
 });
 
 // Instructors table
-export const instructors = pgTable("instructors", {
+export const instructors = bustanSchema.table("instructors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   nameAr: varchar("name_ar").notNull(),
   nameEn: varchar("name_en"),
@@ -87,7 +90,7 @@ export const instructors = pgTable("instructors", {
 });
 
 // Course Enrollments table
-export const courseEnrollments = pgTable("course_enrollments", {
+export const courseEnrollments = bustanSchema.table("course_enrollments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
@@ -99,7 +102,7 @@ export const courseEnrollments = pgTable("course_enrollments", {
 });
 
 // Contact messages table
-export const contactMessages = pgTable("contact_messages", {
+export const contactMessages = bustanSchema.table("contact_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: varchar("name").notNull(),
   email: varchar("email").notNull(),
@@ -111,7 +114,7 @@ export const contactMessages = pgTable("contact_messages", {
 });
 
 // Students table for detailed student management
-export const students = pgTable("students", {
+export const students = bustanSchema.table("students", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   studentName: varchar("student_name").notNull(),
@@ -132,7 +135,7 @@ export const students = pgTable("students", {
 });
 
 // Student sessions/classes table
-export const studentSessions = pgTable("student_sessions", {
+export const studentSessions = bustanSchema.table("student_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   sessionNumber: integer("session_number").notNull(),
@@ -148,7 +151,7 @@ export const studentSessions = pgTable("student_sessions", {
 });
 
 // Student recitation errors table
-export const studentErrors = pgTable("student_errors", {
+export const studentErrors = bustanSchema.table("student_errors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   surah: varchar("surah").notNull(),
@@ -161,7 +164,7 @@ export const studentErrors = pgTable("student_errors", {
 });
 
 // Student payments and subscriptions
-export const studentPayments = pgTable("student_payments", {
+export const studentPayments = bustanSchema.table("student_payments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
@@ -178,7 +181,7 @@ export const studentPayments = pgTable("student_payments", {
 });
 
 // Class schedules
-export const classSchedules = pgTable("class_schedules", {
+export const classSchedules = bustanSchema.table("class_schedules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   dayOfWeek: integer("day_of_week").notNull(), // 0-6 (Sunday=0)
@@ -190,7 +193,7 @@ export const classSchedules = pgTable("class_schedules", {
 });
 
 // Quizzes/Exams table for courses
-export const quizzes = pgTable("quizzes", {
+export const quizzes = bustanSchema.table("quizzes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
   titleAr: varchar("title_ar").notNull(),
@@ -203,7 +206,7 @@ export const quizzes = pgTable("quizzes", {
 });
 
 // Quiz attempts table
-export const quizAttempts = pgTable("quiz_attempts", {
+export const quizAttempts = bustanSchema.table("quiz_attempts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   quizId: varchar("quiz_id").references(() => quizzes.id).notNull(),
   studentId: varchar("student_id").references(() => students.id).notNull(),
@@ -216,7 +219,7 @@ export const quizAttempts = pgTable("quiz_attempts", {
 });
 
 // Session access control table
-export const sessionAccess = pgTable("session_access", {
+export const sessionAccess = bustanSchema.table("session_access", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   scheduleId: varchar("schedule_id").references(() => classSchedules.id).notNull(),
@@ -230,7 +233,7 @@ export const sessionAccess = pgTable("session_access", {
 });
 
 // Student daily assignments table
-export const dailyAssignments = pgTable("daily_assignments", {
+export const dailyAssignments = bustanSchema.table("daily_assignments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   assignmentDate: date("assignment_date").notNull(),
@@ -243,7 +246,7 @@ export const dailyAssignments = pgTable("daily_assignments", {
 });
 
 // Educational trips table
-export const trips = pgTable("trips", {
+export const trips = bustanSchema.table("trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   titleAr: varchar("title_ar").notNull(),
   titleEn: varchar("title_en"),
@@ -261,7 +264,7 @@ export const trips = pgTable("trips", {
 });
 
 // Trip enrollments table
-export const tripEnrollments = pgTable("trip_enrollments", {
+export const tripEnrollments = bustanSchema.table("trip_enrollments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   tripId: varchar("trip_id").references(() => trips.id).notNull(),
@@ -273,7 +276,7 @@ export const tripEnrollments = pgTable("trip_enrollments", {
 ]);
 
 // Quran notes table - for students to save notes on verses
-export const quranNotes = pgTable("quran_notes", {
+export const quranNotes = bustanSchema.table("quran_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   surahNumber: integer("surah_number").notNull(),
@@ -285,7 +288,7 @@ export const quranNotes = pgTable("quran_notes", {
 });
 
 // Quran progress table - to track reading progress
-export const quranProgress = pgTable("quran_progress", {
+export const quranProgress = bustanSchema.table("quran_progress", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   lastSurah: integer("last_surah").default(1),
@@ -297,7 +300,7 @@ export const quranProgress = pgTable("quran_progress", {
 ]);
 
 // Supervisors table - for supervisor management
-export const supervisors = pgTable("supervisors", {
+export const supervisors = bustanSchema.table("supervisors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
   name: varchar("name").notNull(),
@@ -312,7 +315,7 @@ export const supervisors = pgTable("supervisors", {
 });
 
 // Student notes table - for supervisor notes on students
-export const studentNotes = pgTable("student_notes", {
+export const studentNotes = bustanSchema.table("student_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   authorId: varchar("author_id").references(() => users.id).notNull(), // Who wrote the note
@@ -324,7 +327,7 @@ export const studentNotes = pgTable("student_notes", {
 });
 
 // Course modules/content table
-export const courseModules = pgTable("course_modules", {
+export const courseModules = bustanSchema.table("course_modules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
   titleAr: varchar("title_ar").notNull(),
@@ -343,7 +346,7 @@ export const courseModules = pgTable("course_modules", {
 });
 
 // Exam questions table
-export const examQuestions = pgTable("exam_questions", {
+export const examQuestions = bustanSchema.table("exam_questions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
   questionAr: text("question_ar").notNull(),
@@ -359,7 +362,7 @@ export const examQuestions = pgTable("exam_questions", {
 });
 
 // Student exam attempts table
-export const examAttempts = pgTable("exam_attempts", {
+export const examAttempts = bustanSchema.table("exam_attempts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
@@ -376,7 +379,7 @@ export const examAttempts = pgTable("exam_attempts", {
 });
 
 // Session access control - controls when students can access session links
-export const sessionAccessControl = pgTable("session_access_control", {
+export const sessionAccessControl = bustanSchema.table("session_access_control", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   sessionDate: date("session_date").notNull(),
@@ -392,7 +395,7 @@ export const sessionAccessControl = pgTable("session_access_control", {
 });
 
 // Messages table - for real-time chat between teacher and students
-export const messages = pgTable("messages", {
+export const messages = bustanSchema.table("messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   senderId: varchar("sender_id").references(() => users.id).notNull(),
   receiverId: varchar("receiver_id").references(() => users.id), // null for group messages
@@ -405,7 +408,7 @@ export const messages = pgTable("messages", {
 });
 
 // Quran word highlights table - for highlighting and annotating individual words
-export const quranWordHighlights = pgTable("quran_word_highlights", {
+export const quranWordHighlights = bustanSchema.table("quran_word_highlights", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   surahNumber: integer("surah_number").notNull(),
@@ -419,7 +422,7 @@ export const quranWordHighlights = pgTable("quran_word_highlights", {
 });
 
 // Quran memorization tracking table - tracks which ayahs are being memorized and review progress
-export const quranMemorization = pgTable("quran_memorization", {
+export const quranMemorization = bustanSchema.table("quran_memorization", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   surahNumber: integer("surah_number").notNull(),
@@ -436,7 +439,7 @@ export const quranMemorization = pgTable("quran_memorization", {
 });
 
 // Quran reading statistics table - tracks daily reading and progress
-export const quranReadingStats = pgTable("quran_reading_stats", {
+export const quranReadingStats = bustanSchema.table("quran_reading_stats", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   readingDate: date("reading_date").notNull(),
@@ -450,7 +453,7 @@ export const quranReadingStats = pgTable("quran_reading_stats", {
 ]);
 
 // Quran ayah markers table - for marking individual ayahs for memorization or review
-export const quranAyahMarkers = pgTable("quran_ayah_markers", {
+export const quranAyahMarkers = bustanSchema.table("quran_ayah_markers", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   surahNumber: integer("surah_number").notNull(),
@@ -469,7 +472,7 @@ export const quranAyahMarkers = pgTable("quran_ayah_markers", {
 ]);
 
 // Quran recitation attempts table - tracks recitation practice and corrections
-export const quranRecitationAttempts = pgTable("quran_recitation_attempts", {
+export const quranRecitationAttempts = bustanSchema.table("quran_recitation_attempts", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   surahNumber: integer("surah_number").notNull(),
@@ -492,7 +495,7 @@ export const quranRecitationAttempts = pgTable("quran_recitation_attempts", {
 ]);
 
 // Certificates table - for course completion and achievements
-export const certificates = pgTable("certificates", {
+export const certificates = bustanSchema.table("certificates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
   courseId: varchar("course_id").references(() => courses.id),

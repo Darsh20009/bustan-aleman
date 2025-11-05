@@ -13,4 +13,5 @@ export default defineConfig({
   dbCredentials: {
     url: databaseUrl,
   },
+  schemaFilter: ["bustan"],
 });
