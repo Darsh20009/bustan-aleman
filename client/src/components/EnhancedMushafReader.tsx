@@ -51,8 +51,6 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
     };
   }>({
     queryKey: ['/api/quran/page', currentPage],
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
-    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
   });
 
   const totalPages = 604;
@@ -142,10 +140,10 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
   }
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="h-full flex flex-col bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Top Controls */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 border-b-4 border-amber-400 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="bg-white dark:bg-gray-900 border-b shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Page Navigation */}
             <div className="flex items-center gap-2">
@@ -155,9 +153,9 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
                 data-testid="button-prev-page"
-                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
+                className="hover:bg-emerald-50 dark:hover:bg-emerald-950"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4" />
               </Button>
               
               <div className="flex items-center gap-2">
@@ -165,12 +163,12 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                   type="number"
                   value={currentPage}
                   onChange={(e) => handlePageJump(parseInt(e.target.value) || 1)}
-                  className="w-20 text-center bg-white/90 border-white text-emerald-800 font-bold"
+                  className="w-20 text-center"
                   min={1}
                   max={totalPages}
                   data-testid="input-page-number"
                 />
-                <span className="text-sm text-white font-semibold whitespace-nowrap">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
                   من {totalPages}
                 </span>
               </div>
@@ -181,9 +179,9 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 onClick={goToNextPage}
                 disabled={currentPage === totalPages}
                 data-testid="button-next-page"
-                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
+                className="hover:bg-emerald-50 dark:hover:bg-emerald-950"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4" />
               </Button>
             </div>
 
@@ -196,7 +194,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="sm"
                 onClick={() => setCurrentMode(currentMode === 'memorize' ? 'read' : 'memorize')}
                 data-testid="button-memorize-mode"
-                className={`gap-2 ${currentMode === 'memorize' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white/20 hover:bg-white/30 border-white/40 text-white'}`}
+                className="gap-2"
               >
                 <BookMarked className="h-4 w-4" />
                 <span className="hidden md:inline">وضع الحفظ</span>
@@ -207,7 +205,7 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="sm"
                 onClick={() => setCurrentMode('recite')}
                 data-testid="button-recite-mode"
-                className={`gap-2 ${currentMode === 'recite' ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-white/20 hover:bg-white/30 border-white/40 text-white'}`}
+                className="gap-2"
               >
                 <Eye className="h-4 w-4" />
                 <span className="hidden md:inline">وضع التلاوة</span>
@@ -221,11 +219,10 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="icon"
                 onClick={() => setFontSize(prev => Math.max(14, prev - 2))}
                 data-testid="button-zoom-out"
-                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-sm text-white font-semibold w-12 text-center">
+              <span className="text-sm text-muted-foreground w-12 text-center">
                 {fontSize}px
               </span>
               <Button
@@ -233,7 +230,6 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                 size="icon"
                 onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
                 data-testid="button-zoom-in"
-                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
               >
                 <ZoomIn className="h-4 w-4" />
               </Button>
@@ -265,89 +261,108 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
               </div>
             )}
 
-            <Card className="overflow-hidden shadow-2xl border-2 border-emerald-200 bg-white dark:bg-gray-900">
-              <CardContent className="p-8 md:p-16">
-                {/* Page Header - مبسط وجميل */}
-                <div className="text-center mb-6 pb-6 border-b-2 border-emerald-300">
-                  <div className="text-3xl md:text-4xl font-arabic-serif text-emerald-700 dark:text-emerald-300 mb-3">
-                    بسم الله الرحمن الرحيم
-                  </div>
-                  {pageData?.surahInfo && (
-                    <div className="text-xl text-emerald-600 font-semibold">
-                      {pageData.surahInfo.name}
+            <Card className="overflow-hidden shadow-2xl border-4 border-amber-300 dark:border-amber-900 bg-white dark:bg-gray-900">
+              <CardContent className="p-6 md:p-12">
+                {/* Page Header */}
+                <div className="text-center mb-8 pb-4 border-b-2 border-amber-200 dark:border-amber-800">
+                  <div className="flex justify-between items-center">
+                    <Badge variant="outline" className="text-base md:text-lg px-3 md:px-4 py-2 bg-emerald-50 dark:bg-emerald-950">
+                      الجزء {Math.ceil(currentPage / 20)}
+                    </Badge>
+                    <div className="text-center flex-1">
+                      <div className="text-2xl md:text-3xl font-arabic-serif text-emerald-700 dark:text-emerald-300 mb-2">
+                        بسم الله الرحمن الرحيم
+                      </div>
+                      {pageData?.surahInfo && (
+                        <div className="text-lg text-muted-foreground">
+                          {pageData.surahInfo.name}
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <Badge variant="outline" className="text-base md:text-lg px-3 md:px-4 py-2 bg-emerald-50 dark:bg-emerald-950">
+                      صفحة {currentPage}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Page Content */}
-                <div 
-                  className="quran-text font-arabic-serif leading-loose text-center space-y-3"
-                  style={{ 
-                    fontSize: `${fontSize}px`,
-                    lineHeight: '2.8em',
-                    color: '#065f46'
-                  }}
-                >
-                  {pageData?.verses?.map((verse, index) => {
-                    const words = verse.text.split(' ');
-                    return (
-                      <div 
-                        key={index}
-                        className="inline-block mb-2"
-                        onMouseEnter={() => setCurrentAyahForAudio(verse.numberInSurah)}
-                      >
-                        <span className="inline hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-1 rounded transition-colors">
-                          {currentMode === 'memorize' ? (
-                            words.map((word, wordIndex) => (
-                              <WordNotes
-                                key={wordIndex}
+                {isLoading ? (
+                  <div className="text-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 dark:border-emerald-400 mx-auto"></div>
+                    <p className="mt-4 text-muted-foreground">جاري تحميل الصفحة...</p>
+                  </div>
+                ) : (
+                  <div 
+                    className="quran-text font-arabic-serif leading-loose text-justify space-y-2"
+                    style={{ 
+                      fontSize: `${fontSize}px`,
+                      lineHeight: '2.5em',
+                      color: 'var(--foreground)'
+                    }}
+                  >
+                    {pageData?.verses?.map((verse, index) => {
+                      const words = verse.text.split(' ');
+                      return (
+                        <div 
+                          key={index}
+                          className="inline-block mb-2"
+                          onMouseEnter={() => setCurrentAyahForAudio(verse.numberInSurah)}
+                        >
+                          <span className="inline hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-1 rounded transition-colors">
+                            {currentMode === 'memorize' ? (
+                              words.map((word, wordIndex) => (
+                                <WordNotes
+                                  key={wordIndex}
+                                  surahNumber={verse.surahNumber}
+                                  ayahNumber={verse.numberInSurah}
+                                  wordIndex={wordIndex}
+                                  wordText={word}
+                                >
+                                  {word}{' '}
+                                </WordNotes>
+                              ))
+                            ) : (
+                              verse.text
+                            )}
+                            <span className="text-emerald-600 dark:text-emerald-400 mx-2">
+                              ﴿{verse.numberInSurah}﴾
+                            </span>
+                          </span>
+                          {currentMode === 'memorize' && (
+                            <div className="inline-block mr-2">
+                              <MemorizationMarkers
                                 surahNumber={verse.surahNumber}
                                 ayahNumber={verse.numberInSurah}
-                                wordIndex={wordIndex}
-                                wordText={word}
-                              >
-                                {word}{' '}
-                              </WordNotes>
-                            ))
-                          ) : (
-                            verse.text
+                              />
+                            </div>
                           )}
-                          <span className="text-emerald-600 dark:text-emerald-400 mx-2">
-                            ﴿{verse.numberInSurah}﴾
-                          </span>
-                        </span>
-                        {currentMode === 'memorize' && (
-                          <div className="inline-block mr-2">
-                            <MemorizationMarkers
-                              surahNumber={verse.surahNumber}
-                              ayahNumber={verse.numberInSurah}
-                            />
-                          </div>
-                        )}
+                        </div>
+                      );
+                    })}
+                    
+                    {!pageData?.verses && (
+                      <div className="text-center py-20 text-muted-foreground">
+                        <p className="text-2xl mb-4">الصفحة {currentPage}</p>
+                        <p>يتم تحميل محتوى الصفحة من API القرآن الكريم</p>
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Page Footer */}
-                <div className="mt-8 pt-6 border-t-2 border-emerald-300 text-center">
-                  <div className="flex justify-center items-center gap-6">
-                    <Badge className="bg-emerald-100 text-emerald-800 px-4 py-2">
-                      الجزء {Math.ceil(currentPage / 20)}
-                    </Badge>
-                    <Badge className="bg-emerald-100 text-emerald-800 px-4 py-2">
-                      صفحة {currentPage}
-                    </Badge>
+                <div className="mt-8 pt-4 border-t-2 border-amber-200 dark:border-amber-800 text-center">
+                  <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
+                    <span>الحزب {Math.ceil(currentPage / 10)}</span>
+                    <span>•</span>
+                    <span>الربع {Math.ceil(currentPage / 5)}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Page Navigation Hint */}
-            <div className="mt-6 text-center">
-              <p className="text-emerald-700 dark:text-emerald-300 font-semibold">
-                ← استخدم الأزرار أعلاه أو الأسهم للتنقل →
-              </p>
+            <div className="mt-4 text-center text-sm text-muted-foreground">
+              <p>استخدم الأسهم ← → أو الأزرار أعلاه للتنقل بين الصفحات</p>
             </div>
           </motion.div>
         </AnimatePresence>

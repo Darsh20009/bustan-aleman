@@ -905,23 +905,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get Quran page data
-  app.get('/api/quran/page/:pageNumber', async (req, res) => {
-    try {
-      const pageNumber = parseInt(req.params.pageNumber);
-      if (pageNumber < 1 || pageNumber > 604) {
-        return res.status(400).json({ message: 'رقم الصفحة غير صحيح' });
-      }
-      
-      const quranService = await import('./quranService');
-      const pageData = await quranService.getPageData(pageNumber);
-      res.json(pageData);
-    } catch (error) {
-      console.error('Error fetching page data:', error);
-      res.status(500).json({ message: 'خطأ في تحميل الصفحة' });
-    }
-  });
-
   // Quran page route - fetch verses for a specific Mushaf page
   app.get('/api/quran/page/:pageNumber', async (req, res) => {
     try {

@@ -24,7 +24,7 @@ interface WordNotesProps {
 // مفتاح تخزين الملاحظات في localStorage
 const NOTES_STORAGE_KEY = 'quran_word_notes';
 
-export function WordNotes({ surahNumber, ayahNumber, wordIndex, wordText }: WordNotesProps) {
+export default function WordNotes({ surahNumber, ayahNumber, wordIndex, wordText }: WordNotesProps) {
   const [note, setNote] = useState('');
   const { toast } = useToast();
 
