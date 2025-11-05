@@ -21,6 +21,7 @@ import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
 import CertificatesPage from "./components/CertificatesPage";
 import EnhancedQuranReader from "./components/EnhancedQuranReader";
+import { EnhancedMushafReader } from "./components/EnhancedMushafReader";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import QuranStats from "./pages/QuranStats";
 import MemorizationPage from "./pages/MemorizationPage";
@@ -239,7 +240,7 @@ function AppContent() {
             <div className="bg-gradient-to-r from-emerald-700 via-green-600 to-emerald-600 text-white p-4 shadow-lg border-b-4 border-amber-400">
               <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
                 <h1 className="text-xl md:text-3xl font-bold mb-2 md:mb-0" style={{ fontFamily: 'Amiri, serif' }}>
-                  ﴿ قارئ القرآن الكريم ﴾
+                  ﴿ بستان الإيمان ﴾
                 </h1>
                 <div className="flex items-center space-x-2 md:space-x-4 flex-wrap space-x-reverse">
                   <button
@@ -268,9 +269,9 @@ function AppContent() {
                       </span>
                     </div>
                   </div>
-                  <EnhancedQuranReader 
-                    initialSurah={1} 
-                    studentId={user?.studentId}
+                  <EnhancedMushafReader 
+                    initialPage={1} 
+                    mode="read"
                   />
                 </div>
               </div>
