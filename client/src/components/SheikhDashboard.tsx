@@ -7,7 +7,8 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
-import { Users, BookOpen, Calendar, Clock, Award, Video, AlertTriangle } from 'lucide-react';
+import { Users, BookOpen, Calendar, Clock, Award, Video, AlertTriangle, Star, TrendingUp, Bell, CheckCircle2, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface Student {
   id: string;
@@ -27,7 +28,6 @@ export function SheikhDashboard() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   
-  // WebSocket connection
   useEffect(() => {
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
     
@@ -149,109 +149,212 @@ export function SheikhDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen gradient-islamic p-6" dir="rtl">
-        <div className="text-center">
-          <div className="islamic-spinner w-16 h-16 mx-auto mb-4"></div>
-          <p className="text-islamic-emerald font-arabic-sans">جاري التحميل...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-6" dir="rtl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-emerald-700 text-lg font-medium">جاري التحميل...</p>
+        </motion.div>
       </div>
     );
   }
 
+  const activeStudents = students.filter(s => s.sessions && s.sessions.length > 0).length;
+  const totalErrors = students.reduce((sum, s) => sum + (s.errors?.filter(e => !e.isResolved).length || 0), 0);
+
   return (
-    <div className="min-h-screen gradient-islamic p-6" dir="rtl">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-islamic-emerald mb-2 font-arabic-serif">
-            لوحة تحكم الشيخ
-          </h1>
-          <p className="text-midnight-navy font-arabic-sans">
-            إدارة الطلاب والحلقات والمراجعات
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" dir="rtl">
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-2">لوحة تحكم الشيخ</h1>
+                <p className="text-emerald-100 text-lg">إدارة شاملة للطلاب والحلقات</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                <span className="font-medium">{totalErrors} إشعار</span>
+              </div>
+            </div>
+          </motion.div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="islamic-card">
-            <CardContent className="p-6 text-center">
-              <Users className="w-12 h-12 text-islamic-emerald mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-islamic-emerald">{students.length}</h3>
-              <p className="text-gray-600 font-arabic-sans">إجمالي الطلاب</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="islamic-card">
-            <CardContent className="p-6 text-center">
-              <Calendar className="w-12 h-12 text-warm-gold mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-warm-gold">
-                {students.filter(s => s.sessions && s.sessions.length > 0).length}
-              </h3>
-              <p className="text-gray-600 font-arabic-sans">طلاب نشطون</p>
-            </CardContent>
-          </Card>
-          
-          <Card className="islamic-card">
-            <CardContent className="p-6 text-center">
-              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-2" />
-              <h3 className="text-2xl font-bold text-red-500">
-                {students.reduce((sum, s) => sum + (s.errors?.filter(e => !e.isResolved).length || 0), 0)}
-              </h3>
-              <p className="text-gray-600 font-arabic-sans">أخطاء تحتاج مراجعة</p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Users className="w-7 h-7" />
+                  </div>
+                  <TrendingUp className="w-6 h-6 text-blue-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{students.length}</h3>
+                <p className="text-blue-100">إجمالي الطلاب</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-emerald-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <CheckCircle2 className="w-7 h-7" />
+                  </div>
+                  <Star className="w-6 h-6 text-green-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{activeStudents}</h3>
+                <p className="text-green-100">طلاب نشطون</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-red-500 to-rose-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <AlertTriangle className="w-7 h-7" />
+                  </div>
+                  <XCircle className="w-6 h-6 text-red-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{totalErrors}</h3>
+                <p className="text-red-100">أخطاء تحتاج مراجعة</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
+        {/* Main Content Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="students">الطلاب</TabsTrigger>
-            <TabsTrigger value="assignments">التكليفات</TabsTrigger>
-            <TabsTrigger value="sessions">الحصص</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-white shadow-md p-1 rounded-xl">
+            <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
+              الطلاب
+            </TabsTrigger>
+            <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
+              التكليفات
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
+              الحصص
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="students">
-            <Card className="islamic-card">
-              <CardHeader>
-                <CardTitle className="font-arabic-sans">قائمة الطلاب</CardTitle>
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center gap-2 text-2xl text-gray-800">
+                  <Users className="w-6 h-6 text-emerald-600" />
+                  قائمة الطلاب
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="space-y-4">
-                  {students.map((student) => (
-                    <div
-                      key={student.id}
-                      className="flex items-center justify-between p-4 bg-pearl-cream rounded-lg hover:bg-desert-sand/30 transition-colors cursor-pointer"
-                      onClick={() => setSelectedStudent(student)}
+                  {students.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-16"
                     >
-                      <div className="flex-1">
-                        <h3 className="font-bold text-islamic-emerald mb-1 font-arabic-sans">
-                          {student.studentName}
-                        </h3>
-                        <p className="text-sm text-copper-bronze font-arabic-sans">
-                          {student.phoneNumber}
-                        </p>
-                        <div className="flex gap-2 mt-2">
-                          <Badge className="bg-islamic-emerald/20 text-islamic-emerald">
-                            {student.currentLevel}
-                          </Badge>
-                          {student.memorizedSurahs && (
-                            <Badge className="bg-royal-gold/20 text-royal-gold">
-                              {JSON.parse(student.memorizedSurahs || '[]').length} سورة محفوظة
-                            </Badge>
-                          )}
-                        </div>
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Users className="w-12 h-12 text-gray-400" />
                       </div>
-                      {student.schedules && student.schedules.length > 0 && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            enableSession(student.id, student.schedules[0]);
-                          }}
-                          className="btn-islamic-gradient"
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">لا يوجد طلاب مسجلين</h3>
+                      <p className="text-gray-500">سيظهر الطلاب هنا عند تسجيلهم في النظام</p>
+                    </motion.div>
+                  ) : (
+                    students.map((student, index) => (
+                      <motion.div
+                        key={student.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-white to-emerald-50 overflow-hidden group cursor-pointer"
+                          onClick={() => setSelectedStudent(student)}
                         >
-                          <Video className="w-4 h-4 ml-2" />
-                          تفعيل الحصة
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-lg group-hover:scale-110 transition-transform">
+                                  {student.studentName.charAt(0)}
+                                </div>
+                                <div className="flex-1">
+                                  <h3 className="font-bold text-lg text-gray-800 mb-1">
+                                    {student.studentName}
+                                  </h3>
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    {student.phoneNumber}
+                                  </p>
+                                  <div className="flex gap-2 flex-wrap">
+                                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                                      {student.currentLevel}
+                                    </Badge>
+                                    {student.memorizedSurahs && (
+                                      <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                                        <Award className="w-3 h-3 ml-1" />
+                                        {JSON.parse(student.memorizedSurahs || '[]').length} سورة
+                                      </Badge>
+                                    )}
+                                    {student.errors && student.errors.length > 0 && (
+                                      <Badge className="bg-red-100 text-red-700 border-red-200">
+                                        <AlertTriangle className="w-3 h-3 ml-1" />
+                                        {student.errors.filter(e => !e.isResolved).length} خطأ
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {student.schedules && student.schedules.length > 0 && (
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    enableSession(student.id, student.schedules[0]);
+                                  }}
+                                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+                                >
+                                  <Video className="w-4 h-4 ml-2" />
+                                  تفعيل الحصة
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -259,110 +362,147 @@ export function SheikhDashboard() {
 
           <TabsContent value="assignments">
             {selectedStudent ? (
-              <Card className="islamic-card">
-                <CardHeader>
-                  <CardTitle className="font-arabic-sans">
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="w-6 h-6" />
                     إنشاء تكليف جديد - {selectedStudent.studentName}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <form onSubmit={createAssignment} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2 font-arabic-sans">
+                <CardContent className="p-6">
+                  <form onSubmit={createAssignment} className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-gray-700">
                         الحفظ الجديد
                       </label>
                       <Textarea
                         name="memorization"
                         placeholder="مثال: سورة البقرة من الآية 1 إلى 10"
-                        className="w-full"
+                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
                         required
+                        rows={3}
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium mb-2 font-arabic-sans">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-gray-700">
                         المراجعة
                       </label>
                       <Textarea
                         name="review"
                         placeholder="مثال: سورة الفاتحة كاملة"
-                        className="w-full"
+                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
                         required
+                        rows={3}
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium mb-2 font-arabic-sans">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-gray-700">
                         الأخطاء
                       </label>
                       <Textarea
                         name="mistakes"
                         placeholder="أخطاء اليوم (اختياري)"
-                        className="w-full"
+                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
+                        rows={3}
                       />
                     </div>
                     
-                    <div>
-                      <label className="block text-sm font-medium mb-2 font-arabic-sans">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-bold text-gray-700">
                         ملاحظات
                       </label>
                       <Textarea
                         name="notes"
                         placeholder="ملاحظات إضافية (اختياري)"
-                        className="w-full"
+                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
+                        rows={3}
                       />
                     </div>
                     
-                    <Button type="submit" className="w-full btn-islamic-gradient">
+                    <Button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-6 text-lg shadow-lg">
+                      <CheckCircle2 className="w-5 h-5 ml-2" />
                       إنشاء التكليف وإرساله
                     </Button>
                   </form>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="islamic-card">
-                <CardContent className="p-12 text-center">
-                  <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-arabic-sans">
-                    اختر طالباً من القائمة لإنشاء تكليف
-                  </p>
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-16 text-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <BookOpen className="w-12 h-12 text-emerald-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">اختر طالباً</h3>
+                  <p className="text-gray-500 text-lg">اختر طالباً من القائمة لإنشاء تكليف له</p>
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
           <TabsContent value="sessions">
-            <Card className="islamic-card">
-              <CardHeader>
-                <CardTitle className="font-arabic-sans">جدول الحصص</CardTitle>
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center gap-2 text-2xl text-gray-800">
+                  <Calendar className="w-6 h-6 text-emerald-600" />
+                  جدول الحصص
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="space-y-4">
-                  {students.filter(s => s.schedules && s.schedules.length > 0).map((student) => (
-                    student.schedules!.map((schedule: any) => (
-                      <div
-                        key={`${student.id}-${schedule.id}`}
-                        className="flex items-center justify-between p-4 bg-pearl-cream rounded-lg"
-                      >
-                        <div>
-                          <h3 className="font-bold text-islamic-emerald font-arabic-sans">
-                            {student.studentName}
-                          </h3>
-                          <p className="text-sm text-copper-bronze font-arabic-sans">
-                            <Clock className="w-4 h-4 inline ml-1" />
-                            {schedule.startTime} - {schedule.endTime}
-                          </p>
-                        </div>
-                        <Button
-                          onClick={() => enableSession(student.id, schedule)}
-                          className="btn-islamic-gradient"
-                        >
-                          <Video className="w-4 h-4 ml-2" />
-                          تفعيل الحلقة
-                        </Button>
+                  {students.filter(s => s.schedules && s.schedules.length > 0).length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-16"
+                    >
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Calendar className="w-12 h-12 text-gray-400" />
                       </div>
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد حصص مجدولة</h3>
+                      <p className="text-gray-500">سيظهر جدول الحصص هنا عند إضافتها</p>
+                    </motion.div>
+                  ) : (
+                    students.filter(s => s.schedules && s.schedules.length > 0).map((student) => (
+                      student.schedules!.map((schedule: any, index: number) => (
+                        <motion.div
+                          key={`${student.id}-${schedule.id}`}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-white to-blue-50">
+                            <CardContent className="p-6">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                                    {student.studentName.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-bold text-lg text-gray-800">
+                                      {student.studentName}
+                                    </h3>
+                                    <p className="text-gray-600 flex items-center gap-2">
+                                      <Clock className="w-4 h-4" />
+                                      {schedule.startTime} - {schedule.endTime}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  onClick={() => enableSession(student.id, schedule)}
+                                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                                >
+                                  <Video className="w-4 h-4 ml-2" />
+                                  تفعيل الحلقة
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      ))
                     ))
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
