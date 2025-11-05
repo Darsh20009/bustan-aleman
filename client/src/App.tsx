@@ -234,22 +234,22 @@ function AppContent() {
       
       case 'quran':
         return (
-          <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+          <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-100 to-emerald-100">
             {/* Header with back button */}
-            <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4">
+            <div className="bg-gradient-to-r from-emerald-700 via-green-600 to-emerald-600 text-white p-4 shadow-lg border-b-4 border-amber-400">
               <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
-                <h1 className="text-xl md:text-2xl font-bold mb-2 md:mb-0" style={{ fontFamily: 'Amiri, serif' }}>
-                  قارئ القرآن الكريم
+                <h1 className="text-xl md:text-3xl font-bold mb-2 md:mb-0" style={{ fontFamily: 'Amiri, serif' }}>
+                  ﴿ قارئ القرآن الكريم ﴾
                 </h1>
-                <div className="flex items-center space-x-2 md:space-x-4 flex-wrap">
+                <div className="flex items-center space-x-2 md:space-x-4 flex-wrap space-x-reverse">
                   <button
                     onClick={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
-                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base"
+                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base border border-white/30 backdrop-blur-sm"
                   >
                     ← العودة
                   </button>
                   {isAuthenticated && user && (
-                    <span className="text-amber-200 text-sm md:text-base">
+                    <span className="text-white bg-emerald-800/40 px-3 py-1 rounded-lg text-sm md:text-base border border-white/20">
                       {user.firstName} {user.lastName}
                     </span>
                   )}
@@ -260,7 +260,14 @@ function AppContent() {
             {/* Enhanced Quran Reader Container */}
             <div className="p-2 md:p-6">
               <div className="max-w-7xl mx-auto">
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl">
+                <div className="bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 rounded-xl shadow-2xl border-4 border-amber-600 overflow-hidden">
+                  <div className="bg-gradient-to-r from-emerald-700 to-green-600 p-2 border-b-2 border-amber-500">
+                    <div className="text-center">
+                      <span className="text-amber-200 text-sm font-arabic" style={{ fontFamily: 'Amiri, serif' }}>
+                        ﷽
+                      </span>
+                    </div>
+                  </div>
                   <EnhancedQuranReader 
                     initialSurah={1} 
                     studentId={user?.studentId}
