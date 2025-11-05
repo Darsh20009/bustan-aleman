@@ -55,14 +55,29 @@ if (useAiven) {
   db = drizzlePg(pgPool, { schema });
   console.log(`✅ Database connection initialized (Aiven Cloud)`);
 } else if (databaseUrl) {
-  // Use Neon driver for other databases
-  const neonPool = new NeonPool({ connectionString: databaseUrl });
-  pool = neonPool;
-  db = drizzleNeon(neonPool, { schema });
-  const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
-  console.log(`✅ Database connection initialized (${dbSource})`);
-  if (!ENABLE_AIVEN && process.env.AIVEN_DB_HOST) {
-    console.log(`⚠️  Aiven database available but disabled. Set ENABLE_AIVEN=true in server/db.ts after fixing connection.`);
+  // Check if it's a filess.io database (use regular pg driver without SSL)
+  if (databaseUrl.includes('filess.io')) {
+    console.log(`🔗 Connecting to Filess.io database...`);
+    const pgPool = new PgPool({
+      connectionString: databaseUrl,
+      ssl: false,
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+    pool = pgPool;
+    db = drizzlePg(pgPool, { schema });
+    console.log(`✅ Database connection initialized (Filess.io)`);
+  } else {
+    // Use Neon driver for other databases
+    const neonPool = new NeonPool({ connectionString: databaseUrl });
+    pool = neonPool;
+    db = drizzleNeon(neonPool, { schema });
+    const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
+    console.log(`✅ Database connection initialized (${dbSource})`);
+    if (!ENABLE_AIVEN && process.env.AIVEN_DB_HOST) {
+      console.log(`⚠️  Aiven database available but disabled. Set ENABLE_AIVEN=true in server/db.ts after fixing connection.`);
+    }
   }
 } else {
   console.log("⚠️  No database URL found. Using JSON storage fallback.");
