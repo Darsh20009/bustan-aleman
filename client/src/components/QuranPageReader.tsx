@@ -24,7 +24,11 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
-  X
+  X,
+  Play,
+  Pause,
+  Volume2,
+  FileText
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,6 +46,13 @@ interface Ayah {
     name: string;
     englishName: string;
   };
+  audio?: string;
+}
+
+interface Reciter {
+  id: string;
+  name: string;
+  style: string;
 }
 
 interface PageData {
@@ -75,6 +86,21 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [noteText, setNoteText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState(false);
+  const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
+  const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+  const [playingAyah, setPlayingAyah] = useState<number | null>(null);
+  const [showTafsir, setShowTafsir] = useState<{ [key: number]: boolean }>({});
+  const [tafsirData, setTafsirData] = useState<{ [key: number]: string }>({});
+
+  const reciters: Reciter[] = [
+    { id: 'ar.alafasy', name: 'مشاري العفاسي', style: 'مرتل' },
+    { id: 'ar.abdulbasitmurattal', name: 'عبد الباسط عبد الصمد', style: 'مرتل' },
+    { id: 'ar.abdulsamad', name: 'عبد الباسط عبد الصمد', style: 'مجود' },
+    { id: 'ar.shaatree', name: 'أبو بكر الشاطري', style: 'مرتل' },
+    { id: 'ar.husary', name: 'محمود خليل الحصري', style: 'مرتل' },
+    { id: 'ar.minshawi', name: 'محمد صديق المنشاوي', style: 'مجود' },
+    { id: 'ar.sudais', name: 'عبد الرحمن السديس', style: 'مرتل' },
+  ];
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('quran-notes');
@@ -247,6 +273,85 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   const filteredAyahs = pageData?.ayahs.filter(matchesSearch) || [];
 
+  const playAyah = async (ayah: Ayah) => {
+    if (currentAudio) {
+      currentAudio.pause();
+      setCurrentAudio(null);
+      setPlayingAyah(null);
+    }
+
+    if (playingAyah === ayah.number) {
+      return;
+    }
+
+    try {
+      const audioUrl = `https://cdn.islamic.network/quran/audio/128/${selectedReciter}/${ayah.number}.mp3`;
+      const audio = new Audio(audioUrl);
+      
+      audio.addEventListener('ended', () => {
+        setPlayingAyah(null);
+        setCurrentAudio(null);
+      });
+
+      audio.addEventListener('error', () => {
+        toast({
+          title: "خطأ",
+          description: "فشل تشغيل الصوت",
+          variant: "destructive"
+        });
+        setPlayingAyah(null);
+        setCurrentAudio(null);
+      });
+
+      await audio.play();
+      setCurrentAudio(audio);
+      setPlayingAyah(ayah.number);
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: "فشل تشغيل الصوت",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleTafsir = async (ayah: Ayah) => {
+    const ayahKey = ayah.number;
+    
+    if (showTafsir[ayahKey]) {
+      setShowTafsir(prev => ({ ...prev, [ayahKey]: false }));
+      return;
+    }
+
+    if (!tafsirData[ayahKey]) {
+      try {
+        const response = await fetch(`https://api.alquran.cloud/v1/ayah/${ayah.number}/ar.muyassar`);
+        const result = await response.json();
+        
+        if (result.code === 200 && result.data) {
+          setTafsirData(prev => ({ ...prev, [ayahKey]: result.data.text }));
+          setShowTafsir(prev => ({ ...prev, [ayahKey]: true }));
+        }
+      } catch (error) {
+        toast({
+          title: "خطأ",
+          description: "فشل تحميل التفسير",
+          variant: "destructive"
+        });
+      }
+    } else {
+      setShowTafsir(prev => ({ ...prev, [ayahKey]: true }));
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (currentAudio) {
+        currentAudio.pause();
+      }
+    };
+  }, [currentAudio]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50" dir="rtl">
       <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg">
@@ -310,6 +415,19 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             </div>
 
             <div className="flex items-center gap-2">
+              <select
+                value={selectedReciter}
+                onChange={(e) => setSelectedReciter(e.target.value)}
+                className="px-3 py-1.5 rounded-md bg-emerald-700 text-white text-sm border-2 border-emerald-500"
+                data-testid="select-reciter"
+              >
+                {reciters.map(reciter => (
+                  <option key={reciter.id} value={reciter.id}>
+                    {reciter.name} ({reciter.style})
+                  </option>
+                ))}
+              </select>
+
               <Button
                 onClick={() => setSearchMode(!searchMode)}
                 size="sm"
@@ -497,6 +615,32 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <Button
                                       size="sm"
+                                      variant="outline"
+                                      onClick={() => playAyah(ayah)}
+                                      className={`h-8 ${playingAyah === ayah.number ? 'bg-purple-600 text-white border-purple-600' : 'text-purple-600 border-purple-300 hover:bg-purple-50'}`}
+                                      data-testid={`button-play-${ayah.number}`}
+                                    >
+                                      {playingAyah === ayah.number ? (
+                                        <Pause className="w-4 h-4 ml-1" />
+                                      ) : (
+                                        <Play className="w-4 h-4 ml-1" />
+                                      )}
+                                      {playingAyah === ayah.number ? 'إيقاف' : 'استماع'}
+                                    </Button>
+
+                                    <Button
+                                      size="sm"
+                                      variant={showTafsir[ayah.number] ? "default" : "outline"}
+                                      onClick={() => toggleTafsir(ayah)}
+                                      className={`h-8 ${showTafsir[ayah.number] ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'text-indigo-600 border-indigo-300 hover:bg-indigo-50'}`}
+                                      data-testid={`button-tafsir-${ayah.number}`}
+                                    >
+                                      <FileText className="w-4 h-4 ml-1" />
+                                      {showTafsir[ayah.number] ? 'إخفاء التفسير' : 'التفسير'}
+                                    </Button>
+
+                                    <Button
+                                      size="sm"
                                       variant={isMemorized ? "default" : "outline"}
                                       onClick={() => toggleMarker(ayah, 'memorized')}
                                       className={`h-8 ${isMemorized ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-green-600 border-green-300 hover:bg-green-50'}`}
@@ -529,6 +673,18 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                     </Button>
                                   </div>
                                   
+                                  {showTafsir[ayah.number] && tafsirData[ayah.number] && (
+                                    <div className="mt-3 p-4 bg-indigo-50 border-r-2 border-indigo-400 rounded">
+                                      <div className="flex items-start gap-2">
+                                        <FileText className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                                        <div className="flex-1">
+                                          <p className="text-xs text-indigo-600 font-bold mb-1">التفسير الميسر:</p>
+                                          <p className="text-indigo-900 text-right text-sm leading-relaxed">{tafsirData[ayah.number]}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
                                   {ayahNote && (
                                     <div className="mt-3 p-3 bg-blue-50 border-r-2 border-blue-400 rounded">
                                       <div className="flex items-start gap-2">
