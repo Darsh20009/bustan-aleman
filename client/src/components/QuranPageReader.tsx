@@ -22,7 +22,9 @@ import {
   StickyNote,
   Bookmark,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Search,
+  X
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -71,6 +73,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [selectedAyah, setSelectedAyah] = useState<Ayah | null>(null);
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState(false);
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('quran-notes');
@@ -236,6 +240,13 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     );
   };
 
+  const matchesSearch = (ayah: Ayah) => {
+    if (!searchQuery.trim()) return true;
+    return ayah.text.includes(searchQuery.trim());
+  };
+
+  const filteredAyahs = pageData?.ayahs.filter(matchesSearch) || [];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50" dir="rtl">
       <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg">
@@ -300,6 +311,16 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
             <div className="flex items-center gap-2">
               <Button
+                onClick={() => setSearchMode(!searchMode)}
+                size="sm"
+                variant="ghost"
+                className={`text-white hover:bg-emerald-700 ${searchMode ? 'bg-emerald-700' : ''}`}
+                data-testid="button-toggle-search"
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+
+              <Button
                 onClick={decreaseFontSize}
                 size="sm"
                 variant="ghost"
@@ -334,6 +355,38 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </Button>
             </div>
           </div>
+
+          {searchMode && (
+            <div className="mt-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث عن آية..."
+                  className="w-full px-4 py-2 pr-10 rounded-lg text-emerald-900 border-2 border-emerald-300"
+                  data-testid="input-search-ayah"
+                />
+                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-emerald-600" />
+                {searchQuery && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                    data-testid="button-clear-search"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+              {searchQuery && (
+                <p className="text-xs text-emerald-100 mt-1">
+                  {filteredAyahs.length} آية من أصل {pageData?.ayahs.length || 0}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="mt-3">
             <div className="w-full bg-emerald-800/30 rounded-full h-2">
@@ -401,80 +454,95 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                     )}
 
                     <div className="space-y-4">
-                      {pageData?.ayahs.map((ayah, index) => {
-                        const ayahNote = getAyahNote(ayah);
-                        const isMemorized = hasMarker(ayah, 'memorized');
-                        const needsReview = hasMarker(ayah, 'review');
-                        
-                        return (
-                          <div
-                            key={ayah.number}
-                            className={`group relative p-3 rounded-lg transition-all ${
-                              isMemorized ? 'bg-green-50 border-l-4 border-green-500' :
-                              needsReview ? 'bg-amber-50 border-l-4 border-amber-500' :
-                              'hover:bg-emerald-50/50'
-                            }`}
-                            data-testid={`ayah-container-${ayah.number}`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="inline-flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => toggleMarker(ayah, 'memorized')}
-                                  className={`h-7 w-7 p-0 ${isMemorized ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-green-600'}`}
-                                  data-testid={`button-memorized-${ayah.number}`}
-                                  title="علامة الحفظ"
-                                >
-                                  <CheckCircle2 className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => toggleMarker(ayah, 'review')}
-                                  className={`h-7 w-7 p-0 ${needsReview ? 'text-amber-600 hover:text-amber-700' : 'text-gray-400 hover:text-amber-600'}`}
-                                  data-testid={`button-review-${ayah.number}`}
-                                  title="علامة المراجعة"
-                                >
-                                  <RefreshCw className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => openNoteDialog(ayah)}
-                                  className={`h-7 w-7 p-0 ${ayahNote ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-blue-600'}`}
-                                  data-testid={`button-note-${ayah.number}`}
-                                  title="إضافة ملاحظة"
-                                >
-                                  <StickyNote className="w-4 h-4" />
-                                </Button>
-                              </div>
-
-                              <div className="flex-1">
-                                <span
-                                  className="inline font-arabic text-emerald-900"
-                                  data-testid={`ayah-${ayah.number}`}
-                                >
-                                  {ayah.text}
-                                  <span className="inline-flex items-center justify-center w-8 h-8 mx-2 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white text-sm font-bold shadow-md">
-                                    {ayah.numberInSurah}
-                                  </span>
-                                  {' '}
-                                </span>
-                                
-                                {ayahNote && (
-                                  <div className="mt-2 p-3 bg-blue-50 border-r-2 border-blue-400 rounded text-sm">
-                                    <div className="flex items-start gap-2">
-                                      <StickyNote className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                      <p className="text-blue-800 text-right">{ayahNote.note}</p>
-                                    </div>
+                      {filteredAyahs.length === 0 && searchQuery ? (
+                        <div className="text-center py-12">
+                          <Search className="w-12 h-12 text-emerald-300 mx-auto mb-4" />
+                          <p className="text-emerald-600 text-lg">لم يتم العثور على نتائج</p>
+                          <p className="text-emerald-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                        </div>
+                      ) : (
+                        filteredAyahs.map((ayah, index) => {
+                          const ayahNote = getAyahNote(ayah);
+                          const isMemorized = hasMarker(ayah, 'memorized');
+                          const needsReview = hasMarker(ayah, 'review');
+                          
+                          return (
+                            <div
+                              key={ayah.number}
+                              className={`relative p-4 rounded-lg transition-all ${
+                                isMemorized ? 'bg-green-50 border-r-4 border-green-500' :
+                                needsReview ? 'bg-amber-50 border-r-4 border-amber-500' :
+                                'bg-white/50 border-r-4 border-transparent hover:border-emerald-200'
+                              }`}
+                              data-testid={`ayah-container-${ayah.number}`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white text-sm font-bold shadow-md">
+                                      {ayah.numberInSurah}
+                                    </span>
+                                    <span className="text-xs text-emerald-600">
+                                      {ayah.surah.name}
+                                    </span>
                                   </div>
-                                )}
+                                  
+                                  <p
+                                    className="font-arabic text-emerald-900 leading-loose mb-3"
+                                    data-testid={`ayah-${ayah.number}`}
+                                  >
+                                    {ayah.text}
+                                  </p>
+
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <Button
+                                      size="sm"
+                                      variant={isMemorized ? "default" : "outline"}
+                                      onClick={() => toggleMarker(ayah, 'memorized')}
+                                      className={`h-8 ${isMemorized ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-green-600 border-green-300 hover:bg-green-50'}`}
+                                      data-testid={`button-memorized-${ayah.number}`}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 ml-1" />
+                                      {isMemorized ? 'محفوظ' : 'حفظ'}
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={needsReview ? "default" : "outline"}
+                                      onClick={() => toggleMarker(ayah, 'review')}
+                                      className={`h-8 ${needsReview ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-amber-600 border-amber-300 hover:bg-amber-50'}`}
+                                      data-testid={`button-review-${ayah.number}`}
+                                    >
+                                      <RefreshCw className="w-4 h-4 ml-1" />
+                                      {needsReview ? 'للمراجعة' : 'مراجعة'}
+                                    </Button>
+                                    
+                                    <Button
+                                      size="sm"
+                                      variant={ayahNote ? "default" : "outline"}
+                                      onClick={() => openNoteDialog(ayah)}
+                                      className={`h-8 ${ayahNote ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'text-blue-600 border-blue-300 hover:bg-blue-50'}`}
+                                      data-testid={`button-note-${ayah.number}`}
+                                    >
+                                      <StickyNote className="w-4 h-4 ml-1" />
+                                      {ayahNote ? 'تعديل الملاحظة' : 'إضافة ملاحظة'}
+                                    </Button>
+                                  </div>
+                                  
+                                  {ayahNote && (
+                                    <div className="mt-3 p-3 bg-blue-50 border-r-2 border-blue-400 rounded">
+                                      <div className="flex items-start gap-2">
+                                        <StickyNote className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                        <p className="text-blue-800 text-right text-sm">{ayahNote.note}</p>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                     </div>
                   </div>
                 )}
