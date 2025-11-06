@@ -111,6 +111,12 @@
     font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
   }
 
+  .font-arabic {
+    font-family: 'Amiri Quran', 'Amiri', serif;
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+    line-height: 2;
+  }
+
   /* Enhanced Islamic color utilities */
   .text-islamic-emerald {
     color: var(--islamic-emerald);

@@ -20,7 +20,7 @@ import { MyCoursesPage } from "./components/MyCoursesPage";
 import { StudentDashboard } from "./components/StudentDashboard";
 import { PersonalProfile } from "./components/PersonalProfile";
 import CertificatesPage from "./components/CertificatesPage";
-import EnhancedQuranReader from "./components/EnhancedQuranReader";
+import QuranPageReader from "./components/QuranPageReader";
 import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import QuranStats from "./pages/QuranStats";
 import MemorizationPage from "./pages/MemorizationPage";
@@ -234,41 +234,10 @@ function AppContent() {
       
       case 'quran':
         return (
-          <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
-            {/* Header with back button */}
-            <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white p-4">
-              <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
-                <h1 className="text-xl md:text-2xl font-bold mb-2 md:mb-0" style={{ fontFamily: 'Amiri, serif' }}>
-                  قارئ القرآن الكريم
-                </h1>
-                <div className="flex items-center space-x-2 md:space-x-4 flex-wrap">
-                  <button
-                    onClick={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
-                    className="bg-white/20 hover:bg-white/30 px-3 md:px-4 py-2 rounded-lg transition-colors text-sm md:text-base"
-                  >
-                    ← العودة
-                  </button>
-                  {isAuthenticated && user && (
-                    <span className="text-amber-200 text-sm md:text-base">
-                      {user.firstName} {user.lastName}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Enhanced Quran Reader Container */}
-            <div className="p-2 md:p-6">
-              <div className="max-w-7xl mx-auto">
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl">
-                  <EnhancedQuranReader 
-                    initialSurah={1} 
-                    studentId={user?.studentId}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <QuranPageReader 
+            studentId={user?.studentId} 
+            onBack={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
+          />
         );
       
       default:
