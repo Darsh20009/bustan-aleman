@@ -353,7 +353,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   }, [currentAudio]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-100 to-green-50" dir="rtl">
       <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
@@ -526,7 +526,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="bg-gradient-to-br from-white via-emerald-50/30 to-green-50/30 shadow-2xl border-4 border-emerald-200/50 rounded-2xl overflow-hidden">
+            <Card className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 shadow-2xl border-4 border-green-300/50 rounded-2xl overflow-hidden">
               <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 text-white py-4 px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -588,9 +588,9 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                             <div
                               key={ayah.number}
                               className={`relative p-4 rounded-lg transition-all ${
-                                isMemorized ? 'bg-green-50 border-r-4 border-green-500' :
-                                needsReview ? 'bg-amber-50 border-r-4 border-amber-500' :
-                                'bg-white/50 border-r-4 border-transparent hover:border-emerald-200'
+                                isMemorized ? 'bg-green-100 border-r-4 border-green-600' :
+                                needsReview ? 'bg-amber-100 border-r-4 border-amber-500' :
+                                'bg-green-50/70 border-r-4 border-transparent hover:border-green-300'
                               }`}
                               data-testid={`ayah-container-${ayah.number}`}
                             >
