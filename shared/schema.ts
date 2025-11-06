@@ -586,6 +586,16 @@ export const insertClassScheduleSchema = createInsertSchema(classSchedules).omit
   createdAt: true,
 });
 
+export const insertSessionAccessSchema = createInsertSchema(sessionAccess).omit({
+  id: true,
+  enabledAt: true,
+});
+
+export const insertDailyAssignmentSchema = createInsertSchema(dailyAssignments).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertTripSchema = createInsertSchema(trips).omit({
   id: true,
   createdAt: true,
@@ -714,6 +724,10 @@ export type StudentPayment = typeof studentPayments.$inferSelect;
 export type InsertStudentPayment = z.infer<typeof insertStudentPaymentSchema>;
 export type ClassSchedule = typeof classSchedules.$inferSelect;
 export type InsertClassSchedule = z.infer<typeof insertClassScheduleSchema>;
+export type SessionAccess = typeof sessionAccess.$inferSelect;
+export type InsertSessionAccess = z.infer<typeof insertSessionAccessSchema>;
+export type DailyAssignment = typeof dailyAssignments.$inferSelect;
+export type InsertDailyAssignment = z.infer<typeof insertDailyAssignmentSchema>;
 
 export type Trip = typeof trips.$inferSelect;
 export type InsertTrip = z.infer<typeof insertTripSchema>;

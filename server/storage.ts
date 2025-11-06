@@ -18,6 +18,8 @@ import {
   quranReadingStats,
   quranAyahMarkers,
   quranRecitationAttempts,
+  sessionAccess,
+  dailyAssignments,
   type User,
   type UpsertUser,
   type Course,
@@ -56,6 +58,10 @@ import {
   type InsertQuranAyahMarker,
   type QuranRecitationAttempt,
   type InsertQuranRecitationAttempt,
+  type SessionAccess,
+  type InsertSessionAccess,
+  type DailyAssignment,
+  type InsertDailyAssignment,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -182,6 +188,16 @@ export interface IStorage {
   // Quran recitation attempts operations
   createRecitationAttempt(attempt: InsertQuranRecitationAttempt): Promise<QuranRecitationAttempt>;
   getStudentRecitationAttempts(studentId: string): Promise<QuranRecitationAttempt[]>;
+  
+  // Daily assignments operations
+  createDailyAssignment(assignment: InsertDailyAssignment): Promise<DailyAssignment>;
+  getDailyAssignments(studentId: string): Promise<DailyAssignment[]>;
+  getAllDailyAssignments(): Promise<DailyAssignment[]>;
+  
+  // Session access operations
+  enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
+  getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined>;
+  getAllSessionAccess(studentId: string): Promise<SessionAccess[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1124,6 +1140,54 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return db!.select().from(quranRecitationAttempts).where(eq(quranRecitationAttempts.studentId, studentId));
+  }
+
+  // Daily assignments operations
+  async createDailyAssignment(assignment: InsertDailyAssignment): Promise<DailyAssignment> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newAssignment] = await db!.insert(dailyAssignments).values(assignment).returning();
+    return newAssignment;
+  }
+
+  async getDailyAssignments(studentId: string): Promise<DailyAssignment[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(dailyAssignments).where(eq(dailyAssignments.studentId, studentId)).orderBy(desc(dailyAssignments.assignmentDate));
+  }
+
+  async getAllDailyAssignments(): Promise<DailyAssignment[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(dailyAssignments).orderBy(desc(dailyAssignments.assignmentDate));
+  }
+
+  // Session access operations
+  async enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newAccess] = await db!.insert(sessionAccess).values(access).returning();
+    return newAccess;
+  }
+
+  async getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [access] = await db!.select().from(sessionAccess)
+      .where(and(eq(sessionAccess.studentId, studentId), eq(sessionAccess.sessionDate, sessionDate)));
+    return access;
+  }
+
+  async getAllSessionAccess(studentId: string): Promise<SessionAccess[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(sessionAccess).where(eq(sessionAccess.studentId, studentId)).orderBy(desc(sessionAccess.sessionDate));
   }
 }
 

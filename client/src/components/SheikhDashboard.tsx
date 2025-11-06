@@ -341,9 +341,10 @@ export function SheikhDashboard() {
                                 <Button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    enableSession(student.id, student.schedules[0]);
+                                    enableSession(student.id, student.schedules![0]);
                                   }}
                                   className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg"
+                                  data-testid={`button-enable-session-${student.id}`}
                                 >
                                   <Video className="w-4 h-4 ml-2" />
                                   تفعيل الحصة
