@@ -4,7 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   ChevronLeft,
   ChevronRight,
@@ -12,7 +19,10 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Settings
+  StickyNote,
+  Bookmark,
+  CheckCircle2,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,18 +31,33 @@ interface QuranPageProps {
   onBack?: () => void;
 }
 
+interface Ayah {
+  number: number;
+  numberInSurah: number;
+  text: string;
+  surah: {
+    number: number;
+    name: string;
+    englishName: string;
+  };
+}
+
 interface PageData {
   page: number;
   juz: number;
-  ayahs: Array<{
-    number: number;
-    text: string;
-    surah: {
-      number: number;
-      name: string;
-      englishName: string;
-    };
-  }>;
+  ayahs: Ayah[];
+}
+
+interface AyahNote {
+  surahNumber: number;
+  ayahNumber: number;
+  note: string;
+}
+
+interface AyahMarker {
+  surahNumber: number;
+  ayahNumber: number;
+  type: 'memorized' | 'review';
 }
 
 export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
@@ -40,6 +65,29 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [fontSize, setFontSize] = useState([28]);
   const [lineSpacing, setLineSpacing] = useState([2]);
   const { toast } = useToast();
+
+  const [notes, setNotes] = useState<AyahNote[]>([]);
+  const [markers, setMarkers] = useState<AyahMarker[]>([]);
+  const [selectedAyah, setSelectedAyah] = useState<Ayah | null>(null);
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
+  const [noteText, setNoteText] = useState('');
+
+  useEffect(() => {
+    const savedNotes = localStorage.getItem('quran-notes');
+    const savedMarkers = localStorage.getItem('quran-markers');
+    if (savedNotes) setNotes(JSON.parse(savedNotes));
+    if (savedMarkers) setMarkers(JSON.parse(savedMarkers));
+  }, []);
+
+  const saveNotes = (newNotes: AyahNote[]) => {
+    setNotes(newNotes);
+    localStorage.setItem('quran-notes', JSON.stringify(newNotes));
+  };
+
+  const saveMarkers = (newMarkers: AyahMarker[]) => {
+    setMarkers(newMarkers);
+    localStorage.setItem('quran-markers', JSON.stringify(newMarkers));
+  };
 
   const { data: pageData, isLoading } = useQuery<PageData>({
     queryKey: ['/api/quran/page', currentPage],
@@ -53,6 +101,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         juz: result.data.surahs[0]?.ayahs[0]?.juz || 1,
         ayahs: result.data.ayahs.map((ayah: any) => ({
           number: ayah.number,
+          numberInSurah: ayah.numberInSurah,
           text: ayah.text,
           surah: {
             number: ayah.surah.number,
@@ -112,13 +161,86 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     });
   };
 
+  const openNoteDialog = (ayah: Ayah) => {
+    setSelectedAyah(ayah);
+    const existingNote = notes.find(
+      n => n.surahNumber === ayah.surah.number && n.ayahNumber === ayah.numberInSurah
+    );
+    setNoteText(existingNote?.note || '');
+    setNoteDialogOpen(true);
+  };
+
+  const saveNote = () => {
+    if (!selectedAyah) return;
+    
+    const newNotes = notes.filter(
+      n => !(n.surahNumber === selectedAyah.surah.number && n.ayahNumber === selectedAyah.numberInSurah)
+    );
+    
+    if (noteText.trim()) {
+      newNotes.push({
+        surahNumber: selectedAyah.surah.number,
+        ayahNumber: selectedAyah.numberInSurah,
+        note: noteText.trim()
+      });
+    }
+    
+    saveNotes(newNotes);
+    setNoteDialogOpen(false);
+    toast({
+      title: "✅ تم حفظ الملاحظة",
+      description: noteText.trim() ? "تمت إضافة الملاحظة بنجاح" : "تم حذف الملاحظة"
+    });
+  };
+
+  const toggleMarker = (ayah: Ayah, type: 'memorized' | 'review') => {
+    const existingMarkerIndex = markers.findIndex(
+      m => m.surahNumber === ayah.surah.number && 
+           m.ayahNumber === ayah.numberInSurah && 
+           m.type === type
+    );
+
+    let newMarkers: AyahMarker[];
+    if (existingMarkerIndex >= 0) {
+      newMarkers = markers.filter((_, idx) => idx !== existingMarkerIndex);
+      toast({
+        title: "تم الإلغاء",
+        description: type === 'memorized' ? "تم إلغاء علامة الحفظ" : "تم إلغاء علامة المراجعة"
+      });
+    } else {
+      newMarkers = [...markers, {
+        surahNumber: ayah.surah.number,
+        ayahNumber: ayah.numberInSurah,
+        type
+      }];
+      toast({
+        title: "✅ تم الإضافة",
+        description: type === 'memorized' ? "تمت إضافة علامة الحفظ" : "تمت إضافة علامة المراجعة"
+      });
+    }
+    
+    saveMarkers(newMarkers);
+  };
+
+  const getAyahNote = (ayah: Ayah) => {
+    return notes.find(
+      n => n.surahNumber === ayah.surah.number && n.ayahNumber === ayah.numberInSurah
+    );
+  };
+
+  const hasMarker = (ayah: Ayah, type: 'memorized' | 'review') => {
+    return markers.some(
+      m => m.surahNumber === ayah.surah.number && 
+           m.ayahNumber === ayah.numberInSurah && 
+           m.type === type
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50" dir="rtl">
-      {/* Header with Controls */}
       <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4">
-            {/* Back Button & Page Info */}
             <div className="flex items-center gap-4">
               {onBack && (
                 <Button
@@ -140,7 +262,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </div>
             </div>
 
-            {/* Navigation Controls */}
             <div className="flex items-center gap-2">
               <Button
                 onClick={goToPreviousPage}
@@ -177,7 +298,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </Button>
             </div>
 
-            {/* Font Controls */}
             <div className="flex items-center gap-2">
               <Button
                 onClick={decreaseFontSize}
@@ -215,7 +335,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             </div>
           </div>
 
-          {/* Page Progress Bar */}
           <div className="mt-3">
             <div className="w-full bg-emerald-800/30 rounded-full h-2">
               <div
@@ -227,7 +346,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         </div>
       </div>
 
-      {/* Quran Page Content */}
       <div className="max-w-5xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           <motion.div
@@ -238,7 +356,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             transition={{ duration: 0.3 }}
           >
             <Card className="bg-gradient-to-br from-white via-emerald-50/30 to-green-50/30 shadow-2xl border-4 border-emerald-200/50 rounded-2xl overflow-hidden">
-              {/* Decorative Header */}
               <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 text-white py-4 px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -259,7 +376,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 </div>
               </div>
 
-              {/* Page Content */}
               <div className="p-8 md:p-12">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-96">
@@ -276,8 +392,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                       lineHeight: `${lineSpacing[0]}em`,
                     }}
                   >
-                    {/* بسم الله الرحمن الرحيم في بداية السور */}
-                    {pageData?.ayahs[0]?.number === 1 && pageData.ayahs[0].surah.number !== 1 && pageData.ayahs[0].surah.number !== 9 && (
+                    {pageData?.ayahs[0]?.numberInSurah === 1 && pageData.ayahs[0].surah.number !== 1 && pageData.ayahs[0].surah.number !== 9 && (
                       <div className="text-center mb-8 py-4">
                         <p className="text-emerald-800 font-semibold text-3xl">
                           بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
@@ -285,26 +400,85 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                       </div>
                     )}
 
-                    {/* Ayahs */}
-                    <div className="space-y-3">
-                      {pageData?.ayahs.map((ayah, index) => (
-                        <span
-                          key={ayah.number}
-                          className="inline font-arabic text-emerald-900"
-                          data-testid={`ayah-${ayah.number}`}
-                        >
-                          {ayah.text}
-                          <span className="inline-flex items-center justify-center w-8 h-8 mx-2 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white text-sm font-bold shadow-md">
-                            {ayah.number}
-                          </span>
-                          {' '}
-                        </span>
-                      ))}
+                    <div className="space-y-4">
+                      {pageData?.ayahs.map((ayah, index) => {
+                        const ayahNote = getAyahNote(ayah);
+                        const isMemorized = hasMarker(ayah, 'memorized');
+                        const needsReview = hasMarker(ayah, 'review');
+                        
+                        return (
+                          <div
+                            key={ayah.number}
+                            className={`group relative p-3 rounded-lg transition-all ${
+                              isMemorized ? 'bg-green-50 border-l-4 border-green-500' :
+                              needsReview ? 'bg-amber-50 border-l-4 border-amber-500' :
+                              'hover:bg-emerald-50/50'
+                            }`}
+                            data-testid={`ayah-container-${ayah.number}`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="inline-flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => toggleMarker(ayah, 'memorized')}
+                                  className={`h-7 w-7 p-0 ${isMemorized ? 'text-green-600 hover:text-green-700' : 'text-gray-400 hover:text-green-600'}`}
+                                  data-testid={`button-memorized-${ayah.number}`}
+                                  title="علامة الحفظ"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => toggleMarker(ayah, 'review')}
+                                  className={`h-7 w-7 p-0 ${needsReview ? 'text-amber-600 hover:text-amber-700' : 'text-gray-400 hover:text-amber-600'}`}
+                                  data-testid={`button-review-${ayah.number}`}
+                                  title="علامة المراجعة"
+                                >
+                                  <RefreshCw className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => openNoteDialog(ayah)}
+                                  className={`h-7 w-7 p-0 ${ayahNote ? 'text-blue-600 hover:text-blue-700' : 'text-gray-400 hover:text-blue-600'}`}
+                                  data-testid={`button-note-${ayah.number}`}
+                                  title="إضافة ملاحظة"
+                                >
+                                  <StickyNote className="w-4 h-4" />
+                                </Button>
+                              </div>
+
+                              <div className="flex-1">
+                                <span
+                                  className="inline font-arabic text-emerald-900"
+                                  data-testid={`ayah-${ayah.number}`}
+                                >
+                                  {ayah.text}
+                                  <span className="inline-flex items-center justify-center w-8 h-8 mx-2 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white text-sm font-bold shadow-md">
+                                    {ayah.numberInSurah}
+                                  </span>
+                                  {' '}
+                                </span>
+                                
+                                {ayahNote && (
+                                  <div className="mt-2 p-3 bg-blue-50 border-r-2 border-blue-400 rounded text-sm">
+                                    <div className="flex items-start gap-2">
+                                      <StickyNote className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                      <p className="text-blue-800 text-right">{ayahNote.note}</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Decorative Bottom Border */}
                 <div className="mt-12 pt-6 border-t-2 border-emerald-200">
                   <div className="flex items-center justify-center gap-2 text-emerald-600">
                     <div className="w-16 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full" />
@@ -317,7 +491,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Quick Page Jumps */}
         <div className="mt-6 grid grid-cols-4 gap-3">
           {[1, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((page) => (
             <Button
@@ -337,14 +510,68 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         </div>
       </div>
 
-      {/* Keyboard Shortcuts Help */}
       <div className="fixed bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 border-2 border-emerald-200">
         <div className="text-xs text-emerald-800">
           <p className="font-bold mb-2">اختصارات لوحة المفاتيح:</p>
           <p>← السهم الأيسر: الصفحة التالية</p>
           <p>→ السهم الأيمن: الصفحة السابقة</p>
+          <div className="mt-3 pt-3 border-t border-emerald-200">
+            <p className="font-bold mb-1">العلامات:</p>
+            <div className="flex items-center gap-1 mb-1">
+              <CheckCircle2 className="w-3 h-3 text-green-600" />
+              <span>محفوظ</span>
+            </div>
+            <div className="flex items-center gap-1 mb-1">
+              <RefreshCw className="w-3 h-3 text-amber-600" />
+              <span>للمراجعة</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <StickyNote className="w-3 h-3 text-blue-600" />
+              <span>ملاحظة</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>إضافة ملاحظة</DialogTitle>
+            <DialogDescription>
+              {selectedAyah && (
+                <span>
+                  {selectedAyah.surah.name} - الآية {selectedAyah.numberInSurah}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="اكتب ملاحظتك هنا..."
+              className="min-h-[150px] text-right"
+              data-testid="textarea-note"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setNoteDialogOpen(false)}
+                data-testid="button-cancel-note"
+              >
+                إلغاء
+              </Button>
+              <Button
+                onClick={saveNote}
+                className="bg-emerald-600 hover:bg-emerald-700"
+                data-testid="button-save-note"
+              >
+                حفظ
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
