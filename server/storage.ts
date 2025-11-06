@@ -191,6 +191,7 @@ export interface IStorage {
   
   // Daily assignments operations
   createDailyAssignment(assignment: InsertDailyAssignment): Promise<DailyAssignment>;
+  getDailyAssignment(studentId: string, date: string): Promise<DailyAssignment | undefined>;
   getDailyAssignments(studentId: string): Promise<DailyAssignment[]>;
   getAllDailyAssignments(): Promise<DailyAssignment[]>;
   
@@ -1149,6 +1150,15 @@ export class DatabaseStorage implements IStorage {
     }
     const [newAssignment] = await db!.insert(dailyAssignments).values(assignment).returning();
     return newAssignment;
+  }
+
+  async getDailyAssignment(studentId: string, date: string): Promise<DailyAssignment | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [assignment] = await db!.select().from(dailyAssignments)
+      .where(and(eq(dailyAssignments.studentId, studentId), eq(dailyAssignments.assignmentDate, date)));
+    return assignment;
   }
 
   async getDailyAssignments(studentId: string): Promise<DailyAssignment[]> {

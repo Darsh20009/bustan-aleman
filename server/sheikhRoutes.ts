@@ -112,7 +112,10 @@ export function setupSheikhRoutes(app: Express) {
       // Add errors if any
       if (errors && errors.length > 0) {
         for (const error of errors) {
-          await storage.addStudentError(studentId, error);
+          await storage.createStudentError({
+            studentId,
+            ...error
+          });
         }
       }
       
