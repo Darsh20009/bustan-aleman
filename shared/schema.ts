@@ -119,6 +119,7 @@ export const students = bustanSchema.table("students", {
   userId: varchar("user_id").references(() => users.id),
   studentName: varchar("student_name").notNull(),
   passwordHash: varchar("password_hash").notNull(), // Hashed password for security
+  phoneNumber: varchar("phone_number"), // رقم الهاتف
   dateOfBirth: date("date_of_birth"),
   grade: varchar("grade"), // الصف الدراسي
   monthlySessionsCount: integer("monthly_sessions_count").default(0),

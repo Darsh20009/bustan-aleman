@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, RequestHandler } from "express";
 
 // Extend session interface
 declare module 'express-session' {
@@ -20,7 +20,7 @@ export interface AuthenticatedRequest extends Request {
 /**
  * Middleware to check if user is authenticated
  */
-export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+export const requireAuth: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
   const userId = req.session?.userId;
   const userRole = req.session?.userRole;
   
@@ -31,7 +31,7 @@ export const requireAuth = (req: AuthenticatedRequest, res: Response, next: Next
   }
   
   // Attach user info to request
-  req.user = {
+  (req as AuthenticatedRequest).user = {
     id: userId,
     role: userRole,
     studentId: req.session?.studentId,
