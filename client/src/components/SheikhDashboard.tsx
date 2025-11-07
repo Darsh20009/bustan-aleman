@@ -311,12 +311,15 @@ export function SheikhDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white shadow-md p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-5 bg-white shadow-md p-1 rounded-xl">
             <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
               الطلاب
             </TabsTrigger>
             <TabsTrigger value="add-student" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white">
               إضافة طالب
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white">
+              المدفوعات
             </TabsTrigger>
             <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
               التكليفات
@@ -499,6 +502,84 @@ export function SheikhDashboard() {
                 </form>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            {selectedStudent ? (
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Award className="w-6 h-6" />
+                    إضافة دفعة جديدة - {selectedStudent.studentName}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    try {
+                      const response = await fetch('/api/sheikh/payments', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          studentId: selectedStudent.id,
+                          amount: parseFloat(formData.get('amount') as string),
+                          sessionsIncluded: parseInt(formData.get('sessions') as string),
+                          expiryDate: formData.get('expiryDate'),
+                          notes: formData.get('notes'),
+                        }),
+                      });
+                      if (response.ok) {
+                        toast({
+                          title: "تم إضافة الدفعة ✅",
+                          description: "تم تسجيل الدفعة بنجاح",
+                        });
+                        (e.target as HTMLFormElement).reset();
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "خطأ",
+                        description: "فشل في إضافة الدفعة",
+                        variant: "destructive",
+                      });
+                    }
+                  }} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>المبلغ (ريال سعودي)</Label>
+                        <Input name="amount" type="number" step="0.01" required placeholder="300.00" data-testid="input-amount" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>عدد الحصص</Label>
+                        <Input name="sessions" type="number" required placeholder="8" data-testid="input-sessions" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>تاريخ الانتهاء</Label>
+                        <Input name="expiryDate" type="date" data-testid="input-expiry" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <Label>ملاحظات</Label>
+                        <Textarea name="notes" placeholder="ملاحظات إضافية" rows={3} data-testid="input-notes" />
+                      </div>
+                    </div>
+                    <Button type="submit" className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 py-6 text-lg">
+                      <PlusCircle className="w-5 h-5 ml-2" />
+                      إضافة الدفعة
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+                <CardContent className="p-16 text-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-amber-100 to-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Award className="w-12 h-12 text-amber-600" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-2">اختر طالباً</h3>
+                  <p className="text-gray-500 text-lg">اختر طالباً من القائمة لإضافة دفعة له</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="assignments">

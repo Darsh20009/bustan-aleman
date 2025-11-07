@@ -127,6 +127,7 @@ export interface IStorage {
   
   // Additional student operations
   updateStudent(id: string, updates: Partial<Student>): Promise<Student>;
+  deleteStudent(id: string): Promise<void>;
   updateStudentMemorization(userId: string, memorization: Array<{surah: number, ayat: number[]}>): Promise<void>;
   
   // Student error operations
@@ -867,6 +868,17 @@ export class DatabaseStorage implements IStorage {
     
     const [updatedStudent] = await db!.update(students).set(updates).where(eq(students.id, id)).returning();
     return updatedStudent;
+  }
+
+  async deleteStudent(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      const studentsData = await jsonStorage.readJSON('data/students.json');
+      const filteredStudents = studentsData.filter((s: any) => s.id !== id);
+      await jsonStorage.writeJSON('data/students.json', filteredStudents);
+      return;
+    }
+    
+    await db!.delete(students).where(eq(students.id, id));
   }
 
   async updateStudentMemorization(userId: string, memorization: Array<{surah: number, ayat: number[]}>): Promise<void> {

@@ -156,6 +156,20 @@ class WebSocketService {
       data: certificate
     });
   }
+
+  public notifyStudentOfPayment(studentId: string, payment: any) {
+    this.sendToStudent(studentId, {
+      type: 'payment_received',
+      data: payment
+    });
+  }
+
+  public notifyStudentOfMeeting(studentId: string, meeting: any) {
+    this.sendToStudent(studentId, {
+      type: 'meeting_scheduled',
+      data: meeting
+    });
+  }
 }
 
 export const wsService = new WebSocketService();

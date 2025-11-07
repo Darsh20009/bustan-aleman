@@ -31,6 +31,31 @@ const createStudentSchema = z.object({
   zoomLink: z.string().optional(),
 });
 
+const paymentSchema = z.object({
+  studentId: z.string(),
+  amount: z.number().positive(),
+  currency: z.string().default('SAR'),
+  paymentMethod: z.string().default('whatsapp'),
+  subscriptionPeriod: z.string().default('monthly'),
+  sessionsIncluded: z.number().int().positive(),
+  expiryDate: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
+const scheduleSchema = z.object({
+  studentId: z.string(),
+  dayOfWeek: z.number().int().min(0).max(6),
+  startTime: z.string().regex(/^\d{1,2}:\d{2}$/),
+  endTime: z.string().regex(/^\d{1,2}:\d{2}$/),
+  zoomLink: z.string().optional().nullable(),
+});
+
+const meetingSchema = z.object({
+  studentId: z.string(),
+  scheduledTime: z.string(),
+  duration: z.number().int().positive().default(60),
+});
+
 export function setupSheikhRoutes(app: Express) {
   // Create new student
   app.post('/api/sheikh/students/create', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
@@ -186,6 +211,143 @@ export function setupSheikhRoutes(app: Express) {
     } catch (error) {
       console.error("Error fetching assignment:", error);
       res.status(500).json({ message: "خطأ في جلب التكليف" });
+    }
+  });
+
+  // Get all assignments
+  app.get('/api/sheikh/assignments', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const assignments = await storage.getAllDailyAssignments();
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      res.status(500).json({ message: "خطأ في جلب التكاليف" });
+    }
+  });
+
+  // Create payment for student
+  app.post('/api/sheikh/payments', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const paymentData = paymentSchema.parse(req.body);
+      
+      const payment = await storage.createStudentPayment({
+        studentId: paymentData.studentId,
+        amount: paymentData.amount.toString(),
+        currency: paymentData.currency,
+        paymentMethod: paymentData.paymentMethod,
+        subscriptionPeriod: paymentData.subscriptionPeriod,
+        sessionsIncluded: paymentData.sessionsIncluded,
+        sessionsRemaining: paymentData.sessionsIncluded,
+        expiryDate: paymentData.expiryDate || null,
+        status: 'active',
+        notes: paymentData.notes || null,
+      });
+      
+      wsService.notifyStudentOfPayment(paymentData.studentId, payment);
+      
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating payment:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "بيانات غير صالحة", errors: error.errors });
+      }
+      res.status(500).json({ message: "خطأ في إنشاء الدفعة" });
+    }
+  });
+
+  // Get student payments
+  app.get('/api/sheikh/payments/:studentId', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.params.studentId;
+      const payments = await storage.getStudentPayments(studentId);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "خطأ في جلب الدفعات" });
+    }
+  });
+
+  // Update student information
+  app.patch('/api/sheikh/students/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.params.id;
+      const updateData = req.body;
+      
+      const updatedStudent = await storage.updateStudent(studentId, updateData);
+      
+      res.json(updatedStudent);
+    } catch (error) {
+      console.error("Error updating student:", error);
+      res.status(500).json({ message: "خطأ في تحديث بيانات الطالب" });
+    }
+  });
+
+  // Delete student
+  app.delete('/api/sheikh/students/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.params.id;
+      await storage.deleteStudent(studentId);
+      
+      res.json({ message: "تم حذف الطالب بنجاح" });
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      res.status(500).json({ message: "خطأ في حذف الطالب" });
+    }
+  });
+
+  // Create class schedule
+  app.post('/api/sheikh/schedules', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const scheduleData = scheduleSchema.parse(req.body);
+      
+      const schedule = await storage.createClassSchedule({
+        studentId: scheduleData.studentId,
+        dayOfWeek: scheduleData.dayOfWeek,
+        startTime: scheduleData.startTime,
+        endTime: scheduleData.endTime,
+        zoomLink: scheduleData.zoomLink || null,
+        isActive: true,
+      });
+      
+      res.status(201).json(schedule);
+    } catch (error) {
+      console.error("Error creating schedule:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "بيانات غير صالحة", errors: error.errors });
+      }
+      res.status(500).json({ message: "خطأ في إنشاء الجدول" });
+    }
+  });
+
+  // Create live meeting room
+  app.post('/api/sheikh/create-meeting', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const meetingData = meetingSchema.parse(req.body);
+      const sheikhId = req.user!.id;
+      
+      const meetingId = `meeting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const meetingLink = `/meeting/${meetingId}`;
+      
+      const meeting = {
+        id: meetingId,
+        sheikhId,
+        studentId: meetingData.studentId,
+        scheduledTime: meetingData.scheduledTime,
+        duration: meetingData.duration,
+        meetingLink,
+        status: 'scheduled',
+        createdAt: new Date(),
+      };
+      
+      wsService.notifyStudentOfMeeting(meetingData.studentId, meeting);
+      
+      res.status(201).json(meeting);
+    } catch (error) {
+      console.error("Error creating meeting:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "بيانات غير صالحة", errors: error.errors });
+      }
+      res.status(500).json({ message: "خطأ في إنشاء الحصة" });
     }
   });
 }
