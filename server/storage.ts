@@ -174,6 +174,8 @@ export interface IStorage {
   getStudentMemorization(studentId: string): Promise<QuranMemorization[]>;
   updateMemorization(id: string, updates: Partial<InsertQuranMemorization>): Promise<QuranMemorization>;
   deleteMemorization(id: string): Promise<void>;
+  getDueReviews(studentId: string, untilDate?: Date): Promise<QuranMemorization[]>;
+  updateReviewOutcome(id: string, reviewData: { difficulty: 'easy' | 'medium' | 'hard'; reviewCount: number; lastReviewed: Date; nextReviewDate: Date; masteryLevel: number; status: string }): Promise<QuranMemorization>;
   
   // Quran reading statistics operations
   createOrUpdateReadingStats(stats: InsertQuranReadingStats): Promise<QuranReadingStats>;
@@ -1044,6 +1046,63 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     await db!.delete(quranMemorization).where(eq(quranMemorization.id, id));
+  }
+
+  async getDueReviews(studentId: string, untilDate?: Date): Promise<QuranMemorization[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    const until = untilDate || new Date();
+    until.setHours(23, 59, 59, 999);
+    
+    const allMemorization = await db!.select().from(quranMemorization)
+      .where(eq(quranMemorization.studentId, studentId))
+      .orderBy(desc(quranMemorization.nextReviewDate));
+    
+    return allMemorization.filter(mem => {
+      if (mem.status === 'in_progress') return false;
+      
+      if (!mem.nextReviewDate) {
+        return true;
+      }
+      
+      const nextReview = new Date(mem.nextReviewDate);
+      nextReview.setHours(0, 0, 0, 0);
+      
+      return nextReview <= until;
+    });
+  }
+
+  async updateReviewOutcome(
+    id: string,
+    reviewData: {
+      difficulty: 'easy' | 'medium' | 'hard';
+      reviewCount: number;
+      lastReviewed: Date;
+      nextReviewDate: Date;
+      masteryLevel: number;
+      status: string;
+    }
+  ): Promise<QuranMemorization> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    const [updated] = await db!.update(quranMemorization)
+      .set({
+        lastReviewed: reviewData.lastReviewed,
+        nextReviewDate: reviewData.nextReviewDate,
+        lastDifficulty: reviewData.difficulty,
+        reviewCount: reviewData.reviewCount,
+        masteryLevel: reviewData.masteryLevel,
+        status: reviewData.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(quranMemorization.id, id))
+      .returning();
+    
+    return updated;
   }
 
   // Quran reading statistics operations

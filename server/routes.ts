@@ -1262,6 +1262,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Review System Endpoints
+  app.get('/api/quran/review-items/:studentId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      const userId = (req.session as any).userId;
+      
+      if (userId !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const SURAH_NAMES: Record<number, string> = {
+        1: 'الفاتحة', 2: 'البقرة', 3: 'آل عمران', 4: 'النساء', 5: 'المائدة',
+        6: 'الأنعام', 7: 'الأعراف', 8: 'الأنفال', 9: 'التوبة', 10: 'يونس',
+        11: 'هود', 12: 'يوسف', 13: 'الرعد', 14: 'إبراهيم', 15: 'الحجر',
+        16: 'النحل', 17: 'الإسراء', 18: 'الكهف', 19: 'مريم', 20: 'طه',
+        114: 'الناس'
+      };
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const allMemorizations = await storage.getStudentMemorization(studentId);
+      
+      const reviewItems = allMemorizations
+        .filter(mem => mem.status !== 'in_progress')
+        .map(mem => {
+          const nextReview = mem.nextReviewDate 
+            ? new Date(mem.nextReviewDate)
+            : mem.lastReviewed 
+              ? new Date(mem.lastReviewed)
+              : new Date();
+          
+          nextReview.setHours(0, 0, 0, 0);
+          const daysUntilReview = Math.floor((nextReview.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          
+          let status: 'due' | 'soon' | 'later';
+          if (daysUntilReview <= 0) {
+            status = 'due';
+          } else if (daysUntilReview <= 3) {
+            status = 'soon';
+          } else {
+            status = 'later';
+          }
+          
+          return {
+            id: mem.id,
+            surahNumber: mem.surahNumber,
+            surahName: SURAH_NAMES[mem.surahNumber] || `سورة ${mem.surahNumber}`,
+            fromAyah: mem.fromAyah,
+            toAyah: mem.toAyah,
+            lastReviewDate: mem.lastReviewed ? new Date(mem.lastReviewed).toISOString() : null,
+            nextReviewDate: nextReview.toISOString(),
+            reviewCount: mem.reviewCount || 0,
+            difficultyLevel: mem.masteryLevel || 0,
+            status
+          };
+        });
+      
+      res.json(reviewItems);
+    } catch (error) {
+      console.error("Error fetching review items:", error);
+      res.status(500).json({ message: "Failed to fetch review items" });
+    }
+  });
+
+  app.post('/api/quran/complete-review', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { reviewId, difficulty, studentId } = req.body;
+      
+      if (userId !== studentId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+      
+      const memorizations = await storage.getStudentMemorization(studentId);
+      const memorization = memorizations.find(m => m.id === reviewId);
+      
+      if (!memorization) {
+        return res.status(404).json({ message: "Review item not found" });
+      }
+      
+      const intervals = {
+        easy: [1, 3, 7, 14, 30, 60, 90],
+        medium: [1, 2, 4, 8, 15, 30, 60],
+        hard: [1, 1, 2, 3, 5, 7, 14]
+      };
+      
+      const reviewCount = (memorization.reviewCount || 0) + 1;
+      const intervalList = intervals[difficulty as 'easy' | 'medium' | 'hard'];
+      const index = Math.min(reviewCount - 1, intervalList.length - 1);
+      const nextInterval = intervalList[index];
+      
+      const now = new Date();
+      const nextReviewDate = new Date(now.getTime() + nextInterval * 24 * 60 * 60 * 1000);
+      
+      const currentMastery = memorization.masteryLevel || 50;
+      let newMastery = currentMastery;
+      
+      if (difficulty === 'easy') {
+        newMastery = Math.min(100, currentMastery + 15);
+      } else if (difficulty === 'medium') {
+        newMastery = Math.max(0, Math.min(100, currentMastery));
+      } else {
+        newMastery = Math.max(0, currentMastery - 10);
+      }
+      
+      const newStatus = newMastery >= 90 ? 'completed' : 'reviewing';
+      
+      const updated = await storage.updateReviewOutcome(reviewId, {
+        difficulty: difficulty as 'easy' | 'medium' | 'hard',
+        reviewCount,
+        lastReviewed: now,
+        nextReviewDate,
+        masteryLevel: newMastery,
+        status: newStatus
+      });
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error completing review:", error);
+      res.status(500).json({ message: "Failed to complete review" });
+    }
+  });
+
   // Reciters List
   app.get('/api/quran/reciters', async (req, res) => {
     try {

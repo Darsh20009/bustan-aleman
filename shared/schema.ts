@@ -432,7 +432,9 @@ export const quranMemorization = bustanSchema.table("quran_memorization", {
   status: varchar("status").default("in_progress"), // in_progress, completed, reviewing
   masteryLevel: integer("mastery_level").default(0), // 0-100
   lastReviewed: timestamp("last_reviewed"),
+  nextReviewDate: timestamp("next_review_date"), // Calculated next review date based on spaced repetition
   reviewCount: integer("review_count").default(0),
+  lastDifficulty: varchar("last_difficulty"), // easy, medium, hard - last review difficulty rating
   mistakes: text("mistakes"), // JSON string of common mistakes
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

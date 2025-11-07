@@ -9,16 +9,31 @@ import { BookMarked, TrendingUp, Clock, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 
+interface QuranStats {
+  pagesRead: number;
+  memorizedAyahs: number;
+  minutesSpent: number;
+  masteryLevel: number;
+}
+
+interface QuranMarker {
+  id: string;
+  surahNumber: number;
+  ayahNumber: number;
+  markerType: string;
+  markerColor: string;
+}
+
 export default function QuranWorkspace() {
   const { user } = useAuth();
   const studentId = (user as any)?.id;
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<QuranStats>({
     queryKey: ['/api/quran/stats', studentId],
     enabled: !!studentId,
   });
 
-  const { data: markers } = useQuery({
+  const { data: markers } = useQuery<QuranMarker[]>({
     queryKey: ['/api/quran/markers', studentId],
     enabled: !!studentId,
   });
