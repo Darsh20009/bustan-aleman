@@ -22,8 +22,27 @@ neonConfig.pipelineConnect = false;
 let pool: any = null;
 let db: any = null;
 
-// Build Aiven database URL from individual secrets if available
-let databaseUrl = process.env.EXTERNAL_DATABASE_URL || process.env.DATABASE_URL;
+// Validate and build database URL
+function isValidDatabaseUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    return url.startsWith('postgres://') || url.startsWith('postgresql://');
+  } catch {
+    return false;
+  }
+}
+
+// Use EXTERNAL_DATABASE_URL if valid, otherwise fallback to DATABASE_URL
+let databaseUrl: string | undefined;
+if (isValidDatabaseUrl(process.env.EXTERNAL_DATABASE_URL)) {
+  databaseUrl = process.env.EXTERNAL_DATABASE_URL;
+} else {
+  if (process.env.EXTERNAL_DATABASE_URL) {
+    console.log('⚠️  EXTERNAL_DATABASE_URL is set but invalid, falling back to DATABASE_URL');
+  }
+  databaseUrl = process.env.DATABASE_URL;
+}
+
 let useAiven = false;
 
 // Enable Aiven PostgreSQL database connection (disabled until secrets are verified)
