@@ -58,6 +58,14 @@ const meetingSchema = z.object({
   duration: z.number().int().positive().default(60),
 });
 
+const studentErrorSchema = z.object({
+  studentId: z.string(),
+  surahNumber: z.number().int().min(1).max(114),
+  ayahNumber: z.number().int().min(1),
+  errorType: z.enum(['pronunciation', 'tajweed', 'memorization']),
+  errorDescription: z.string(),
+});
+
 export function setupSheikhRoutes(app: Express) {
   // Create new student
   app.post('/api/sheikh/students/create', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
@@ -395,6 +403,56 @@ export function setupSheikhRoutes(app: Express) {
         return res.status(400).json({ message: "بيانات غير صالحة", errors: error.errors });
       }
       res.status(500).json({ message: "خطأ في إنشاء الحصة" });
+    }
+  });
+
+  // Student errors management
+  app.get('/api/sheikh/student-errors/:studentId', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId } = req.params;
+      const errors = await storage.getStudentErrors(studentId);
+      res.json(errors);
+    } catch (error) {
+      console.error("Error fetching student errors:", error);
+      res.status(500).json({ message: "خطأ في جلب الأخطاء" });
+    }
+  });
+
+  app.post('/api/sheikh/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const errorData = studentErrorSchema.parse(req.body);
+      const sheikhId = req.user!.id;
+      
+      const error = await storage.createStudentError({
+        studentId: errorData.studentId,
+        surahNumber: errorData.surahNumber,
+        ayahNumber: errorData.ayahNumber,
+        errorType: errorData.errorType,
+        errorDescription: errorData.errorDescription,
+        recordedBy: sheikhId,
+        recordedAt: new Date().toISOString(),
+      });
+      
+      wsService.notifyStudentOfError(errorData.studentId, error);
+      
+      res.status(201).json(error);
+    } catch (error) {
+      console.error("Error creating student error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "بيانات غير صالحة", errors: error.errors });
+      }
+      res.status(500).json({ message: "خطأ في تسجيل الخطأ" });
+    }
+  });
+
+  app.delete('/api/sheikh/student-errors/:errorId', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { errorId } = req.params;
+      await storage.deleteStudentError(errorId);
+      res.json({ message: "تم حذف الخطأ بنجاح" });
+    } catch (error) {
+      console.error("Error deleting student error:", error);
+      res.status(500).json({ message: "خطأ في حذف الخطأ" });
     }
   });
 }

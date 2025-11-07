@@ -136,6 +136,7 @@ export interface IStorage {
   // Student error operations
   createStudentError(error: InsertStudentError): Promise<StudentError>;
   getStudentErrors(studentId: string): Promise<StudentError[]>;
+  deleteStudentError(errorId: string): Promise<void>;
   
   // Student payment operations
   createStudentPayment(payment: InsertStudentPayment): Promise<StudentPayment>;
@@ -677,6 +678,15 @@ export class DatabaseStorage implements IStorage {
       .from(studentErrors)
       .where(eq(studentErrors.studentId, studentId))
       .orderBy(desc(studentErrors.createdAt));
+  }
+
+  async deleteStudentError(errorId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      // Memory fallback: filter out the error
+      this.memStudentErrors = this.memStudentErrors.filter(e => e.id !== errorId);
+      return;
+    }
+    await db!.delete(studentErrors).where(eq(studentErrors.id, errorId));
   }
 
   // Student payment operations
