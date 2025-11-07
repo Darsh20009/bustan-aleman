@@ -274,14 +274,21 @@ class QuranService {
     return this.reciters;
   }
 
+  private removeDiacritics(text: string): string {
+    return text.replace(/[\u064B-\u065F\u0670]/g, '');
+  }
+
   async searchQuran(query: string): Promise<any[]> {
     if (!this.quranData?.data?.surahs || !query.trim()) return [];
     
+    const normalizedQuery = this.removeDiacritics(query.trim()).toLowerCase();
     const results: any[] = [];
     
     this.quranData.data.surahs.forEach((surah: QuranSurah) => {
       surah.ayahs.forEach((ayah: QuranAyah) => {
-        if (ayah.text.includes(query)) {
+        const normalizedText = this.removeDiacritics(ayah.text).toLowerCase();
+        
+        if (normalizedText.includes(normalizedQuery)) {
           results.push({
             surahNumber: surah.number,
             surahName: surah.name,

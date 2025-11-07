@@ -6,7 +6,8 @@ import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
-import { User, BookOpen, Calendar, Clock, Award, Home, LogOut, Video, CheckCircle, AlertTriangle, Phone } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { User, BookOpen, Calendar, Clock, Award, Home, LogOut, Video, CheckCircle, AlertTriangle, Phone, GraduationCap } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -35,6 +36,16 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
   const [classAccess, setClassAccess] = useState<any>(null);
   const [checkingAccess, setCheckingAccess] = useState(false);
   const { toast } = useToast();
+
+  const { data: certificates = [], isLoading: certificatesLoading, isError: certificatesError } = useQuery({
+    queryKey: ['/api/certificates'],
+    enabled: !!student.id,
+  });
+
+  const { data: myCourses = [], isLoading: coursesLoading, isError: coursesError } = useQuery({
+    queryKey: ['/api/my-courses'],
+    enabled: !!student.id,
+  });
 
   // Check class access periodically
   useEffect(() => {
@@ -333,6 +344,80 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
 
           <TabsContent value="overview" className="space-y-4 md:space-y-6">
             <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {/* Certificates Card */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-yellow-50 to-amber-50 backdrop-blur-sm hover:shadow-xl transition-shadow cursor-pointer" onClick={() => window.location.href = '/certificates'} data-testid="card-certificates">
+                <CardHeader>
+                  <CardTitle className="text-amber-700 flex items-center justify-between text-sm md:text-base">
+                    <span className="flex items-center gap-2">
+                      <Award className="w-5 h-5" />
+                      الشهادات
+                    </span>
+                    {!certificatesLoading && certificates.length > 0 && (
+                      <Badge variant="secondary" className="bg-amber-600 text-white">
+                        {certificates.length}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {certificatesLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600 mx-auto"></div>
+                    </div>
+                  ) : certificatesError ? (
+                    <div className="text-center py-4">
+                      <p className="text-red-600 text-sm">خطأ في تحميل الشهادات</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-amber-600 mb-2">
+                        {certificates.length}
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        {certificates.length === 0 ? 'لا توجد شهادات بعد' : 'شهادة محصّلة'}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Courses Card */}
+              <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-cyan-50 backdrop-blur-sm hover:shadow-xl transition-shadow cursor-pointer" onClick={onMyCourses} data-testid="card-courses">
+                <CardHeader>
+                  <CardTitle className="text-blue-700 flex items-center justify-between text-sm md:text-base">
+                    <span className="flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5" />
+                      دوراتي
+                    </span>
+                    {!coursesLoading && myCourses.length > 0 && (
+                      <Badge variant="secondary" className="bg-blue-600 text-white">
+                        {myCourses.length}
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {coursesLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    </div>
+                  ) : coursesError ? (
+                    <div className="text-center py-4">
+                      <p className="text-red-600 text-sm">خطأ في تحميل الدورات</p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {myCourses.filter((c: any) => c.status === 'active' || c.status === 'enrolled').length}
+                      </div>
+                      <p className="text-gray-600 text-sm">
+                        {myCourses.length === 0 ? 'لا توجد دورات مسجلة' : 'دورة نشطة'}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Memorized Surahs */}
               <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                 <CardHeader>
