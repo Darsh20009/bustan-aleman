@@ -29,7 +29,24 @@ export function SheikhDashboard() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
+  const [showAddScheduleDialog, setShowAddScheduleDialog] = useState(false);
+  const [newStudent, setNewStudent] = useState({
+    studentName: '',
+    phoneNumber: '',
+    password: '',
+    currentLevel: 'beginner',
+    zoomLink: '',
+    monthlyPrice: '0'
+  });
+  const [newSchedule, setNewSchedule] = useState({
+    studentId: '',
+    dayOfWeek: 0,
+    startTime: '',
+    endTime: '',
+    zoomLink: ''
+  });
+  const { toast} = useToast();
   
   useEffect(() => {
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
@@ -188,6 +205,7 @@ export function SheikhDashboard() {
           zoomLink: '',
           monthlyPrice: '0'
         });
+        setShowAddStudentDialog(false);
         fetchStudents();
       }
     } catch (error) {
@@ -195,6 +213,41 @@ export function SheikhDashboard() {
       toast({
         title: "خطأ",
         description: "فشل في إضافة الطالب",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createSchedule = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/sheikh/schedules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSchedule),
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "تم إضافة الجدول ✅",
+          description: "تم إضافة جدول الحصة بنجاح",
+        });
+        setNewSchedule({
+          studentId: '',
+          dayOfWeek: 0,
+          startTime: '',
+          endTime: '',
+          zoomLink: ''
+        });
+        setShowAddScheduleDialog(false);
+        fetchStudents();
+      }
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إضافة الجدول",
         variant: "destructive",
       });
     }
@@ -666,12 +719,122 @@ export function SheikhDashboard() {
           <TabsContent value="sessions">
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader className="border-b border-gray-100">
-                <CardTitle className="flex items-center gap-2 text-2xl text-gray-800">
-                  <Calendar className="w-6 h-6 text-emerald-600" />
-                  جدول الحصص
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-2xl text-gray-800">
+                    <Calendar className="w-6 h-6 text-emerald-600" />
+                    جدول الحصص
+                  </div>
+                  <Button
+                    onClick={() => setShowAddScheduleDialog(true)}
+                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                    data-testid="button-add-schedule"
+                  >
+                    <PlusCircle className="w-4 h-4 ml-2" />
+                    إضافة جدول حصة
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6">
+                {showAddScheduleDialog && (
+                  <Card className="border-2 border-blue-200 bg-blue-50/50 mb-6">
+                    <CardContent className="p-6">
+                      <form onSubmit={createSchedule} className="space-y-4">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">إضافة جدول حصة جديد</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2 md:col-span-2">
+                            <Label className="text-sm font-bold">اختر الطالب</Label>
+                            <Select 
+                              value={newSchedule.studentId}
+                              onValueChange={(val) => setNewSchedule({...newSchedule, studentId: val})}
+                              required
+                            >
+                              <SelectTrigger data-testid="select-student-schedule">
+                                <SelectValue placeholder="اختر الطالب" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {students.map(student => (
+                                  <SelectItem key={student.id} value={student.id}>
+                                    {student.studentName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-bold">اليوم</Label>
+                            <Select 
+                              value={newSchedule.dayOfWeek.toString()}
+                              onValueChange={(val) => setNewSchedule({...newSchedule, dayOfWeek: parseInt(val)})}
+                            >
+                              <SelectTrigger data-testid="select-day">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0">الأحد</SelectItem>
+                                <SelectItem value="1">الاثنين</SelectItem>
+                                <SelectItem value="2">الثلاثاء</SelectItem>
+                                <SelectItem value="3">الأربعاء</SelectItem>
+                                <SelectItem value="4">الخميس</SelectItem>
+                                <SelectItem value="5">الجمعة</SelectItem>
+                                <SelectItem value="6">السبت</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-bold">وقت البداية</Label>
+                            <Input
+                              type="time"
+                              value={newSchedule.startTime}
+                              onChange={(e) => setNewSchedule({...newSchedule, startTime: e.target.value})}
+                              required
+                              data-testid="input-start-time"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-bold">وقت النهاية</Label>
+                            <Input
+                              type="time"
+                              value={newSchedule.endTime}
+                              onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
+                              required
+                              data-testid="input-end-time"
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label className="text-sm font-bold">رابط Zoom (اختياري)</Label>
+                            <Input
+                              value={newSchedule.zoomLink}
+                              onChange={(e) => setNewSchedule({...newSchedule, zoomLink: e.target.value})}
+                              placeholder="https://zoom.us/j/..."
+                              data-testid="input-schedule-zoom-link"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <Button type="submit" className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
+                            <CheckCircle2 className="w-4 h-4 ml-2" />
+                            حفظ الجدول
+                          </Button>
+                          <Button 
+                            type="button"
+                            onClick={() => setShowAddScheduleDialog(false)}
+                            variant="outline"
+                            className="px-6"
+                          >
+                            إلغاء
+                          </Button>
+                        </div>
+                      </form>
+                    </CardContent>
+                  </Card>
+                )}
+                
                 <div className="space-y-4">
                   {students.filter(s => s.schedules && s.schedules.length > 0).length === 0 ? (
                     <motion.div
@@ -683,7 +846,7 @@ export function SheikhDashboard() {
                         <Calendar className="w-12 h-12 text-gray-400" />
                       </div>
                       <h3 className="text-xl font-semibold text-gray-800 mb-2">لا توجد حصص مجدولة</h3>
-                      <p className="text-gray-500">سيظهر جدول الحصص هنا عند إضافتها</p>
+                      <p className="text-gray-500">انقر على "إضافة جدول حصة" لإضافة جدول جديد</p>
                     </motion.div>
                   ) : (
                     students.filter(s => s.schedules && s.schedules.length > 0).map((student) => (

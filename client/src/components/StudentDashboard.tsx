@@ -26,9 +26,10 @@ interface StudentDashboardProps {
   onQuranReader: () => void;
   onProfile?: () => void;
   onMyCourses?: () => void;
+  onMyNotes?: () => void;
 }
 
-export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses }: StudentDashboardProps) {
+export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses, onMyNotes }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
   const [isNewStudent, setIsNewStudent] = useState<boolean>(false);
   const [classAccess, setClassAccess] = useState<any>(null);
@@ -397,17 +398,27 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                 <CardTitle className="text-blue-700">إجراءات سريعة</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
                   <Button
                     onClick={onQuranReader}
                     className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-6"
+                    data-testid="button-quran-reader"
                   >
                     📖 ابدأ القراءة
+                  </Button>
+                  <Button
+                    onClick={onMyNotes}
+                    variant="outline"
+                    className="border-emerald-300 text-emerald-700 py-6"
+                    data-testid="button-my-notes"
+                  >
+                    📝 ملاحظاتي
                   </Button>
                   <Button
                     onClick={handleRenewalRequest}
                     variant="outline"
                     className="border-blue-300 text-blue-700 py-6"
+                    data-testid="button-renewal"
                   >
                     💰 طلب تجديد
                   </Button>
@@ -420,6 +431,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                         window.open(zoomLink, '_blank');
                       }
                     }}
+                    data-testid="button-join-class"
                   >
                     📹 دخول الحلقة
                   </Button>

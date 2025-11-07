@@ -109,6 +109,15 @@ function StudentProfileHeader({ user, onNavigate }: { user: any; onNavigate: (pa
               المصحف
             </Button>
             <Button 
+              onClick={() => onNavigate('my-notes')}
+              className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+              variant="outline"
+              data-testid="button-quick-my-notes"
+            >
+              <BookMarked className="w-4 h-4 ml-2" />
+              ملاحظاتي
+            </Button>
+            <Button 
               onClick={() => onNavigate('certificates')}
               className="bg-white/10 text-white border-white/20 hover:bg-white/20"
               variant="outline"
@@ -246,6 +255,13 @@ const roleNavigation = {
       description: 'قراءة القرآن مع الملاحظات والتفسير', 
       icon: BookOpen,
       gradient: 'from-blue-500 to-cyan-500'
+    },
+    { 
+      title: 'ملاحظاتي 📝', 
+      path: 'my-notes', 
+      description: 'إدارة ملاحظاتك على آيات القرآن', 
+      icon: BookMarked,
+      gradient: 'from-teal-500 to-cyan-500'
     },
     { 
       title: 'استكشف الدورات', 
