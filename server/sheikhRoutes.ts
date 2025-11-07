@@ -29,6 +29,7 @@ const createStudentSchema = z.object({
   password: z.string(),
   currentLevel: z.string().optional(),
   zoomLink: z.string().optional(),
+  monthlyPrice: z.coerce.number().nonnegative().optional(),
 });
 
 const paymentSchema = z.object({
@@ -72,7 +73,7 @@ export function setupSheikhRoutes(app: Express) {
         currentLevel: studentData.currentLevel || 'beginner',
         zoomLink: studentData.zoomLink || null,
         monthlySessionsCount: 0,
-        monthlyPrice: studentData.monthlyPrice || '0',
+        monthlyPrice: studentData.monthlyPrice !== undefined ? String(studentData.monthlyPrice) : '0',
         isPaid: false,
         isActive: true,
         memorizedSurahs: '[]',
