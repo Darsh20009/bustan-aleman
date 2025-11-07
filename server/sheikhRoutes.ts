@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { requireAuth, requireSupervisorOrAdmin, type AuthenticatedRequest } from "./authMiddleware";
 import { wsService } from "./websocket";
 import { z } from "zod";
+import { studentUpdateSchema } from "@shared/schema";
 
 const assignmentSchema = z.object({
   studentId: z.string(),
@@ -272,7 +273,7 @@ export function setupSheikhRoutes(app: Express) {
   app.patch('/api/sheikh/students/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const studentId = req.params.id;
-      const updateData = req.body;
+      const updateData = studentUpdateSchema.parse(req.body);
       
       const updatedStudent = await storage.updateStudent(studentId, updateData);
       

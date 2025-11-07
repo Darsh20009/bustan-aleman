@@ -569,6 +569,12 @@ export const insertStudentSchema = createInsertSchema(students).omit({
   updatedAt: true,
 });
 
+export const studentUpdateSchema = insertStudentSchema.partial().extend({
+  phoneNumber: z.string().optional(),
+  monthlyPrice: z.string().or(z.number()).optional(),
+  monthlySessionsCount: z.number().optional(),
+});
+
 export const insertStudentSessionSchema = createInsertSchema(studentSessions).omit({
   id: true,
   createdAt: true,
