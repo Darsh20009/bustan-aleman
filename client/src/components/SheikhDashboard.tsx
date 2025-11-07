@@ -161,7 +161,8 @@ export function SheikhDashboard() {
     phoneNumber: '',
     password: '',
     currentLevel: 'beginner',
-    zoomLink: ''
+    zoomLink: '',
+    monthlyPrice: '0'
   });
 
   const createStudent = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -184,7 +185,8 @@ export function SheikhDashboard() {
           phoneNumber: '',
           password: '',
           currentLevel: 'beginner',
-          zoomLink: ''
+          zoomLink: '',
+          monthlyPrice: '0'
         });
         fetchStudents();
       }
@@ -481,6 +483,20 @@ export function SheikhDashboard() {
                           <SelectItem value="advanced">متقدم</SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-gray-700">الرسوم الشهرية (ريال)</Label>
+                      <Input
+                        type="number"
+                        value={newStudentData.monthlyPrice}
+                        onChange={(e) => setNewStudentData({...newStudentData, monthlyPrice: e.target.value})}
+                        placeholder="0"
+                        min="0"
+                        step="0.01"
+                        className="border-2 border-gray-200 focus:border-blue-500"
+                        data-testid="input-monthly-price"
+                      />
                     </div>
                     
                     <div className="space-y-2 md:col-span-2">

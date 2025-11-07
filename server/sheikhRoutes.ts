@@ -72,7 +72,7 @@ export function setupSheikhRoutes(app: Express) {
         currentLevel: studentData.currentLevel || 'beginner',
         zoomLink: studentData.zoomLink || null,
         monthlySessionsCount: 0,
-        monthlyPrice: '0',
+        monthlyPrice: studentData.monthlyPrice || '0',
         isPaid: false,
         isActive: true,
         memorizedSurahs: '[]',
