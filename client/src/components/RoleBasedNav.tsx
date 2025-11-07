@@ -309,15 +309,15 @@ const roleNavigation = {
     },
     { 
       title: 'إدارة جدول الحصص', 
-      path: '/sessions', 
-      description: 'إضافة وتعديل وحذف جداول حصص الطلاب', 
+      path: '/sheikh-schedule', 
+      description: 'إدارة المواعيد الأسبوعية للحصص المباشرة', 
       icon: Calendar,
       gradient: 'from-indigo-500 to-purple-600'
     },
     { 
-      title: 'الجلسات', 
-      path: '/supervisor/sessions', 
-      description: 'جدولة وإدارة الجلسات', 
+      title: 'تتبع أخطاء التلاوة', 
+      path: '/sheikh-quran-editing', 
+      description: 'تسجيل أخطاء التلاوة والتجويد للطلاب', 
       icon: BookOpen,
       gradient: 'from-purple-500 to-pink-500'
     },
