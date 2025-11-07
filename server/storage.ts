@@ -18,6 +18,7 @@ import {
   quranReadingStats,
   quranAyahMarkers,
   quranRecitationAttempts,
+  quranNotes,
   sessionAccess,
   dailyAssignments,
   type User,
@@ -58,6 +59,8 @@ import {
   type InsertQuranAyahMarker,
   type QuranRecitationAttempt,
   type InsertQuranRecitationAttempt,
+  type QuranNote,
+  type InsertQuranNote,
   type SessionAccess,
   type InsertSessionAccess,
   type DailyAssignment,
@@ -1200,6 +1203,47 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     await db!.delete(quranAyahMarkers).where(eq(quranAyahMarkers.id, id));
+  }
+
+  // Quran notes operations
+  async createQuranNote(note: InsertQuranNote): Promise<QuranNote> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newNote] = await db!.insert(quranNotes).values(note).returning();
+    return newNote;
+  }
+
+  async getStudentQuranNotes(studentId: string, surahNumber?: number, ayahNumber?: number): Promise<QuranNote[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    let query = db!.select().from(quranNotes).where(eq(quranNotes.studentId, studentId)).$dynamic();
+    
+    if (surahNumber !== undefined && ayahNumber !== undefined) {
+      query = query.where(and(
+        eq(quranNotes.surahNumber, surahNumber),
+        eq(quranNotes.ayahNumber, ayahNumber)
+      ));
+    }
+    
+    return await query.orderBy(desc(quranNotes.createdAt));
+  }
+
+  async updateQuranNote(id: string, updates: Partial<InsertQuranNote>): Promise<QuranNote> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(quranNotes).set(updates).where(eq(quranNotes.id, id)).returning();
+    return updated;
+  }
+
+  async deleteQuranNote(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(quranNotes).where(eq(quranNotes.id, id));
   }
 
   // Quran recitation attempts operations

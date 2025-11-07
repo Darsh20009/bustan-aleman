@@ -1084,6 +1084,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quran Notes Routes
+  app.get('/api/quran/notes', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { surahNumber, ayahNumber } = req.query;
+      
+      const notes = await storage.getStudentQuranNotes(
+        userId,
+        surahNumber ? parseInt(surahNumber) : undefined,
+        ayahNumber ? parseInt(ayahNumber) : undefined
+      );
+      res.json(notes);
+    } catch (error) {
+      console.error("Error fetching Quran notes:", error);
+      res.status(500).json({ message: "Failed to fetch notes" });
+    }
+  });
+
+  app.post('/api/quran/notes', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const noteData = insertQuranNoteSchema.parse({
+        ...req.body,
+        studentId: userId
+      });
+      const note = await storage.createQuranNote(noteData);
+      res.json(note);
+    } catch (error) {
+      console.error("Error creating Quran note:", error);
+      res.status(400).json({ message: "Invalid note data" });
+    }
+  });
+
+  app.patch('/api/quran/notes/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Verify ownership
+      const notes = await storage.getStudentQuranNotes(userId);
+      const note = notes.find(n => n.id === id);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found or unauthorized" });
+      }
+      
+      const updates = insertQuranNoteSchema.partial().parse(req.body);
+      const updatedNote = await storage.updateQuranNote(id, updates);
+      res.json(updatedNote);
+    } catch (error) {
+      console.error("Error updating Quran note:", error);
+      res.status(400).json({ message: "Invalid note data" });
+    }
+  });
+
+  app.delete('/api/quran/notes/:id', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id} = req.params;
+      const userId = (req.session as any).userId;
+      
+      // Verify ownership
+      const notes = await storage.getStudentQuranNotes(userId);
+      const note = notes.find(n => n.id === id);
+      if (!note) {
+        return res.status(404).json({ message: "Note not found or unauthorized" });
+      }
+      
+      await storage.deleteQuranNote(id);
+      res.json({ message: "Note deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting Quran note:", error);
+      res.status(500).json({ message: "Failed to delete note" });
+    }
+  });
+
   // Word Highlights Routes
   app.get('/api/quran/word-highlights', isPhoneAuthenticated, async (req: any, res) => {
     try {
