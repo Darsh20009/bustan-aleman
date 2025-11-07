@@ -21,7 +21,7 @@ const sessionEnableSchema = z.object({
   sessionDate: z.string(),
   startTime: z.string(),
   endTime: z.string(),
-  zoomLink: z.string(),
+  zoomLink: z.string().optional().nullable(),
 });
 
 const createStudentSchema = z.object({

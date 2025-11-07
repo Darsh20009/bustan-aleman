@@ -7,6 +7,8 @@ import { useToast } from '../hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
+import LiveSessionRoom from './LiveSessionRoom';
+import { useAuth } from '../hooks/useAuth';
 
 interface SessionAccess {
   id: string;
@@ -32,7 +34,9 @@ export default function MySessionPage() {
   const [todayAssignment, setTodayAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
   const [joiningSession, setJoiningSession] = useState<string | null>(null);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchSessions();
@@ -109,12 +113,12 @@ export default function MySessionPage() {
     setJoiningSession(session.id);
     
     setTimeout(() => {
-      window.open(session.zoomLink, '_blank');
+      setActiveRoomId(session.id);
       setJoiningSession(null);
       
       toast({
-        title: "جاري فتح الحصة...",
-        description: "سيتم فتح رابط الحصة في نافذة جديدة",
+        title: "🎉 جاري الانضمام للحصة...",
+        description: "سيتم فتح غرفة الحصة المباشرة الآن",
       });
     }, 1000);
   };
@@ -332,6 +336,24 @@ export default function MySessionPage() {
           </div>
         )}
       </div>
+
+      {/* Live Session Room Modal */}
+      {activeRoomId && user?.studentId && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+          <LiveSessionRoom
+            roomId={activeRoomId}
+            studentId={user.studentId}
+            sheikhId="sheikh-placeholder"
+            onLeave={() => {
+              setActiveRoomId(null);
+              toast({
+                title: "👋 تم مغادرة الحصة",
+                description: "شكراً لمشاركتك في الحصة"
+              });
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }
