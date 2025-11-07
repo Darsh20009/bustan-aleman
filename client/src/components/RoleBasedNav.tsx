@@ -308,6 +308,13 @@ const roleNavigation = {
       gradient: 'from-blue-500 to-cyan-500'
     },
     { 
+      title: 'إدارة جدول الحصص', 
+      path: '/sessions', 
+      description: 'إضافة وتعديل وحذف جداول حصص الطلاب', 
+      icon: Calendar,
+      gradient: 'from-indigo-500 to-purple-600'
+    },
+    { 
       title: 'الجلسات', 
       path: '/supervisor/sessions', 
       description: 'جدولة وإدارة الجلسات', 

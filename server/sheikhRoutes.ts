@@ -321,6 +321,51 @@ export function setupSheikhRoutes(app: Express) {
     }
   });
 
+  // Get schedules for a specific student
+  app.get('/api/sheikh/students/:studentId/schedules', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.params.studentId;
+      const schedules = await storage.getStudentSchedules(studentId);
+      res.json(schedules);
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      res.status(500).json({ message: "خطأ في جلب الجدول" });
+    }
+  });
+
+  // Update schedule
+  app.put('/api/sheikh/schedules/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const scheduleId = req.params.id;
+      const scheduleData = req.body;
+      
+      const updatedSchedule = await storage.updateClassSchedule(scheduleId, {
+        dayOfWeek: scheduleData.dayOfWeek,
+        startTime: scheduleData.startTime,
+        endTime: scheduleData.endTime,
+        zoomLink: scheduleData.zoomLink,
+        isActive: scheduleData.isActive !== undefined ? scheduleData.isActive : true,
+      });
+      
+      res.json(updatedSchedule);
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      res.status(500).json({ message: "خطأ في تحديث الجدول" });
+    }
+  });
+
+  // Delete schedule
+  app.delete('/api/sheikh/schedules/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const scheduleId = req.params.id;
+      await storage.deleteClassSchedule(scheduleId);
+      res.json({ message: "تم حذف الجدول بنجاح" });
+    } catch (error) {
+      console.error("Error deleting schedule:", error);
+      res.status(500).json({ message: "خطأ في حذف الجدول" });
+    }
+  });
+
   // Create live meeting room
   app.post('/api/sheikh/create-meeting', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {

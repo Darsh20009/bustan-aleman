@@ -144,6 +144,8 @@ export interface IStorage {
   // Class schedule operations
   createClassSchedule(schedule: InsertClassSchedule): Promise<ClassSchedule>;
   getStudentSchedules(studentId: string): Promise<ClassSchedule[]>;
+  updateClassSchedule(id: string, updates: Partial<InsertClassSchedule>): Promise<ClassSchedule>;
+  deleteClassSchedule(id: string): Promise<void>;
   
   // Supervisor operations
   createSupervisor(supervisor: InsertSupervisor): Promise<Supervisor>;
@@ -740,6 +742,25 @@ export class DatabaseStorage implements IStorage {
       .from(classSchedules)
       .where(eq(classSchedules.studentId, studentId))
       .orderBy(classSchedules.dayOfWeek);
+  }
+
+  async updateClassSchedule(id: string, updates: Partial<InsertClassSchedule>): Promise<ClassSchedule> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!
+      .update(classSchedules)
+      .set(updates)
+      .where(eq(classSchedules.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteClassSchedule(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(classSchedules).where(eq(classSchedules.id, id));
   }
 
   // Supervisor operations
