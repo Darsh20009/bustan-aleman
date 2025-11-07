@@ -23,7 +23,50 @@ const sessionEnableSchema = z.object({
   zoomLink: z.string(),
 });
 
+const createStudentSchema = z.object({
+  studentName: z.string(),
+  phoneNumber: z.string(),
+  password: z.string(),
+  currentLevel: z.string().optional(),
+  zoomLink: z.string().optional(),
+});
+
 export function setupSheikhRoutes(app: Express) {
+  // Create new student
+  app.post('/api/sheikh/students/create', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentData = createStudentSchema.parse(req.body);
+      const bcrypt = await import('bcrypt');
+      
+      const passwordHash = await bcrypt.hash(studentData.password, 10);
+      
+      const student = await storage.createStudent({
+        studentName: studentData.studentName,
+        passwordHash,
+        phoneNumber: studentData.phoneNumber,
+        currentLevel: studentData.currentLevel || 'beginner',
+        zoomLink: studentData.zoomLink || null,
+        monthlySessionsCount: 0,
+        monthlyPrice: '0',
+        isPaid: false,
+        isActive: true,
+        memorizedSurahs: '[]',
+        notes: null,
+        whatsappContact: studentData.phoneNumber,
+        dateOfBirth: null,
+        grade: null,
+        userId: null,
+      });
+      
+      wsService.notifySheikhOfNewStudent(student);
+      
+      res.status(201).json(student);
+    } catch (error) {
+      console.error("Error creating student:", error);
+      res.status(500).json({ message: "خطأ في إضافة الطالب" });
+    }
+  });
+
   // Get all students for sheikh
   app.get('/api/sheikh/students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {

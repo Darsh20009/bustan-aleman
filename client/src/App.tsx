@@ -25,12 +25,13 @@ import { AnnouncementsPage } from "./pages/AnnouncementsPage";
 import QuranStats from "./pages/QuranStats";
 import MemorizationPage from "./pages/MemorizationPage";
 import QuranWorkspace from "./pages/QuranWorkspace";
+import MySessionPage from "./pages/MySessionPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session'];
   return validStates.includes(path as AppState);
 };
 
@@ -208,6 +209,13 @@ function AppContent() {
       
       case 'quran-workspace':
         return <QuranWorkspace />;
+      
+      case 'my-session':
+        if (isAuthenticated && user) {
+          return <MySessionPage />;
+        } else {
+          return <AuthPage />;
+        }
       
       case 'memorization':
         if (isAuthenticated && user) {

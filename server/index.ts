@@ -95,6 +95,16 @@ app.use((req, res, next) => {
     setupSheikhRoutes(app);
     console.log("✅ Sheikh routes setup");
     
+    // Setup Student Session routes (my sessions page)
+    const { setupStudentSessionRoutes } = await import("./studentSessionRoutes");
+    setupStudentSessionRoutes(app);
+    console.log("✅ Student session routes setup");
+    
+    // Setup Surah routes (surah list API)
+    const { setupSurahRoutes } = await import("./surahRoutes");
+    setupSurahRoutes(app);
+    console.log("✅ Surah routes setup");
+    
     // Setup Course routes (enrollments, quizzes, certificates)
     const { setupCourseRoutes } = await import("./courseRoutes");
     setupCourseRoutes(app);

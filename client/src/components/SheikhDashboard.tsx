@@ -7,8 +7,11 @@ import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useToast } from '../hooks/use-toast';
-import { Users, BookOpen, Calendar, Clock, Award, Video, AlertTriangle, Star, TrendingUp, Bell, CheckCircle2, XCircle } from 'lucide-react';
+import { Users, BookOpen, Calendar, Clock, Award, Video, AlertTriangle, Star, TrendingUp, Bell, CheckCircle2, XCircle, PlusCircle, UserPlus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { SurahAyahSelector } from './SurahAyahSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Label } from './ui/label';
 
 interface Student {
   id: string;
@@ -110,11 +113,14 @@ export function SheikhDashboard() {
     }
   };
   
+  const [memorizationRanges, setMemorizationRanges] = useState('');
+  const [reviewRanges, setReviewRanges] = useState('');
+  const [mistakes, setMistakes] = useState('');
+  const [notes, setNotes] = useState('');
+
   const createAssignment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedStudent) return;
-    
-    const formData = new FormData(e.currentTarget);
     
     try {
       const response = await fetch('/api/sheikh/assignments', {
@@ -123,10 +129,10 @@ export function SheikhDashboard() {
         body: JSON.stringify({
           studentId: selectedStudent.id,
           assignmentDate: new Date().toISOString().split('T')[0],
-          memorization: formData.get('memorization'),
-          review: formData.get('review'),
-          mistakes: formData.get('mistakes'),
-          notes: formData.get('notes'),
+          memorization: memorizationRanges || '[]',
+          review: reviewRanges || '[]',
+          mistakes: mistakes,
+          notes: notes,
         }),
       });
       
@@ -135,13 +141,58 @@ export function SheikhDashboard() {
           title: "تم إنشاء التكليف ✅",
           description: "تم إرسال التكليف للطالب",
         });
-        e.currentTarget.reset();
+        setMemorizationRanges('');
+        setReviewRanges('');
+        setMistakes('');
+        setNotes('');
       }
     } catch (error) {
       console.error('Error creating assignment:', error);
       toast({
         title: "خطأ",
         description: "فشل في إنشاء التكليف",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const [newStudentData, setNewStudentData] = useState({
+    studentName: '',
+    phoneNumber: '',
+    password: '',
+    currentLevel: 'beginner',
+    zoomLink: ''
+  });
+
+  const createStudent = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch('/api/sheikh/students/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudentData),
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "تم إضافة الطالب ✅",
+          description: `تم تسجيل الطالب ${newStudentData.studentName} بنجاح`,
+        });
+        setNewStudentData({
+          studentName: '',
+          phoneNumber: '',
+          password: '',
+          currentLevel: 'beginner',
+          zoomLink: ''
+        });
+        fetchStudents();
+      }
+    } catch (error) {
+      console.error('Error creating student:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إضافة الطالب",
         variant: "destructive",
       });
     }
@@ -260,9 +311,12 @@ export function SheikhDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white shadow-md p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 bg-white shadow-md p-1 rounded-xl">
             <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
               الطلاب
+            </TabsTrigger>
+            <TabsTrigger value="add-student" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white">
+              إضافة طالب
             </TabsTrigger>
             <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
               التكليفات
@@ -361,6 +415,92 @@ export function SheikhDashboard() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="add-student">
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <UserPlus className="w-6 h-6" />
+                  إضافة طالب جديد
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={createStudent} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-gray-700">اسم الطالب *</Label>
+                      <Input
+                        value={newStudentData.studentName}
+                        onChange={(e) => setNewStudentData({...newStudentData, studentName: e.target.value})}
+                        placeholder="أدخل اسم الطالب"
+                        className="border-2 border-gray-200 focus:border-blue-500"
+                        required
+                        data-testid="input-student-name"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-gray-700">رقم الهاتف *</Label>
+                      <Input
+                        value={newStudentData.phoneNumber}
+                        onChange={(e) => setNewStudentData({...newStudentData, phoneNumber: e.target.value})}
+                        placeholder="05XXXXXXXX"
+                        className="border-2 border-gray-200 focus:border-blue-500"
+                        required
+                        data-testid="input-phone-number"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-gray-700">كلمة المرور *</Label>
+                      <Input
+                        type="password"
+                        value={newStudentData.password}
+                        onChange={(e) => setNewStudentData({...newStudentData, password: e.target.value})}
+                        placeholder="كلمة مرور قوية"
+                        className="border-2 border-gray-200 focus:border-blue-500"
+                        required
+                        data-testid="input-password"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-gray-700">المستوى</Label>
+                      <Select 
+                        value={newStudentData.currentLevel}
+                        onValueChange={(val) => setNewStudentData({...newStudentData, currentLevel: val})}
+                      >
+                        <SelectTrigger className="border-2 border-gray-200" data-testid="select-level">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="beginner">مبتدئ</SelectItem>
+                          <SelectItem value="intermediate">متوسط</SelectItem>
+                          <SelectItem value="advanced">متقدم</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2 md:col-span-2">
+                      <Label className="text-sm font-bold text-gray-700">رابط Zoom</Label>
+                      <Input
+                        value={newStudentData.zoomLink}
+                        onChange={(e) => setNewStudentData({...newStudentData, zoomLink: e.target.value})}
+                        placeholder="https://zoom.us/j/..."
+                        className="border-2 border-gray-200 focus:border-blue-500"
+                        data-testid="input-zoom-link"
+                      />
+                    </div>
+                  </div>
+                  
+                  <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-6 text-lg shadow-lg">
+                    <UserPlus className="w-5 h-5 ml-2" />
+                    إضافة الطالب
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="assignments">
             {selectedStudent ? (
               <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
@@ -372,38 +512,23 @@ export function SheikhDashboard() {
                 </CardHeader>
                 <CardContent className="p-6">
                   <form onSubmit={createAssignment} className="space-y-6">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-bold text-gray-700">
-                        الحفظ الجديد
-                      </label>
-                      <Textarea
-                        name="memorization"
-                        placeholder="مثال: سورة البقرة من الآية 1 إلى 10"
-                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
-                        required
-                        rows={3}
-                      />
-                    </div>
+                    <SurahAyahSelector
+                      label="الحفظ الجديد"
+                      value={memorizationRanges}
+                      onChange={setMemorizationRanges}
+                    />
+                    
+                    <SurahAyahSelector
+                      label="المراجعة"
+                      value={reviewRanges}
+                      onChange={setReviewRanges}
+                    />
                     
                     <div className="space-y-2">
-                      <label className="block text-sm font-bold text-gray-700">
-                        المراجعة
-                      </label>
+                      <Label className="text-lg font-bold text-gray-800">الأخطاء</Label>
                       <Textarea
-                        name="review"
-                        placeholder="مثال: سورة الفاتحة كاملة"
-                        className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
-                        required
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="block text-sm font-bold text-gray-700">
-                        الأخطاء
-                      </label>
-                      <Textarea
-                        name="mistakes"
+                        value={mistakes}
+                        onChange={(e) => setMistakes(e.target.value)}
                         placeholder="أخطاء اليوم (اختياري)"
                         className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
                         rows={3}
@@ -411,11 +536,10 @@ export function SheikhDashboard() {
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="block text-sm font-bold text-gray-700">
-                        ملاحظات
-                      </label>
+                      <Label className="text-lg font-bold text-gray-800">ملاحظات</Label>
                       <Textarea
-                        name="notes"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
                         placeholder="ملاحظات إضافية (اختياري)"
                         className="w-full border-2 border-gray-200 focus:border-emerald-500 rounded-lg"
                         rows={3}

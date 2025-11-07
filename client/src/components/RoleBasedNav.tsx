@@ -234,6 +234,13 @@ const roleNavigation = {
       gradient: 'from-emerald-500 to-teal-500'
     },
     { 
+      title: 'حصتي 📚', 
+      path: 'my-session', 
+      description: 'الحصص المباشرة والتكاليف اليومية', 
+      icon: BookOpen,
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    { 
       title: 'المصحف التفاعلي', 
       path: '/quran', 
       description: 'قراءة القرآن مع الملاحظات والتفسير', 
