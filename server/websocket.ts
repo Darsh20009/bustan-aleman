@@ -113,7 +113,7 @@ class WebSocketService {
 
   private sendToStudent(studentId: string, payload: any) {
     this.clients.forEach((client) => {
-      if (client.studentId === studentId) {
+      if (client.studentId === studentId || client.userId === studentId) {
         client.ws.send(JSON.stringify(payload));
       }
     });
@@ -168,6 +168,30 @@ class WebSocketService {
     this.sendToStudent(studentId, {
       type: 'meeting_scheduled',
       data: meeting
+    });
+  }
+
+  public notifyStudentOfQuranUpdate(studentId: string, updateData: any) {
+    this.sendToStudent(studentId, {
+      type: 'quran_update',
+      data: updateData,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  public notifyStudentOfNewError(studentId: string, error: any) {
+    this.sendToStudent(studentId, {
+      type: 'new_error_added',
+      data: error,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  public notifyStudentOfNoteUpdate(studentId: string, note: any) {
+    this.sendToStudent(studentId, {
+      type: 'note_updated',
+      data: note,
+      timestamp: new Date().toISOString()
     });
   }
 }

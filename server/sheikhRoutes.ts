@@ -425,15 +425,13 @@ export function setupSheikhRoutes(app: Express) {
       
       const error = await storage.createStudentError({
         studentId: errorData.studentId,
-        surahNumber: errorData.surahNumber,
+        surah: `${errorData.surahNumber}`,
         ayahNumber: errorData.ayahNumber,
         errorType: errorData.errorType,
         errorDescription: errorData.errorDescription,
-        recordedBy: sheikhId,
-        recordedAt: new Date().toISOString(),
       });
       
-      wsService.notifyStudentOfError(errorData.studentId, error);
+      wsService.notifyStudentOfNewError(errorData.studentId, error);
       
       res.status(201).json(error);
     } catch (error) {

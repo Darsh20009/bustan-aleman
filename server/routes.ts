@@ -1131,6 +1131,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updates = insertQuranNoteSchema.partial().parse(req.body);
       const updatedNote = await storage.updateQuranNote(id, updates);
+      
+      // Notify student via WebSocket for real-time sync
+      wsService.notifyStudentOfNoteUpdate(userId, updatedNote);
+      
       res.json(updatedNote);
     } catch (error) {
       console.error("Error updating Quran note:", error);

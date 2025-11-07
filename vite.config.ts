@@ -33,5 +33,9 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    hmr: {
+      clientPort: process.env.REPL_SLUG ? 443 : undefined,
+      protocol: process.env.REPL_SLUG ? 'wss' : 'ws',
+    },
   },
 });
