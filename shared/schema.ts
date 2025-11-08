@@ -234,6 +234,7 @@ export const sessionAccess = bustanSchema.table("session_access", {
   sessionDate: date("session_date").notNull(),
   startTime: varchar("start_time").notNull(),
   endTime: varchar("end_time").notNull(),
+  zoomLink: varchar("zoom_link"), // Nullable zoom link for online sessions
   isEnabled: boolean("is_enabled").default(false),
   enabledBy: varchar("enabled_by").references(() => users.id),
   enabledAt: timestamp("enabled_at"),

@@ -360,23 +360,25 @@ export function SheikhDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white shadow-md p-1 rounded-xl">
-            <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
-              الطلاب
-            </TabsTrigger>
-            <TabsTrigger value="add-student" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white">
-              إضافة طالب
-            </TabsTrigger>
-            <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white">
-              المدفوعات
-            </TabsTrigger>
-            <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
-              التكليفات
-            </TabsTrigger>
-            <TabsTrigger value="sessions" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white">
-              الحصص
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="inline-flex md:grid w-full md:grid-cols-5 bg-white shadow-md p-1 rounded-xl min-w-max md:min-w-0">
+              <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
+                الطلاب
+              </TabsTrigger>
+              <TabsTrigger value="add-student" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white whitespace-nowrap px-4">
+                إضافة طالب
+              </TabsTrigger>
+              <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white whitespace-nowrap px-4">
+                المدفوعات
+              </TabsTrigger>
+              <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
+                التكليفات
+              </TabsTrigger>
+              <TabsTrigger value="sessions" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
+                الحصص
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="students">
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">

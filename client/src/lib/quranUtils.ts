@@ -44,3 +44,17 @@ export interface FormattedSurah {
 export const isAyahUrl = (url: string): boolean => {
   return /\/surah\/\d+\/\d+/.test(url);
 };
+
+// Remove Arabic diacritical marks (tashkeel) for better search
+export const removeDiacritics = (text: string): string => {
+  return text
+    .replace(/[\u064B-\u065F\u0670]/g, '')
+    .replace(/\u0640/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '');
+};
+
+// Normalize Arabic text for search (remove diacritics and extra spaces)
+// Note: Does not change case to preserve Latin text matching
+export const normalizeArabicText = (text: string): string => {
+  return removeDiacritics(text.trim());
+};

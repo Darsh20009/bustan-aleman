@@ -16,6 +16,7 @@ import { motion } from "framer-motion";
 import { BookOpen, Play, Volume2, RotateCcw, CheckCircle, Search, Bookmark, Settings, Pause, SkipBack, SkipForward, Plus, Minus, FileText, Save, Star, Calendar, Clock } from "lucide-react";
 import { useState, useRef } from "react";
 import type { QuranNote, QuranProgress } from "@shared/schema";
+import { normalizeArabicText } from "@/lib/quranUtils";
 
 export default function Quran() {
   const { user, isAuthenticated } = useAuth();
@@ -95,11 +96,12 @@ export default function Quran() {
   const progressPercentage = memorizedVerses > 0 ? (memorizedVerses / 6236) * 100 : 0; // Total Quran verses
   const memorizedSurahs = Math.floor(memorizedVerses / 100); // Better calculation
 
-  const filteredSurahs = surahs.filter(surah => 
-    surah.name.includes(searchTerm) || 
-    surah.arabicName.includes(searchTerm) ||
-    surah.number.toString().includes(searchTerm)
-  );
+  const filteredSurahs = surahs.filter(surah => {
+    const normalizedSearch = normalizeArabicText(searchTerm);
+    return normalizeArabicText(surah.name).includes(normalizedSearch) || 
+           normalizeArabicText(surah.arabicName).includes(normalizedSearch) ||
+           surah.number.toString().includes(searchTerm);
+  });
 
   // Update progress mutation (using student progress endpoint)
   const updateProgressMutation = useMutation({

@@ -173,6 +173,7 @@ export function setupSheikhRoutes(app: Express) {
       
       const sessionAccess = await storage.enableSessionAccess({
         ...sessionData,
+        zoomLink: "", // Default zoom link (will be added later if needed)
         isEnabled: true,
         enabledBy: sheikhId,
       });
