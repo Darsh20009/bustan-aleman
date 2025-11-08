@@ -105,20 +105,35 @@ export function setupSheikhRoutes(app: Express) {
       
       const studentsWithProgress = await Promise.all(
         students.map(async (student) => {
-          const user = student.userId ? await storage.getUser(student.userId) : null;
-          const progress = student.userId ? await storage.getQuranProgress(student.userId) : null;
-          const sessions = await storage.getStudentSessions(student.id);
-          const errors = await storage.getStudentErrors(student.id);
-          const schedules = await storage.getStudentSchedules(student.id);
-          
-          return {
-            ...student,
-            user,
-            progress,
-            sessions,
-            errors,
-            schedules,
-          };
+          try {
+            const user = student.userId ? await storage.getUser(student.userId) : null;
+            const progress = student.userId ? await storage.getQuranProgress(student.userId) : null;
+            const sessions = await storage.getStudentSessions(student.id);
+            const errors = await storage.getStudentErrors(student.id).catch(err => {
+              console.error(`Error fetching errors for student ${student.id}:`, err.message);
+              return [];
+            });
+            const schedules = await storage.getStudentSchedules(student.id);
+            
+            return {
+              ...student,
+              user,
+              progress,
+              sessions,
+              errors,
+              schedules,
+            };
+          } catch (error) {
+            console.error(`Error processing student ${student.id}:`, error);
+            return {
+              ...student,
+              user: null,
+              progress: null,
+              sessions: [],
+              errors: [],
+              schedules: [],
+            };
+          }
         })
       );
       
