@@ -129,7 +129,6 @@ export const students = bustanSchema.table("students", {
   memorizedSurahs: text("memorized_surahs"), // JSON string of memorized surahs
   currentLevel: varchar("current_level").default("beginner"), // beginner, intermediate, advanced
   notes: text("notes"), // ملاحظات عامة
-  zoomLink: varchar("zoom_link"),
   whatsappContact: varchar("whatsapp_contact").default("+966532441566"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -151,18 +150,27 @@ export const studentSessions = bustanSchema.table("student_sessions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Student recitation errors table
+// Student recitation errors table - enhanced with Sheikh notes
 export const studentErrors = bustanSchema.table("student_errors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
-  surah: varchar("surah").notNull(),
+  sheikhId: varchar("sheikh_id").references(() => users.id),
+  surahNumber: integer("surah_number").notNull(),
+  surahName: varchar("surah_name").notNull(),
   ayahNumber: integer("ayah_number").notNull(),
-  errorType: varchar("error_type").default("recitation"), // recitation, memorization
+  wordIndex: integer("word_index"), // specific word if applicable
+  errorType: varchar("error_type").default("recitation"), // recitation, memorization, tajweed
   errorDescription: text("error_description"),
+  sheikhNote: text("sheikh_note"), // Sheikh's detailed feedback
+  severity: varchar("severity").default("medium"), // low, medium, high
   isResolved: boolean("is_resolved").default(false),
   resolvedDate: date("resolved_date"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("student_errors_student_idx").on(table.studentId),
+  index("student_errors_surah_ayah_idx").on(table.surahNumber, table.ayahNumber),
+]);
 
 // Student payments and subscriptions
 export const studentPayments = bustanSchema.table("student_payments", {
@@ -188,7 +196,6 @@ export const classSchedules = bustanSchema.table("class_schedules", {
   dayOfWeek: integer("day_of_week").notNull(), // 0-6 (Sunday=0)
   startTime: varchar("start_time").notNull(), // HH:MM format
   endTime: varchar("end_time").notNull(), // HH:MM format
-  zoomLink: varchar("zoom_link"),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -276,17 +283,25 @@ export const tripEnrollments = bustanSchema.table("trip_enrollments", {
   unique("trip_enrollments_user_trip_unique").on(table.userId, table.tripId),
 ]);
 
-// Quran notes table - for students to save notes on verses
+// Student personal Quran notes table - for students to save their own notes on verses
 export const quranNotes = bustanSchema.table("quran_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => users.id).notNull(),
+  sheikhId: varchar("sheikh_id").references(() => users.id), // null if student's own note
   surahNumber: integer("surah_number").notNull(),
   ayahNumber: integer("ayah_number").notNull(),
-  note: text("note").notNull(),
+  note: text("note"),
+  noteText: text("note_text"), // alternate field name for compatibility
+  noteType: varchar("note_type").default("student"), // student, sheikh_general, sheikh_error, sheikh_improvement
   tags: text("tags"), // JSON string of tags
+  isVisible: boolean("is_visible").default(true), // visible to student
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("quran_notes_student_idx").on(table.studentId),
+  index("quran_notes_sheikh_idx").on(table.sheikhId),
+  index("quran_notes_surah_ayah_idx").on(table.surahNumber, table.ayahNumber),
+]);
 
 // Quran progress table - to track reading progress
 export const quranProgress = bustanSchema.table("quran_progress", {
@@ -379,13 +394,67 @@ export const examAttempts = bustanSchema.table("exam_attempts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Live session rooms - for built-in live classes (replaces Zoom)
+export const liveRooms = bustanSchema.table("live_rooms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  sheikhId: varchar("sheikh_id").references(() => users.id).notNull(),
+  sessionDate: timestamp("session_date").notNull(),
+  sessionTime: varchar("session_time").notNull(),
+  roomToken: varchar("room_token").unique().notNull().default(sql`gen_random_uuid()`),
+  status: varchar("status").default("scheduled"), // scheduled, active, completed, cancelled
+  startedAt: timestamp("started_at"),
+  endedAt: timestamp("ended_at"),
+  duration: integer("duration"), // in minutes
+  isEnabled: boolean("is_enabled").default(false),
+  enabledAt: timestamp("enabled_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("live_rooms_student_idx").on(table.studentId),
+  index("live_rooms_sheikh_idx").on(table.sheikhId),
+  index("live_rooms_token_idx").on(table.roomToken),
+]);
+
+// Live session participants - tracks who's in each live session
+export const roomParticipants = bustanSchema.table("room_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roomId: varchar("room_id").references(() => liveRooms.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  role: varchar("role").notNull(), // sheikh, student
+  joinedAt: timestamp("joined_at").defaultNow(),
+  leftAt: timestamp("left_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Live annotations - Sheikh's real-time annotations on student's Quran
+export const liveAnnotations = bustanSchema.table("live_annotations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roomId: varchar("room_id").references(() => liveRooms.id).notNull(),
+  sheikhId: varchar("sheikh_id").references(() => users.id).notNull(),
+  studentId: varchar("student_id").references(() => students.id).notNull(),
+  surahNumber: integer("surah_number").notNull(),
+  ayahNumber: integer("ayah_number").notNull(),
+  wordIndex: integer("word_index"), // null for full ayah annotation
+  annotationType: varchar("annotation_type").notNull(), // highlight, note, error, correction
+  highlightColor: varchar("highlight_color"), // for highlights
+  noteText: text("note_text"), // for notes
+  isPermanent: boolean("is_permanent").default(true), // keep after session ends
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("live_annotations_room_idx").on(table.roomId),
+  index("live_annotations_student_idx").on(table.studentId),
+  index("live_annotations_surah_ayah_idx").on(table.surahNumber, table.ayahNumber),
+]);
+
 // Session access control - controls when students can access session links
 export const sessionAccessControl = bustanSchema.table("session_access_control", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   studentId: varchar("student_id").references(() => students.id).notNull(),
   sessionDate: date("session_date").notNull(),
   sessionTime: varchar("session_time").notNull(), // e.g., "4:00 PM"
-  zoomLink: varchar("zoom_link"),
   isEnabled: boolean("is_enabled").default(false), // Sheikh controls this
   enabledAt: timestamp("enabled_at"), // When sheikh enabled access
   enabledBy: varchar("enabled_by").references(() => users.id), // Sheikh who enabled
