@@ -234,7 +234,6 @@ export const sessionAccess = bustanSchema.table("session_access", {
   sessionDate: date("session_date").notNull(),
   startTime: varchar("start_time").notNull(),
   endTime: varchar("end_time").notNull(),
-  zoomLink: varchar("zoom_link").notNull(),
   isEnabled: boolean("is_enabled").default(false),
   enabledBy: varchar("enabled_by").references(() => users.id),
   enabledAt: timestamp("enabled_at"),
@@ -321,7 +320,6 @@ export const supervisors = bustanSchema.table("supervisors", {
   userId: varchar("user_id").references(() => users.id),
   name: varchar("name").notNull(),
   whatsappNumber: varchar("whatsapp_number").notNull(),
-  zoomLink: varchar("zoom_link"),
   specialization: varchar("specialization"), // Quran, Fiqh, General
   experience: text("experience"),
   qualifications: text("qualifications"),

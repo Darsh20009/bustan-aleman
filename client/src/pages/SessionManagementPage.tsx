@@ -23,7 +23,6 @@ interface Schedule {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
-  zoomLink: string | null;
   isActive: boolean;
 }
 
@@ -41,8 +40,7 @@ export default function SessionManagementPage() {
     studentId: '',
     dayOfWeek: 0,
     startTime: '',
-    endTime: '',
-    zoomLink: ''
+    endTime: ''
   });
   const { toast } = useToast();
 
@@ -112,8 +110,7 @@ export default function SessionManagementPage() {
           studentId: '',
           dayOfWeek: 0,
           startTime: '',
-          endTime: '',
-          zoomLink: ''
+          endTime: ''
         });
       } else {
         throw new Error('Failed to add schedule');
@@ -197,7 +194,6 @@ export default function SessionManagementPage() {
           sessionDate: new Date().toISOString().split('T')[0],
           startTime: schedule.startTime,
           endTime: schedule.endTime,
-          zoomLink: schedule.zoomLink,
         }),
       });
 
@@ -322,17 +318,6 @@ export default function SessionManagementPage() {
                         data-testid="input-end-time"
                       />
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="zoom-link">رابط Zoom</Label>
-                      <Input
-                        id="zoom-link"
-                        type="url"
-                        value={newSchedule.zoomLink}
-                        onChange={(e) => setNewSchedule({ ...newSchedule, zoomLink: e.target.value })}
-                        placeholder="https://zoom.us/j/..."
-                        data-testid="input-zoom-link"
-                      />
-                    </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowAddDialog(false)} data-testid="button-cancel-add">
@@ -353,7 +338,6 @@ export default function SessionManagementPage() {
                     <TableRow>
                       <TableHead className="text-right">اليوم</TableHead>
                       <TableHead className="text-right">الوقت</TableHead>
-                      <TableHead className="text-right">رابط Zoom</TableHead>
                       <TableHead className="text-right">الحالة</TableHead>
                       <TableHead className="text-right">الإجراءات</TableHead>
                     </TableRow>
@@ -361,7 +345,7 @@ export default function SessionManagementPage() {
                   <TableBody>
                     {schedules.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                           لا توجد حصص مجدولة لهذا الطالب
                         </TableCell>
                       </TableRow>
@@ -376,22 +360,6 @@ export default function SessionManagementPage() {
                               <Clock className="h-4 w-4 text-gray-500" />
                               {schedule.startTime} - {schedule.endTime}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {schedule.zoomLink ? (
-                              <a
-                                href={schedule.zoomLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-blue-600 hover:underline"
-                                data-testid={`link-zoom-${schedule.id}`}
-                              >
-                                <Video className="h-4 w-4" />
-                                رابط الحصة
-                              </a>
-                            ) : (
-                              <span className="text-gray-400">لا يوجد</span>
-                            )}
                           </TableCell>
                           <TableCell>
                             <Badge variant={schedule.isActive ? "default" : "secondary"}>
@@ -486,16 +454,6 @@ export default function SessionManagementPage() {
                   type="time"
                   value={editingSchedule.endTime}
                   onChange={(e) => setEditingSchedule({ ...editingSchedule, endTime: e.target.value })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-zoom-link">رابط Zoom</Label>
-                <Input
-                  id="edit-zoom-link"
-                  type="url"
-                  value={editingSchedule.zoomLink || ''}
-                  onChange={(e) => setEditingSchedule({ ...editingSchedule, zoomLink: e.target.value })}
-                  placeholder="https://zoom.us/j/..."
                 />
               </div>
             </div>

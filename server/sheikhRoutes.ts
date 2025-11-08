@@ -21,7 +21,6 @@ const sessionEnableSchema = z.object({
   sessionDate: z.string(),
   startTime: z.string(),
   endTime: z.string(),
-  zoomLink: z.string().optional().nullable(),
 });
 
 const createStudentSchema = z.object({
@@ -29,7 +28,6 @@ const createStudentSchema = z.object({
   phoneNumber: z.string(),
   password: z.string(),
   currentLevel: z.string().optional(),
-  zoomLink: z.string().optional(),
   monthlyPrice: z.coerce.number().nonnegative().optional(),
 });
 
@@ -49,7 +47,6 @@ const scheduleSchema = z.object({
   dayOfWeek: z.number().int().min(0).max(6),
   startTime: z.string().regex(/^\d{1,2}:\d{2}$/),
   endTime: z.string().regex(/^\d{1,2}:\d{2}$/),
-  zoomLink: z.string().optional().nullable(),
 });
 
 const meetingSchema = z.object({
@@ -80,7 +77,6 @@ export function setupSheikhRoutes(app: Express) {
         passwordHash,
         phoneNumber: studentData.phoneNumber,
         currentLevel: studentData.currentLevel || 'beginner',
-        zoomLink: studentData.zoomLink || null,
         monthlySessionsCount: 0,
         monthlyPrice: studentData.monthlyPrice !== undefined ? String(studentData.monthlyPrice) : '0',
         isPaid: false,
@@ -315,7 +311,6 @@ export function setupSheikhRoutes(app: Express) {
         dayOfWeek: scheduleData.dayOfWeek,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
-        zoomLink: scheduleData.zoomLink || null,
         isActive: true,
       });
       
@@ -351,7 +346,6 @@ export function setupSheikhRoutes(app: Express) {
         dayOfWeek: scheduleData.dayOfWeek,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
-        zoomLink: scheduleData.zoomLink,
         isActive: scheduleData.isActive !== undefined ? scheduleData.isActive : true,
       });
       

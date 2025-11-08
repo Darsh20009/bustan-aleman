@@ -486,7 +486,6 @@ export class DatabaseStorage implements IStorage {
         schedules: [],
         currentLevel: student.currentLevel || 'beginner',
         notes: student.notes || '',
-        zoomLink: student.zoomLink || '',
         isActive: student.isActive ?? true,
       });
       // Convert JSON student to Student type
@@ -505,7 +504,6 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-        zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -535,7 +533,6 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-        zoomLink: jsonStudent.zoomLink || null,
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -564,7 +561,7 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-        zoomLink: jsonStudent.zoomLink || null,
+
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -594,7 +591,7 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-        zoomLink: jsonStudent.zoomLink || null,
+
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -655,13 +652,19 @@ export class DatabaseStorage implements IStorage {
       const errorData: StudentError = {
         id: `error_${Date.now()}`,
         studentId: error.studentId,
-        surah: error.surah,
+        sheikhId: error.sheikhId || null,
+        surahNumber: error.surahNumber,
+        surahName: error.surahName,
         ayahNumber: error.ayahNumber,
+        wordIndex: error.wordIndex || null,
         errorType: error.errorType ?? 'recitation',
         errorDescription: error.errorDescription || null,
+        sheikhNote: error.sheikhNote || null,
+        severity: error.severity ?? 'medium',
         isResolved: error.isResolved ?? false,
         resolvedDate: error.resolvedDate ? (typeof error.resolvedDate === 'string' ? error.resolvedDate : new Date().toISOString().split('T')[0]) : null,
         createdAt: new Date(),
+        updatedAt: new Date(),
       };
       return errorData;
     }
@@ -682,8 +685,22 @@ export class DatabaseStorage implements IStorage {
 
   async deleteStudentError(errorId: string): Promise<void> {
     if (!this.isDbAvailable()) {
-      // Memory fallback: filter out the error
-      this.memStudentErrors = this.memStudentErrors.filter(e => e.id !== errorId);
+      // JSON fallback: read all students, find and remove the error, then save
+      const students = await jsonStorage.readJSON('data/students.json');
+      let errorFound = false;
+      const updatedStudents = students.map((student: any) => {
+        if (student.errors && Array.isArray(student.errors)) {
+          const originalLength = student.errors.length;
+          student.errors = student.errors.filter((e: any) => e.id !== errorId);
+          if (student.errors.length < originalLength) {
+            errorFound = true;
+          }
+        }
+        return student;
+      });
+      if (errorFound) {
+        await jsonStorage.writeJSON('data/students.json', updatedStudents);
+      }
       return;
     }
     await db!.delete(studentErrors).where(eq(studentErrors.id, errorId));
@@ -733,7 +750,6 @@ export class DatabaseStorage implements IStorage {
         dayOfWeek: schedule.dayOfWeek,
         startTime: schedule.startTime,
         endTime: schedule.endTime,
-        zoomLink: schedule.zoomLink || null,
         isActive: schedule.isActive ?? true,
         createdAt: new Date(),
       };
@@ -781,7 +797,6 @@ export class DatabaseStorage implements IStorage {
         userId: supervisor.userId || null,
         name: supervisor.name,
         whatsappNumber: supervisor.whatsappNumber,
-        zoomLink: supervisor.zoomLink || null,
         specialization: supervisor.specialization || null,
         experience: supervisor.experience || null,
         qualifications: supervisor.qualifications || null,
@@ -1094,7 +1109,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(quranMemorization.studentId, studentId))
       .orderBy(desc(quranMemorization.nextReviewDate));
     
-    return allMemorization.filter(mem => {
+    return allMemorization.filter((mem: QuranMemorization) => {
       if (mem.status === 'in_progress') return false;
       
       if (!mem.nextReviewDate) {

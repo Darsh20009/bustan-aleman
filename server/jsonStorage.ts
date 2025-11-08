@@ -20,14 +20,14 @@ interface Student {
   schedules: ClassSchedule[];
   currentLevel: string;
   notes: string;
-  zoomLink: string;
   createdAt: string;
   isActive: boolean;
 }
 
 interface StudentError {
   id: string;
-  surah: string;
+  surahNumber: number;
+  surahName: string;
   ayahNumber: number;
   errorType: string;
   errorDescription: string;
@@ -68,7 +68,6 @@ interface ClassSchedule {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
-  zoomLink: string;
   isActive: boolean;
 }
 
@@ -269,7 +268,8 @@ class JSONStorage {
       errors: [
         {
           id: 'err_001',
-          surah: 'البقرة',
+          surahNumber: 2,
+          surahName: 'البقرة',
           ayahNumber: 285,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - البقرة آية 285',
@@ -278,7 +278,8 @@ class JSONStorage {
         },
         {
           id: 'err_002',
-          surah: 'البقرة',
+          surahNumber: 2,
+          surahName: 'البقرة',
           ayahNumber: 217,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - البقرة آية 217',
@@ -287,7 +288,8 @@ class JSONStorage {
         },
         {
           id: 'err_003',
-          surah: 'البقرة',
+          surahNumber: 2,
+          surahName: 'البقرة',
           ayahNumber: 15,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - البقرة آية 15',
@@ -296,7 +298,8 @@ class JSONStorage {
         },
         {
           id: 'err_004',
-          surah: 'آل عمران',
+          surahNumber: 3,
+          surahName: 'آل عمران',
           ayahNumber: 1,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - آل عمران آية 1',
@@ -305,7 +308,8 @@ class JSONStorage {
         },
         {
           id: 'err_005',
-          surah: 'آل عمران',
+          surahNumber: 3,
+          surahName: 'آل عمران',
           ayahNumber: 5,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - آل عمران آية 5',
@@ -314,7 +318,8 @@ class JSONStorage {
         },
         {
           id: 'err_006',
-          surah: 'آل عمران',
+          surahNumber: 3,
+          surahName: 'آل عمران',
           ayahNumber: 6,
           errorType: 'recitation',
           errorDescription: 'خطأ في التلاوة - آل عمران آية 6',
@@ -358,7 +363,7 @@ class JSONStorage {
           dayOfWeek: 6, // Saturday
           startTime: '16:00',
           endTime: '17:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
         {
@@ -366,7 +371,7 @@ class JSONStorage {
           dayOfWeek: 2, // Tuesday
           startTime: '16:00',
           endTime: '17:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
         {
@@ -374,7 +379,7 @@ class JSONStorage {
           dayOfWeek: 3, // Wednesday
           startTime: '16:00',
           endTime: '17:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
         {
@@ -382,13 +387,12 @@ class JSONStorage {
           dayOfWeek: 4, // Thursday
           startTime: '16:00',
           endTime: '17:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
       ],
       currentLevel: 'advanced',
       notes: 'طالب متميز، حافظ سورة البقرة وآل عمران. مستوى الحفظ ممتاز لكن يريد التميز أكثر',
-      zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
       createdAt: new Date().toISOString(),
       isActive: true,
     };
@@ -427,7 +431,7 @@ class JSONStorage {
           dayOfWeek: 0, // Sunday
           startTime: '18:00',
           endTime: '19:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
         {
@@ -435,13 +439,12 @@ class JSONStorage {
           dayOfWeek: 6, // Saturday
           startTime: '18:00',
           endTime: '19:00',
-          zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
+
           isActive: true,
         },
       ],
       currentLevel: 'beginner',
       notes: 'طالب جديد، لم يكمل أي حصة بعد. سيبدأ من سورة الناس، الفلق، الإخلاص',
-      zoomLink: 'https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success',
       createdAt: new Date().toISOString(),
       isActive: true,
     };
