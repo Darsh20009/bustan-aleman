@@ -55,7 +55,6 @@ export function SupervisorDashboard() {
       sessionDate: new Date().toISOString().split('T')[0],
       sessionTime: new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }),
       isEnabled: true,
-      zoomLink: 'https://zoom.us/j/example',
     };
 
     ws.current?.send(JSON.stringify({

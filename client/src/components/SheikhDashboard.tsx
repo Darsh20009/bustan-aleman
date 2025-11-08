@@ -36,15 +36,13 @@ export function SheikhDashboard() {
     phoneNumber: '',
     password: '',
     currentLevel: 'beginner',
-    zoomLink: '',
     monthlyPrice: '0'
   });
   const [newSchedule, setNewSchedule] = useState({
     studentId: '',
     dayOfWeek: 0,
     startTime: '',
-    endTime: '',
-    zoomLink: ''
+    endTime: ''
   });
   const { toast} = useToast();
   
@@ -110,7 +108,6 @@ export function SheikhDashboard() {
           sessionDate: new Date().toISOString().split('T')[0],
           startTime: schedule.startTime,
           endTime: schedule.endTime,
-          zoomLink: schedule.zoomLink,
         }),
       });
       
@@ -178,7 +175,6 @@ export function SheikhDashboard() {
     phoneNumber: '',
     password: '',
     currentLevel: 'beginner',
-    zoomLink: '',
     monthlyPrice: '0'
   });
 
@@ -202,7 +198,6 @@ export function SheikhDashboard() {
           phoneNumber: '',
           password: '',
           currentLevel: 'beginner',
-          zoomLink: '',
           monthlyPrice: '0'
         });
         setShowAddStudentDialog(false);
@@ -237,8 +232,7 @@ export function SheikhDashboard() {
           studentId: '',
           dayOfWeek: 0,
           startTime: '',
-          endTime: '',
-          zoomLink: ''
+          endTime: ''
         });
         setShowAddScheduleDialog(false);
         fetchStudents();
@@ -551,17 +545,6 @@ export function SheikhDashboard() {
                         data-testid="input-monthly-price"
                       />
                     </div>
-                    
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-sm font-bold text-gray-700">رابط Zoom</Label>
-                      <Input
-                        value={newStudentData.zoomLink}
-                        onChange={(e) => setNewStudentData({...newStudentData, zoomLink: e.target.value})}
-                        placeholder="https://zoom.us/j/..."
-                        className="border-2 border-gray-200 focus:border-blue-500"
-                        data-testid="input-zoom-link"
-                      />
-                    </div>
                   </div>
                   
                   <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-6 text-lg shadow-lg">
@@ -802,16 +785,6 @@ export function SheikhDashboard() {
                               onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
                               required
                               data-testid="input-end-time"
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label className="text-sm font-bold">رابط Zoom (اختياري)</Label>
-                            <Input
-                              value={newSchedule.zoomLink}
-                              onChange={(e) => setNewSchedule({...newSchedule, zoomLink: e.target.value})}
-                              placeholder="https://zoom.us/j/..."
-                              data-testid="input-schedule-zoom-link"
                             />
                           </div>
                         </div>
