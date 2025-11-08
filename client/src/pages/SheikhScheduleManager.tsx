@@ -37,7 +37,6 @@ interface Schedule {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
-  zoomLink?: string | null;
   student?: Student;
 }
 
@@ -56,7 +55,6 @@ export default function SheikhScheduleManager() {
   const [dayOfWeek, setDayOfWeek] = useState<string>('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [zoomLink, setZoomLink] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -125,7 +123,6 @@ export default function SheikhScheduleManager() {
     setDayOfWeek('');
     setStartTime('');
     setEndTime('');
-    setZoomLink('');
   };
 
   const handleCreateSchedule = () => {
@@ -143,7 +140,6 @@ export default function SheikhScheduleManager() {
       dayOfWeek: parseInt(dayOfWeek),
       startTime,
       endTime,
-      zoomLink: zoomLink || null,
     });
   };
 
@@ -155,7 +151,6 @@ export default function SheikhScheduleManager() {
       sessionDate: today,
       startTime: schedule.startTime,
       endTime: schedule.endTime,
-      zoomLink: schedule.zoomLink || null,
     });
   };
 
@@ -250,17 +245,6 @@ export default function SheikhScheduleManager() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="zoom">رابط Zoom (اختياري)</Label>
-                    <Input
-                      id="zoom"
-                      type="url"
-                      placeholder="https://zoom.us/j/..."
-                      value={zoomLink}
-                      onChange={(e) => setZoomLink(e.target.value)}
-                      data-testid="input-zoom-link"
-                    />
-                  </div>
                 </div>
 
                 <DialogFooter>
@@ -327,12 +311,6 @@ export default function SheikhScheduleManager() {
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
-                        {schedule.zoomLink && (
-                          <div className="text-xs text-blue-600 mb-2 truncate">
-                            <Video className="w-3 h-3 inline ml-1" />
-                            {schedule.zoomLink}
-                          </div>
-                        )}
                         {dayIndex === new Date().getDay() && (
                           <Button
                             size="sm"
@@ -379,9 +357,9 @@ export default function SheikhScheduleManager() {
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-orange-600">
-                  {schedules.filter(s => s.zoomLink).length}
+                  {DAYS.length}
                 </p>
-                <p className="text-sm text-gray-600">حصص بروابط Zoom</p>
+                <p className="text-sm text-gray-600">أيام الأسبوع</p>
               </div>
             </div>
           </CardContent>

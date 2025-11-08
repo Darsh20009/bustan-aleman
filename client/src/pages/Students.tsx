@@ -286,16 +286,6 @@ export default function Students() {
                             <p className="text-gray-600">{selectedStudentData.whatsappContact}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Video className="text-blue-600" size={20} />
-                          <div>
-                            <p className="font-medium">رابط الزوم</p>
-                            <a href={selectedStudentData.zoomLink} target="_blank" rel="noopener noreferrer" 
-                               className="text-blue-600 hover:underline text-sm break-all">
-                              {selectedStudentData.zoomLink}
-                            </a>
-                          </div>
-                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -497,14 +487,9 @@ export default function Students() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => window.open(schedule.zoomLink, '_blank')}
-                                >
-                                  <Video size={16} className="mr-1" />
-                                  انضم للحصة
-                                </Button>
+                                <Badge variant="outline" className="text-blue-600">
+                                  حصة مجدولة
+                                </Badge>
                               </div>
                             </div>
                           ))}

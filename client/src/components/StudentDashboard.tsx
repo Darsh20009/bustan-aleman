@@ -28,9 +28,10 @@ interface StudentDashboardProps {
   onProfile?: () => void;
   onMyCourses?: () => void;
   onMyNotes?: () => void;
+  onJoinSession?: () => void;
 }
 
-export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses, onMyNotes }: StudentDashboardProps) {
+export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, onMyCourses, onMyNotes, onJoinSession }: StudentDashboardProps) {
   const [progress, setProgress] = useState<any>(null);
   const [isNewStudent, setIsNewStudent] = useState<boolean>(false);
   const [classAccess, setClassAccess] = useState<any>(null);
@@ -70,23 +71,18 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
   };
 
   const joinClass = () => {
-    if (classAccess?.canAccess && classAccess.zoomLink) {
-      window.open(classAccess.zoomLink, '_blank');
-      toast({
-        title: '🎓 تم فتح الحصة',
-        description: 'تم فتح رابط الحصة في نافذة جديدة'
-      });
-    } else if (student.schedules?.[0]?.zoomLink) {
-      // Fallback to first schedule's zoom link
-      window.open(student.schedules[0].zoomLink, '_blank');
-      toast({
-        title: '📹 تم فتح رابط الحلقة',
-        description: 'ملاحظة: قد تكون خارج الوقت المحدد'
-      });
+    if (classAccess?.canAccess) {
+      if (onJoinSession) {
+        onJoinSession();
+        toast({
+          title: '🎓 الانتقال للحصة',
+          description: 'سيتم فتح صفحة الحصص المباشرة'
+        });
+      }
     } else {
       toast({
         title: 'خطأ',
-        description: 'لا يوجد رابط متاح للحصة',
+        description: 'الحصة غير متاحة حالياً. انتظر حتى يفعل الشيخ الحصة',
         variant: 'destructive'
       });
     }
@@ -510,12 +506,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                   <Button
                     variant="outline"
                     className="border-green-300 text-green-700 py-6"
-                    onClick={() => {
-                      const zoomLink = student.schedules?.[0]?.zoomLink;
-                      if (zoomLink) {
-                        window.open(zoomLink, '_blank');
-                      }
-                    }}
+                    onClick={joinClass}
                     data-testid="button-join-class"
                   >
                     📹 دخول الحلقة
@@ -591,7 +582,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
                           </p>
                         </div>
                         <Button
-                          onClick={() => window.open(schedule.zoomLink, '_blank')}
+                          onClick={joinClass}
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700"
                         >

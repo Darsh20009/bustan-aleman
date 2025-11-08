@@ -15,7 +15,6 @@ interface SessionAccess {
   sessionDate: string;
   startTime: string;
   endTime: string;
-  zoomLink: string;
   isEnabled: boolean;
   enabledAt?: string;
 }
