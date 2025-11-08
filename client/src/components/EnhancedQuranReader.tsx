@@ -27,7 +27,8 @@ import {
   Bookmark,
   BookOpen,
   Eye,
-  EyeOff
+  EyeOff,
+  PenTool
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -54,6 +55,17 @@ interface WordHighlight {
   wordIndex: number;
   wordText: string;
   note: string;
+}
+
+interface LiveAnnotation {
+  id: string;
+  studentId: string;
+  sheikhId: string;
+  surahNumber: number;
+  ayahNumber: number;
+  annotationType: string;
+  annotationText: string;
+  createdAt: string;
 }
 
 interface EnhancedQuranReaderProps {
@@ -217,6 +229,12 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId: propS
   // Load word highlights from backend
   const { data: savedHighlights } = useQuery<WordHighlight[]>({
     queryKey: ['/api/quran/highlights', studentId],
+    enabled: !!studentId
+  });
+
+  // Load Sheikh annotations for this student
+  const { data: annotations = [] } = useQuery<LiveAnnotation[]>({
+    queryKey: [`/api/live-annotations/student/${studentId}`],
     enabled: !!studentId
   });
 
@@ -819,6 +837,26 @@ export default function EnhancedQuranReader({ initialSurah = 1, studentId: propS
                   </div>
                 </div>
               )}
+
+              {/* Sheikh Annotations */}
+              {annotations.filter(ann => ann.surahNumber === currentSurah.number && ann.ayahNumber === ayah.number).map((annotation) => (
+                <div key={annotation.id} className={`mt-4 pt-4 border-t ${isDarkMode ? 'border-orange-700' : 'border-orange-200'}`}>
+                  <div className="flex items-start gap-2">
+                    <PenTool className={`h-4 w-4 mt-1 flex-shrink-0 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                    <div className="flex-1">
+                      <p className={`text-xs font-semibold mb-1 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                        ملاحظة الشيخ
+                        {annotation.annotationType === 'pronunciation' && ' - نطق'}
+                        {annotation.annotationType === 'tajweed' && ' - تجويد'}
+                        {annotation.annotationType === 'memorization' && ' - حفظ'}
+                      </p>
+                      <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        {annotation.annotationText}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
               {mode === 'memorize' && (
                 <div className={`mt-4 pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>

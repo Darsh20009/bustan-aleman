@@ -36,13 +36,15 @@ interface Student {
   phoneNumber: string;
 }
 
-interface StudentError {
+interface LiveAnnotation {
   id: string;
   studentId: string;
-  surah: string;
+  sheikhId: string;
+  surahNumber: number;
   ayahNumber: number;
-  errorType: string;
-  errorDescription: string;
+  annotationType: string;
+  annotationText: string;
+  createdAt: string;
 }
 
 const ERROR_TYPES = [
@@ -71,9 +73,9 @@ export default function SheikhQuranEditing() {
     queryKey: ['/api/surahs'],
   });
 
-  // Fetch student errors
-  const { data: studentErrors = [] } = useQuery<StudentError[]>({
-    queryKey: ['/api/sheikh/student-errors', selectedStudent],
+  // Fetch student annotations
+  const { data: studentAnnotations = [] } = useQuery<LiveAnnotation[]>({
+    queryKey: ['/api/live-annotations/student', selectedStudent],
     enabled: !!selectedStudent,
   });
 
@@ -91,15 +93,15 @@ export default function SheikhQuranEditing() {
     }
   }, [selectedSurah]);
 
-  // Add error mutation
-  const addError = useMutation({
+  // Add annotation mutation
+  const addAnnotation = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/sheikh/student-errors', 'POST', data);
+      return apiRequest('/api/live-annotations', 'POST', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/student-errors', selectedStudent] });
+      queryClient.invalidateQueries({ queryKey: ['/api/live-annotations/student', selectedStudent] });
       toast({
-        title: '✅ تم تسجيل الخطأ',
+        title: '✅ تم تسجيل التعليق',
         description: 'تم إرسال إشعار للطالب',
       });
       setShowErrorDialog(false);
@@ -109,21 +111,21 @@ export default function SheikhQuranEditing() {
       toast({
         variant: 'destructive',
         title: '❌ خطأ',
-        description: 'فشل تسجيل الخطأ',
+        description: 'فشل تسجيل التعليق',
       });
     },
   });
 
-  // Delete error mutation
-  const deleteError = useMutation({
-    mutationFn: async (errorId: string) => {
-      return apiRequest(`/api/sheikh/student-errors/${errorId}`, 'DELETE');
+  // Delete annotation mutation
+  const deleteAnnotation = useMutation({
+    mutationFn: async (annotationId: string) => {
+      return apiRequest(`/api/live-annotations/${annotationId}`, 'DELETE');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/student-errors', selectedStudent] });
+      queryClient.invalidateQueries({ queryKey: ['/api/live-annotations/student', selectedStudent] });
       toast({
         title: '✅ تم الحذف',
-        description: 'تم حذف الخطأ بنجاح',
+        description: 'تم حذف التعليق بنجاح',
       });
     },
   });
@@ -144,12 +146,12 @@ export default function SheikhQuranEditing() {
       return;
     }
 
-    addError.mutate({
+    addAnnotation.mutate({
       studentId: selectedStudent,
       surahNumber: parseInt(selectedSurah),
       ayahNumber: parseInt(selectedAyah),
-      errorType,
-      errorDescription,
+      annotationType: errorType,
+      annotationText: errorDescription,
     });
   };
 
@@ -263,34 +265,34 @@ export default function SheikhQuranEditing() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="max-h-[600px] overflow-y-auto">
-                  {studentErrors.length === 0 ? (
+                  {studentAnnotations.length === 0 ? (
                     <div className="text-center py-8">
                       <Check className="w-16 h-16 text-green-400 mx-auto mb-3" />
                       <p className="text-gray-500">لا توجد أخطاء مسجلة</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {studentErrors.map((error) => (
+                      {studentAnnotations.map((annotation) => (
                         <div
-                          key={error.id}
+                          key={annotation.id}
                           className="bg-red-50 border border-red-200 rounded-lg p-3"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1">
                               <p className="font-bold text-red-800 text-sm mb-1">
-                                السورة {error.surah} - الآية {error.ayahNumber}
+                                السورة {annotation.surahNumber} - الآية {annotation.ayahNumber}
                               </p>
                               <p className="text-xs text-gray-600 mb-1">
-                                {ERROR_TYPES.find(t => t.value === error.errorType)?.label}
+                                {ERROR_TYPES.find(t => t.value === annotation.annotationType)?.label}
                               </p>
-                              <p className="text-sm text-gray-700">{error.errorDescription}</p>
+                              <p className="text-sm text-gray-700">{annotation.annotationText}</p>
                             </div>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => deleteError.mutate(error.id)}
+                              onClick={() => deleteAnnotation.mutate(annotation.id)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-100 h-6 w-6 p-0"
-                              data-testid={`button-delete-error-${error.id}`}
+                              data-testid={`button-delete-error-${annotation.id}`}
                             >
                               ×
                             </Button>
@@ -363,12 +365,12 @@ export default function SheikhQuranEditing() {
             <DialogFooter>
               <Button
                 onClick={handleSaveError}
-                disabled={addError.isPending}
+                disabled={addAnnotation.isPending}
                 className="bg-orange-600 hover:bg-orange-700"
                 data-testid="button-save-error"
               >
                 <Save className="w-4 h-4 ml-2" />
-                {addError.isPending ? 'جاري الحفظ...' : 'حفظ الخطأ'}
+                {addAnnotation.isPending ? 'جاري الحفظ...' : 'حفظ الخطأ'}
               </Button>
             </DialogFooter>
           </DialogContent>

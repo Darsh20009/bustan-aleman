@@ -484,13 +484,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Live annotation routes - Sheikh annotations on student Quran
   app.post('/api/live-annotations', isTeacher, async (req: any, res) => {
     try {
+      // Force sheikhId from session to prevent spoofing
       const sheikhId = req.session.userId;
       
-      // Validate request body with Zod schema
+      // Validate request body with Zod schema (ignore any sheikhId from client)
       const { insertLiveAnnotationSchema } = await import("@shared/schema");
+      const { sheikhId: _ignored, ...clientData } = req.body;
+      
       const validationResult = insertLiveAnnotationSchema.safeParse({
-        ...req.body,
-        sheikhId,
+        ...clientData,
+        sheikhId, // Override with session sheikhId
       });
       
       if (!validationResult.success) {
@@ -512,11 +515,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { studentId } = req.params;
       const { surah, ayah } = req.query;
-      const currentUserId = req.session.userId;
       const userRole = req.session.role;
+      const sessionStudentId = req.session.studentId;
       
-      // Authorization: Only allow teachers or the student themselves
-      if (userRole !== 'teacher' && userRole !== 'sheikh' && currentUserId !== studentId) {
+      // Authorization: Only allow teachers/sheikh or the student themselves
+      const isTeacherOrSheikh = userRole === 'teacher' || userRole === 'sheikh';
+      const isOwnStudent = sessionStudentId === studentId;
+      
+      if (!isTeacherOrSheikh && !isOwnStudent) {
         return res.status(403).json({ message: "غير مصرح لك بعرض هذه التعليقات" });
       }
       
@@ -545,11 +551,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/live-annotations/ayah/:studentId/:surah/:ayah', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const { studentId, surah, ayah } = req.params;
-      const currentUserId = req.session.userId;
       const userRole = req.session.role;
+      const sessionStudentId = req.session.studentId;
       
-      // Authorization: Only allow teachers or the student themselves
-      if (userRole !== 'teacher' && userRole !== 'sheikh' && currentUserId !== studentId) {
+      // Authorization: Only allow teachers/sheikh or the student themselves
+      const isTeacherOrSheikh = userRole === 'teacher' || userRole === 'sheikh';
+      const isOwnStudent = sessionStudentId === studentId;
+      
+      if (!isTeacherOrSheikh && !isOwnStudent) {
         return res.status(403).json({ message: "غير مصرح لك بعرض هذه التعليقات" });
       }
       
