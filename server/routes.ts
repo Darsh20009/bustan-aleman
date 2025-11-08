@@ -905,6 +905,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quran search endpoint
+  app.get('/api/search', async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      
+      if (!query || query.trim().length === 0) {
+        return res.json([]);
+      }
+      
+      const searchResults = await quranService.searchQuran(query);
+      
+      // Transform results to match expected format
+      const results = searchResults.map(result => ({
+        surah: result.surahNumber,
+        surahName: result.surahName,
+        ayah: result.ayahNumber,
+        text: result.ayahText,
+        tafsir: `تفسير الآية ${result.ayahNumber} من ${result.surahName}`
+      }));
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching Quran:", error);
+      res.status(500).json({ message: "Failed to search Quran" });
+    }
+  });
+
   // Quran page route - fetch verses for a specific Mushaf page
   app.get('/api/quran/page/:pageNumber', async (req, res) => {
     try {
