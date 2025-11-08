@@ -141,12 +141,20 @@ export interface IStorage {
   // Student payment operations
   createStudentPayment(payment: InsertStudentPayment): Promise<StudentPayment>;
   getStudentPayments(studentId: string): Promise<StudentPayment[]>;
+  getAllPayments(): Promise<StudentPayment[]>;
   
   // Class schedule operations
   createClassSchedule(schedule: InsertClassSchedule): Promise<ClassSchedule>;
   getStudentSchedules(studentId: string): Promise<ClassSchedule[]>;
   updateClassSchedule(id: string, updates: Partial<InsertClassSchedule>): Promise<ClassSchedule>;
   deleteClassSchedule(id: string): Promise<void>;
+  
+  // Bulk export operations
+  getAllCourses(): Promise<Course[]>;
+  getAllInstructors(): Promise<Instructor[]>;
+  getAllEnrollments(): Promise<CourseEnrollment[]>;
+  getAllStudentSessions(): Promise<StudentSession[]>;
+  getAllStudentErrors(): Promise<StudentError[]>;
   
   // Supervisor operations
   createSupervisor(supervisor: InsertSupervisor): Promise<Supervisor>;
@@ -738,6 +746,16 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(studentPayments)
       .where(eq(studentPayments.studentId, studentId))
+      .orderBy(desc(studentPayments.paymentDate));
+  }
+
+  async getAllPayments(): Promise<StudentPayment[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(studentPayments)
       .orderBy(desc(studentPayments.paymentDate));
   }
 
@@ -1363,6 +1381,63 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return db!.select().from(sessionAccess).where(eq(sessionAccess.studentId, studentId)).orderBy(desc(sessionAccess.sessionDate));
+  }
+
+  // Bulk export operations
+  async getAllCourses(): Promise<Course[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(courses).orderBy(desc(courses.createdAt));
+  }
+
+  async getAllInstructors(): Promise<Instructor[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(instructors).orderBy(desc(instructors.createdAt));
+  }
+
+  async getAllEnrollments(): Promise<CourseEnrollment[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(courseEnrollments).orderBy(desc(courseEnrollments.createdAt));
+  }
+
+  async getAllStudentSessions(): Promise<StudentSession[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(studentSessions).orderBy(desc(studentSessions.createdAt));
+  }
+
+  async getAllStudentErrors(): Promise<StudentError[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!.select().from(studentErrors).orderBy(desc(studentErrors.createdAt));
+  }
+
+  async createEnrollment(enrollment: InsertEnrollment): Promise<CourseEnrollment> {
+    if (!this.isDbAvailable()) {
+      return {
+        id: `enrollment_${Date.now()}`,
+        userId: enrollment.userId,
+        courseId: enrollment.courseId,
+        enrollmentDate: new Date(),
+        status: enrollment.status || 'enrolled',
+        progress: enrollment.progress || 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+    const [newEnrollment] = await db!.insert(courseEnrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async createPayment(payment: InsertStudentPayment): Promise<StudentPayment> {
+    return this.createStudentPayment(payment);
   }
 }
 

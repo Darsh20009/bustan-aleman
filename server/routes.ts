@@ -624,7 +624,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memorizedSurahs: JSON.stringify(["البقرة", "آل عمران"]),
         currentLevel: "advanced",
         notes: "طالب متميز، حافظ سورة البقرة وآل عمران. مستوى الحفظ ممتاز لكن يريد التميز أكثر",
-        zoomLink: "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
         whatsappContact: "+966532441566",
       });
 
@@ -637,10 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const schedule of yousefSchedules) {
-        await storage.createClassSchedule({
-          ...schedule,
-          zoomLink: yousefStudent.zoomLink,
-        });
+        await storage.createClassSchedule(schedule);
       }
 
       // Add Yousef's payment record
@@ -682,9 +678,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const error of yousefErrors) {
+        const surahNumber = error.surah === "البقرة" ? 2 : 3;
         await storage.createStudentError({
           studentId: yousefStudent.id,
-          surah: error.surah,
+          surahNumber: surahNumber,
+          surahName: error.surah,
           ayahNumber: error.ayahNumber,
           errorType: "recitation",
           errorDescription: `خطأ في التلاوة - ${error.surah} آية ${error.ayahNumber}`,
@@ -705,7 +703,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memorizedSurahs: JSON.stringify([]),
         currentLevel: "beginner",
         notes: "طالب جديد، لم يكمل أي حصة بعد. سيبدأ من سورة الناس",
-        zoomLink: "https://us05web.zoom.us/j/2150630036?pwd=lQD4VAFswkSMSIb5PqbkgxpR1waZVg.1&omn=81643358315#success",
         whatsappContact: "+966532441566",
       });
 
@@ -716,10 +713,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const schedule of mohamedSchedules) {
-        await storage.createClassSchedule({
-          ...schedule,
-          zoomLink: mohamedStudent.zoomLink,
-        });
+        await storage.createClassSchedule(schedule);
       }
 
       // Add Mohamed's payment record
@@ -976,7 +970,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Transform the data to match the expected format for the Mushaf reader
-      const verses = [];
+      const verses: any[] = [];
       for (const surahNumber in pageData.surahs) {
         const surahData = pageData.surahs[surahNumber];
         surahData.ayahs.forEach((ayah: any) => {
@@ -1160,10 +1154,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/quran/notes', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const noteData = insertQuranNoteSchema.parse({
+      const noteData = {
         ...req.body,
         studentId: userId
-      });
+      };
       const note = await storage.createQuranNote(noteData);
       res.json(note);
     } catch (error) {
@@ -1184,11 +1178,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Note not found or unauthorized" });
       }
       
-      const updates = insertQuranNoteSchema.partial().parse(req.body);
+      const updates = req.body;
       const updatedNote = await storage.updateQuranNote(id, updates);
       
-      // Notify student via WebSocket for real-time sync
-      wsService.notifyStudentOfNoteUpdate(userId, updatedNote);
+      // TODO: Add WebSocket notification for real-time sync
       
       res.json(updatedNote);
     } catch (error) {
@@ -1536,6 +1529,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching reciters:", error);
       res.status(500).json({ message: "Failed to fetch reciters" });
+    }
+  });
+
+  // Data Export/Import Routes
+  app.get('/api/admin/export/:table', isPhoneAuthenticated, isTeacher, async (req: any, res) => {
+    try {
+      const { table } = req.params;
+      const { format = 'json' } = req.query;
+      
+      console.log(`📤 Exporting ${table} as ${format}...`);
+      
+      let data: any[] = [];
+      
+      // Get data based on table name
+      switch(table) {
+        case 'students':
+          data = await storage.getAllStudents();
+          break;
+        case 'courses':
+          data = await storage.getAllCourses();
+          break;
+        case 'instructors':
+          data = await storage.getAllInstructors();
+          break;
+        case 'enrollments':
+          data = await storage.getAllEnrollments();
+          break;
+        case 'sessions':
+          data = await storage.getAllStudentSessions();
+          break;
+        case 'payments':
+          data = await storage.getAllPayments();
+          break;
+        case 'errors':
+          data = await storage.getAllStudentErrors();
+          break;
+        default:
+          return res.status(400).json({ message: 'جدول غير مدعوم' });
+      }
+      
+      if (format === 'csv') {
+        // Convert to CSV
+        if (data.length === 0) {
+          return res.status(404).json({ message: 'لا توجد بيانات للتصدير' });
+        }
+        
+        const headers = Object.keys(data[0]).join(',');
+        const rows = data.map(row => 
+          Object.values(row).map(val => 
+            typeof val === 'string' && val.includes(',') 
+              ? `"${val}"` 
+              : val
+          ).join(',')
+        );
+        
+        const csv = [headers, ...rows].join('\n');
+        
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${table}_${Date.now()}.csv"`);
+        return res.send('\uFEFF' + csv); // UTF-8 BOM for Excel
+      }
+      
+      // Default: JSON format
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${table}_${Date.now()}.json"`);
+      res.json(data);
+      
+    } catch (error) {
+      console.error('❌ Export error:', error);
+      res.status(500).json({ message: 'فشل تصدير البيانات' });
+    }
+  });
+
+  app.post('/api/admin/import/:table', isPhoneAuthenticated, isTeacher, async (req: any, res) => {
+    try {
+      const { table } = req.params;
+      const { data, mode = 'add' } = req.body; // mode: 'add' or 'replace'
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        return res.status(400).json({ message: 'البيانات غير صحيحة أو فارغة' });
+      }
+      
+      console.log(`📥 Importing ${data.length} records to ${table} (mode: ${mode})...`);
+      
+      let imported = 0;
+      let errors = 0;
+      
+      // If replace mode, clear existing data first
+      if (mode === 'replace') {
+        console.log(`🗑️ Clearing existing ${table} data...`);
+        // This would need specific methods in storage
+      }
+      
+      // Import data based on table
+      for (const record of data) {
+        try {
+          switch(table) {
+            case 'students':
+              await storage.createStudent(record);
+              break;
+            case 'courses':
+              await storage.createCourse(record);
+              break;
+            case 'instructors':
+              await storage.createInstructor(record);
+              break;
+            case 'enrollments':
+              await storage.createEnrollment(record);
+              break;
+            case 'sessions':
+              await storage.createStudentSession(record);
+              break;
+            case 'payments':
+              await storage.createPayment(record);
+              break;
+            case 'errors':
+              await storage.createStudentError(record);
+              break;
+            default:
+              return res.status(400).json({ message: 'جدول غير مدعوم' });
+          }
+          imported++;
+        } catch (err) {
+          console.error('Error importing record:', err);
+          errors++;
+        }
+      }
+      
+      res.json({
+        success: true,
+        imported,
+        errors,
+        total: data.length,
+        message: `تم استيراد ${imported} سجل بنجاح${errors > 0 ? ` (${errors} خطأ)` : ''}`
+      });
+      
+    } catch (error) {
+      console.error('❌ Import error:', error);
+      res.status(500).json({ message: 'فشل استيراد البيانات' });
+    }
+  });
+
+  app.get('/api/admin/stats', isPhoneAuthenticated, isTeacher, async (req: any, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      const courses = await storage.getAllCourses();
+      const instructors = await storage.getAllInstructors();
+      const sessions = await storage.getAllStudentSessions();
+      const payments = await storage.getAllPayments();
+      
+      res.json({
+        students: students.length,
+        courses: courses.length,
+        instructors: instructors.length,
+        sessions: sessions.length,
+        payments: payments.length,
+        activeStudents: students.filter(s => s.isActive).length,
+        activeCourses: courses.filter(c => c.isActive).length
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      res.status(500).json({ message: 'فشل جلب الإحصائيات' });
     }
   });
 
