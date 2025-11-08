@@ -91,6 +91,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
   const [showTafsir, setShowTafsir] = useState<{ [key: number]: boolean }>({});
   const [tafsirData, setTafsirData] = useState<{ [key: number]: string }>({});
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(true);
 
   const reciters: Reciter[] = [
     { id: 'ar.alafasy', name: 'مشاري العفاسي', style: 'مرتل' },
@@ -734,28 +735,41 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         </div>
       </div>
 
-      <div className="fixed bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 border-2 border-emerald-200">
-        <div className="text-xs text-emerald-800">
-          <p className="font-bold mb-2">اختصارات لوحة المفاتيح:</p>
-          <p>← السهم الأيسر: الصفحة التالية</p>
-          <p>→ السهم الأيمن: الصفحة السابقة</p>
-          <div className="mt-3 pt-3 border-t border-emerald-200">
-            <p className="font-bold mb-1">العلامات:</p>
-            <div className="flex items-center gap-1 mb-1">
-              <CheckCircle2 className="w-3 h-3 text-green-600" />
-              <span>محفوظ</span>
-            </div>
-            <div className="flex items-center gap-1 mb-1">
-              <RefreshCw className="w-3 h-3 text-amber-600" />
-              <span>للمراجعة</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <StickyNote className="w-3 h-3 text-blue-600" />
-              <span>ملاحظة</span>
+      {showKeyboardShortcuts && (
+        <div className="fixed bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 border-2 border-emerald-200">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <p className="font-bold text-xs text-emerald-800">اختصارات لوحة المفاتيح:</p>
+            <Button
+              onClick={() => setShowKeyboardShortcuts(false)}
+              size="sm"
+              variant="ghost"
+              className="h-5 w-5 p-0 hover:bg-emerald-100"
+              data-testid="button-close-shortcuts"
+            >
+              <X className="w-3 h-3 text-emerald-600" />
+            </Button>
+          </div>
+          <div className="text-xs text-emerald-800">
+            <p>← السهم الأيسر: الصفحة التالية</p>
+            <p>→ السهم الأيمن: الصفحة السابقة</p>
+            <div className="mt-3 pt-3 border-t border-emerald-200">
+              <p className="font-bold mb-1">العلامات:</p>
+              <div className="flex items-center gap-1 mb-1">
+                <CheckCircle2 className="w-3 h-3 text-green-600" />
+                <span>محفوظ</span>
+              </div>
+              <div className="flex items-center gap-1 mb-1">
+                <RefreshCw className="w-3 h-3 text-amber-600" />
+                <span>للمراجعة</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <StickyNote className="w-3 h-3 text-blue-600" />
+                <span>ملاحظة</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
         <DialogContent className="sm:max-w-[500px]" dir="rtl">
