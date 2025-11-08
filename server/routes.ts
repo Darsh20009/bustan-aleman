@@ -32,6 +32,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await initializePreregisteredUsers();
   console.log("✅ registerRoutes: Pre-registered users initialized");
 
+  // Temporary migration endpoint - للاستخدام مرة واحدة فقط
+  app.post('/api/admin/run-migration', async (req, res) => {
+    try {
+      const { readFileSync } = await import('fs');
+      const { db } = await import('./db');
+      const { sql: rawSql } = await import('drizzle-orm');
+      
+      console.log('📁 Reading migration file...');
+      const migrationSQL = readFileSync('./migrations/0000_organic_fabian_cortez.sql', 'utf8');
+      
+      console.log('🔄 Executing migration...');
+      await db.execute(rawSql.raw(migrationSQL));
+      
+      console.log('✅ Migration completed!');
+      
+      res.json({ 
+        success: true, 
+        message: 'تم إنشاء الجداول بنجاح' 
+      });
+    } catch (error: any) {
+      console.error('❌ Migration error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message 
+      });
+    }
+  });
+
   // User profile routes
   app.patch('/api/user/profile', isPhoneAuthenticated, async (req: any, res) => {
     try {

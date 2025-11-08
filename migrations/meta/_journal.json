@@ -8,6 +8,13 @@
       "when": 1762603538483,
       "tag": "0000_organic_fabian_cortez",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1762635302378,
+      "tag": "0001_silent_albert_cleary",
+      "breakpoints": true
     }
   ]
 }
