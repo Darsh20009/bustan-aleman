@@ -742,6 +742,11 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertLiveAnnotationSchema = createInsertSchema(liveAnnotations).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertQuranWordHighlightSchema = createInsertSchema(quranWordHighlights).omit({
   id: true,
   createdAt: true,
@@ -830,6 +835,8 @@ export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type LiveAnnotation = typeof liveAnnotations.$inferSelect;
+export type InsertLiveAnnotation = z.infer<typeof insertLiveAnnotationSchema>;
 export type QuranWordHighlight = typeof quranWordHighlights.$inferSelect;
 export type InsertQuranWordHighlight = z.infer<typeof insertQuranWordHighlightSchema>;
 export type QuranMemorization = typeof quranMemorization.$inferSelect;

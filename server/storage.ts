@@ -21,6 +21,7 @@ import {
   quranNotes,
   sessionAccess,
   dailyAssignments,
+  liveAnnotations,
   type User,
   type UpsertUser,
   type Course,
@@ -65,6 +66,8 @@ import {
   type InsertSessionAccess,
   type DailyAssignment,
   type InsertDailyAssignment,
+  type LiveAnnotation,
+  type InsertLiveAnnotation,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -214,6 +217,13 @@ export interface IStorage {
   
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
+  
+  // Live annotation operations
+  createLiveAnnotation(annotation: InsertLiveAnnotation): Promise<LiveAnnotation>;
+  getStudentAnnotations(studentId: string, surahNumber?: number, ayahNumber?: number): Promise<LiveAnnotation[]>;
+  getAnnotationsByAyah(studentId: string, surahNumber: number, ayahNumber: number): Promise<LiveAnnotation[]>;
+  updateLiveAnnotation(id: string, updates: Partial<InsertLiveAnnotation>): Promise<LiveAnnotation>;
+  deleteLiveAnnotation(id: string): Promise<void>;
   getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined>;
   getAllSessionAccess(studentId: string): Promise<SessionAccess[]>;
 }
@@ -1381,6 +1391,68 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return db!.select().from(sessionAccess).where(eq(sessionAccess.studentId, studentId)).orderBy(desc(sessionAccess.sessionDate));
+  }
+
+  // Live annotation operations
+  async createLiveAnnotation(annotation: InsertLiveAnnotation): Promise<LiveAnnotation> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newAnnotation] = await db!.insert(liveAnnotations).values(annotation).returning();
+    return newAnnotation;
+  }
+
+  async getStudentAnnotations(studentId: string, surahNumber?: number, ayahNumber?: number): Promise<LiveAnnotation[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    // Build predicates array for cleaner composition
+    const predicates = [eq(liveAnnotations.studentId, studentId)];
+    
+    if (surahNumber) {
+      predicates.push(eq(liveAnnotations.surahNumber, surahNumber));
+    }
+    
+    if (ayahNumber) {
+      predicates.push(eq(liveAnnotations.ayahNumber, ayahNumber));
+    }
+    
+    return db!.select().from(liveAnnotations)
+      .where(and(...predicates))
+      .orderBy(desc(liveAnnotations.createdAt));
+  }
+
+  async getAnnotationsByAyah(studentId: string, surahNumber: number, ayahNumber: number): Promise<LiveAnnotation[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    return db!.select().from(liveAnnotations)
+      .where(and(
+        eq(liveAnnotations.studentId, studentId),
+        eq(liveAnnotations.surahNumber, surahNumber),
+        eq(liveAnnotations.ayahNumber, ayahNumber)
+      ))
+      .orderBy(desc(liveAnnotations.createdAt));
+  }
+
+  async updateLiveAnnotation(id: string, updates: Partial<InsertLiveAnnotation>): Promise<LiveAnnotation> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(liveAnnotations)
+      .set(updates)
+      .where(eq(liveAnnotations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteLiveAnnotation(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!.delete(liveAnnotations).where(eq(liveAnnotations.id, id));
   }
 
   // Bulk export operations

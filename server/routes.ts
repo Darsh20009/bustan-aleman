@@ -481,6 +481,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live annotation routes - Sheikh annotations on student Quran
+  app.post('/api/live-annotations', isTeacher, async (req: any, res) => {
+    try {
+      const sheikhId = req.session.userId;
+      
+      // Validate request body with Zod schema
+      const { insertLiveAnnotationSchema } = await import("@shared/schema");
+      const validationResult = insertLiveAnnotationSchema.safeParse({
+        ...req.body,
+        sheikhId,
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "بيانات التعليق غير صحيحة",
+          errors: validationResult.error.issues 
+        });
+      }
+      
+      const annotation = await storage.createLiveAnnotation(validationResult.data);
+      res.json(annotation);
+    } catch (error) {
+      console.error("Error creating annotation:", error);
+      res.status(500).json({ message: "فشل إنشاء التعليق" });
+    }
+  });
+
+  app.get('/api/live-annotations/student/:studentId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId } = req.params;
+      const { surah, ayah } = req.query;
+      const currentUserId = req.session.userId;
+      const userRole = req.session.role;
+      
+      // Authorization: Only allow teachers or the student themselves
+      if (userRole !== 'teacher' && userRole !== 'sheikh' && currentUserId !== studentId) {
+        return res.status(403).json({ message: "غير مصرح لك بعرض هذه التعليقات" });
+      }
+      
+      const surahNumber = surah ? parseInt(surah as string) : undefined;
+      const ayahNumber = ayah ? parseInt(ayah as string) : undefined;
+      
+      if (surah && isNaN(surahNumber!)) {
+        return res.status(400).json({ message: "رقم السورة غير صحيح" });
+      }
+      if (ayah && isNaN(ayahNumber!)) {
+        return res.status(400).json({ message: "رقم الآية غير صحيح" });
+      }
+      
+      const annotations = await storage.getStudentAnnotations(
+        studentId,
+        surahNumber,
+        ayahNumber
+      );
+      res.json(annotations);
+    } catch (error) {
+      console.error("Error fetching annotations:", error);
+      res.status(500).json({ message: "فشل جلب التعليقات" });
+    }
+  });
+
+  app.get('/api/live-annotations/ayah/:studentId/:surah/:ayah', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { studentId, surah, ayah } = req.params;
+      const currentUserId = req.session.userId;
+      const userRole = req.session.role;
+      
+      // Authorization: Only allow teachers or the student themselves
+      if (userRole !== 'teacher' && userRole !== 'sheikh' && currentUserId !== studentId) {
+        return res.status(403).json({ message: "غير مصرح لك بعرض هذه التعليقات" });
+      }
+      
+      const surahNumber = parseInt(surah);
+      const ayahNumber = parseInt(ayah);
+      
+      if (isNaN(surahNumber) || isNaN(ayahNumber)) {
+        return res.status(400).json({ message: "أرقام السورة والآية غير صحيحة" });
+      }
+      
+      const annotations = await storage.getAnnotationsByAyah(
+        studentId,
+        surahNumber,
+        ayahNumber
+      );
+      res.json(annotations);
+    } catch (error) {
+      console.error("Error fetching ayah annotations:", error);
+      res.status(500).json({ message: "فشل جلب تعليقات الآية" });
+    }
+  });
+
+  app.delete('/api/live-annotations/:id', isTeacher, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLiveAnnotation(id);
+      res.json({ message: "تم حذف التعليق بنجاح" });
+    } catch (error) {
+      console.error("Error deleting annotation:", error);
+      res.status(500).json({ message: "فشل حذف التعليق" });
+    }
+  });
+
   // Telegram login verification route
   app.post('/api/telegram/login', async (req, res) => {
     try {
