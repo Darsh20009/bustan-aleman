@@ -29,12 +29,13 @@ import MySessionPage from "./pages/MySessionPage";
 import MyNotesPage from "./pages/MyNotesPage";
 import SheikhScheduleManager from "./pages/SheikhScheduleManager";
 import SheikhQuranEditing from "./pages/SheikhQuranEditing";
+import DataManagement from "./pages/DataManagement";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management'];
   return validStates.includes(path as AppState);
 };
 
@@ -228,15 +229,22 @@ function AppContent() {
         }
       
       case 'sheikh-schedule':
-        if (isAuthenticated && (user?.role === 'teacher' || user?.role === 'supervisor')) {
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
           return <SheikhScheduleManager />;
         } else {
           return <AuthPage />;
         }
       
       case 'sheikh-quran-editing':
-        if (isAuthenticated && (user?.role === 'teacher' || user?.role === 'supervisor')) {
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
           return <SheikhQuranEditing />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'data-management':
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
+          return <DataManagement />;
         } else {
           return <AuthPage />;
         }
