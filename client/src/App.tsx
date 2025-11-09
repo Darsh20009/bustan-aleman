@@ -10,6 +10,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 // Import our new authentication components
 import { AuthPage } from "./components/AuthPage";
 import { RoleBasedNav } from "./components/RoleBasedNav";
+import { SupportChat } from "./components/SupportChat";
 
 // Import existing components
 import { BustanSplashScreen } from "./components/BustanSplashScreen";
@@ -289,6 +290,7 @@ function AppContent() {
     <div className="min-h-screen" dir="rtl">
       <Toaster />
       {renderCurrentState()}
+      <SupportChat />
     </div>
   );
 }
