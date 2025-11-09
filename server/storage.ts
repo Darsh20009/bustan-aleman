@@ -22,6 +22,7 @@ import {
   sessionAccess,
   dailyAssignments,
   liveAnnotations,
+  messages,
   type User,
   type UpsertUser,
   type Course,
@@ -68,11 +69,13 @@ import {
   type InsertDailyAssignment,
   type LiveAnnotation,
   type InsertLiveAnnotation,
+  type Message,
+  type InsertMessage,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
 import { hashPassword, verifyPassword } from "./authUtils";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -193,6 +196,10 @@ export interface IStorage {
   deleteMemorization(id: string): Promise<void>;
   getDueReviews(studentId: string, untilDate?: Date): Promise<QuranMemorization[]>;
   updateReviewOutcome(id: string, reviewData: { difficulty: 'easy' | 'medium' | 'hard'; reviewCount: number; lastReviewed: Date; nextReviewDate: Date; masteryLevel: number; status: string }): Promise<QuranMemorization>;
+  
+  // Message operations
+  getMessagesForUser(userId: string): Promise<Message[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
   
   // Quran reading statistics operations
   createOrUpdateReadingStats(stats: InsertQuranReadingStats): Promise<QuranReadingStats>;
@@ -1510,6 +1517,44 @@ export class DatabaseStorage implements IStorage {
 
   async createPayment(payment: InsertStudentPayment): Promise<StudentPayment> {
     return this.createStudentPayment(payment);
+  }
+
+  // Message operations
+  async getMessagesForUser(userId: string): Promise<Message[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    // Get messages where user is sender or receiver
+    const userMessages = await db!
+      .select()
+      .from(messages)
+      .where(
+        sql`${messages.senderId} = ${userId} OR ${messages.receiverId} = ${userId} OR ${messages.isGroupMessage} = true`
+      )
+      .orderBy(desc(messages.createdAt));
+    
+    return userMessages;
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    if (!this.isDbAvailable()) {
+      const mockMessage: Message = {
+        id: `msg_${Date.now()}`,
+        senderId: message.senderId,
+        receiverId: message.receiverId || null,
+        content: message.content,
+        messageType: message.messageType || 'text',
+        isRead: false,
+        readAt: null,
+        isGroupMessage: message.isGroupMessage || false,
+        createdAt: new Date(),
+      };
+      return mockMessage;
+    }
+    
+    const [newMessage] = await db!.insert(messages).values(message).returning();
+    return newMessage;
   }
 }
 

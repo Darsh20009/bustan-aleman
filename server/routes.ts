@@ -1805,6 +1805,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Messages API - Support Chat
+  app.get('/api/messages/:userId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const sessionUserId = (req.session as any).userId;
+      
+      if (!sessionUserId) {
+        return res.status(401).json({ message: 'غير مسجل الدخول' });
+      }
+      
+      const messages = await storage.getMessagesForUser(sessionUserId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: 'فشل جلب الرسائل' });
+    }
+  });
+
+  app.post('/api/messages', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const sessionUserId = (req.session as any).userId;
+      
+      if (!sessionUserId) {
+        return res.status(401).json({ message: 'غير مسجل الدخول' });
+      }
+      
+      const { content, messageType, receiverId } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: 'المحتوى مطلوب' });
+      }
+      
+      const message = await storage.createMessage({
+        senderId: sessionUserId,
+        receiverId: receiverId || null,
+        content: content.trim(),
+        messageType: messageType || 'text',
+        isRead: false,
+        isGroupMessage: !receiverId,
+      });
+      
+      res.json(message);
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).json({ message: 'فشل إرسال الرسالة' });
+    }
+  });
+
+  // Contact form API
+  app.post('/api/contact', async (req, res) => {
+    try {
+      const validatedData = insertContactMessageSchema.parse(req.body);
+      const contactMessage = await storage.createContactMessage(validatedData);
+      
+      res.json({
+        success: true,
+        message: 'تم إرسال رسالتك بنجاح',
+        data: contactMessage
+      });
+    } catch (error: any) {
+      console.error('Error creating contact message:', error);
+      res.status(400).json({ 
+        success: false,
+        message: error.message || 'فشل إرسال الرسالة' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

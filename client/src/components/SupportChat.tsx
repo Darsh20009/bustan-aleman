@@ -66,13 +66,10 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest('/api/messages', {
-        method: 'POST',
-        body: JSON.stringify({
-          content,
-          messageType: 'text',
-          receiverId: userRole === 'student' ? null : null, // Will be handled by backend
-        }),
+      return await apiRequest('POST', '/api/messages', {
+        content,
+        messageType: 'text',
+        receiverId: userRole === 'student' ? null : null, // Will be handled by backend
       });
     },
     onSuccess: () => {
@@ -92,10 +89,7 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
   // Send contact message mutation
   const sendContactMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/contact', {
-        method: 'POST',
-        body: JSON.stringify(contactForm),
-      });
+      return await apiRequest('POST', '/api/contact', contactForm);
     },
     onSuccess: () => {
       toast({
