@@ -69,7 +69,10 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
       return await apiRequest('POST', '/api/messages', {
         content,
         messageType: 'text',
-        receiverId: userRole === 'student' ? null : null, // Will be handled by backend
+        // Students send to all supervisors (group message)
+        // Supervisors/admins will need to specify receiverId in future enhancement
+        receiverId: userRole === 'student' ? null : null,
+        isGroupMessage: userRole === 'student' ? true : false,
       });
     },
     onSuccess: () => {

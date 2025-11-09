@@ -290,7 +290,7 @@ function AppContent() {
     <div className="min-h-screen" dir="rtl">
       <Toaster />
       {renderCurrentState()}
-      <SupportChat />
+      {user && <SupportChat userId={user.id} userRole={user.role} />}
     </div>
   );
 }
