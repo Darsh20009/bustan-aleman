@@ -31,6 +31,7 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState<'chat' | 'contact'>('chat');
   const [message, setMessage] = useState('');
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState({
     name: '',
     email: '',
@@ -56,6 +57,12 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
   };
 
   const [available] = useState(isSupportAvailable());
+
+  // Fetch students list for supervisors/admins
+  const { data: students } = useQuery<any[]>({
+    queryKey: ['/api/students'],
+    enabled: !!userId && isOpen && (userRole === 'supervisor' || userRole === 'admin'),
+  });
 
   // Fetch initial messages (HTTP) - only once, then WebSocket takes over
   const { data: messages, isLoading } = useQuery<Message[]>({
@@ -130,11 +137,16 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
   // Send message via WebSocket (or fallback to HTTP if WS not connected)
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
+      // Validate receiver for supervisors/admins
+      if (userRole !== 'student' && !selectedStudentId) {
+        throw new Error('يرجى اختيار طالب لإرسال الرسالة إليه');
+      }
+
       const messageData = {
         content,
         messageType: 'text',
         senderId: userId,
-        receiverId: userRole === 'student' ? null : null,
+        receiverId: userRole === 'student' ? null : selectedStudentId,
         isGroupMessage: userRole === 'student' ? true : false,
       };
 
@@ -387,7 +399,24 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
 
                   {/* Message Input */}
                   {userId && (
-                    <div className="p-3 border-t bg-white">
+                    <div className="p-3 border-t bg-white space-y-2">
+                      {/* Student selector for supervisors/admins */}
+                      {(userRole === 'supervisor' || userRole === 'admin') && (
+                        <select
+                          value={selectedStudentId || ''}
+                          onChange={(e) => setSelectedStudentId(e.target.value || null)}
+                          className="w-full p-2 border rounded-md text-sm"
+                          data-testid="select-student"
+                        >
+                          <option value="">اختر طالباً...</option>
+                          {students?.map((student) => (
+                            <option key={student.id} value={student.id}>
+                              {student.name || student.fullName || `طالب ${student.id}`}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      
                       <div className="flex gap-2">
                         <Input
                           placeholder="اكتب رسالتك..."
@@ -400,7 +429,11 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
                         <Button
                           size="icon"
                           onClick={handleSendMessage}
-                          disabled={!message.trim() || sendMessageMutation.isPending}
+                          disabled={
+                            !message.trim() || 
+                            sendMessageMutation.isPending ||
+                            (userRole !== 'student' && !selectedStudentId)
+                          }
                           className="bg-emerald-500 hover:bg-emerald-600"
                           data-testid="button-send-message"
                         >
