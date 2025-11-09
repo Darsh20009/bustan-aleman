@@ -39,6 +39,7 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
     message: ''
   });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
 
   // Check if support is available based on current time
@@ -56,29 +57,108 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
 
   const [available] = useState(isSupportAvailable());
 
-  // Fetch messages if user is logged in
+  // Fetch initial messages (HTTP) - only once, then WebSocket takes over
   const { data: messages, isLoading } = useQuery<Message[]>({
     queryKey: ['/api/messages', userId],
     enabled: !!userId && isOpen,
-    refetchInterval: 5000, // Poll every 5 seconds when chat is open
   });
 
-  // Send message mutation
+  // Setup WebSocket connection for real-time messages
+  useEffect(() => {
+    if (!userId || !isOpen) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('🔌 WebSocket connected');
+      // Authenticate
+      ws.send(JSON.stringify({
+        type: 'auth',
+        payload: {
+          userId,
+          role: userRole,
+          studentId: userId, // For students, userId === studentId
+        }
+      }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'chat_message') {
+          // Update React Query cache with new message
+          queryClient.setQueryData<Message[]>(
+            ['/api/messages', userId],
+            (oldMessages) => {
+              if (!oldMessages) return [data.payload];
+              
+              // Check if message already exists to avoid duplicates
+              const exists = oldMessages.some(m => m.id === data.payload.id);
+              if (exists) return oldMessages;
+              
+              return [...oldMessages, data.payload];
+            }
+          );
+        } else if (data.type === 'auth_success') {
+          console.log('✅ WebSocket authenticated');
+        }
+      } catch (error) {
+        console.error('❌ Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('❌ WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('👋 WebSocket disconnected');
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [userId, userRole, isOpen]);
+
+  // Send message via WebSocket (or fallback to HTTP if WS not connected)
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      return await apiRequest('POST', '/api/messages', {
+      const messageData = {
         content,
         messageType: 'text',
-        // Students send to all supervisors (group message)
-        // Supervisors/admins will need to specify receiverId in future enhancement
+        senderId: userId,
         receiverId: userRole === 'student' ? null : null,
         isGroupMessage: userRole === 'student' ? true : false,
-      });
+      };
+
+      // Try WebSocket first
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'chat_message',
+          payload: messageData
+        }));
+        return messageData; // Return immediately, actual message will come via WebSocket
+      } else {
+        // Fallback to HTTP if WebSocket not available
+        console.warn('⚠️ WebSocket not ready, using HTTP fallback');
+        return await apiRequest('POST', '/api/messages', messageData);
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+    onSuccess: (data) => {
       setMessage('');
       scrollToBottom();
+      
+      // Only invalidate if we used HTTP fallback
+      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+      }
     },
     onError: () => {
       toast({

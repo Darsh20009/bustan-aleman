@@ -47,6 +47,9 @@ class WebSocketService {
       case 'auth':
         this.handleAuth(ws, payload);
         break;
+      case 'chat_message':
+        this.handleChatMessage(ws, payload);
+        break;
       case 'student_update':
         this.broadcastToSupervisors(payload);
         break;
@@ -117,6 +120,70 @@ class WebSocketService {
         client.ws.send(JSON.stringify(payload));
       }
     });
+  }
+
+  private async handleChatMessage(ws: WebSocket, payload: any) {
+    const { content, senderId, receiverId, isGroupMessage, messageType = 'text' } = payload;
+    
+    // Import storage here to avoid circular dependency
+    const { storage } = await import('./storage');
+    
+    try {
+      // Save message to database
+      const savedMessage = await storage.createMessage({
+        senderId,
+        receiverId: receiverId || null,
+        content,
+        messageType,
+        isGroupMessage: isGroupMessage || false,
+      });
+
+      // Echo back to sender
+      ws.send(JSON.stringify({
+        type: 'chat_message',
+        payload: savedMessage
+      }));
+
+      // Route message based on group or direct
+      if (isGroupMessage) {
+        // Broadcast to all supervisors/admins
+        this.broadcastChatMessage(savedMessage, senderId);
+      } else if (receiverId) {
+        // Send to specific user
+        this.sendChatMessageToUser(receiverId, savedMessage);
+      }
+
+      console.log(`📨 Chat message from ${senderId} ${isGroupMessage ? '(broadcast)' : `to ${receiverId}`}`);
+    } catch (error) {
+      console.error('❌ Error handling chat message:', error);
+      ws.send(JSON.stringify({
+        type: 'error',
+        payload: { message: 'Failed to send message' }
+      }));
+    }
+  }
+
+  private broadcastChatMessage(message: any, excludeUserId?: string) {
+    this.clients.forEach((client) => {
+      if (client.role === 'supervisor' || client.role === 'admin') {
+        if (!excludeUserId || client.userId !== excludeUserId) {
+          client.ws.send(JSON.stringify({
+            type: 'chat_message',
+            payload: message
+          }));
+        }
+      }
+    });
+  }
+
+  private sendChatMessageToUser(userId: string, message: any) {
+    const client = this.clients.get(userId);
+    if (client) {
+      client.ws.send(JSON.stringify({
+        type: 'chat_message',
+        payload: message
+      }));
+    }
   }
 
   private handleSessionEnable(payload: any) {
