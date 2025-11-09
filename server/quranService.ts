@@ -275,7 +275,17 @@ class QuranService {
   }
 
   private removeDiacritics(text: string): string {
-    return text.replace(/[\u064B-\u065F\u0670]/g, '');
+    // Remove all Arabic diacritics (tashkeel) and special marks
+    return text
+      .replace(/[\u064B-\u065F]/g, '') // Fathatan, Dammatan, Kasratan, Fatha, Damma, Kasra, Shadda, Sukun, etc.
+      .replace(/[\u0670]/g, '') // Alif Khanjariyah
+      .replace(/[\u06D6-\u06DC]/g, '') // Small High Ligature Sad, etc.
+      .replace(/[\u06DF-\u06E8]/g, '') // Small High Rounded Zero, etc.
+      .replace(/[\u06EA-\u06ED]/g, '') // Empty Centre Low Stop, etc.
+      .replace(/[\u08D3-\u08E1]/g, '') // Small Low Waw, etc.
+      .replace(/[\u08E3-\u08FF]/g, '') // Arabic Turned Damma, etc.
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .trim();
   }
 
   async searchQuran(query: string): Promise<any[]> {
