@@ -17,6 +17,8 @@ interface SessionAccess {
   endTime: string;
   isEnabled: boolean;
   enabledAt?: string;
+  roomToken?: string;
+  roomId?: string;
 }
 
 interface Assignment {
@@ -56,6 +58,7 @@ export default function MySessionPage() {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'session_enabled') {
+        console.log('📢 Session enabled notification received:', data.data);
         toast({
           title: "🎉 تم تفعيل الحصة!",
           description: "يمكنك الآن الدخول للحصة المباشرة",
@@ -109,10 +112,19 @@ export default function MySessionPage() {
       return;
     }
 
+    if (!session.roomToken) {
+      toast({
+        title: "خطأ",
+        description: "لم يتم إنشاء غرفة الحصة بعد، الرجاء المحاولة مرة أخرى",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setJoiningSession(session.id);
     
     setTimeout(() => {
-      setActiveRoomId(session.id);
+      setActiveRoomId(session.roomToken!);
       setJoiningSession(null);
       
       toast({
