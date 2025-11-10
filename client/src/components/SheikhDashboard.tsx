@@ -12,6 +12,8 @@ import { motion } from 'framer-motion';
 import { SurahAyahSelector } from './SurahAyahSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
+import LiveSessionRoom from '../pages/LiveSessionRoom';
+import { useAuth } from '../hooks/useAuth';
 
 interface Student {
   id: string;
@@ -31,6 +33,8 @@ export function SheikhDashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [showAddScheduleDialog, setShowAddScheduleDialog] = useState(false);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const [newStudent, setNewStudent] = useState({
     studentName: '',
     phoneNumber: '',
@@ -45,6 +49,7 @@ export function SheikhDashboard() {
     endTime: ''
   });
   const { toast} = useToast();
+  const { user } = useAuth();
   
   useEffect(() => {
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
@@ -112,10 +117,17 @@ export function SheikhDashboard() {
       });
       
       if (response.ok) {
+        const data = await response.json();
         toast({
           title: "تم تفعيل الحصة ✅",
-          description: "يمكن للطالب الدخول الآن",
+          description: "جاري فتح غرفة الحصة المباشرة...",
         });
+        
+        // فتح غرفة الحصة المباشرة للشيخ
+        setTimeout(() => {
+          setActiveRoomId(data.sessionId || schedule.id);
+          setActiveStudentId(studentId);
+        }, 500);
       }
     } catch (error) {
       console.error('Error enabling session:', error);
@@ -246,6 +258,25 @@ export function SheikhDashboard() {
       });
     }
   };
+
+  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
+  if (activeRoomId && activeStudentId && user?.id) {
+    return (
+      <LiveSessionRoom
+        roomId={activeRoomId}
+        studentId={activeStudentId}
+        sheikhId={user.id}
+        onLeave={() => {
+          setActiveRoomId(null);
+          setActiveStudentId(null);
+          toast({
+            title: "تم مغادرة الحصة",
+            description: "عودة إلى لوحة التحكم",
+          });
+        }}
+      />
+    );
+  }
 
   if (loading) {
     return (
