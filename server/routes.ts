@@ -1810,12 +1810,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId } = req.params;
       const sessionUserId = (req.session as any).userId;
+      const sessionUserRole = (req.session as any).role;
       
       if (!sessionUserId) {
         return res.status(401).json({ message: 'غير مسجل الدخول' });
       }
       
-      const messages = await storage.getMessagesForUser(sessionUserId);
+      // For supervisors/admins, they can view any user's messages
+      // For students, they can only view their own messages
+      const targetUserId = (sessionUserRole === 'supervisor' || sessionUserRole === 'admin') 
+        ? userId 
+        : sessionUserId;
+      
+      const messages = await storage.getMessagesForUser(targetUserId);
       res.json(messages);
     } catch (error) {
       console.error('Error fetching messages:', error);

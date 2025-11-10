@@ -58,6 +58,13 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
 
   const [available] = useState(isSupportAvailable());
 
+  // Determine the effective conversation ID
+  // For supervisors/admins: selected student ID
+  // For students: their own ID
+  const effectiveConversationId = (userRole === 'supervisor' || userRole === 'admin')
+    ? selectedStudentId
+    : userId;
+
   // Fetch students list for supervisors/admins
   const { data: students } = useQuery<any[]>({
     queryKey: ['/api/students'],
@@ -66,8 +73,8 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
 
   // Fetch initial messages (HTTP) - only once, then WebSocket takes over
   const { data: messages, isLoading } = useQuery<Message[]>({
-    queryKey: ['/api/messages', userId],
-    enabled: !!userId && isOpen,
+    queryKey: [`/api/messages/${effectiveConversationId}`],
+    enabled: !!userId && !!effectiveConversationId && isOpen,
   });
 
   // Setup WebSocket connection for real-time messages
@@ -99,18 +106,24 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
         
         if (data.type === 'chat_message') {
           // Update React Query cache with new message
-          queryClient.setQueryData<Message[]>(
-            ['/api/messages', userId],
-            (oldMessages) => {
-              if (!oldMessages) return [data.payload];
-              
-              // Check if message already exists to avoid duplicates
-              const exists = oldMessages.some(m => m.id === data.payload.id);
-              if (exists) return oldMessages;
-              
-              return [...oldMessages, data.payload];
-            }
-          );
+          const conversationId = (userRole === 'supervisor' || userRole === 'admin')
+            ? selectedStudentId
+            : userId;
+          
+          if (conversationId) {
+            queryClient.setQueryData<Message[]>(
+              [`/api/messages/${conversationId}`],
+              (oldMessages) => {
+                if (!oldMessages) return [data.payload];
+                
+                // Check if message already exists to avoid duplicates
+                const exists = oldMessages.some(m => m.id === data.payload.id);
+                if (exists) return oldMessages;
+                
+                return [...oldMessages, data.payload];
+              }
+            );
+          }
         } else if (data.type === 'auth_success') {
           console.log('✅ WebSocket authenticated');
         }
@@ -132,7 +145,7 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
         ws.close();
       }
     };
-  }, [userId, userRole, isOpen]);
+  }, [userId, userRole, isOpen, selectedStudentId]);
 
   // Send message via WebSocket (or fallback to HTTP if WS not connected)
   const sendMessageMutation = useMutation({
@@ -169,7 +182,12 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
       
       // Only invalidate if we used HTTP fallback
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-        queryClient.invalidateQueries({ queryKey: ['/api/messages'] });
+        const conversationId = (userRole === 'supervisor' || userRole === 'admin')
+          ? selectedStudentId
+          : userId;
+        if (conversationId) {
+          queryClient.invalidateQueries({ queryKey: [`/api/messages/${conversationId}`] });
+        }
       }
     },
     onError: () => {
@@ -359,6 +377,10 @@ export function SupportChat({ userId, userRole }: SupportChatProps) {
                             </Button>
                           </div>
                         </div>
+                      </div>
+                    ) : (userRole === 'supervisor' || userRole === 'admin') && !selectedStudentId ? (
+                      <div className="text-center text-muted-foreground py-8">
+                        <p>يرجى اختيار طالب من القائمة أدناه لعرض الرسائل</p>
                       </div>
                     ) : isLoading ? (
                       <div className="text-center text-muted-foreground py-8">
