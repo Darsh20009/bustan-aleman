@@ -117,6 +117,7 @@ export const contactMessages = bustanSchema.table("contact_messages", {
 export const students = bustanSchema.table("students", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id),
+  sheikhId: varchar("sheikh_id").references(() => users.id), // Sheikh assigned to this student
   studentName: varchar("student_name").notNull(),
   passwordHash: varchar("password_hash").notNull(), // Hashed password for security
   phoneNumber: varchar("phone_number"), // رقم الهاتف
@@ -863,4 +864,13 @@ export type QuranAyahMarker = typeof quranAyahMarkers.$inferSelect;
 export type InsertQuranAyahMarker = z.infer<typeof insertQuranAyahMarkerSchema>;
 export type QuranRecitationAttempt = typeof quranRecitationAttempts.$inferSelect;
 export type InsertQuranRecitationAttempt = z.infer<typeof insertQuranRecitationAttemptSchema>;
+
+// Extended types for Sheikh session view (joins session with student and room data)
+export interface SheikhSessionView extends SessionAccess {
+  studentName: string;
+  studentPhone: string | null;
+  roomToken?: string | null;
+  roomId?: string | null;
+  roomStatus?: string | null;
+}
 

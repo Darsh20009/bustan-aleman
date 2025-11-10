@@ -9,6 +9,17 @@ declare module 'express-session' {
   }
 }
 
+// Extend Express Request to include user
+declare module 'express-serve-static-core' {
+  interface Request {
+    user?: {
+      id: string;
+      role: 'student' | 'supervisor' | 'admin';
+      studentId?: string;
+    };
+  }
+}
+
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;

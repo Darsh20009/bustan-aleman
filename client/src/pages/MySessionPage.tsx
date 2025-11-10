@@ -44,17 +44,21 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (!user) return;
+    
     fetchSessions();
-    fetchTodayAssignment();
+    if (user.role === 'student') {
+      fetchTodayAssignment();
+    }
 
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
     
     ws.onopen = () => {
       const userId = sessionStorage.getItem('userId');
-      if (userId) {
+      if (userId && user.role) {
         ws.send(JSON.stringify({
           type: 'auth',
-          payload: { userId, role: 'student' }
+          payload: { userId, role: user.role }
         }));
       }
     };
@@ -78,11 +82,14 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
     };
     
     return () => ws.close();
-  }, []);
+  }, [user]);
 
   const fetchSessions = async () => {
     try {
-      const response = await fetch('/api/student/sessions');
+      const endpoint = user?.role === 'supervisor' || user?.role === 'admin' 
+        ? '/api/sheikh/sessions?range=upcoming'
+        : '/api/student/sessions';
+      const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
         setSessions(data);

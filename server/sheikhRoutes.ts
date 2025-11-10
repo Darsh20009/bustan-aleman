@@ -76,6 +76,7 @@ export function setupSheikhRoutes(app: Express) {
         studentName: studentData.studentName,
         passwordHash,
         phoneNumber: studentData.phoneNumber,
+        sheikhId: req.user!.id, // Assign the creating sheikh as the student's sheikh
         currentLevel: studentData.currentLevel || 'beginner',
         monthlySessionsCount: 0,
         monthlyPrice: studentData.monthlyPrice !== undefined ? String(studentData.monthlyPrice) : '0',
@@ -207,6 +208,20 @@ export function setupSheikhRoutes(app: Express) {
     }
   });
 
+  // Get sheikh's sessions
+  app.get('/api/sheikh/sessions', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sheikhId = req.user!.id;
+      const range = req.query.range as 'upcoming' | 'past' | 'today' | undefined;
+      
+      const sessions = await storage.getSheikhSessions(sheikhId, range);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching sheikh sessions:", error);
+      res.status(500).json({ message: "خطأ في جلب الحصص" });
+    }
+  });
+
   // Update student memorization and errors
   app.post('/api/sheikh/update-student-progress', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
@@ -313,6 +328,11 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const studentId = req.params.id;
       const updateData = studentUpdateSchema.parse(req.body);
+      
+      // Convert monthlyPrice to string if it's a number
+      if (typeof updateData.monthlyPrice === 'number') {
+        updateData.monthlyPrice = updateData.monthlyPrice.toString();
+      }
       
       const updatedStudent = await storage.updateStudent(studentId, updateData);
       
@@ -454,7 +474,8 @@ export function setupSheikhRoutes(app: Express) {
       
       const error = await storage.createStudentError({
         studentId: errorData.studentId,
-        surah: `${errorData.surahNumber}`,
+        surahNumber: errorData.surahNumber,
+        surahName: errorData.surahName,
         ayahNumber: errorData.ayahNumber,
         errorType: errorData.errorType,
         errorDescription: errorData.errorDescription,

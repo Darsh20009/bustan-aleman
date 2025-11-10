@@ -81,7 +81,7 @@ import {
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
 import { hashPassword, verifyPassword } from "./authUtils";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, lt, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -239,6 +239,7 @@ export interface IStorage {
   deleteLiveAnnotation(id: string): Promise<void>;
   getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined>;
   getAllSessionAccess(studentId: string): Promise<SessionAccess[]>;
+  getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]>;
   
   // Live room operations
   createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
@@ -1413,6 +1414,152 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return db!.select().from(sessionAccess).where(eq(sessionAccess.studentId, studentId)).orderBy(desc(sessionAccess.sessionDate));
+  }
+
+  async getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+
+    // Get all schedules for students assigned to this sheikh
+    const schedules = await db!
+      .select({
+        scheduleId: classSchedules.id,
+        studentId: classSchedules.studentId,
+        dayOfWeek: classSchedules.dayOfWeek,
+        startTime: classSchedules.startTime,
+        endTime: classSchedules.endTime,
+        studentName: students.studentName,
+        studentPhone: students.phoneNumber,
+      })
+      .from(classSchedules)
+      .innerJoin(students, eq(classSchedules.studentId, students.id))
+      .where(and(
+        eq(students.sheikhId, sheikhId),
+        eq(classSchedules.isActive, true)
+      ));
+
+    // Expand schedules into concrete dates for next 4 weeks
+    const today = new Date();
+    const fourWeeksLater = new Date(today);
+    fourWeeksLater.setDate(today.getDate() + 28);
+
+    const expandedSessions: Array<{
+      scheduleId: string;
+      studentId: string;
+      sessionDate: string;
+      startTime: string;
+      endTime: string;
+      studentName: string;
+      studentPhone: string | null;
+    }> = [];
+
+    for (const schedule of schedules) {
+      // Find all occurrences of this schedule in the next 4 weeks
+      const currentDate = new Date(today);
+      while (currentDate <= fourWeeksLater) {
+        if (currentDate.getDay() === schedule.dayOfWeek) {
+          expandedSessions.push({
+            scheduleId: schedule.scheduleId,
+            studentId: schedule.studentId,
+            sessionDate: currentDate.toISOString().split('T')[0],
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            studentName: schedule.studentName,
+            studentPhone: schedule.studentPhone,
+          });
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+    }
+
+    // Get all sessionAccess entries for these schedules
+    const sessionAccessMap = new Map<string, any>();
+    const scheduleIds = [...new Set(expandedSessions.map(s => s.scheduleId))];
+    
+    if (scheduleIds.length > 0) {
+      const accessRecords = await db!
+        .select()
+        .from(sessionAccess)
+        .where(sql`${sessionAccess.scheduleId} IN (${sql.join(scheduleIds.map(id => sql`${id}`), sql`, `)})`);
+
+      for (const record of accessRecords) {
+        const key = `${record.scheduleId}-${record.sessionDate}`;
+        sessionAccessMap.set(key, record);
+      }
+    }
+
+    // Helper to normalize date to YYYY-MM-DD format
+    const normalizeDate = (date: Date | string): string => {
+      if (typeof date === 'string') {
+        return date.split('T')[0];
+      }
+      return date.toISOString().split('T')[0];
+    };
+
+    // Get live rooms for matching sessions
+    const roomsMap = new Map<string, any>();
+    const studentIds = [...new Set(expandedSessions.map(s => s.studentId))];
+    
+    if (studentIds.length > 0) {
+      const rooms = await db!
+        .select()
+        .from(liveRooms)
+        .where(sql`${liveRooms.studentId} IN (${sql.join(studentIds.map(id => sql`${id}`), sql`, `)})`);
+
+      for (const room of rooms) {
+        if (room.sessionDate) {
+          const normalizedDate = normalizeDate(room.sessionDate);
+          const key = `${room.studentId}-${normalizedDate}`;
+          roomsMap.set(key, room);
+        }
+      }
+    }
+
+    // Merge expanded sessions with sessionAccess and liveRooms
+    const mergedSessions = expandedSessions.map(session => {
+      const accessKey = `${session.scheduleId}-${session.sessionDate}`;
+      const access = sessionAccessMap.get(accessKey);
+      
+      const normalizedSessionDate = normalizeDate(session.sessionDate);
+      const roomKey = `${session.studentId}-${normalizedSessionDate}`;
+      const room = roomsMap.get(roomKey);
+
+      return {
+        id: access?.id || `${session.scheduleId}-${session.sessionDate}`,
+        studentId: session.studentId,
+        scheduleId: session.scheduleId,
+        sessionDate: session.sessionDate,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        zoomLink: access?.zoomLink || null,
+        isEnabled: access?.isEnabled || false,
+        enabledBy: access?.enabledBy || null,
+        enabledAt: access?.enabledAt || null,
+        studentName: session.studentName,
+        studentPhone: session.studentPhone,
+        roomToken: room?.roomToken || null,
+        roomId: room?.id || null,
+        roomStatus: room?.status || null,
+      };
+    });
+
+    // Filter by range
+    const todayStr = today.toISOString().split('T')[0];
+    let filteredSessions = mergedSessions;
+
+    if (range === 'today') {
+      filteredSessions = mergedSessions.filter(s => s.sessionDate === todayStr);
+    } else if (range === 'upcoming') {
+      filteredSessions = mergedSessions.filter(s => s.sessionDate >= todayStr);
+    } else if (range === 'past') {
+      filteredSessions = mergedSessions.filter(s => s.sessionDate < todayStr);
+    }
+
+    // Sort by date
+    filteredSessions.sort((a, b) => a.sessionDate.localeCompare(b.sessionDate));
+
+    return filteredSessions;
   }
 
   // Live annotation operations

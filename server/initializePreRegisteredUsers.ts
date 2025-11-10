@@ -37,19 +37,21 @@ export async function initializePreRegisteredUsers() {
     console.log("🔐 Initializing pre-registered users...");
     const allUsers = await storage.getAllUsers();
 
+    // First pass: create all users
     for (const preUser of preRegisteredUsers) {
       try {
         const existingUser = allUsers.find(u => u.phoneNumber === preUser.phoneNumber);
 
         if (!existingUser) {
-          // Store password as plain text temporarily for pre-registered users
-          // It will be hashed on first successful login
+          // Hash password before storing
+          const hashedPassword = await hashPassword(preUser.password);
+          
           const userData = {
             email: `${preUser.phoneNumber}@bustan.local`,
             firstName: preUser.name.split(' ')[0],
             lastName: preUser.name.split(' ').slice(1).join(' ') || preUser.name,
             role: preUser.role,
-            passwordHash: preUser.password, // Store as plain text initially
+            passwordHash: hashedPassword,
             phoneNumber: preUser.phoneNumber,
             isActive: true,
             registrationCompleted: true,
@@ -57,30 +59,12 @@ export async function initializePreRegisteredUsers() {
 
           const user = await storage.upsertUser(userData);
 
-          // Create student record for student users
-          if (preUser.role === 'student') {
-            const student = await storage.createStudent({
-              userId: user.id,
-              studentName: preUser.name,
-              passwordHash: preUser.password, // Use plain text initially
-              dateOfBirth: null,
-              grade: null,
-              monthlySessionsCount: 0,
-              monthlyPrice: "0",
-              isPaid: false,
-              isActive: true,
-              memorizedSurahs: "[]",
-              currentLevel: "beginner",
-              notes: "طالب مسجل مسبقاً",
-              zoomLink: null,
-              whatsappContact: preUser.phoneNumber,
-            });
-          } else if (preUser.role === 'supervisor') {
+          // Create supervisor record for supervisor users
+          if (preUser.role === 'supervisor') {
             await storage.createSupervisor({
               userId: user.id,
               name: preUser.name,
               whatsappNumber: preUser.phoneNumber,
-              zoomLink: null,
               specialization: "القرآن الكريم",
               experience: "شيخ معتمد",
               qualifications: "إجازة في القرآن الكريم",
@@ -96,6 +80,53 @@ export async function initializePreRegisteredUsers() {
         console.error(`Error initializing user ${preUser.name}:`, userError);
       }
     }
+
+    // Second pass: create student records and assign to default sheikh
+    const updatedAllUsers = await storage.getAllUsers();
+    const defaultSheikh = updatedAllUsers.find(u => u.phoneNumber === "0549947386");
+
+    if (!defaultSheikh) {
+      console.warn("⚠️  Default sheikh not found, students will not be assigned");
+    }
+
+    for (const preUser of preRegisteredUsers) {
+      if (preUser.role === 'student') {
+        try {
+          const user = updatedAllUsers.find(u => u.phoneNumber === preUser.phoneNumber);
+          if (user) {
+            // Check if student record already exists
+            const existingStudents = await storage.getAllStudents();
+            const existingStudent = existingStudents.find(s => s.userId === user.id);
+            
+            if (!existingStudent) {
+              // Use the already-hashed password from user record
+              await storage.createStudent({
+                userId: user.id,
+                sheikhId: defaultSheikh?.id || null, // Assign to default sheikh
+                studentName: preUser.name,
+                passwordHash: user.passwordHash || '',
+                dateOfBirth: null,
+                grade: null,
+                monthlySessionsCount: 0,
+                monthlyPrice: "0",
+                isPaid: false,
+                isActive: true,
+                memorizedSurahs: "[]",
+                currentLevel: "beginner",
+                notes: "طالب مسجل مسبقاً",
+                whatsappContact: preUser.phoneNumber,
+              });
+              console.log(`✅ Student record created for: ${preUser.name}`);
+            } else {
+              console.log(`ℹ️  Student record already exists for: ${preUser.name}`);
+            }
+          }
+        } catch (studentError) {
+          console.error(`Error creating student record for ${preUser.name}:`, studentError);
+        }
+      }
+    }
+
     console.log("✅ Pre-registered users initialization completed");
   } catch (error) {
     console.error("Error initializing pre-registered users:", error);
