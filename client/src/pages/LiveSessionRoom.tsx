@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,13 +10,10 @@ import {
   VideoOff, 
   PhoneOff, 
   MessageSquare,
-  BookOpen,
   Send,
-  Users,
-  Maximize2,
-  Minimize2
+  Users
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useLiveSessionWebRTC } from '@/hooks/useLiveSessionWebRTC';
 
 interface LiveSessionRoomProps {
   roomId: string;
@@ -26,176 +22,30 @@ interface LiveSessionRoomProps {
   onLeave: () => void;
 }
 
-interface Message {
-  id: string;
-  userId: string;
-  userName: string;
-  text: string;
-  timestamp: string;
-}
-
-export default function LiveSessionRoom({ roomId, studentId, sheikhId, onLeave }: LiveSessionRoomProps) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [isAudioEnabled, setIsAudioEnabled] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([]);
+export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProps) {
   const [newMessage, setNewMessage] = useState('');
-  const [currentSurah, setCurrentSurah] = useState(1);
-  const [currentAyah, setCurrentAyah] = useState(1);
-  const [surahText, setSurahText] = useState<any[]>([]);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [participants, setParticipants] = useState<string[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
-  const localAudioRef = useRef<HTMLAudioElement | null>(null);
-  const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const {
+    isAudioEnabled,
+    isVideoEnabled,
+    participants,
+    messages,
+    isConnected,
+    localVideoRef,
+    remoteVideoRef,
+    toggleAudio,
+    toggleVideo,
+    sendMessage,
+    leaveRoom
+  } = useLiveSessionWebRTC(roomId, onLeave);
 
-  // WebSocket Connection
-  useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      console.log('🔌 Connected to live session');
-      ws.send(JSON.stringify({
-        type: 'auth',
-        payload: { userId: user?.id, role: user?.role }
-      }));
-      
-      ws.send(JSON.stringify({
-        type: 'room:join',
-        roomId,
-        userId: user?.id
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      handleWebSocketMessage(message);
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'خطأ في الاتصال',
-        description: 'حدث خطأ في الاتصال بالحصة'
-      });
-    };
-
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'room:leave',
-          roomId
-        }));
-      }
-      ws.close();
-    };
-  }, [roomId, user]);
-
-  const handleWebSocketMessage = (message: any) => {
-    switch (message.type) {
-      case 'room:user-joined':
-        setParticipants(prev => [...prev, message.userId]);
-        toast({
-          title: '👋 انضم مشارك جديد',
-          description: 'انضم شخص للحصة'
-        });
-        break;
-      
-      case 'room:user-left':
-        setParticipants(prev => prev.filter(id => id !== message.userId));
-        break;
-      
-      case 'mushaf:update':
-        setCurrentSurah(message.surahNumber);
-        setCurrentAyah(message.ayahNumber);
-        break;
-      
-      case 'chat:message':
-        setMessages(prev => [...prev, {
-          id: Date.now().toString(),
-          userId: message.from,
-          userName: message.userName,
-          text: message.text,
-          timestamp: new Date().toLocaleTimeString('ar-SA')
-        }]);
-        break;
-    }
-  };
-
-  // Fetch Surah Text
-  useEffect(() => {
-    fetch(`https://api.alquran.cloud/v1/surah/${currentSurah}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.data && data.data.ayahs) {
-          setSurahText(data.data.ayahs);
-        }
-      })
-      .catch(err => console.error('Error fetching surah:', err));
-  }, [currentSurah]);
-
-  const toggleAudio = () => {
-    setIsAudioEnabled(!isAudioEnabled);
-    // في التطبيق الحقيقي، سنشغل/نوقف MediaStream
-    toast({
-      title: isAudioEnabled ? '🔇 تم كتم الصوت' : '🎤 تم تفعيل الصوت',
-      description: isAudioEnabled ? 'تم إيقاف الميكروفون' : 'تم تشغيل الميكروفون'
-    });
-  };
-
-  const toggleVideo = () => {
-    setIsVideoEnabled(!isVideoEnabled);
-    toast({
-      title: isVideoEnabled ? '📹 تم إيقاف الكاميرا' : '📹 تم تشغيل الكاميرا',
-      description: isVideoEnabled ? 'تم إيقاف الفيديو' : 'تم تشغيل الفيديو'
-    });
-  };
-
-  const sendMessage = () => {
+  const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-
-    const message = {
-      type: 'chat:message',
-      roomId,
-      from: user?.id,
-      userName: user?.firstName || 'مستخدم',
-      text: newMessage
-    };
-
-    wsRef.current?.send(JSON.stringify(message));
-    setMessages(prev => [...prev, {
-      id: Date.now().toString(),
-      userId: user?.id || '',
-      userName: user?.firstName || 'أنا',
-      text: newMessage,
-      timestamp: new Date().toLocaleTimeString('ar-SA')
-    }]);
+    sendMessage(newMessage);
     setNewMessage('');
   };
 
-  const updateMushafPosition = (surahNumber: number, ayahNumber: number) => {
-    wsRef.current?.send(JSON.stringify({
-      type: 'mushaf:update',
-      roomId,
-      surahNumber,
-      ayahNumber
-    }));
-  };
-
-  const handleLeave = () => {
-    wsRef.current?.send(JSON.stringify({
-      type: 'room:leave',
-      roomId
-    }));
-    onLeave();
-  };
-
   return (
-    <div className={`${isFullscreen ? 'fixed inset-0 z-50' : 'relative'} bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900`} dir="rtl">
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -208,189 +58,195 @@ export default function LiveSessionRoom({ roomId, studentId, sheikhId, onLeave }
               <div className="flex items-center gap-3 text-white/80 text-sm">
                 <Badge className="bg-green-500 text-white">
                   <span className="w-2 h-2 bg-white rounded-full inline-block ml-1 animate-pulse"></span>
-                  مباشر
+                  {isConnected ? 'متصل' : 'غير متصل'}
                 </Badge>
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {participants.length + 1} مشاركين
+                  {participants.length} مشاركين
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-              className="text-white hover:bg-white/20"
-              data-testid="button-toggle-fullscreen"
-            >
-              {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleLeave}
-              className="bg-red-600 hover:bg-red-700"
-              data-testid="button-leave-room"
-            >
-              <PhoneOff className="w-5 h-5 ml-2" />
-              إنهاء الحصة
-            </Button>
-          </div>
+          <Button
+            variant="destructive"
+            onClick={leaveRoom}
+            className="flex items-center gap-2"
+            data-testid="button-leave-session"
+          >
+            <PhoneOff className="w-5 h-5" />
+            <span>مغادرة الحصة</span>
+          </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 max-w-7xl mx-auto h-[calc(100vh-100px)]">
-        {/* Mushaf Viewer */}
-        <div className="lg:col-span-2">
-          <Card className="h-full border-2 border-white/20 bg-white/95 backdrop-blur-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center justify-between text-emerald-800">
-                <span className="flex items-center">
-                  <BookOpen className="w-6 h-6 ml-2" />
-                  المصحف الشريف - السورة {currentSurah}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentSurah(Math.max(1, currentSurah - 1))}
-                    disabled={currentSurah === 1}
-                  >
-                    السورة السابقة
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentSurah(Math.min(114, currentSurah + 1))}
-                    disabled={currentSurah === 114}
-                  >
-                    السورة التالية
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="h-[calc(100%-80px)] overflow-y-auto">
-              <div className="space-y-4">
-                {surahText.map((ayah) => (
-                  <div
-                    key={ayah.number}
-                    className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                      ayah.numberInSurah === currentAyah
-                        ? 'bg-emerald-100 border-emerald-500 shadow-lg scale-105'
-                        : 'bg-white border-gray-200 hover:border-emerald-300'
-                    }`}
-                    onClick={() => {
-                      setCurrentAyah(ayah.numberInSurah);
-                      updateMushafPosition(currentSurah, ayah.numberInSurah);
-                    }}
-                    data-testid={`ayah-${ayah.numberInSurah}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-10 h-10 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold">
-                        {ayah.numberInSurah}
+      <div className="h-[calc(100vh-80px)] p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+          {/* Video Section */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Remote Video */}
+            <Card className="bg-black/40 border-emerald-500/30 h-[60%]">
+              <CardContent className="p-4 h-full">
+                <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
+                  <video
+                    ref={remoteVideoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                    data-testid="video-remote"
+                  />
+                  {participants.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white/60">
+                        <Users className="w-16 h-16 mx-auto mb-4" />
+                        <p className="text-lg">في انتظار انضمام المشاركين...</p>
                       </div>
-                      <p className="text-2xl leading-loose text-right flex-1" style={{ fontFamily: 'Amiri, serif' }}>
-                        {ayah.text}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Local Video */}
+            <Card className="bg-black/40 border-emerald-500/30 h-[35%]">
+              <CardContent className="p-4 h-full">
+                <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    data-testid="video-local"
+                  />
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3">
+                    <Button
+                      size="icon"
+                      variant={isAudioEnabled ? "default" : "destructive"}
+                      onClick={toggleAudio}
+                      className="rounded-full w-12 h-12"
+                      data-testid="button-toggle-audio"
+                    >
+                      {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                    </Button>
+
+                    <Button
+                      size="icon"
+                      variant={isVideoEnabled ? "default" : "destructive"}
+                      onClick={toggleVideo}
+                      className="rounded-full w-12 h-12"
+                      data-testid="button-toggle-video"
+                    >
+                      {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                    </Button>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <Badge className="bg-emerald-500 text-white">
+                      أنت
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-4">
+            {/* Participants */}
+            <Card className="bg-black/40 border-emerald-500/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  المشاركون ({participants.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {participants.map((participant, idx) => (
+                  <div
+                    key={participant.userId}
+                    className="flex items-center gap-3 p-3 bg-white/10 rounded-lg"
+                    data-testid={`participant-${participant.userId}`}
+                  >
+                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
+                      {participant.role === 'supervisor' ? 'ش' : 'ط'}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white font-medium">
+                        {participant.role === 'supervisor' ? 'الشيخ' : 'الطالب'}
+                      </p>
+                      <p className="text-white/60 text-sm">
+                        {participant.role}
                       </p>
                     </div>
+                    <Badge className="bg-green-500 text-white">
+                      متصل
+                    </Badge>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                {participants.length === 0 && (
+                  <div className="text-center text-white/60 py-8">
+                    <p>لا يوجد مشاركون آخرون</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Chat & Controls Sidebar */}
-        <div className="space-y-4">
-          {/* Controls */}
-          <Card className="border-2 border-white/20 bg-white/95 backdrop-blur-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-emerald-800">التحكم</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex gap-2 justify-center">
-                <Button
-                  size="lg"
-                  variant={isAudioEnabled ? "default" : "outline"}
-                  onClick={toggleAudio}
-                  className={`flex-1 ${isAudioEnabled ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                  data-testid="button-toggle-audio"
-                >
-                  {isAudioEnabled ? <Mic className="w-5 h-5 ml-2" /> : <MicOff className="w-5 h-5 ml-2" />}
-                  {isAudioEnabled ? 'كتم' : 'تشغيل'}
-                </Button>
-                <Button
-                  size="lg"
-                  variant={isVideoEnabled ? "default" : "outline"}
-                  onClick={toggleVideo}
-                  className={`flex-1 ${isVideoEnabled ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
-                  data-testid="button-toggle-video"
-                >
-                  {isVideoEnabled ? <Video className="w-5 h-5 ml-2" /> : <VideoOff className="w-5 h-5 ml-2" />}
-                  {isVideoEnabled ? 'إيقاف' : 'كاميرا'}
-                </Button>
-              </div>
-              
-              <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">الآية الحالية</p>
-                <p className="text-3xl font-bold text-emerald-800">{currentAyah}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Chat */}
-          <Card className="border-2 border-white/20 bg-white/95 backdrop-blur-sm flex-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-emerald-800 flex items-center">
-                <MessageSquare className="w-5 h-5 ml-2" />
-                المحادثة
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="h-[300px] overflow-y-auto space-y-2 p-2 bg-gray-50 rounded-lg">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-gray-400 mt-20">لا توجد رسائل بعد</p>
-                  ) : (
-                    messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`p-2 rounded-lg ${
-                          msg.userId === user?.id
-                            ? 'bg-emerald-100 ml-auto max-w-[80%]'
-                            : 'bg-white max-w-[80%]'
-                        }`}
-                      >
-                        <p className="font-bold text-xs text-gray-600">{msg.userName}</p>
-                        <p className="text-sm">{msg.text}</p>
-                        <p className="text-xs text-gray-400 text-left">{msg.timestamp}</p>
+            {/* Chat */}
+            <Card className="bg-black/40 border-emerald-500/30 flex-1">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  المحادثة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="h-[300px] overflow-y-auto space-y-2 mb-3">
+                  {messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="bg-white/10 p-3 rounded-lg"
+                      data-testid={`message-${msg.id}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-emerald-400 font-medium text-sm">
+                          {msg.userName}
+                        </span>
+                        <span className="text-white/50 text-xs">
+                          {msg.timestamp}
+                        </span>
                       </div>
-                    ))
+                      <p className="text-white">{msg.text}</p>
+                    </div>
+                  ))}
+                  {messages.length === 0 && (
+                    <div className="text-center text-white/60 py-8">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>لا توجد رسائل بعد</p>
+                    </div>
                   )}
                 </div>
 
                 <div className="flex gap-2">
                   <Input
-                    placeholder="اكتب رسالة..."
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="اكتب رسالة..."
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
                     data-testid="input-chat-message"
                   />
                   <Button
-                    onClick={sendMessage}
+                    onClick={handleSendMessage}
                     className="bg-emerald-600 hover:bg-emerald-700"
                     data-testid="button-send-message"
                   >
-                    <Send className="w-4 h-4" />
+                    <Send className="w-5 h-5" />
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

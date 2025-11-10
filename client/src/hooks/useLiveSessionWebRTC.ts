@@ -1,0 +1,359 @@
+import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+
+interface Participant {
+  userId: string;
+  role: string;
+  studentId?: string;
+}
+
+interface Message {
+  id: string;
+  userId: string;
+  userName: string;
+  text: string;
+  timestamp: string;
+}
+
+export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => void) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  
+  const wsRef = useRef<WebSocket | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    const wsUrl = window.location.origin.replace(/^http/, 'ws') + '/ws';
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('🔌 WebSocket connected to live session');
+      
+      ws.send(JSON.stringify({
+        type: 'auth',
+        payload: { userId: user?.id, role: user?.role, studentId: user?.role === 'student' ? user?.id : undefined }
+      }));
+      
+      ws.send(JSON.stringify({
+        type: 'room:join',
+        payload: { roomToken }
+      }));
+      
+      setIsConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleWebSocketMessage(message);
+    };
+
+    ws.onerror = (error) => {
+      console.error('❌ WebSocket error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الاتصال',
+        description: 'حدث خطأ في الاتصال بالحصة'
+      });
+    };
+
+    ws.onclose = () => {
+      console.log('👋 WebSocket disconnected');
+      setIsConnected(false);
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'room:leave',
+          payload: { roomToken }
+        }));
+      }
+      ws.close();
+      cleanupMedia();
+    };
+  }, [roomToken, user]);
+
+  // Get user media on mount
+  useEffect(() => {
+    async function initMedia() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+        
+        localStreamRef.current = stream;
+        
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+        
+        console.log('📹 Local media acquired');
+      } catch (error) {
+        console.error('❌ Error getting media:', error);
+        toast({
+          variant: 'destructive',
+          title: 'خطأ في الوصول للكاميرا',
+          description: 'تأكد من السماح بالوصول للكاميرا والميكروفون'
+        });
+      }
+    }
+    
+    initMedia();
+    
+    return () => cleanupMedia();
+  }, []);
+
+  const handleWebSocketMessage = async (message: any) => {
+    const { type, payload } = message;
+
+    switch (type) {
+      case 'room:joined':
+        console.log('✅ Joined room:', payload.roomToken);
+        break;
+
+      case 'room:participants':
+        console.log('👥 Participants:', payload.participants);
+        setParticipants(payload.participants || []);
+        
+        const others = (payload.participants || []).filter((p: Participant) => p.userId !== user?.id);
+        if (others.length > 0 && user?.role === 'supervisor') {
+          await createOffer();
+        }
+        break;
+
+      case 'webrtc:offer':
+        console.log('📨 Received offer from:', payload.from);
+        await handleOffer(payload.data);
+        break;
+
+      case 'webrtc:answer':
+        console.log('📨 Received answer from:', payload.from);
+        await handleAnswer(payload.data);
+        break;
+
+      case 'webrtc:ice-candidate':
+        console.log('🧊 Received ICE candidate from:', payload.from);
+        await handleIceCandidate(payload.data);
+        break;
+
+      case 'chat_message':
+        setMessages(prev => [...prev, {
+          id: payload.id || Date.now().toString(),
+          userId: payload.senderId || payload.from || 'unknown',
+          userName: payload.senderName || payload.userName || 'مستخدم',
+          text: payload.content || payload.text || '',
+          timestamp: new Date().toLocaleTimeString('ar-SA')
+        }]);
+        break;
+
+      default:
+        console.log('⚠️ Unknown message type:', type);
+    }
+  };
+
+  const createPeerConnection = () => {
+    if (peerConnectionRef.current) {
+      return peerConnectionRef.current;
+    }
+
+    const configuration = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    const pc = new RTCPeerConnection(configuration);
+    peerConnectionRef.current = pc;
+
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate && wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'webrtc:ice-candidate',
+          payload: event.candidate
+        }));
+      }
+    };
+
+    pc.ontrack = (event) => {
+      console.log('🎥 Remote track received');
+      const [remoteStream] = event.streams;
+      
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStream;
+      }
+      
+      setRemoteStreams(prev => {
+        const newMap = new Map(prev);
+        newMap.set('remote', remoteStream);
+        return newMap;
+      });
+    };
+
+    pc.onconnectionstatechange = () => {
+      console.log('🔄 Connection state:', pc.connectionState);
+      if (pc.connectionState === 'failed') {
+        toast({
+          variant: 'destructive',
+          title: 'خطأ في الاتصال',
+          description: 'فشل الاتصال مع المشارك الآخر'
+        });
+      }
+    };
+
+    return pc;
+  };
+
+  const createOffer = async () => {
+    try {
+      const pc = createPeerConnection();
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'webrtc:offer',
+          payload: offer
+        }));
+        console.log('📤 Offer sent');
+      }
+    } catch (error) {
+      console.error('❌ Error creating offer:', error);
+    }
+  };
+
+  const handleOffer = async (offer: RTCSessionDescriptionInit) => {
+    try {
+      const pc = createPeerConnection();
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: 'webrtc:answer',
+          payload: answer
+        }));
+        console.log('📤 Answer sent');
+      }
+    } catch (error) {
+      console.error('❌ Error handling offer:', error);
+    }
+  };
+
+  const handleAnswer = async (answer: RTCSessionDescriptionInit) => {
+    try {
+      const pc = peerConnectionRef.current;
+      if (pc) {
+        await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        console.log('✅ Answer applied');
+      }
+    } catch (error) {
+      console.error('❌ Error handling answer:', error);
+    }
+  };
+
+  const handleIceCandidate = async (candidate: RTCIceCandidateInit) => {
+    try {
+      const pc = peerConnectionRef.current;
+      if (pc) {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        console.log('✅ ICE candidate added');
+      }
+    } catch (error) {
+      console.error('❌ Error adding ICE candidate:', error);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setIsAudioEnabled(prev => !prev);
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getVideoTracks().forEach(track => {
+        track.enabled = !track.enabled;
+      });
+      setIsVideoEnabled(prev => !prev);
+    }
+  };
+
+  const sendMessage = (text: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'chat_message',
+        payload: {
+          content: text,
+          senderId: user?.id,
+          receiverId: null,
+          messageType: 'text',
+          isGroupMessage: true
+        }
+      }));
+    }
+  };
+
+  const leaveRoom = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:leave',
+        payload: { roomToken }
+      }));
+    }
+    cleanupMedia();
+    onDisconnect?.();
+  };
+
+  const cleanupMedia = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+    
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+  };
+
+  return {
+    isAudioEnabled,
+    isVideoEnabled,
+    participants,
+    messages,
+    isConnected,
+    remoteStreams,
+    localVideoRef,
+    remoteVideoRef,
+    toggleAudio,
+    toggleVideo,
+    sendMessage,
+    leaveRoom
+  };
+}

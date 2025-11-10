@@ -123,9 +123,9 @@ export function SheikhDashboard() {
           description: "جاري فتح غرفة الحصة المباشرة...",
         });
         
-        // فتح غرفة الحصة المباشرة للشيخ
+        // فتح غرفة الحصة المباشرة للشيخ باستخدام roomToken الموحد
         setTimeout(() => {
-          setActiveRoomId(data.sessionId || schedule.id);
+          setActiveRoomId(data.roomToken);
           setActiveStudentId(studentId);
         }, 500);
       }

@@ -747,6 +747,18 @@ export const insertLiveAnnotationSchema = createInsertSchema(liveAnnotations).om
   createdAt: true,
 });
 
+export const insertLiveRoomSchema = createInsertSchema(liveRooms).omit({
+  id: true,
+  roomToken: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRoomParticipantSchema = createInsertSchema(roomParticipants).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertQuranWordHighlightSchema = createInsertSchema(quranWordHighlights).omit({
   id: true,
   createdAt: true,
@@ -837,6 +849,10 @@ export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type LiveAnnotation = typeof liveAnnotations.$inferSelect;
 export type InsertLiveAnnotation = z.infer<typeof insertLiveAnnotationSchema>;
+export type LiveRoom = typeof liveRooms.$inferSelect;
+export type InsertLiveRoom = z.infer<typeof insertLiveRoomSchema>;
+export type RoomParticipant = typeof roomParticipants.$inferSelect;
+export type InsertRoomParticipant = z.infer<typeof insertRoomParticipantSchema>;
 export type QuranWordHighlight = typeof quranWordHighlights.$inferSelect;
 export type InsertQuranWordHighlight = z.infer<typeof insertQuranWordHighlightSchema>;
 export type QuranMemorization = typeof quranMemorization.$inferSelect;

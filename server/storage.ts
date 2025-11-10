@@ -22,6 +22,8 @@ import {
   sessionAccess,
   dailyAssignments,
   liveAnnotations,
+  liveRooms,
+  roomParticipants,
   messages,
   type User,
   type UpsertUser,
@@ -69,6 +71,10 @@ import {
   type InsertDailyAssignment,
   type LiveAnnotation,
   type InsertLiveAnnotation,
+  type LiveRoom,
+  type InsertLiveRoom,
+  type RoomParticipant,
+  type InsertRoomParticipant,
   type Message,
   type InsertMessage,
 } from "@shared/schema";
@@ -233,6 +239,15 @@ export interface IStorage {
   deleteLiveAnnotation(id: string): Promise<void>;
   getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined>;
   getAllSessionAccess(studentId: string): Promise<SessionAccess[]>;
+  
+  // Live room operations
+  createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
+  getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined>;
+  getLiveRoomsByStudent(studentId: string): Promise<LiveRoom[]>;
+  updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom>;
+  addRoomParticipant(participant: InsertRoomParticipant): Promise<RoomParticipant>;
+  removeRoomParticipant(roomId: string, userId: string): Promise<void>;
+  getRoomParticipants(roomId: string): Promise<RoomParticipant[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1460,6 +1475,95 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     await db!.delete(liveAnnotations).where(eq(liveAnnotations.id, id));
+  }
+
+  // Live room operations
+  async createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    const existingRooms = await db!
+      .select()
+      .from(liveRooms)
+      .where(
+        and(
+          eq(liveRooms.studentId, studentId),
+          eq(liveRooms.sheikhId, sheikhId),
+          eq(liveRooms.sessionDate, sessionDate),
+          eq(liveRooms.sessionTime, sessionTime)
+        )
+      );
+    
+    if (existingRooms.length > 0) {
+      return existingRooms[0];
+    }
+    
+    const [newRoom] = await db!
+      .insert(liveRooms)
+      .values({
+        studentId,
+        sheikhId,
+        sessionDate,
+        sessionTime,
+        status: 'scheduled',
+        isEnabled: false,
+      })
+      .returning();
+    
+    return newRoom;
+  }
+
+  async getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [room] = await db!.select().from(liveRooms).where(eq(liveRooms.roomToken, roomToken));
+    return room;
+  }
+
+  async getLiveRoomsByStudent(studentId: string): Promise<LiveRoom[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(liveRooms).where(eq(liveRooms.studentId, studentId)).orderBy(desc(liveRooms.sessionDate));
+  }
+
+  async updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updatedRoom] = await db!
+      .update(liveRooms)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(liveRooms.id, roomId))
+      .returning();
+    return updatedRoom;
+  }
+
+  async addRoomParticipant(participant: InsertRoomParticipant): Promise<RoomParticipant> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [newParticipant] = await db!.insert(roomParticipants).values(participant).returning();
+    return newParticipant;
+  }
+
+  async removeRoomParticipant(roomId: string, userId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    await db!
+      .update(roomParticipants)
+      .set({ isActive: false, leftAt: new Date() })
+      .where(and(eq(roomParticipants.roomId, roomId), eq(roomParticipants.userId, userId)));
+  }
+
+  async getRoomParticipants(roomId: string): Promise<RoomParticipant[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(roomParticipants).where(eq(roomParticipants.roomId, roomId));
   }
 
   // Bulk export operations
