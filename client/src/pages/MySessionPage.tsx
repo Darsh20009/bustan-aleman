@@ -30,7 +30,11 @@ interface Assignment {
   notes?: string;
 }
 
-export default function MySessionPage() {
+interface MySessionPageProps {
+  onBack?: () => void;
+}
+
+export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
   const [sessions, setSessions] = useState<SessionAccess[]>([]);
   const [todayAssignment, setTodayAssignment] = useState<Assignment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -164,19 +168,25 @@ export default function MySessionPage() {
   const todaysSessions = sessions.filter(s => s.sessionDate === new Date().toISOString().split('T')[0]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6" dir="rtl">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <div className="inline-block bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl px-8 py-6 shadow-2xl">
-            <h1 className="text-4xl font-bold mb-2">حصتي 📚</h1>
-            <p className="text-emerald-100 text-lg">منصة الحصص المباشرة</p>
-          </div>
-        </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" dir="rtl">
+      {/* Header with Back Button */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 sticky top-0 z-50 shadow-lg">
+        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
+          <h1 className="text-xl md:text-2xl font-bold">حصتي 📚</h1>
+          {onBack && (
+            <Button
+              onClick={onBack}
+              variant="ghost"
+              className="bg-white/20 hover:bg-white/30 text-white"
+              data-testid="button-back-my-session"
+            >
+              ← العودة
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto space-y-6 p-6">
 
         {/* Today's Assignment */}
         {todayAssignment && (

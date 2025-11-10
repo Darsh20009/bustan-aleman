@@ -1,12 +1,12 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { requireAuth, type AuthenticatedRequest } from "./authMiddleware";
 
 export function setupStudentSessionRoutes(app: Express) {
   // Get student's sessions
-  app.get('/api/student/sessions', requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/student/sessions', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id;
+      const userId = (req as AuthenticatedRequest).user!.id;
       
       // Get student record from userId
       const students = await storage.getAllStudents();
@@ -39,9 +39,9 @@ export function setupStudentSessionRoutes(app: Express) {
   });
 
   // Get today's assignment
-  app.get('/api/student/assignment/today', requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/student/assignment/today', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id;
+      const userId = (req as AuthenticatedRequest).user!.id;
       
       // Get student record from userId
       const students = await storage.getAllStudents();
@@ -66,9 +66,9 @@ export function setupStudentSessionRoutes(app: Express) {
   });
 
   // Get all assignments
-  app.get('/api/student/assignments', requireAuth, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/student/assignments', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.user!.id;
+      const userId = (req as AuthenticatedRequest).user!.id;
       
       // Get student record from userId
       const students = await storage.getAllStudents();

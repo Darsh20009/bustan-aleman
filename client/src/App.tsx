@@ -217,7 +217,7 @@ function AppContent() {
       
       case 'my-session':
         if (isAuthenticated && user) {
-          return <MySessionPage />;
+          return <MySessionPage onBack={() => setAppState('dashboard')} />;
         } else {
           return <AuthPage />;
         }
