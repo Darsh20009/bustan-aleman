@@ -55,35 +55,6 @@ export function useAuth() {
     }
   };
 
-  // Ensure studentId is extracted from user data
-  const login = async (phoneNumber: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ phoneNumber, password }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'فشل في تسجيل الدخول');
-      }
-
-      const data = await response.json();
-      console.log('[useAuth] Login data received:', data.user);
-      setUser(data.user);
-      return data;
-    } catch (err: any) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return {
     user,
     isLoading,
@@ -93,6 +64,5 @@ export function useAuth() {
     isAdmin: user?.role === 'admin',
     logout,
     refetch,
-    login, // Added login function to the return object
   };
 }
