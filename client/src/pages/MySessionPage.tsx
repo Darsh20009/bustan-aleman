@@ -7,7 +7,6 @@ import { useToast } from '../hooks/use-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ar } from 'date-fns/locale';
-import LiveSessionRoom from './LiveSessionRoom';
 import { useAuth } from '../hooks/useAuth';
 
 interface SessionAccess {
@@ -135,14 +134,14 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
     setJoiningSession(session.id);
     
     setTimeout(() => {
-      setActiveRoomId(session.roomToken!);
+      window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
       setJoiningSession(null);
       
       toast({
-        title: "🎉 جاري الانضمام للحصة...",
-        description: "سيتم فتح غرفة الحصة المباشرة الآن",
+        title: "🎉 تم فتح الحصة",
+        description: "تم فتح الحصة المباشرة في نافذة جديدة",
       });
-    }, 1000);
+    }, 500);
   };
 
   const parseAssignmentRanges = (jsonString: string) => {
@@ -365,23 +364,6 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
         )}
       </div>
 
-      {/* Live Session Room Modal */}
-      {activeRoomId && user?.studentId && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-          <LiveSessionRoom
-            roomId={activeRoomId}
-            studentId={user.studentId}
-            sheikhId="sheikh-placeholder"
-            onLeave={() => {
-              setActiveRoomId(null);
-              toast({
-                title: "👋 تم مغادرة الحصة",
-                description: "شكراً لمشاركتك في الحصة"
-              });
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }

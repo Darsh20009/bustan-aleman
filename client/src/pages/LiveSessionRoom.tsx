@@ -103,29 +103,29 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900" dir="rtl">
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 overflow-hidden" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 shadow-lg">
-        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <Video className="w-6 h-6 text-white" />
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-2 md:p-4 shadow-lg">
+        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <Video className="w-4 h-4 md:w-6 md:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">الحصة المباشرة</h2>
-              <div className="flex items-center gap-3 text-white/80 text-sm flex-wrap">
-                <Badge className="bg-green-500 text-white">
+              <h2 className="text-base md:text-2xl font-bold text-white">الحصة المباشرة</h2>
+              <div className="flex items-center gap-2 md:gap-3 text-white/80 text-xs md:text-sm flex-wrap">
+                <Badge className="bg-green-500 text-white text-xs">
                   <span className="w-2 h-2 bg-white rounded-full inline-block ml-1 animate-pulse"></span>
                   {isConnected ? 'متصل' : 'غير متصل'}
                 </Badge>
-                <span className="flex items-center gap-1">
-                  <Users className="w-4 h-4" />
+                <span className="hidden md:flex items-center gap-1">
+                  <Users className="w-3 h-3 md:w-4 md:h-4" />
                   {participants.length} مشاركين
                 </span>
                 {isShamsikh && (
-                  <Badge className="bg-amber-500 text-white flex items-center gap-1">
+                  <Badge className="bg-amber-500 text-white flex items-center gap-1 text-xs">
                     <Shield className="w-3 h-3" />
-                    مشرف
+                    <span className="hidden md:inline">مشرف</span>
                   </Badge>
                 )}
               </div>
@@ -133,41 +133,45 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           </div>
 
           {/* Control Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 md:gap-2 flex-wrap">
             {/* Whiteboard Toggle - Sheikh Only */}
             {isShamsikh && (
               <Button
+                size="sm"
                 variant={whiteboardEnabled ? "default" : "outline"}
                 onClick={toggleWhiteboard}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
                 data-testid="button-toggle-whiteboard"
               >
-                <Pencil className="w-5 h-5" />
-                <span>{whiteboardEnabled ? 'إخفاء السبورة' : 'إظهار السبورة'}</span>
+                <Pencil className="w-3 h-3 md:w-5 md:h-5" />
+                <span className="hidden md:inline">{whiteboardEnabled ? 'إخفاء السبورة' : 'إظهار السبورة'}</span>
+                <span className="md:hidden">سبورة</span>
               </Button>
             )}
 
             {/* Screen Share - Sheikh Only */}
             {isShamsikh && (
               <Button
+                size="sm"
                 variant={isScreenSharing ? "destructive" : "outline"}
                 onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-                className="flex items-center gap-2"
+                className="hidden md:flex items-center gap-2 text-xs md:text-sm"
                 data-testid="button-toggle-screen-share"
               >
                 {isScreenSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-                <span>{isScreenSharing ? 'إيقاف مشاركة الشاشة' : 'مشاركة الشاشة'}</span>
+                <span>{isScreenSharing ? 'إيقاف مشاركة' : 'مشاركة الشاشة'}</span>
               </Button>
             )}
 
             <Button
+              size="sm"
               variant="destructive"
               onClick={leaveRoom}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
               data-testid="button-leave-session"
             >
-              <PhoneOff className="w-5 h-5" />
-              <span>مغادرة الحصة</span>
+              <PhoneOff className="w-3 h-3 md:w-5 md:h-5" />
+              <span>مغادرة</span>
             </Button>
           </div>
         </div>

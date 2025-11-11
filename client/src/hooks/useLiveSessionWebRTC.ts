@@ -31,6 +31,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const originalVideoTrackRef = useRef<MediaStreamTrack | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -352,8 +353,10 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
         const sender = pc.getSenders().find(s => s.track?.kind === 'video');
         
         if (sender) {
+          originalVideoTrackRef.current = localStreamRef.current.getVideoTracks()[0];
+          
           await sender.replaceTrack(videoTrack);
-          console.log('📺 Screen sharing started');
+          console.log('📺 Screen sharing started - audio tracks preserved, original camera saved');
           setIsScreenSharing(true);
           
           videoTrack.onended = () => {
@@ -362,7 +365,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
           
           toast({
             title: 'بدأت مشاركة الشاشة',
-            description: 'يمكن للطلاب رؤية شاشتك الآن'
+            description: 'يمكن للطلاب رؤية شاشتك الآن - الصوت مستمر'
           });
         }
       }
@@ -384,14 +387,24 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
       }
       
       const pc = peerConnectionRef.current;
-      if (pc && localStreamRef.current) {
-        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+      if (pc && originalVideoTrackRef.current) {
         const sender = pc.getSenders().find(s => s.track?.kind === 'video');
         
-        if (sender && videoTrack) {
-          await sender.replaceTrack(videoTrack);
-          console.log('📺 Screen sharing stopped');
+        if (sender) {
+          await sender.replaceTrack(originalVideoTrackRef.current);
+          
+          if (localVideoRef.current) {
+            const newStream = new MediaStream();
+            newStream.addTrack(originalVideoTrackRef.current);
+            if (localStreamRef.current) {
+              localStreamRef.current.getAudioTracks().forEach(track => newStream.addTrack(track));
+            }
+            localVideoRef.current.srcObject = newStream;
+          }
+          
+          console.log('📺 Screen sharing stopped, camera restored');
           setIsScreenSharing(false);
+          originalVideoTrackRef.current = null;
           
           toast({
             title: 'توقفت مشاركة الشاشة',
@@ -401,6 +414,11 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
       }
     } catch (error) {
       console.error('❌ Error stopping screen share:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ',
+        description: 'حدث خطأ عند العودة للكاميرا'
+      });
     }
   };
 

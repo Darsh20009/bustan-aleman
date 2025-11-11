@@ -1,5 +1,6 @@
 import { Route, Switch } from "wouter";
 import SessionManagementPage from "./pages/SessionManagementPage";
+import LiveSession from "./pages/LiveSession";
 import { useAuth } from "./hooks/useAuth";
 import { AuthPage } from "./components/AuthPage";
 
@@ -23,6 +24,7 @@ export function AppRoutes() {
   return (
     <Switch>
       <Route path="/sessions" component={() => requireSheikh(SessionManagementPage)} />
+      <Route path="/session/:roomToken" component={() => requireAuth(LiveSession)} />
       <Route>404: لم يتم العثور على الصفحة</Route>
     </Switch>
   );
