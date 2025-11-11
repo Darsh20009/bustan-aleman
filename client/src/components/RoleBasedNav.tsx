@@ -572,7 +572,44 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           </aside>
 
           {/* Mobile Horizontal Grid */}
-          <div className="lg:hidden">
+          <div className="lg:hidden w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {navigation.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+                      handleNavigation(path);
+                    }}
+                    className="group relative bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 hover:shadow-xl hover:border-emerald-400 transition-all duration-300 overflow-hidden"
+                    data-testid={`nav-item-mobile-${index}`}
+                  >
+                    {/* Card Content */}
+                    <div className="p-6 flex flex-col items-center text-center">
+                      {/* Icon */}
+                      <div className={`w-16 h-16 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 mb-4`}>
+                        <Icon className="w-8 h-8 text-white" />
+                      </div>
+                      
+                      {/* Title */}
+                      <h3 className="text-base font-bold text-gray-800 group-hover:text-emerald-700 transition-colors mb-2">
+                        {item.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors line-clamp-2">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Hover Effect Overlay */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Main Content Area (for desktop) */}
