@@ -43,37 +43,68 @@ if (isValidDatabaseUrl(process.env.EXTERNAL_DATABASE_URL)) {
   databaseUrl = process.env.DATABASE_URL;
 }
 
-let useAiven = false;
+// Check if AWS RDS should be used (via environment variable for safer deployment)
+const ENABLE_AWS_RDS = process.env.ENABLE_AWS_RDS === 'true';
 
-// Enable Aiven PostgreSQL database connection (disabled until secrets are verified)
-const ENABLE_AIVEN = false;
+// Try AWS RDS connection if enabled and all credentials are available
+async function tryAwsRdsConnection(): Promise<boolean> {
+  if (!ENABLE_AWS_RDS) return false;
+  
+  if (!process.env.AWS_DB_HOST || !process.env.AWS_DB_PORT || 
+      !process.env.AWS_DB_NAME || !process.env.AWS_DB_USER || 
+      !process.env.AWS_DB_PASSWORD) {
+    console.log('⚠️  AWS RDS credentials incomplete, skipping...');
+    return false;
+  }
 
-if (ENABLE_AIVEN && process.env.AIVEN_DB_HOST && process.env.AIVEN_DB_PORT && 
-    process.env.AIVEN_DB_NAME && process.env.AIVEN_DB_USER && 
-    process.env.AIVEN_DB_PASSWORD) {
-  useAiven = true;
-  console.log(`🔗 Connecting to Aiven database at ${process.env.AIVEN_DB_HOST}:${process.env.AIVEN_DB_PORT}`);
-}
-
-if (useAiven) {
-  // Use pg driver for Aiven with SSL configuration
+  console.log(`🔗 Attempting to connect to AWS RDS at ${process.env.AWS_DB_HOST}:${process.env.AWS_DB_PORT}`);
+  
   const pgPool = new PgPool({
-    host: process.env.AIVEN_DB_HOST,
-    port: parseInt(process.env.AIVEN_DB_PORT || '10370'),
-    database: process.env.AIVEN_DB_NAME,
-    user: process.env.AIVEN_DB_USER,
-    password: process.env.AIVEN_DB_PASSWORD,
+    host: process.env.AWS_DB_HOST,
+    port: parseInt(process.env.AWS_DB_PORT || '5432'),
+    database: process.env.AWS_DB_NAME,
+    user: process.env.AWS_DB_USER,
+    password: process.env.AWS_DB_PASSWORD,
     ssl: {
-      rejectUnauthorized: false  // For development - in production use CA certificate
+      rejectUnauthorized: false  // TODO: Use AWS RDS CA certificate in production
     },
-    max: 20,
+    max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
   });
-  pool = pgPool;
-  db = drizzlePg(pgPool, { schema });
-  console.log(`✅ Database connection initialized (Aiven Cloud)`);
-} else if (databaseUrl) {
+  
+  // Test connection before committing to this pool
+  try {
+    const client = await pgPool.connect();
+    console.log('✅ Successfully connected to AWS RDS');
+    client.release();
+    
+    // Only assign if connection succeeds
+    pool = pgPool;
+    db = drizzlePg(pgPool, { schema });
+    return true;
+  } catch (err: any) {
+    console.error('❌ Failed to connect to AWS RDS:', err.message);
+    console.log('⚠️  Falling back to local database...');
+    await pgPool.end();  // Clean up failed pool
+    return false;
+  }
+}
+
+// Initialize database connection (async wrapper for AWS RDS fallback)
+(async () => {
+  const awsConnected = await tryAwsRdsConnection();
+
+  if (!awsConnected && databaseUrl) {
+    initializeLocalDatabase();
+  } else if (!awsConnected && !databaseUrl) {
+    console.log("⚠️  No database URL found. Using JSON storage fallback.");
+  }
+})();
+
+function initializeLocalDatabase() {
+  if (!databaseUrl) return;
+  
   // Check if it's a filess.io database (use regular pg driver without SSL)
   if (databaseUrl.includes('filess.io')) {
     console.log(`🔗 Connecting to Filess.io database...`);
@@ -94,12 +125,10 @@ if (useAiven) {
     db = drizzleNeon(neonPool, { schema });
     const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
     console.log(`✅ Database connection initialized (${dbSource})`);
-    if (!ENABLE_AIVEN && process.env.AIVEN_DB_HOST) {
-      console.log(`⚠️  Aiven database available but disabled. Set ENABLE_AIVEN=true in server/db.ts after fixing connection.`);
+    if (!ENABLE_AWS_RDS && process.env.AWS_DB_HOST) {
+      console.log(`⚠️  AWS RDS database available but disabled. Set environment variable ENABLE_AWS_RDS=true to use it.`);
     }
   }
-} else {
-  console.log("⚠️  No database URL found. Using JSON storage fallback.");
 }
 
 export { pool, db };
