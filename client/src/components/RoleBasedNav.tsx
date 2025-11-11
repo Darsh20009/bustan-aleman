@@ -499,53 +499,76 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           </div>
         )}
 
-        {/* Navigation Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {navigation.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <Card 
-                key={index} 
-                className="group relative overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer border-0 bg-white/80 backdrop-blur-sm hover:scale-105"
-                onClick={() => {
-                  const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
-                  handleNavigation(path);
-                }}
-                data-testid={`nav-card-${index}`}
-              >
-                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${item.gradient} opacity-10 group-hover:opacity-20 transition-opacity rounded-full -mr-16 -mt-16`}></div>
-                
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-xl text-gray-800 group-hover:text-gray-900 mb-2">
-                        {item.title}
-                      </CardTitle>
-                    </div>
-                    <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg`}>
-                      <Icon className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent>
-                  <p className="text-gray-600 mb-4">{item.description}</p>
-                  
-                  <Button 
-                    className={`w-full bg-gradient-to-r ${item.gradient} hover:opacity-90 text-white shadow-md`}
-                    onClick={(e) => {
-                      e.stopPropagation();
+        {/* Modern Navigation Menu */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+          {/* Navigation Header */}
+          <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <BookMarked className="w-6 h-6 text-white" />
+              </div>
+              القائمة الرئيسية
+            </h2>
+            <p className="text-white/80 mt-2">اختر القسم الذي تريد الانتقال إليه</p>
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {navigation.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
                       const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
                       handleNavigation(path);
                     }}
-                    data-testid={`button-nav-${index}`}
+                    className="group relative flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-white hover:to-gray-50 border border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
+                    data-testid={`nav-item-${index}`}
                   >
-                    انطلق الآن
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    {/* Icon Container */}
+                    <div className={`relative flex-shrink-0 w-14 h-14 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
+                      <Icon className="w-7 h-7 text-white" />
+                      <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 text-right">
+                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-emerald-700 transition-colors mb-1">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors line-clamp-1">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Arrow Indicator */}
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-all duration-300">
+                      <svg 
+                        className="w-4 h-4 text-emerald-600 group-hover:text-white transition-colors" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </div>
+
+                    {/* Hover Gradient Effect */}
+                    <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`}></div>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* Footer Tip */}
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600">
+              💡 <span className="font-semibold">نصيحة:</span> استخدم القائمة للوصول السريع إلى جميع أقسام المنصة
+            </p>
+          </div>
         </div>
 
       </main>
