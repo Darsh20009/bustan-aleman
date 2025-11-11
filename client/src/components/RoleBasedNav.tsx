@@ -499,75 +499,125 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           </div>
         )}
 
-        {/* Modern Navigation Menu */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
-          {/* Navigation Header */}
-          <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 p-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <BookMarked className="w-6 h-6 text-white" />
+        {/* Responsive Navigation - Mobile: Horizontal Grid, Desktop: Sidebar */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Desktop Sidebar */}
+          <aside className="hidden lg:block lg:w-80 lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+            {/* Sidebar Header */}
+            <div className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 p-6">
+              <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                  <BookMarked className="w-6 h-6 text-white" />
+                </div>
+                القائمة الرئيسية
+              </h2>
+              <p className="text-white/80 mt-2 text-sm">اختر القسم المطلوب</p>
+            </div>
+
+            {/* Sidebar Navigation */}
+            <nav className="p-4 overflow-y-auto h-[calc(100%-120px)]">
+              <div className="space-y-2">
+                {navigation.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+                        handleNavigation(path);
+                      }}
+                      className="group relative w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-white hover:to-emerald-50 border border-gray-200 hover:border-emerald-400 transition-all duration-300 hover:shadow-md"
+                      data-testid={`nav-item-${index}`}
+                    >
+                      {/* Icon */}
+                      <div className={`relative flex-shrink-0 w-11 h-11 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300`}>
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 text-right">
+                        <h3 className="text-sm font-bold text-gray-800 group-hover:text-emerald-700 transition-colors">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors line-clamp-1">
+                          {item.description}
+                        </p>
+                      </div>
+
+                      {/* Arrow */}
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-all duration-300">
+                        <svg 
+                          className="w-3 h-3 text-emerald-600 group-hover:text-white transition-colors" 
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </div>
+
+                      {/* Hover Effect */}
+                      <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`}></div>
+                    </button>
+                  );
+                })}
               </div>
-              القائمة الرئيسية
-            </h2>
-            <p className="text-white/80 mt-2">اختر القسم الذي تريد الانتقال إليه</p>
-          </div>
+            </nav>
+          </aside>
 
-          {/* Navigation Items */}
-          <nav className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {navigation.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={index}
-                    onClick={() => {
-                      const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
-                      handleNavigation(path);
-                    }}
-                    className="group relative flex items-center gap-4 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-white hover:to-gray-50 border border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg hover:scale-[1.02]"
-                    data-testid={`nav-item-${index}`}
-                  >
-                    {/* Icon Container */}
-                    <div className={`relative flex-shrink-0 w-14 h-14 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-110 transition-all duration-300`}>
-                      <Icon className="w-7 h-7 text-white" />
-                      <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    </div>
+          {/* Mobile Horizontal Grid */}
+          <div className="lg:hidden">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden p-4">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <BookMarked className="w-5 h-5 text-emerald-600" />
+                القائمة الرئيسية
+              </h2>
+              <div className="grid grid-cols-3 gap-3">
+                {navigation.map((item, index) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
+                        handleNavigation(path);
+                      }}
+                      className="group relative flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-gray-50 to-white hover:from-white hover:to-emerald-50 border border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg active:scale-95"
+                      data-testid={`nav-item-mobile-${index}`}
+                    >
+                      {/* Icon */}
+                      <div className={`relative w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300`}>
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
 
-                    {/* Content */}
-                    <div className="flex-1 text-right">
-                      <h3 className="text-lg font-bold text-gray-800 group-hover:text-emerald-700 transition-colors mb-1">
+                      {/* Title */}
+                      <h3 className="text-xs font-bold text-gray-800 group-hover:text-emerald-700 transition-colors text-center line-clamp-2">
                         {item.title}
                       </h3>
-                      <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors line-clamp-1">
-                        {item.description}
-                      </p>
-                    </div>
 
-                    {/* Arrow Indicator */}
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 group-hover:bg-emerald-500 flex items-center justify-center transition-all duration-300">
-                      <svg 
-                        className="w-4 h-4 text-emerald-600 group-hover:text-white transition-colors" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </div>
-
-                    {/* Hover Gradient Effect */}
-                    <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`}></div>
-                  </button>
-                );
-              })}
+                      {/* Hover Effect */}
+                      <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`}></div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </nav>
+          </div>
 
-          {/* Footer Tip */}
-          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 border-t border-gray-200">
-            <p className="text-center text-sm text-gray-600">
-              💡 <span className="font-semibold">نصيحة:</span> استخدم القائمة للوصول السريع إلى جميع أقسام المنصة
-            </p>
+          {/* Main Content Area (for desktop) */}
+          <div className="hidden lg:block flex-1 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                <BookOpen className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 mb-2">مرحباً بك في بستان الإيمان</h3>
+              <p className="text-gray-600 mb-6">اختر من القائمة الجانبية للبدء</p>
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto">
+                <p className="text-sm text-gray-700">
+                  💡 <span className="font-semibold">نصيحة:</span> استخدم القائمة الجانبية للوصول السريع إلى جميع أقسام المنصة
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
