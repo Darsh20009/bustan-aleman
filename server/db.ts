@@ -91,17 +91,6 @@ async function tryAwsRdsConnection(): Promise<boolean> {
   }
 }
 
-// Initialize database connection (async wrapper for AWS RDS fallback)
-(async () => {
-  const awsConnected = await tryAwsRdsConnection();
-
-  if (!awsConnected && databaseUrl) {
-    initializeLocalDatabase();
-  } else if (!awsConnected && !databaseUrl) {
-    console.log("⚠️  No database URL found. Using JSON storage fallback.");
-  }
-})();
-
 function initializeLocalDatabase() {
   if (!databaseUrl) return;
   
@@ -128,6 +117,17 @@ function initializeLocalDatabase() {
     if (!ENABLE_AWS_RDS && process.env.AWS_DB_HOST) {
       console.log(`⚠️  AWS RDS database available but disabled. Set environment variable ENABLE_AWS_RDS=true to use it.`);
     }
+  }
+}
+
+// Initialize database connection (async wrapper for AWS RDS fallback)
+export async function initializeDatabase() {
+  const awsConnected = await tryAwsRdsConnection();
+
+  if (!awsConnected && databaseUrl) {
+    initializeLocalDatabase();
+  } else if (!awsConnected && !databaseUrl) {
+    console.log("⚠️  No database URL found. Using JSON storage fallback.");
   }
 }
 

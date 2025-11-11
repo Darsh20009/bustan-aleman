@@ -9,6 +9,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { wsService } from "./websocket";
+import { initializeDatabase } from "./db";
 
 const app = express();
 app.use(express.json());
@@ -69,6 +70,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Initialize database connection first (AWS RDS or local)
+    await initializeDatabase();
+    console.log("✅ Database connection initialized");
+    
     // Run password migration on startup
     await migratePasswords();
     console.log("✅ Password migration completed");
