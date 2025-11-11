@@ -43,9 +43,13 @@ export const users = bustanSchema.table("users", {
   age: integer("age"),
   educationLevel: varchar("education_level"),
   quranExperience: varchar("quran_experience"),
+  memorization_level: varchar("memorization_level"), // مستوى الحفظ: لم أبدأ، أقل من جزء، جزء واحد، أكثر من جزء، إلخ
   learningGoals: text("learning_goals"),
   preferredTime: varchar("preferred_time"),
   whatsappNumber: varchar("whatsapp_number"),
+  emailVerified: boolean("email_verified").default(false), // للتحقق من البريد الإلكتروني
+  passwordResetToken: varchar("password_reset_token"), // رمز إعادة تعيين كلمة المرور
+  passwordResetExpiry: timestamp("password_reset_expiry"), // تاريخ انتهاء الرمز
   isActive: boolean("is_active").default(true),
   registrationCompleted: boolean("registration_completed").default(false),
   createdAt: timestamp("created_at").defaultNow(),

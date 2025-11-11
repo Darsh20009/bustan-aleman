@@ -1,8 +1,12 @@
 import { defineConfig } from "drizzle-kit";
 
-// Build AWS RDS connection string if credentials are available
+// Build database connection string
 let databaseUrl = '';
-if (process.env.AWS_DB_HOST && process.env.AWS_DB_PORT && 
+
+// Only use AWS RDS if explicitly enabled (same as server/db.ts)
+const ENABLE_AWS_RDS = process.env.ENABLE_AWS_RDS === 'true';
+
+if (ENABLE_AWS_RDS && process.env.AWS_DB_HOST && process.env.AWS_DB_PORT && 
     process.env.AWS_DB_NAME && process.env.AWS_DB_USER && 
     process.env.AWS_DB_PASSWORD) {
   databaseUrl = `postgresql://${process.env.AWS_DB_USER}:${process.env.AWS_DB_PASSWORD}@${process.env.AWS_DB_HOST}:${process.env.AWS_DB_PORT}/${process.env.AWS_DB_NAME}?sslmode=require`;
