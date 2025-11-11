@@ -384,6 +384,7 @@ const roleNavigation = {
 
 export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => void } = {}) {
   const { user, logout, isLoading } = useAuth();
+  const [activeRoomId, setActiveRoomId] = React.useState<string | null>(null);
   
   // Default navigation handler using window.location if none provided
   const handleNavigation = onNavigate || ((path: string) => {
@@ -445,6 +446,11 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
     supervisor: 'مشرف',
     admin: 'مدير'
   }[user.role];
+
+  // إذا كانت هناك حصة نشطة، لا نعرض القائمة
+  if (activeRoomId) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
