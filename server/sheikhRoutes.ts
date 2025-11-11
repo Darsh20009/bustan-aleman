@@ -58,6 +58,7 @@ const meetingSchema = z.object({
 const studentErrorSchema = z.object({
   studentId: z.string(),
   surahNumber: z.number().int().min(1).max(114),
+  surahName: z.string(),
   ayahNumber: z.number().int().min(1),
   errorType: z.enum(['pronunciation', 'tajweed', 'memorization']),
   errorDescription: z.string(),
@@ -330,11 +331,14 @@ export function setupSheikhRoutes(app: Express) {
       const updateData = studentUpdateSchema.parse(req.body);
       
       // Convert monthlyPrice to string if it's a number
-      if (typeof updateData.monthlyPrice === 'number') {
-        updateData.monthlyPrice = updateData.monthlyPrice.toString();
-      }
+      const cleanedUpdateData = {
+        ...updateData,
+        monthlyPrice: typeof updateData.monthlyPrice === 'number' 
+          ? updateData.monthlyPrice.toString() 
+          : updateData.monthlyPrice
+      };
       
-      const updatedStudent = await storage.updateStudent(studentId, updateData);
+      const updatedStudent = await storage.updateStudent(studentId, cleanedUpdateData);
       
       res.json(updatedStudent);
     } catch (error) {
