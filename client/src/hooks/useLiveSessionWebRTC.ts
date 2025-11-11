@@ -22,6 +22,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -29,9 +30,11 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const screenVideoRef = useRef<HTMLVideoElement | null>(null);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -330,10 +333,86 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
     onDisconnect?.();
   };
 
+  const startScreenShare = async () => {
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false
+      });
+      
+      screenStreamRef.current = screenStream;
+      
+      if (screenVideoRef.current) {
+        screenVideoRef.current.srcObject = screenStream;
+      }
+      
+      const pc = peerConnectionRef.current;
+      if (pc && localStreamRef.current) {
+        const videoTrack = screenStream.getVideoTracks()[0];
+        const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+        
+        if (sender) {
+          await sender.replaceTrack(videoTrack);
+          console.log('📺 Screen sharing started');
+          setIsScreenSharing(true);
+          
+          videoTrack.onended = () => {
+            stopScreenShare();
+          };
+          
+          toast({
+            title: 'بدأت مشاركة الشاشة',
+            description: 'يمكن للطلاب رؤية شاشتك الآن'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error starting screen share:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في مشاركة الشاشة',
+        description: 'لم نتمكن من مشاركة شاشتك'
+      });
+    }
+  };
+
+  const stopScreenShare = async () => {
+    try {
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach(track => track.stop());
+        screenStreamRef.current = null;
+      }
+      
+      const pc = peerConnectionRef.current;
+      if (pc && localStreamRef.current) {
+        const videoTrack = localStreamRef.current.getVideoTracks()[0];
+        const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+        
+        if (sender && videoTrack) {
+          await sender.replaceTrack(videoTrack);
+          console.log('📺 Screen sharing stopped');
+          setIsScreenSharing(false);
+          
+          toast({
+            title: 'توقفت مشاركة الشاشة',
+            description: 'عدت إلى الكاميرا'
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error stopping screen share:', error);
+    }
+  };
+
   const cleanupMedia = () => {
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
       localStreamRef.current = null;
+    }
+    
+    if (screenStreamRef.current) {
+      screenStreamRef.current.getTracks().forEach(track => track.stop());
+      screenStreamRef.current = null;
     }
     
     if (peerConnectionRef.current) {
@@ -345,14 +424,18 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   return {
     isAudioEnabled,
     isVideoEnabled,
+    isScreenSharing,
     participants,
     messages,
     isConnected,
     remoteStreams,
     localVideoRef,
     remoteVideoRef,
+    screenVideoRef,
     toggleAudio,
     toggleVideo,
+    startScreenShare,
+    stopScreenShare,
     sendMessage,
     leaveRoom
   };

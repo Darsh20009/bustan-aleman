@@ -573,41 +573,6 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
 
           {/* Mobile Horizontal Grid */}
           <div className="lg:hidden">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden p-4">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <BookMarked className="w-5 h-5 text-emerald-600" />
-                القائمة الرئيسية
-              </h2>
-              <div className="grid grid-cols-3 gap-3">
-                {navigation.map((item, index) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
-                        handleNavigation(path);
-                      }}
-                      className="group relative flex flex-col items-center gap-2 p-3 rounded-xl bg-gradient-to-br from-gray-50 to-white hover:from-white hover:to-emerald-50 border border-gray-200 hover:border-emerald-300 transition-all duration-300 hover:shadow-lg active:scale-95"
-                      data-testid={`nav-item-mobile-${index}`}
-                    >
-                      {/* Icon */}
-                      <div className={`relative w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-all duration-300`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-
-                      {/* Title */}
-                      <h3 className="text-xs font-bold text-gray-800 group-hover:text-emerald-700 transition-colors text-center line-clamp-2">
-                        {item.title}
-                      </h3>
-
-                      {/* Hover Effect */}
-                      <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-5 rounded-xl transition-opacity duration-300`}></div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Main Content Area (for desktop) */}
