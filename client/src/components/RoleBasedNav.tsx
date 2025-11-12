@@ -4,10 +4,19 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles } from 'lucide-react';
+import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { SheikhDashboard } from './SheikhDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+} from './ui/dropdown-menu';
 
 interface NavItem {
   title: string;
@@ -94,7 +103,7 @@ function StudentProfileHeader({ user, onNavigate }: { user: any; onNavigate: (pa
             </div>
 
             <p className="text-white/80 text-lg">
-              استمر في رحلتك المباركة في تعلم القرآن الكريم 🌟
+              استمر في رحلتك المباركة في تعلم القرآن الكريم
             </p>
           </div>
 
@@ -243,7 +252,7 @@ const roleNavigation = {
       gradient: 'from-emerald-500 to-teal-500'
     },
     { 
-      title: 'حصتي 📚', 
+      title: 'حصتي', 
       path: 'my-session', 
       description: 'الحصص المباشرة والتكاليف اليومية', 
       icon: BookOpen,
@@ -257,7 +266,7 @@ const roleNavigation = {
       gradient: 'from-blue-500 to-cyan-500'
     },
     { 
-      title: 'ملاحظاتي 📝', 
+      title: 'ملاحظاتي', 
       path: 'my-notes', 
       description: 'إدارة ملاحظاتك على آيات القرآن', 
       icon: BookMarked,
@@ -386,12 +395,17 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
   const { user, logout, isLoading } = useAuth();
   const [activeRoomId, setActiveRoomId] = React.useState<string | null>(null);
   
-  // Default navigation handler using window.location if none provided
-  const handleNavigation = onNavigate || ((path: string) => {
+  // Default navigation handler - normalizes paths before navigation
+  const handleNavigation = (path: string) => {
     // Ensure path has leading slash for URL navigation
     const fullPath = path.startsWith('/') ? path : `/${path}`;
-    window.location.href = fullPath;
-  });
+    
+    if (onNavigate) {
+      onNavigate(fullPath);
+    } else {
+      window.location.href = fullPath;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -465,20 +479,69 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
               <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">بستان الإيمان</h1>
             </div>
             
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div className="text-right">
+            <div className="flex items-center gap-2">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm text-gray-600">مرحباً</p>
                 <p className="font-medium text-gray-900">
                   {user.firstName} {user.lastName} ({roleTitle})
                 </p>
               </div>
               
+              {/* Dropdown Menu for Navigation */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon"
+                    className="border-emerald-300 text-emerald-600 hover:bg-emerald-50"
+                    data-testid="button-main-menu"
+                  >
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-72 max-h-96 overflow-y-auto">
+                  <DropdownMenuLabel className="text-right text-emerald-700 font-bold">
+                    القائمة الرئيسية
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
+                  {/* Navigation Items */}
+                  <DropdownMenuGroup>
+                    {navigation.map((item, index) => {
+                      const Icon = item.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={index}
+                          onClick={() => {
+                            handleNavigation(item.path);
+                          }}
+                          className="cursor-pointer hover:bg-emerald-50 focus:bg-emerald-50"
+                          data-testid={`dropdown-nav-${index}`}
+                        >
+                          <div className="flex items-center gap-3 w-full text-right">
+                            <div className={`flex-shrink-0 w-8 h-8 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center`}>
+                              <Icon className="w-4 h-4 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-800">{item.title}</div>
+                              <div className="text-xs text-gray-500">{item.description}</div>
+                            </div>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <Button
                 onClick={logout}
                 variant="outline"
                 className="border-red-300 text-red-600 hover:bg-red-50"
+                data-testid="button-logout"
               >
-                تسجيل الخروج
+                <span className="hidden sm:inline">تسجيل الخروج</span>
+                <span className="sm:hidden">خروج</span>
               </Button>
             </div>
           </div>
@@ -529,8 +592,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
                     <button
                       key={index}
                       onClick={() => {
-                        const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
-                        handleNavigation(path);
+                        handleNavigation(item.path);
                       }}
                       className="group relative w-full flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-white hover:to-emerald-50 border border-gray-200 hover:border-emerald-400 transition-all duration-300 hover:shadow-md"
                       data-testid={`nav-item-${index}`}
@@ -571,45 +633,51 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
             </nav>
           </aside>
 
-          {/* Mobile Horizontal Grid */}
-          <div className="lg:hidden w-full">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {navigation.map((item, index) => {
+          {/* Mobile: Quick access shortcuts */}
+          <div className="lg:hidden w-full space-y-4">
+            {/* Welcome Message */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                  <BookOpen className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">مرحباً بك في بستان الإيمان</h3>
+                <p className="text-gray-600 mb-4">اختر من القائمة أدناه أو استخدم القائمة الكاملة في الأعلى</p>
+              </div>
+            </div>
+            
+            {/* Quick Access Grid - First 4 items */}
+            <div className="grid grid-cols-2 gap-3">
+              {navigation.slice(0, 4).map((item, index) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={index}
-                    onClick={() => {
-                      const path = item.path.startsWith('/') ? item.path.substring(1) : item.path;
-                      handleNavigation(path);
-                    }}
-                    className="group relative bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-200/50 hover:shadow-xl hover:border-emerald-400 transition-all duration-300 overflow-hidden"
-                    data-testid={`nav-item-mobile-${index}`}
+                    onClick={() => handleNavigation(item.path)}
+                    className="group bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200/50 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 p-4"
+                    data-testid={`quick-nav-${index}`}
                   >
-                    {/* Card Content */}
-                    <div className="p-6 flex flex-col items-center text-center">
-                      {/* Icon */}
-                      <div className={`w-16 h-16 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 mb-4`}>
-                        <Icon className="w-8 h-8 text-white" />
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
+                        <Icon className="w-6 h-6 text-white" />
                       </div>
-                      
-                      {/* Title */}
-                      <h3 className="text-base font-bold text-gray-800 group-hover:text-emerald-700 transition-colors mb-2">
-                        {item.title}
-                      </h3>
-                      
-                      {/* Description */}
-                      <p className="text-xs text-gray-500 group-hover:text-gray-600 transition-colors line-clamp-2">
-                        {item.description}
-                      </p>
+                      <h4 className="text-sm font-bold text-gray-800">{item.title}</h4>
                     </div>
-
-                    {/* Hover Effect Overlay */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
                   </button>
                 );
               })}
             </div>
+            
+            {/* More options hint */}
+            {navigation.length > 4 && (
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
+                <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
+                  <MoreVertical className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold">نصيحة:</span>
+                  <span>اضغط على الثلاث نقاط في الأعلى لعرض جميع الأقسام ({navigation.length} قسم)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Main Content Area (for desktop) */}
@@ -621,8 +689,10 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
               <h3 className="text-2xl font-bold text-gray-800 mb-2">مرحباً بك في بستان الإيمان</h3>
               <p className="text-gray-600 mb-6">اختر من القائمة الجانبية للبدء</p>
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto">
-                <p className="text-sm text-gray-700">
-                  💡 <span className="font-semibold">نصيحة:</span> استخدم القائمة الجانبية للوصول السريع إلى جميع أقسام المنصة
+                <p className="text-sm text-gray-700 flex items-center justify-center gap-2">
+                  <BookMarked className="w-4 h-4 text-emerald-600" />
+                  <span className="font-semibold">نصيحة:</span>
+                  <span>استخدم القائمة الجانبية للوصول السريع إلى جميع أقسام المنصة</span>
                 </p>
               </div>
             </div>
