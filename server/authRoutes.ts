@@ -22,8 +22,20 @@ const userRegistrationSchema = z.object({
 });
 
 const loginSchema = z.object({
-  phoneNumber: z.string().min(10, "رقم الجوال مطلوب"),
+  phoneNumber: z.string().optional(),
+  email: z.string().email().optional(),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
+}).refine(data => data.phoneNumber || data.email, {
+  message: "رقم الجوال أو البريد الإلكتروني مطلوب",
+});
+
+const forgotPasswordSchema = z.object({
+  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, "رمز التحقق مطلوب"),
+  newPassword: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
 });
 
 export function setupAuthRoutes(app: Express) {
@@ -116,15 +128,15 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
-  // Universal user login
+  // Universal user login (supports phone or email)
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { phoneNumber, password } = loginSchema.parse(req.body);
+      const { phoneNumber, email, password } = loginSchema.parse(req.body);
 
-      // Find user by phone number
+      // Find user by phone number or email
       const users = await storage.getAllUsers();
       const user = users.find((u: any) =>
-        u.phoneNumber === phoneNumber && u.isActive
+        ((phoneNumber && u.phoneNumber === phoneNumber) || (email && u.email === email)) && u.isActive
       );
 
       if (!user) {
@@ -199,7 +211,6 @@ export function setupAuthRoutes(app: Express) {
             memorizedSurahs: '[]',
             currentLevel: 'المستوى الأول',
             notes: null,
-            zoomLink: null,
             whatsappContact: user.phoneNumber || '+966532441566',
           };
 
@@ -282,7 +293,6 @@ export function setupAuthRoutes(app: Express) {
             memorizedSurahs: '[]',
             currentLevel: 'المستوى الأول',
             notes: null,
-            zoomLink: null,
             whatsappContact: user.phoneNumber || '+966532441566',
           };
 
@@ -319,12 +329,117 @@ export function setupAuthRoutes(app: Express) {
     }
   });
 
+  // Forgot Password - Request Reset
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = forgotPasswordSchema.parse(req.body);
+
+      const users = await storage.getAllUsers();
+      const user = users.find((u: any) => u.email === email && u.isActive);
+
+      if (!user) {
+        // Don't reveal if email exists for security
+        return res.json({ message: "إذا كان البريد الإلكتروني موجوداً، سيتم إرسال رابط إعادة التعيين" });
+      }
+
+      // Generate reset token (valid for 1 hour)
+      const resetToken = require('crypto').randomBytes(32).toString('hex');
+      const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
+
+      // Update user with reset token
+      await storage.upsertUser({
+        ...user,
+        passwordResetToken: resetToken,
+        passwordResetExpiry: resetTokenExpiry,
+      });
+
+      // Generate reset link
+      const resetLink = `${process.env.REPL_SLUG || 'http://localhost:5000'}/reset-password?token=${resetToken}`;
+      
+      // ⚠️ DEVELOPMENT ONLY: Log the reset link to console
+      // In production, this should be sent via email only!
+      console.log('🔑 [DEV ONLY] Password reset link:', resetLink);
+      console.log('⚠️  WARNING: Email service not configured. Please set up email to send reset links securely.');
+
+      // TODO: Send email using email service (e.g., SendGrid, AWS SES)
+      // Example: await sendEmail(user.email, 'Reset Password', resetLink);
+
+      // ✅ SECURITY FIX: Never return the token in the response!
+      // Always send it via a trusted channel (email)
+      res.json({ 
+        message: "إذا كان البريد الإلكتروني موجوداً، سيتم إرسال رابط إعادة التعيين"
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "بريد إلكتروني غير صالح",
+          errors: error.errors.map(e => e.message)
+        });
+      }
+      console.error("Error in forgot password:", error);
+      res.status(500).json({ message: "حدث خطأ، يرجى المحاولة مرة أخرى" });
+    }
+  });
+
+  // Reset Password - Complete Reset
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = resetPasswordSchema.parse(req.body);
+
+      const users = await storage.getAllUsers();
+      const user = users.find((u: any) => 
+        u.passwordResetToken === token && 
+        u.passwordResetExpiry && 
+        new Date(u.passwordResetExpiry) > new Date() &&
+        u.isActive
+      );
+
+      if (!user) {
+        return res.status(400).json({ message: "رمز إعادة التعيين غير صالح أو منتهي الصلاحية" });
+      }
+
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+
+      // Update user password and clear reset token
+      await storage.upsertUser({
+        ...user,
+        passwordHash: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpiry: null,
+      });
+
+      // Also update student record if exists
+      if (user.role === 'student') {
+        const students = await storage.getAllStudents();
+        const student = students.find(s => s.userId === user.id);
+        if (student) {
+          await storage.updateStudent(student.id, {
+            ...student,
+            passwordHash: hashedPassword,
+          });
+        }
+      }
+
+      res.json({ message: "تم تغيير كلمة المرور بنجاح" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "بيانات غير صالحة",
+          errors: error.errors.map(e => e.message)
+        });
+      }
+      console.error("Error in reset password:", error);
+      res.status(500).json({ message: "حدث خطأ، يرجى المحاولة مرة أخرى" });
+    }
+  });
+
   // Logout
   app.post('/api/auth/logout', async (req, res) => {
     try {
       req.session?.destroy?.((err) => {
         if (err) {
-          console.error("Session destruction error:", err);
+          console.error("Session destruction error:", error);
           return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
         }
         res.clearCookie('connect.sid');
