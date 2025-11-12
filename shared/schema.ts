@@ -517,8 +517,27 @@ export const messages = bustanSchema.table("messages", {
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
   isGroupMessage: boolean("is_group_message").default(false), // For broadcasting to all students
+  roomId: varchar("room_id"), // للربط بغرفة محادثة محددة
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Notifications table - for student notifications
+export const notifications = bustanSchema.table("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  messageAr: text("message_ar").notNull(),
+  messageEn: text("message_en"),
+  type: varchar("type").notNull(), // lesson, assignment, announcement, system
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  actionUrl: varchar("action_url"), // URL to navigate when clicked
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("notifications_user_idx").on(table.userId),
+  index("notifications_read_idx").on(table.isRead),
+]);
 
 // Quran word highlights table - for highlighting and annotating individual words
 export const quranWordHighlights = bustanSchema.table("quran_word_highlights", {
@@ -798,6 +817,11 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   createdAt: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertLiveAnnotationSchema = createInsertSchema(liveAnnotations).omit({
   id: true,
   createdAt: true,
@@ -907,6 +931,8 @@ export type Certificate = typeof certificates.$inferSelect;
 export type InsertCertificate = z.infer<typeof insertCertificateSchema>;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type LiveAnnotation = typeof liveAnnotations.$inferSelect;
 export type InsertLiveAnnotation = z.infer<typeof insertLiveAnnotationSchema>;
 export type LiveRoom = typeof liveRooms.$inferSelect;

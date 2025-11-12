@@ -25,6 +25,7 @@ import {
   liveRooms,
   roomParticipants,
   messages,
+  notifications,
   type User,
   type UpsertUser,
   type Course,
@@ -77,6 +78,8 @@ import {
   type InsertRoomParticipant,
   type Message,
   type InsertMessage,
+  type Notification,
+  type InsertNotification,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -249,6 +252,13 @@ export interface IStorage {
   addRoomParticipant(participant: InsertRoomParticipant): Promise<RoomParticipant>;
   removeRoomParticipant(roomId: string, userId: string): Promise<void>;
   getRoomParticipants(roomId: string): Promise<RoomParticipant[]>;
+  
+  // Notification operations
+  getNotifications(userId: string): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: string, userId: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
+  deleteNotification(id: string, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1799,6 +1809,7 @@ export class DatabaseStorage implements IStorage {
         isRead: false,
         readAt: null,
         isGroupMessage: message.isGroupMessage || false,
+        roomId: message.roomId || null,
         createdAt: new Date(),
       };
       return mockMessage;
@@ -1806,6 +1817,72 @@ export class DatabaseStorage implements IStorage {
     
     const [newMessage] = await db!.insert(messages).values(message).returning();
     return newMessage;
+  }
+
+  // Notification operations
+  async getNotifications(userId: string): Promise<Notification[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    const userNotifications = await db!
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+    
+    return userNotifications;
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    if (!this.isDbAvailable()) {
+      const mockNotification: Notification = {
+        id: `notif_${Date.now()}`,
+        ...notification,
+        titleEn: notification.titleEn || null,
+        messageEn: notification.messageEn || null,
+        isRead: false,
+        readAt: null,
+        actionUrl: notification.actionUrl || null,
+        createdAt: new Date(),
+      };
+      return mockNotification;
+    }
+    
+    const [newNotification] = await db!.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async markNotificationAsRead(id: string, userId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      return;
+    }
+    
+    await db!
+      .update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      return;
+    }
+    
+    await db!
+      .update(notifications)
+      .set({ isRead: true, readAt: new Date() })
+      .where(eq(notifications.userId, userId));
+  }
+
+  async deleteNotification(id: string, userId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      return;
+    }
+    
+    await db!
+      .delete(notifications)
+      .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
   }
 }
 
