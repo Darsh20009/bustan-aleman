@@ -25,7 +25,16 @@ export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
   dialect: "postgresql",
-  dbCredentials: {
+  dbCredentials: ENABLE_AWS_RDS ? {
+    host: process.env.AWS_DB_HOST!,
+    port: parseInt(process.env.AWS_DB_PORT || '5432'),
+    user: process.env.AWS_DB_USER!,
+    password: process.env.AWS_DB_PASSWORD!,
+    database: process.env.AWS_DB_NAME!,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  } : {
     url: databaseUrl,
   },
   schemaFilter: ["bustan"],
