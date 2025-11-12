@@ -325,33 +325,52 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             </Card>
 
             {/* Chat */}
-            <Card className="bg-black/40 border-emerald-500/30 flex-1">
-              <CardHeader className="pb-3">
+            <Card className="bg-black/40 border-emerald-500/30 flex flex-col h-[500px]">
+              <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   المحادثة
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="h-[300px] overflow-y-auto space-y-2 mb-3">
-                  {messages.map((msg: any) => (
-                    <div
-                      key={msg.id}
-                      className="bg-white/10 p-3 rounded-lg"
-                      data-testid={`message-${msg.id}`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-emerald-400 font-medium text-sm">
-                          {msg.userName}
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          {msg.timestamp}
-                        </span>
+              <CardContent className="flex flex-col flex-1 min-h-0 space-y-3">
+                <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-emerald-600 scrollbar-track-gray-800">
+                  {messages.map((msg: any) => {
+                    // Filter out whiteboard commands from display
+                    try {
+                      const parsed = JSON.parse(msg.text);
+                      if (parsed.type === 'whiteboard') {
+                        return null;
+                      }
+                    } catch {
+                      // Not a JSON message, display normally
+                    }
+                    
+                    return (
+                      <div
+                        key={msg.id}
+                        className="bg-white/10 p-3 rounded-lg"
+                        data-testid={`message-${msg.id}`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-emerald-400 font-medium text-sm">
+                            {msg.userName}
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            {msg.timestamp}
+                          </span>
+                        </div>
+                        <p className="text-white">{msg.text}</p>
                       </div>
-                      <p className="text-white">{msg.text}</p>
-                    </div>
-                  ))}
-                  {messages.length === 0 && (
+                    );
+                  })}
+                  {messages.filter((msg: any) => {
+                    try {
+                      const parsed = JSON.parse(msg.text);
+                      return parsed.type !== 'whiteboard';
+                    } catch {
+                      return true;
+                    }
+                  }).length === 0 && (
                     <div className="text-center text-white/60 py-8">
                       <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
                       <p>لا توجد رسائل بعد</p>
@@ -359,7 +378,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
