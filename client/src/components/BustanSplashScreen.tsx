@@ -11,11 +11,11 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
   const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
-    const timer1 = setTimeout(() => setShowLogo(true), 500);
-    const timer2 = setTimeout(() => setCurrentPhase(1), 2000);
-    const timer3 = setTimeout(() => setCurrentPhase(2), 3500);
-    const timer4 = setTimeout(() => setCurrentPhase(3), 5000);
-    const timer5 = setTimeout(() => onComplete(), 6500);
+    const timer1 = setTimeout(() => setShowLogo(true), 300);
+    const timer2 = setTimeout(() => setCurrentPhase(1), 800);
+    const timer3 = setTimeout(() => setCurrentPhase(2), 1300);
+    const timer4 = setTimeout(() => setCurrentPhase(3), 1800);
+    const timer5 = setTimeout(() => onComplete(), 2500);
 
     return () => {
       clearTimeout(timer1);
