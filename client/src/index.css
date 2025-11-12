@@ -4,56 +4,56 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(48, 30%, 98%);
-  --foreground: hsl(215, 28%, 17%);
-  --card: hsl(48, 25%, 96%);
-  --card-foreground: hsl(215, 28%, 17%);
-  --popover: hsl(48, 30%, 98%);
-  --popover-foreground: hsl(215, 28%, 17%);
-  --primary: hsl(160, 55%, 30%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(45, 75%, 65%);
-  --secondary-foreground: hsl(215, 28%, 17%);
-  --muted: hsl(48, 18%, 92%);
-  --muted-foreground: hsl(215, 18%, 45%);
-  --accent: hsl(48, 28%, 90%);
-  --accent-foreground: hsl(160, 55%, 30%);
-  --destructive: hsl(0, 70%, 55%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(48, 22%, 87%);
-  --input: hsl(48, 18%, 94%);
-  --ring: hsl(160, 55%, 30%);
-  --chart-1: hsl(160, 55%, 30%);
-  --chart-2: hsl(45, 75%, 65%);
-  --chart-3: hsl(25, 65%, 58%);
-  --chart-4: hsl(160, 45%, 38%);
-  --chart-5: hsl(45, 55%, 48%);
-  --sidebar: hsl(48, 25%, 96%);
-  --sidebar-foreground: hsl(215, 28%, 17%);
-  --sidebar-primary: hsl(160, 55%, 30%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(48, 28%, 90%);
-  --sidebar-accent-foreground: hsl(160, 55%, 30%);
-  --sidebar-border: hsl(48, 22%, 82%);
-  --sidebar-ring: hsl(160, 55%, 30%);
+  --background: 48 30% 98%;
+  --foreground: 215 28% 17%;
+  --card: 48 25% 96%;
+  --card-foreground: 215 28% 17%;
+  --popover: 48 30% 98%;
+  --popover-foreground: 215 28% 17%;
+  --primary: 160 55% 30%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 45 75% 65%;
+  --secondary-foreground: 215 28% 17%;
+  --muted: 48 18% 92%;
+  --muted-foreground: 215 18% 45%;
+  --accent: 48 28% 90%;
+  --accent-foreground: 160 55% 30%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 48 22% 87%;
+  --input: 48 18% 94%;
+  --ring: 160 55% 30%;
+  --chart-1: 160 55% 30%;
+  --chart-2: 45 75% 65%;
+  --chart-3: 25 65% 58%;
+  --chart-4: 160 45% 38%;
+  --chart-5: 45 55% 48%;
+  --sidebar: 48 25% 96%;
+  --sidebar-foreground: 215 28% 17%;
+  --sidebar-primary: 160 55% 30%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 48 28% 90%;
+  --sidebar-accent-foreground: 160 55% 30%;
+  --sidebar-border: 48 22% 82%;
+  --sidebar-ring: 160 55% 30%;
   --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
   --font-serif: 'Amiri', serif;
   --font-mono: 'Courier New', monospace;
   --radius: 0.75rem;
   
   /* Enhanced Islamic theme colors - Unified Green, White, Orange Palette */
-  --islamic-emerald: hsl(160, 65%, 35%);
-  --islamic-teal: hsl(160, 65%, 35%);
-  --royal-gold: hsl(30, 90%, 60%);
-  --antique-gold: hsl(30, 90%, 60%);
-  --persian-blue: hsl(160, 65%, 35%);
-  --mosque-green: hsl(160, 65%, 35%);
-  --desert-sand: hsl(0, 0%, 100%);
-  --marble-white: hsl(0, 0%, 100%);
-  --pearl-cream: hsl(0, 0%, 100%);
-  --midnight-navy: hsl(160, 65%, 35%);
-  --copper-bronze: hsl(30, 90%, 60%);
-  --moonlight-silver: hsl(0, 0%, 100%);
+  --islamic-emerald: 160 65% 35%;
+  --islamic-teal: 160 65% 35%;
+  --royal-gold: 30 90% 60%;
+  --antique-gold: 30 90% 60%;
+  --persian-blue: 160 65% 35%;
+  --mosque-green: 160 65% 35%;
+  --desert-sand: 0 0% 100%;
+  --marble-white: 0 0% 100%;
+  --pearl-cream: 0 0% 100%;
+  --midnight-navy: 160 65% 35%;
+  --copper-bronze: 30 90% 60%;
+  --moonlight-silver: 0 0% 100%;
   
   /* Backward compatibility aliases */
   --islamic-green: var(--islamic-emerald);
@@ -65,25 +65,25 @@
 }
 
 .dark {
-  --background: hsl(0, 0%, 8%);
-  --foreground: hsl(160, 10%, 90%);
-  --card: hsl(160, 8%, 12%);
-  --card-foreground: hsl(160, 10%, 90%);
-  --popover: hsl(0, 0%, 10%);
-  --popover-foreground: hsl(160, 10%, 90%);
-  --primary: hsl(160, 65%, 45%);
-  --primary-foreground: hsl(0, 0%, 0%);
-  --secondary: hsl(160, 50%, 35%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(160, 5%, 18%);
-  --muted-foreground: hsl(160, 8%, 65%);
-  --accent: hsl(160, 15%, 20%);
-  --accent-foreground: hsl(160, 65%, 50%);
-  --destructive: hsl(0, 70%, 55%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(160, 10%, 25%);
-  --input: hsl(160, 8%, 15%);
-  --ring: hsl(160, 65%, 45%);
+  --background: 0 0% 8%;
+  --foreground: 160 10% 90%;
+  --card: 160 8% 12%;
+  --card-foreground: 160 10% 90%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 160 10% 90%;
+  --primary: 160 65% 45%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 160 50% 35%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 160 5% 18%;
+  --muted-foreground: 160 8% 65%;
+  --accent: 160 15% 20%;
+  --accent-foreground: 160 65% 50%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 160 10% 25%;
+  --input: 160 8% 15%;
+  --ring: 160 65% 45%;
 }
 
 @layer base {

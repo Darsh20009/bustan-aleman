@@ -80,12 +80,12 @@ function AppContent() {
         // If authenticated, show role-based navigation instead of homepage
         if (isAuthenticated && user) {
           return <RoleBasedNav onNavigate={(path) => {
-            // Remove leading slash if present for state validation
-            const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+            // Normalize path by removing leading and trailing slashes
+            const normalized = path.replace(/^\/+|\/+$/g, "");
             
             // If it's a valid app state, use state navigation
-            if (isValidAppState(cleanPath)) {
-              setAppState(cleanPath);
+            if (isValidAppState(normalized)) {
+              setAppState(normalized);
             } else {
               // For other paths (like supervisor/students), use URL navigation
               // Ensure path has leading slash
@@ -125,9 +125,10 @@ function AppContent() {
         // If already authenticated, redirect to appropriate dashboard
         if (isAuthenticated && user) {
           return <RoleBasedNav onNavigate={(path) => {
-            const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-            if (isValidAppState(cleanPath)) {
-              setAppState(cleanPath);
+            // Normalize path by removing leading and trailing slashes
+            const normalized = path.replace(/^\/+|\/+$/g, "");
+            if (isValidAppState(normalized)) {
+              setAppState(normalized);
             } else {
               const fullPath = path.startsWith('/') ? path : `/${path}`;
               window.location.href = fullPath;
@@ -140,9 +141,10 @@ function AppContent() {
         // Use the new role-based navigation instead of old dashboard
         if (isAuthenticated && user) {
           return <RoleBasedNav onNavigate={(path) => {
-            const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-            if (isValidAppState(cleanPath)) {
-              setAppState(cleanPath);
+            // Normalize path by removing leading and trailing slashes
+            const normalized = path.replace(/^\/+|\/+$/g, "");
+            if (isValidAppState(normalized)) {
+              setAppState(normalized);
             } else {
               const fullPath = path.startsWith('/') ? path : `/${path}`;
               window.location.href = fullPath;
