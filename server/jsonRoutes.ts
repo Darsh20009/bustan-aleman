@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { jsonStorage } from "./jsonStorage";
-import { courseManager } from "./courseSystem";
+// courseManager removed - using storage for all course operations
 import { hashPassword, verifyPassword } from "./authUtils";
 import { requireAuth, requireAdmin, requireSupervisorOrAdmin } from "./authMiddleware";
 import { storage } from "./storage";

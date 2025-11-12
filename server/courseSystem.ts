@@ -48,54 +48,9 @@ export interface CourseEnrollment {
 }
 
 export class CourseManager {
+  // All courses are now managed via database - no hardcoded courses
   private courses: Course[] = [
-    // رحلة إتقان التجويد - الدورة المميزة الأولى
-    {
-      id: 'tajweed-mastery-journey',
-      title: 'رحلة إتقان التجويد',
-      description: 'مسار تفاعلي متكامل يركز على الأحكام النظرية والتطبيق العملي للتجويد، مع متابعة فردية وتصحيح مباشر من المشرف المختص',
-      instructor: 'الشيخ أحمد عبدالعزيز',
-      startDate: '2025-02-01',
-      endDate: '2025-06-01',
-      level: 'intermediate',
-      category: 'quran',
-      maxStudents: 15,
-      currentStudents: 8,
-      price: 200,
-      isActive: true,
-      requirements: ['إتقان قراءة القرآن الكريم', 'معرفة أساسيات التجويد', 'الالتزام بالحضور والمراجعة'],
-      schedule: {
-        days: ['الأحد', 'الثلاثاء', 'الخميس'],
-        time: '17:00',
-        duration: '90 دقيقة'
-      },
-      curriculum: [
-        {
-          week: 1,
-          topic: 'أحكام النون الساكنة والتنوين',
-          objectives: ['إتقان الإظهار والإدغام', 'تطبيق الإقلاب والإخفاء', 'التدريب الصوتي المكثف'],
-          surahs: ['البقرة (1-20)', 'آل عمران (1-10)']
-        },
-        {
-          week: 2,
-          topic: 'أحكام الميم الساكنة',
-          objectives: ['فهم الإخفاء الشفوي', 'إتقان الإدغام الصغير', 'تطبيق الإظهار الشفوي'],
-          surahs: ['النساء (1-15)', 'المائدة (1-10)']
-        },
-        {
-          week: 3,
-          topic: 'المدود وأنواعها',
-          objectives: ['تعلم المد الطبيعي والفرعي', 'إتقان مد البدل والعوض', 'تطبيق المد المنفصل والمتصل'],
-          surahs: ['الأنعام (1-20)', 'الأعراف (1-15)']
-        },
-        {
-          week: 4,
-          topic: 'القلقلة وأحكام الوقف',
-          objectives: ['إتقان قلقلة الحروف الخمسة', 'فهم أحكام الوقف والابتداء', 'تطبيق السكتات'],
-          surahs: ['الأنفال', 'التوبة (1-30)']
-        }
-      ]
-    },
+    // Courses are created dynamically by sheikhs via the course management UI
     
     // رحلة حفظ جزء عم - للمبتدئين والأطفال
     {
