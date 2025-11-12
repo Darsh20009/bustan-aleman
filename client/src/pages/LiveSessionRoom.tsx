@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { 
   Video, 
   Mic, 
@@ -16,7 +16,9 @@ import {
   Monitor,
   MonitorOff,
   Pencil,
-  Shield
+  Shield,
+  MoreVertical,
+  Settings
 } from 'lucide-react';
 import { useLiveSessionWebRTC } from '@/hooks/useLiveSessionWebRTC';
 import { LiveWhiteboard } from '@/components/LiveWhiteboard';
@@ -56,7 +58,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
     leaveRoom
   } = useLiveSessionWebRTC(roomId, onLeave);
 
-  const isShamsikh = user?.role === 'supervisor';
+  const isShamsikh = user?.role === 'supervisor' || user?.role === 'admin';
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
@@ -103,9 +105,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 overflow-hidden" dir="rtl">
+    <div className="h-screen overflow-y-auto bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-2 md:p-4 shadow-lg">
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 p-2 md:p-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
             <div className="w-8 h-8 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center">
@@ -134,33 +136,34 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
 
           {/* Control Buttons */}
           <div className="flex items-center gap-1 md:gap-2 flex-wrap">
-            {/* Whiteboard Toggle - Sheikh Only */}
             {isShamsikh && (
-              <Button
-                size="sm"
-                variant={whiteboardEnabled ? "default" : "outline"}
-                onClick={toggleWhiteboard}
-                className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
-                data-testid="button-toggle-whiteboard"
-              >
-                <Pencil className="w-3 h-3 md:w-5 md:h-5" />
-                <span className="hidden md:inline">{whiteboardEnabled ? 'إخفاء السبورة' : 'إظهار السبورة'}</span>
-                <span className="md:hidden">سبورة</span>
-              </Button>
-            )}
-
-            {/* Screen Share - Sheikh Only */}
-            {isShamsikh && (
-              <Button
-                size="sm"
-                variant={isScreenSharing ? "destructive" : "outline"}
-                onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-                className="hidden md:flex items-center gap-2 text-xs md:text-sm"
-                data-testid="button-toggle-screen-share"
-              >
-                {isScreenSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
-                <span>{isScreenSharing ? 'إيقاف مشاركة' : 'مشاركة الشاشة'}</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
+                    data-testid="button-controls-menu"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span className="hidden md:inline">أدوات التحكم</span>
+                    <MoreVertical className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={toggleWhiteboard} data-testid="menu-toggle-whiteboard">
+                    <Pencil className="w-4 h-4 ml-2" />
+                    {whiteboardEnabled ? 'إخفاء السبورة' : 'إظهار السبورة'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                    data-testid="menu-toggle-screen-share"
+                  >
+                    {isScreenSharing ? <MonitorOff className="w-4 h-4 ml-2" /> : <Monitor className="w-4 h-4 ml-2" />}
+                    {isScreenSharing ? 'إيقاف مشاركة الشاشة' : 'مشاركة الشاشة'}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
             <Button
@@ -178,98 +181,111 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
       </div>
 
       {/* Main Content */}
-      <div className="h-[calc(100vh-80px)] p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+      <div className="p-4 pb-8 min-h-[calc(100vh-80px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Video & Whiteboard Section */}
           <div className="lg:col-span-2 space-y-4">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'video' | 'whiteboard')} className="h-full flex flex-col">
-              <TabsList className="grid w-full grid-cols-2 bg-black/40">
-                <TabsTrigger value="video" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                  <Video className="w-4 h-4 ml-2" />
-                  الفيديو
-                </TabsTrigger>
-                <TabsTrigger value="whiteboard" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                  <Pencil className="w-4 h-4 ml-2" />
-                  السبورة البيضاء
-                </TabsTrigger>
-              </TabsList>
+            {/* View Toggle Buttons */}
+            <div className="flex gap-2 bg-black/40 p-1 rounded-lg">
+              <Button
+                variant={activeTab === 'video' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('video')}
+                className="flex-1"
+                data-testid="button-view-video"
+              >
+                <Video className="w-4 h-4 ml-2" />
+                الفيديو
+              </Button>
+              <Button
+                variant={activeTab === 'whiteboard' ? 'default' : 'ghost'}
+                onClick={() => setActiveTab('whiteboard')}
+                className="flex-1"
+                data-testid="button-view-whiteboard"
+              >
+                <Pencil className="w-4 h-4 ml-2" />
+                السبورة البيضاء
+              </Button>
+            </div>
 
-              <TabsContent value="video" className="flex-1 space-y-4 mt-4">
-                {/* Remote Video */}
-                <Card className="bg-black/40 border-emerald-500/30 h-[60%]">
-                  <CardContent className="p-4 h-full">
-                    <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
-                      <video
-                        ref={remoteVideoRef}
-                        autoPlay
-                        playsInline
-                        className="w-full h-full object-cover"
-                        data-testid="video-remote"
-                      />
-                      {participants.length === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center text-white/60">
-                            <Users className="w-16 h-16 mx-auto mb-4" />
-                            <p className="text-lg">في انتظار انضمام المشاركين...</p>
-                          </div>
+            {/* Video Section - Always mounted, hidden when whiteboard active */}
+            <div className={activeTab === 'video' ? 'block space-y-4' : 'hidden'}>
+              {/* Remote Video */}
+              <Card className="bg-black/40 border-emerald-500/30 h-[400px] md:h-[500px]">
+                <CardContent className="p-4 h-full">
+                  <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
+                    <video
+                      ref={remoteVideoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-cover"
+                      data-testid="video-remote"
+                    />
+                    {participants.length === 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center text-white/60">
+                          <Users className="w-16 h-16 mx-auto mb-4" />
+                          <p className="text-lg">في انتظار انضمام المشاركين...</p>
                         </div>
-                      )}
-                      {isScreenSharing && (
-                        <div className="absolute top-4 right-4">
-                          <Badge className="bg-red-500 text-white flex items-center gap-1">
-                            <Monitor className="w-3 h-3" />
-                            يشارك الشاشة
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Local Video */}
-                <Card className="bg-black/40 border-emerald-500/30 h-[35%]">
-                  <CardContent className="p-4 h-full">
-                    <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
-                      <video
-                        ref={localVideoRef}
-                        autoPlay
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                        data-testid="video-local"
-                      />
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3">
-                        <Button
-                          size="icon"
-                          variant={isAudioEnabled ? "default" : "destructive"}
-                          onClick={toggleAudio}
-                          className="rounded-full w-12 h-12"
-                          data-testid="button-toggle-audio"
-                        >
-                          {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                        </Button>
-
-                        <Button
-                          size="icon"
-                          variant={isVideoEnabled ? "default" : "destructive"}
-                          onClick={toggleVideo}
-                          className="rounded-full w-12 h-12"
-                          data-testid="button-toggle-video"
-                        >
-                          {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                        </Button>
                       </div>
-                      <div className="absolute top-4 left-4">
-                        <Badge className="bg-emerald-500 text-white">
-                          أنت
+                    )}
+                    {isScreenSharing && (
+                      <div className="absolute top-4 right-4">
+                        <Badge className="bg-red-500 text-white flex items-center gap-1">
+                          <Monitor className="w-3 h-3" />
+                          يشارك الشاشة
                         </Badge>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
 
-              <TabsContent value="whiteboard" className="flex-1 mt-4">
+              {/* Local Video */}
+              <Card className="bg-black/40 border-emerald-500/30 h-[250px] md:h-[300px]">
+                <CardContent className="p-4 h-full">
+                  <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                      data-testid="video-local"
+                    />
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant={isAudioEnabled ? "default" : "destructive"}
+                        onClick={toggleAudio}
+                        className="rounded-full w-12 h-12"
+                        data-testid="button-toggle-audio"
+                      >
+                        {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                      </Button>
+
+                      <Button
+                        size="icon"
+                        variant={isVideoEnabled ? "default" : "destructive"}
+                        onClick={toggleVideo}
+                        className="rounded-full w-12 h-12"
+                        data-testid="button-toggle-video"
+                      >
+                        {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                      </Button>
+                    </div>
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-emerald-500 text-white">
+                        أنت
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Whiteboard Section - Always mounted, hidden when video active */}
+            <div className={activeTab === 'whiteboard' ? 'block' : 'hidden'}>
+              <div className="min-h-[700px]">
                 <LiveWhiteboard
                   roomToken={roomId}
                   userId={user?.id || ''}
@@ -279,8 +295,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                     whiteboardExecuteRef.current = executeFunc;
                   }}
                 />
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
