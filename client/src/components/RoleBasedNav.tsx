@@ -493,7 +493,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
         )}
 
         {/* Supervisor/Sheikh Dashboard */}
-        {(user.role === 'supervisor' || user.role === 'teacher') && (
+        {user.role === 'supervisor' && (
           <div className="mb-8">
             <SheikhDashboard />
           </div>
