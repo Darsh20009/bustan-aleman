@@ -633,52 +633,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
             </nav>
           </aside>
 
-          {/* Mobile: Quick access shortcuts */}
-          <div className="lg:hidden w-full space-y-4">
-            {/* Welcome Message */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                  <BookOpen className="w-8 h-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">مرحباً بك في بستان الإيمان</h3>
-                <p className="text-gray-600 mb-4">اختر من القائمة أدناه أو استخدم القائمة الكاملة في الأعلى</p>
-              </div>
-            </div>
-            
-            {/* Quick Access Grid - First 4 items */}
-            <div className="grid grid-cols-2 gap-3">
-              {navigation.slice(0, 4).map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={index}
-                    onClick={() => handleNavigation(item.path)}
-                    className="group bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200/50 hover:shadow-lg hover:border-emerald-400 transition-all duration-300 p-4"
-                    data-testid={`quick-nav-${index}`}
-                  >
-                    <div className="flex flex-col items-center text-center gap-2">
-                      <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center shadow-sm`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <h4 className="text-sm font-bold text-gray-800">{item.title}</h4>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            
-            {/* More options hint */}
-            {navigation.length > 4 && (
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-4 text-center">
-                <div className="flex items-center justify-center gap-2 text-sm text-gray-700">
-                  <MoreVertical className="w-4 h-4 text-emerald-600" />
-                  <span className="font-semibold">نصيحة:</span>
-                  <span>اضغط على الثلاث نقاط في الأعلى لعرض جميع الأقسام ({navigation.length} قسم)</span>
-                </div>
-              </div>
-            )}
-          </div>
+          
 
           {/* Main Content Area (for desktop) */}
           <div className="hidden lg:block flex-1 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
