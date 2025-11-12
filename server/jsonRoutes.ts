@@ -590,7 +590,7 @@ export function setupJSONRoutes(app: Express) {
     }
   });
 
-  // Update course progress (TODO: implement in storage)
+  // Update course progress
   app.post('/api/courses/progress', async (req, res) => {
     try {
       const userId = req.session?.userId;
@@ -598,29 +598,67 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
 
-      const { enrollmentId, progress, completedLesson } = req.body;
+      const { courseId, progress } = req.body;
       
-      // TODO: Implement updateEnrollmentProgress in storage
-      // For now, return success to prevent breaking existing functionality
-      console.log('Progress update requested:', { enrollmentId, progress, completedLesson });
+      if (!courseId || progress === undefined) {
+        return res.status(400).json({ message: "يجب توفير معرف الدورة ونسبة التقدم" });
+      }
 
-      res.json({ message: "تم تحديث التقدم بنجاح" });
+      if (progress < 0 || progress > 100) {
+        return res.status(400).json({ message: "نسبة التقدم يجب أن تكون بين 0 و 100" });
+      }
+
+      const updatedEnrollment = await storage.updateEnrollmentProgress(userId, courseId, progress);
+      
+      const { wsService } = await import("./websocket");
+      wsService.sendToStudent(userId, {
+        type: "progress_updated",
+        data: { courseId, progress, updatedAt: updatedEnrollment.updatedAt }
+      });
+      
+      res.json({ 
+        message: "تم تحديث التقدم بنجاح",
+        enrollment: updatedEnrollment
+      });
     } catch (error) {
       console.error("Error updating progress:", error);
       res.status(500).json({ message: "فشل في تحديث التقدم" });
     }
   });
 
-  // Add attendance record (TODO: implement in storage)
+  // Add attendance record
   app.post('/api/courses/attendance', async (req, res) => {
     try {
-      const { enrollmentId, date, attended, notes } = req.body;
-      
-      // TODO: Implement addAttendanceRecord in storage
-      // For now, return success to prevent breaking existing functionality
-      console.log('Attendance record requested:', { enrollmentId, date, attended, notes });
+      const studentId = req.session?.studentId;
+      if (!studentId) {
+        return res.status(401).json({ message: "يجب تسجيل الدخول كطالب أولاً" });
+      }
 
-      res.json({ message: "تم تسجيل الحضور بنجاح" });
+      const { sessionId, attended } = req.body;
+      
+      if (!sessionId || attended === undefined) {
+        return res.status(400).json({ message: "يجب توفير معرف الجلسة وحالة الحضور" });
+      }
+
+      const sessions = await storage.getStudentSessions(studentId);
+      const session = sessions.find(s => s.id === sessionId);
+      
+      if (!session) {
+        return res.status(403).json({ message: "غير مصرح لك بتحديث هذه الجلسة" });
+      }
+      
+      const updatedSession = await storage.updateStudentSessionAttendance(sessionId, attended);
+      
+      const { wsService } = await import("./websocket");
+      wsService.sendToStudent(studentId, {
+        type: "attendance_updated",
+        data: { sessionId, attended, sessionDate: updatedSession.sessionDate }
+      });
+      
+      res.json({ 
+        message: "تم تسجيل الحضور بنجاح",
+        session: updatedSession
+      });
     } catch (error) {
       console.error("Error recording attendance:", error);
       res.status(500).json({ message: "فشل في تسجيل الحضور" });

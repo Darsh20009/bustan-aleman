@@ -163,6 +163,7 @@ export interface IStorage {
   enrollUserInCourse(enrollment: InsertEnrollment): Promise<CourseEnrollment>;
   getUserEnrollments(userId: string): Promise<CourseEnrollment[]>;
   getCourseEnrollments(courseId: string): Promise<CourseEnrollment[]>;
+  updateEnrollmentProgress(userId: string, courseId: string, progress: number): Promise<CourseEnrollment>;
   
   // Contact operations
   createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
@@ -177,6 +178,7 @@ export interface IStorage {
   // Student session operations
   createStudentSession(session: InsertStudentSession): Promise<StudentSession>;
   getStudentSessions(studentId: string): Promise<StudentSession[]>;
+  updateStudentSessionAttendance(sessionId: string, attended: boolean): Promise<StudentSession>;
   
   // Student progress operations
   getQuranProgress(studentId: string): Promise<QuranProgress | undefined>;
@@ -787,6 +789,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(courseEnrollments.courseId, courseId));
   }
 
+  async updateEnrollmentProgress(userId: string, courseId: string, progress: number): Promise<CourseEnrollment> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Enrollment progress update not available in JSON mode");
+    }
+    const [updatedEnrollment] = await db!
+      .update(courseEnrollments)
+      .set({
+        progress,
+        updatedAt: new Date(),
+      })
+      .where(and(
+        eq(courseEnrollments.userId, userId),
+        eq(courseEnrollments.courseId, courseId)
+      ))
+      .returning();
+    
+    if (!updatedEnrollment) {
+      throw new Error("Enrollment not found");
+    }
+    
+    return updatedEnrollment;
+  }
+
   private async getCourseEnrollmentCount(courseId: string): Promise<number> {
     const enrollments = await this.getCourseEnrollments(courseId);
     return enrollments.filter(e => e.status === 'enrolled').length;
@@ -999,6 +1024,23 @@ export class DatabaseStorage implements IStorage {
       .from(studentSessions)
       .where(eq(studentSessions.studentId, studentId))
       .orderBy(desc(studentSessions.sessionDate));
+  }
+
+  async updateStudentSessionAttendance(sessionId: string, attended: boolean): Promise<StudentSession> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Session attendance update not available in JSON mode");
+    }
+    const [updatedSession] = await db!
+      .update(studentSessions)
+      .set({ attended })
+      .where(eq(studentSessions.id, sessionId))
+      .returning();
+    
+    if (!updatedSession) {
+      throw new Error("Session not found");
+    }
+    
+    return updatedSession;
   }
 
   // Student error operations
