@@ -42,18 +42,18 @@
   --radius: 0.75rem;
   
   /* Enhanced Islamic theme colors - Unified Green, White, Orange Palette */
-  --islamic-emerald: 160 65% 35%;
-  --islamic-teal: 160 65% 35%;
-  --royal-gold: 30 90% 60%;
-  --antique-gold: 30 90% 60%;
-  --persian-blue: 160 65% 35%;
-  --mosque-green: 160 65% 35%;
-  --desert-sand: 0 0% 100%;
+  --islamic-emerald: 160 85% 39%;
+  --islamic-teal: 174 72% 56%;
+  --royal-gold: 25 95% 53%;
+  --antique-gold: 38 92% 50%;
+  --persian-blue: 174 72% 56%;
+  --mosque-green: 160 85% 39%;
+  --desert-sand: 48 30% 98%;
   --marble-white: 0 0% 100%;
-  --pearl-cream: 0 0% 100%;
-  --midnight-navy: 160 65% 35%;
-  --copper-bronze: 30 90% 60%;
-  --moonlight-silver: 0 0% 100%;
+  --pearl-cream: 48 25% 96%;
+  --midnight-navy: 215 28% 17%;
+  --copper-bronze: 25 95% 53%;
+  --moonlight-silver: 220 10% 95%;
   
   /* Backward compatibility aliases */
   --islamic-green: var(--islamic-emerald);

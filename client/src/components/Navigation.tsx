@@ -54,15 +54,11 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/">
             <div className="flex items-center space-x-reverse space-x-4 cursor-pointer">
-              <div className="w-12 h-12 bg-islamic-green rounded-full flex items-center justify-center">
-                <BookOpen className="text-white" size={24} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-islamic-green dark:text-islamic-green font-arabic-serif">
-                  بستان الإيمان
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">منصة التعليم الإسلامي</p>
-              </div>
+              <img 
+                src="/bustan-logo.png" 
+                alt="بستان الإيمان" 
+                className="h-16 w-auto object-contain"
+              />
             </div>
           </Link>
 
