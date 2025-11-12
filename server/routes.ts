@@ -2,11 +2,17 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupPhoneAuth, isPhoneAuthenticated, isTeacher, initializePreregisteredUsers } from "./phoneAuth";
+import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type AuthenticatedRequest } from "./authMiddleware";
 import { quranService } from "./quranService";
 import bcrypt from "bcrypt";
 import { telegramBot } from "./telegramBot";
 import {
   insertCourseSchema,
+  insertCourseModuleSchema,
+  insertCourseStageSchema,
+  insertCourseUploadSchema,
+  insertExamQuestionSchema,
+  insertExamAttemptSchema,
   insertInstructorSchema,
   insertEnrollmentSchema,
   insertContactMessageSchema,
@@ -152,14 +158,231 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/courses', isPhoneAuthenticated, async (req, res) => {
+  app.post('/api/courses', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const courseData = insertCourseSchema.parse(req.body);
+      
+      // Only admins can create paid courses
+      if (courseData.isPaid && req.user?.role !== 'admin') {
+        return res.status(403).json({ 
+          message: "فقط المدراء يمكنهم إنشاء دورات مدفوعة",
+          messageEn: "Only admins can create paid courses"
+        });
+      }
+      
       const course = await storage.createCourse(courseData);
       res.status(201).json(course);
     } catch (error) {
       console.error("Error creating course:", error);
       res.status(500).json({ message: "Failed to create course" });
+    }
+  });
+
+  // Archive course (soft delete)
+  app.patch('/api/courses/:id/archive', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const course = await storage.archiveCourse(req.params.id);
+      res.json(course);
+    } catch (error) {
+      console.error("Error archiving course:", error);
+      res.status(500).json({ message: "Failed to archive course" });
+    }
+  });
+
+  // Course module routes
+  app.get('/api/courses/:courseId/modules', async (req, res) => {
+    try {
+      const modules = await storage.getCourseModules(req.params.courseId);
+      res.json(modules);
+    } catch (error) {
+      console.error("Error fetching course modules:", error);
+      res.status(500).json({ message: "Failed to fetch modules" });
+    }
+  });
+
+  app.post('/api/courses/:courseId/modules', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const moduleData = insertCourseModuleSchema.parse({
+        ...req.body,
+        courseId: req.params.courseId,
+      });
+      const module = await storage.createCourseModule(moduleData);
+      res.status(201).json(module);
+    } catch (error) {
+      console.error("Error creating course module:", error);
+      res.status(500).json({ message: "Failed to create module" });
+    }
+  });
+
+  app.patch('/api/modules/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const module = await storage.updateCourseModule(req.params.id, req.body);
+      res.json(module);
+    } catch (error) {
+      console.error("Error updating course module:", error);
+      res.status(500).json({ message: "Failed to update module" });
+    }
+  });
+
+  app.delete('/api/modules/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.deleteCourseModule(req.params.id);
+      res.json({ message: "Module deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting course module:", error);
+      res.status(500).json({ message: "Failed to delete module" });
+    }
+  });
+
+  // Course stage routes
+  app.get('/api/modules/:moduleId/stages', async (req, res) => {
+    try {
+      const stages = await storage.getCourseStages(req.params.moduleId);
+      res.json(stages);
+    } catch (error) {
+      console.error("Error fetching course stages:", error);
+      res.status(500).json({ message: "Failed to fetch stages" });
+    }
+  });
+
+  app.post('/api/modules/:moduleId/stages', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const stageData = insertCourseStageSchema.parse({
+        ...req.body,
+        moduleId: req.params.moduleId,
+      });
+      const stage = await storage.createCourseStage(stageData);
+      res.status(201).json(stage);
+    } catch (error) {
+      console.error("Error creating course stage:", error);
+      res.status(500).json({ message: "Failed to create stage" });
+    }
+  });
+
+  app.patch('/api/stages/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const stage = await storage.updateCourseStage(req.params.id, req.body);
+      res.json(stage);
+    } catch (error) {
+      console.error("Error updating course stage:", error);
+      res.status(500).json({ message: "Failed to update stage" });
+    }
+  });
+
+  app.delete('/api/stages/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.deleteCourseStage(req.params.id);
+      res.json({ message: "Stage deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting course stage:", error);
+      res.status(500).json({ message: "Failed to delete stage" });
+    }
+  });
+
+  // Course upload routes
+  app.get('/api/stages/:stageId/uploads', async (req, res) => {
+    try {
+      const uploads = await storage.getCourseUploads(req.params.stageId);
+      res.json(uploads);
+    } catch (error) {
+      console.error("Error fetching course uploads:", error);
+      res.status(500).json({ message: "Failed to fetch uploads" });
+    }
+  });
+
+  app.post('/api/stages/:stageId/uploads', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const uploadData = insertCourseUploadSchema.parse({
+        ...req.body,
+        stageId: req.params.stageId,
+        uploadedBy: req.user?.id,
+      });
+      const upload = await storage.createCourseUpload(uploadData);
+      res.status(201).json(upload);
+    } catch (error) {
+      console.error("Error creating course upload:", error);
+      res.status(500).json({ message: "Failed to create upload" });
+    }
+  });
+
+  app.delete('/api/uploads/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.deleteCourseUpload(req.params.id);
+      res.json({ message: "Upload deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting course upload:", error);
+      res.status(500).json({ message: "Failed to delete upload" });
+    }
+  });
+
+  // Exam question routes
+  app.get('/api/courses/:courseId/exam-questions', async (req, res) => {
+    try {
+      const questions = await storage.getExamQuestions(req.params.courseId);
+      res.json(questions);
+    } catch (error) {
+      console.error("Error fetching exam questions:", error);
+      res.status(500).json({ message: "Failed to fetch questions" });
+    }
+  });
+
+  app.post('/api/courses/:courseId/exam-questions', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const questionData = insertExamQuestionSchema.parse({
+        ...req.body,
+        courseId: req.params.courseId,
+      });
+      const question = await storage.createExamQuestion(questionData);
+      res.status(201).json(question);
+    } catch (error) {
+      console.error("Error creating exam question:", error);
+      res.status(500).json({ message: "Failed to create question" });
+    }
+  });
+
+  app.patch('/api/exam-questions/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const question = await storage.updateExamQuestion(req.params.id, req.body);
+      res.json(question);
+    } catch (error) {
+      console.error("Error updating exam question:", error);
+      res.status(500).json({ message: "Failed to update question" });
+    }
+  });
+
+  app.delete('/api/exam-questions/:id', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      await storage.deleteExamQuestion(req.params.id);
+      res.json({ message: "Question deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting exam question:", error);
+      res.status(500).json({ message: "Failed to delete question" });
+    }
+  });
+
+  // Exam attempt routes
+  app.get('/api/students/:studentId/exam-attempts', async (req, res) => {
+    try {
+      const attempts = await storage.getStudentExamAttempts(req.params.studentId, req.query.courseId as string);
+      res.json(attempts);
+    } catch (error) {
+      console.error("Error fetching exam attempts:", error);
+      res.status(500).json({ message: "Failed to fetch attempts" });
+    }
+  });
+
+  app.post('/api/courses/:courseId/exam-attempts', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const attemptData = insertExamAttemptSchema.parse({
+        ...req.body,
+        courseId: req.params.courseId,
+        studentId: req.user?.id,
+      });
+      const attempt = await storage.createExamAttempt(attemptData);
+      res.status(201).json(attempt);
+    } catch (error) {
+      console.error("Error creating exam attempt:", error);
+      res.status(500).json({ message: "Failed to create attempt" });
     }
   });
 
@@ -312,11 +535,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Student errors routes
-  app.post('/api/students/:id/errors', async (req, res) => {
+  // Only supervisors/sheikhs can create student errors (admins cannot to avoid conflict of interest)
+  app.post('/api/students/:id/errors', requireSupervisor, async (req: AuthenticatedRequest, res) => {
     try {
       const errorData = insertStudentErrorSchema.parse({
         ...req.body,
         studentId: req.params.id,
+        sheikhId: req.user?.id, // Automatically set the sheikh who is creating the error
       });
       const error = await storage.createStudentError(errorData);
       res.status(201).json(error);

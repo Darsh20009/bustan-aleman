@@ -3,6 +3,11 @@ import {
   courses,
   instructors,
   courseEnrollments,
+  courseModules,
+  courseStages,
+  courseUploads,
+  examQuestions,
+  examAttempts,
   contactMessages,
   students,
   studentSessions,
@@ -34,6 +39,16 @@ import {
   type InsertInstructor,
   type CourseEnrollment,
   type InsertEnrollment,
+  type CourseModule,
+  type InsertCourseModule,
+  type CourseStage,
+  type InsertCourseStage,
+  type CourseUpload,
+  type InsertCourseUpload,
+  type ExamQuestion,
+  type InsertExamQuestion,
+  type ExamAttempt,
+  type InsertExamAttempt,
   type ContactMessage,
   type InsertContactMessage,
   type Student,
@@ -101,6 +116,42 @@ export interface IStorage {
   getCourse(id: string): Promise<Course | undefined>;
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: string, course: Partial<InsertCourse>): Promise<Course>;
+  deleteCourse(id: string): Promise<void>;
+  archiveCourse(id: string): Promise<Course>;
+  
+  // Course module operations
+  getCourseModules(courseId: string): Promise<CourseModule[]>;
+  getCourseModule(id: string): Promise<CourseModule | undefined>;
+  createCourseModule(module: InsertCourseModule): Promise<CourseModule>;
+  updateCourseModule(id: string, module: Partial<InsertCourseModule>): Promise<CourseModule>;
+  deleteCourseModule(id: string): Promise<void>;
+  
+  // Course stage operations
+  getCourseStages(moduleId: string): Promise<CourseStage[]>;
+  getCourseStage(id: string): Promise<CourseStage | undefined>;
+  createCourseStage(stage: InsertCourseStage): Promise<CourseStage>;
+  updateCourseStage(id: string, stage: Partial<InsertCourseStage>): Promise<CourseStage>;
+  deleteCourseStage(id: string): Promise<void>;
+  
+  // Course upload operations
+  getCourseUploads(stageId: string): Promise<CourseUpload[]>;
+  getCourseUpload(id: string): Promise<CourseUpload | undefined>;
+  createCourseUpload(upload: InsertCourseUpload): Promise<CourseUpload>;
+  updateCourseUpload(id: string, upload: Partial<InsertCourseUpload>): Promise<CourseUpload>;
+  deleteCourseUpload(id: string): Promise<void>;
+  
+  // Exam question operations
+  getExamQuestions(courseId: string): Promise<ExamQuestion[]>;
+  getExamQuestion(id: string): Promise<ExamQuestion | undefined>;
+  createExamQuestion(question: InsertExamQuestion): Promise<ExamQuestion>;
+  updateExamQuestion(id: string, question: Partial<InsertExamQuestion>): Promise<ExamQuestion>;
+  deleteExamQuestion(id: string): Promise<void>;
+  
+  // Exam attempt operations
+  getStudentExamAttempts(studentId: string, courseId?: string): Promise<ExamAttempt[]>;
+  getExamAttempt(id: string): Promise<ExamAttempt | undefined>;
+  createExamAttempt(attempt: InsertExamAttempt): Promise<ExamAttempt>;
+  updateExamAttempt(id: string, attempt: Partial<InsertExamAttempt>): Promise<ExamAttempt>;
   
   // Instructor operations
   getInstructors(): Promise<Instructor[]>;
@@ -410,6 +461,259 @@ export class DatabaseStorage implements IStorage {
       .where(eq(courses.id, id))
       .returning();
     return updatedCourse;
+  }
+
+  async deleteCourse(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course deletion not available in JSON mode");
+    }
+    await db!.delete(courses).where(eq(courses.id, id));
+  }
+
+  async archiveCourse(id: string): Promise<Course> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course archival not available in JSON mode");
+    }
+    const [archivedCourse] = await db!
+      .update(courses)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(courses.id, id))
+      .returning();
+    return archivedCourse;
+  }
+
+  // Course module operations
+  async getCourseModules(courseId: string): Promise<CourseModule[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(courseModules)
+      .where(eq(courseModules.courseId, courseId))
+      .orderBy(courseModules.orderIndex);
+  }
+
+  async getCourseModule(id: string): Promise<CourseModule | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [module] = await db!.select().from(courseModules).where(eq(courseModules.id, id));
+    return module;
+  }
+
+  async createCourseModule(module: InsertCourseModule): Promise<CourseModule> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course module creation not available in JSON mode");
+    }
+    const [newModule] = await db!.insert(courseModules).values(module).returning();
+    return newModule;
+  }
+
+  async updateCourseModule(id: string, module: Partial<InsertCourseModule>): Promise<CourseModule> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course module updates not available in JSON mode");
+    }
+    const [updatedModule] = await db!
+      .update(courseModules)
+      .set({ ...module, updatedAt: new Date() })
+      .where(eq(courseModules.id, id))
+      .returning();
+    return updatedModule;
+  }
+
+  async deleteCourseModule(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course module deletion not available in JSON mode");
+    }
+    await db!.delete(courseModules).where(eq(courseModules.id, id));
+  }
+
+  // Course stage operations
+  async getCourseStages(moduleId: string): Promise<CourseStage[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(courseStages)
+      .where(eq(courseStages.moduleId, moduleId))
+      .orderBy(courseStages.orderIndex);
+  }
+
+  async getCourseStage(id: string): Promise<CourseStage | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [stage] = await db!.select().from(courseStages).where(eq(courseStages.id, id));
+    return stage;
+  }
+
+  async createCourseStage(stage: InsertCourseStage): Promise<CourseStage> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course stage creation not available in JSON mode");
+    }
+    const [newStage] = await db!.insert(courseStages).values(stage).returning();
+    return newStage;
+  }
+
+  async updateCourseStage(id: string, stage: Partial<InsertCourseStage>): Promise<CourseStage> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course stage updates not available in JSON mode");
+    }
+    const [updatedStage] = await db!
+      .update(courseStages)
+      .set({ ...stage, updatedAt: new Date() })
+      .where(eq(courseStages.id, id))
+      .returning();
+    return updatedStage;
+  }
+
+  async deleteCourseStage(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course stage deletion not available in JSON mode");
+    }
+    await db!.delete(courseStages).where(eq(courseStages.id, id));
+  }
+
+  // Course upload operations
+  async getCourseUploads(stageId: string): Promise<CourseUpload[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(courseUploads)
+      .where(eq(courseUploads.stageId, stageId))
+      .orderBy(courseUploads.createdAt);
+  }
+
+  async getCourseUpload(id: string): Promise<CourseUpload | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [upload] = await db!.select().from(courseUploads).where(eq(courseUploads.id, id));
+    return upload;
+  }
+
+  async createCourseUpload(upload: InsertCourseUpload): Promise<CourseUpload> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course upload creation not available in JSON mode");
+    }
+    const [newUpload] = await db!.insert(courseUploads).values(upload).returning();
+    return newUpload;
+  }
+
+  async updateCourseUpload(id: string, upload: Partial<InsertCourseUpload>): Promise<CourseUpload> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course upload updates not available in JSON mode");
+    }
+    const [updatedUpload] = await db!
+      .update(courseUploads)
+      .set({ ...upload, updatedAt: new Date() })
+      .where(eq(courseUploads.id, id))
+      .returning();
+    return updatedUpload;
+  }
+
+  async deleteCourseUpload(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Course upload deletion not available in JSON mode");
+    }
+    await db!.delete(courseUploads).where(eq(courseUploads.id, id));
+  }
+
+  // Exam question operations
+  async getExamQuestions(courseId: string): Promise<ExamQuestion[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(examQuestions)
+      .where(eq(examQuestions.courseId, courseId));
+  }
+
+  async getExamQuestion(id: string): Promise<ExamQuestion | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [question] = await db!.select().from(examQuestions).where(eq(examQuestions.id, id));
+    return question;
+  }
+
+  async createExamQuestion(question: InsertExamQuestion): Promise<ExamQuestion> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Exam question creation not available in JSON mode");
+    }
+    const [newQuestion] = await db!.insert(examQuestions).values(question).returning();
+    return newQuestion;
+  }
+
+  async updateExamQuestion(id: string, question: Partial<InsertExamQuestion>): Promise<ExamQuestion> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Exam question updates not available in JSON mode");
+    }
+    const [updatedQuestion] = await db!
+      .update(examQuestions)
+      .set(question)
+      .where(eq(examQuestions.id, id))
+      .returning();
+    return updatedQuestion;
+  }
+
+  async deleteExamQuestion(id: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Exam question deletion not available in JSON mode");
+    }
+    await db!.delete(examQuestions).where(eq(examQuestions.id, id));
+  }
+
+  // Exam attempt operations
+  async getStudentExamAttempts(studentId: string, courseId?: string): Promise<ExamAttempt[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    if (courseId) {
+      return await db!
+        .select()
+        .from(examAttempts)
+        .where(and(eq(examAttempts.studentId, studentId), eq(examAttempts.courseId, courseId)))
+        .orderBy(desc(examAttempts.createdAt));
+    }
+    return await db!
+      .select()
+      .from(examAttempts)
+      .where(eq(examAttempts.studentId, studentId))
+      .orderBy(desc(examAttempts.createdAt));
+  }
+
+  async getExamAttempt(id: string): Promise<ExamAttempt | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    const [attempt] = await db!.select().from(examAttempts).where(eq(examAttempts.id, id));
+    return attempt;
+  }
+
+  async createExamAttempt(attempt: InsertExamAttempt): Promise<ExamAttempt> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Exam attempt creation not available in JSON mode");
+    }
+    const [newAttempt] = await db!.insert(examAttempts).values(attempt).returning();
+    return newAttempt;
+  }
+
+  async updateExamAttempt(id: string, attempt: Partial<InsertExamAttempt>): Promise<ExamAttempt> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Exam attempt updates not available in JSON mode");
+    }
+    const [updatedAttempt] = await db!
+      .update(examAttempts)
+      .set(attempt)
+      .where(eq(examAttempts.id, id))
+      .returning();
+    return updatedAttempt;
   }
 
   // Instructor operations

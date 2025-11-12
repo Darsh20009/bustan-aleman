@@ -371,7 +371,7 @@ export const courseModules = bustanSchema.table("course_modules", {
 // Course stages/lessons - for organizing course into stages
 export const courseStages = bustanSchema.table("course_stages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  moduleId: varchar("module_id").references(() => courseModules.id).notNull(),
   titleAr: varchar("title_ar").notNull(),
   titleEn: varchar("title_en"),
   descriptionAr: text("description_ar"),
