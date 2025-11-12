@@ -325,15 +325,15 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             </Card>
 
             {/* Chat */}
-            <Card className="bg-black/40 border-emerald-500/30 flex flex-col h-[500px]">
+            <Card className="bg-black/40 border-emerald-500/30 flex flex-col max-h-[500px]">
               <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   المحادثة
                 </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col flex-1 min-h-0 space-y-3">
-                <div className="flex-1 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-emerald-600 scrollbar-track-gray-800">
+              <CardContent className="flex flex-col flex-1 overflow-hidden p-4">
+                <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-2" style={{ maxHeight: 'calc(500px - 150px)' }}>
                   {messages.map((msg: any) => {
                     // Filter out whiteboard commands from display
                     try {
