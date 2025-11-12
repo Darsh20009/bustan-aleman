@@ -18,7 +18,14 @@ import {
   Pencil,
   Shield,
   MoreVertical,
-  Settings
+  Settings,
+  Hand,
+  Smile,
+  ThumbsUp,
+  Heart,
+  UserMinus,
+  Lock,
+  Unlock
 } from 'lucide-react';
 import { useLiveSessionWebRTC } from '@/hooks/useLiveSessionWebRTC';
 import { LiveWhiteboard } from '@/components/LiveWhiteboard';
@@ -55,7 +62,14 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
     startScreenShare,
     stopScreenShare,
     sendMessage,
-    leaveRoom
+    leaveRoom,
+    toggleHandRaise,
+    sendReaction,
+    muteParticipant,
+    muteAll,
+    removeParticipant,
+    lockRoom,
+    isAudioMutedByHost
   } = useLiveSessionWebRTC(roomId, onLeave);
 
   const isShamsikh = user?.role === 'supervisor' || user?.role === 'admin';
@@ -252,26 +266,85 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                       className="w-full h-full object-cover"
                       data-testid="video-local"
                     />
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-3">
-                      <Button
-                        size="icon"
-                        variant={isAudioEnabled ? "default" : "destructive"}
-                        onClick={toggleAudio}
-                        className="rounded-full w-12 h-12"
-                        data-testid="button-toggle-audio"
-                      >
-                        {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                      </Button>
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-3">
+                      {/* Main Controls */}
+                      <div className="flex items-center gap-3">
+                        <Button
+                          size="icon"
+                          variant={isAudioEnabled ? "default" : "destructive"}
+                          onClick={toggleAudio}
+                          className="rounded-full w-12 h-12"
+                          data-testid="button-toggle-audio"
+                          disabled={isAudioMutedByHost}
+                          title={isAudioMutedByHost ? "تم كتم صوتك من قبل المشرف" : ""}
+                        >
+                          {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                        </Button>
 
-                      <Button
-                        size="icon"
-                        variant={isVideoEnabled ? "default" : "destructive"}
-                        onClick={toggleVideo}
-                        className="rounded-full w-12 h-12"
-                        data-testid="button-toggle-video"
-                      >
-                        {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                      </Button>
+                        <Button
+                          size="icon"
+                          variant={isVideoEnabled ? "default" : "destructive"}
+                          onClick={toggleVideo}
+                          className="rounded-full w-12 h-12"
+                          data-testid="button-toggle-video"
+                        >
+                          {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+                        </Button>
+                        
+                        {!isShamsikh && (
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={toggleHandRaise}
+                            className="rounded-full w-12 h-12 bg-white/10 border-white/30"
+                            data-testid="button-raise-hand"
+                          >
+                            <Hand className="w-5 h-5 text-yellow-400" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* Reaction Buttons */}
+                      {!isShamsikh && (
+                        <div className="flex items-center gap-2 bg-black/50 px-3 py-2 rounded-full">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => sendReaction('👍')}
+                            className="w-10 h-10 text-2xl p-0"
+                            data-testid="button-reaction-thumbsup"
+                          >
+                            👍
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => sendReaction('❤️')}
+                            className="w-10 h-10 text-2xl p-0"
+                            data-testid="button-reaction-heart"
+                          >
+                            ❤️
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => sendReaction('👏')}
+                            className="w-10 h-10 text-2xl p-0"
+                            data-testid="button-reaction-clap"
+                          >
+                            👏
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => sendReaction('✋')}
+                            className="w-10 h-10 text-2xl p-0"
+                            data-testid="button-reaction-raise"
+                          >
+                            ✋
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     <div className="absolute top-4 left-4">
                       <Badge className="bg-emerald-500 text-white">
@@ -310,26 +383,97 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {isShamsikh && (
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={muteAll}
+                      className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20"
+                      data-testid="button-mute-all"
+                    >
+                      <MicOff className="w-4 h-4 ml-2" />
+                      كتم الجميع
+                    </Button>
+                  </div>
+                )}
+                
                 {participants.map((participant: any) => (
                   <div
                     key={participant.userId}
-                    className="flex items-center gap-3 p-3 bg-white/10 rounded-lg"
+                    className="relative p-3 bg-white/10 rounded-lg"
                     data-testid={`participant-${participant.userId}`}
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {participant.role === 'supervisor' ? 'ش' : 'ط'}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-full flex items-center justify-center text-white font-bold relative">
+                        {participant.role === 'supervisor' ? 'ش' : 'ط'}
+                        {participant.reaction && (
+                          <div className="absolute -top-2 -right-2 text-2xl animate-bounce">
+                            {participant.reaction}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-white font-medium">
+                            {participant.role === 'supervisor' ? 'الشيخ' : 'الطالب'}
+                          </p>
+                          {participant.isHandRaised && (
+                            <Badge className="bg-yellow-500 text-black flex items-center gap-1">
+                              <Hand className="w-3 h-3" />
+                              يد مرفوعة
+                            </Badge>
+                          )}
+                          {participant.isAudioMutedByHost && (
+                            <Badge variant="destructive" className="flex items-center gap-1">
+                              <MicOff className="w-3 h-3" />
+                              مكتوم
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-white/60 text-sm">
+                          {participant.role}
+                        </p>
+                      </div>
+                      
+                      {isShamsikh && participant.userId !== user?.id && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8 text-white hover:bg-white/20"
+                              data-testid={`button-participant-menu-${participant.userId}`}
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => muteParticipant(participant.userId, !participant.isAudioMutedByHost)}
+                              data-testid={`menu-mute-participant-${participant.userId}`}
+                            >
+                              <MicOff className="w-4 h-4 ml-2" />
+                              {participant.isAudioMutedByHost ? 'إلغاء الكتم' : 'كتم الصوت'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => removeParticipant(participant.userId)}
+                              className="text-red-600"
+                              data-testid={`menu-remove-participant-${participant.userId}`}
+                            >
+                              <UserMinus className="w-4 h-4 ml-2" />
+                              إزالة من الحصة
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      
+                      {!isShamsikh && (
+                        <Badge className="bg-green-500 text-white">
+                          متصل
+                        </Badge>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium">
-                        {participant.role === 'supervisor' ? 'الشيخ' : 'الطالب'}
-                      </p>
-                      <p className="text-white/60 text-sm">
-                        {participant.role}
-                      </p>
-                    </div>
-                    <Badge className="bg-green-500 text-white">
-                      متصل
-                    </Badge>
                   </div>
                 ))}
                 {participants.length === 0 && (

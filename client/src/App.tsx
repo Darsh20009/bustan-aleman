@@ -31,6 +31,7 @@ import MyNotesPage from "./pages/MyNotesPage";
 import SheikhScheduleManager from "./pages/SheikhScheduleManager";
 import SheikhQuranEditing from "./pages/SheikhQuranEditing";
 import DataManagement from "./pages/DataManagement";
+import LiveSession from "./pages/LiveSession";
 
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management';
 
@@ -307,7 +308,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <TooltipProvider>
-          <AppContent />
+          <Switch>
+            <Route path="/session/:roomToken">
+              <LiveSession />
+            </Route>
+            <Route>
+              <AppContent />
+            </Route>
+          </Switch>
         </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>

@@ -6,6 +6,10 @@ interface Participant {
   userId: string;
   role: string;
   studentId?: string;
+  isHandRaised?: boolean;
+  isMuted?: boolean;
+  isAudioMutedByHost?: boolean;
+  reaction?: string;
 }
 
 interface Message {
@@ -14,6 +18,7 @@ interface Message {
   userName: string;
   text: string;
   timestamp: string;
+  isPrivate?: boolean;
 }
 
 export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => void) {
@@ -27,6 +32,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [isAudioMutedByHost, setIsAudioMutedByHost] = useState(false);
   
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -164,6 +170,81 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
         }]);
         break;
 
+      case 'room:hand-raised':
+      case 'room:hand-lowered':
+      case 'room:reaction':
+        setParticipants(prev => 
+          prev.map(p => 
+            p.userId === payload.userId
+              ? {
+                  ...p,
+                  isHandRaised: type === 'room:hand-raised' ? true : type === 'room:hand-lowered' ? false : p.isHandRaised,
+                  reaction: type === 'room:reaction' ? payload.reaction : p.reaction
+                }
+              : p
+          )
+        );
+        break;
+
+      case 'room:participant-muted':
+        if (payload.participantId === user?.id) {
+          setIsAudioMutedByHost(payload.shouldMute);
+          
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach(track => {
+              track.enabled = !payload.shouldMute;
+            });
+            setIsAudioEnabled(!payload.shouldMute);
+          }
+          
+          toast({
+            variant: payload.shouldMute ? 'destructive' : 'default',
+            title: payload.shouldMute ? 'تم كتم صوتك من قبل المشرف' : 'سمح لك المشرف بفتح الميكروفون',
+            description: payload.shouldMute ? 'لا يمكنك فتح الميكروفون حتى يسمح المشرف' : 'يمكنك الآن فتح الميكروفون'
+          });
+        }
+        
+        setParticipants(prev => 
+          prev.map(p => 
+            p.userId === payload.participantId
+              ? { ...p, isAudioMutedByHost: payload.shouldMute }
+              : p
+          )
+        );
+        break;
+
+      case 'room:participant-removed':
+        if (payload.participantId === user?.id) {
+          toast({
+            variant: 'destructive',
+            title: 'تمت إزالتك من الحصة',
+            description: 'قام المشرف بإزالتك من الحصة'
+          });
+          leaveRoom();
+        } else {
+          setParticipants(prev => prev.filter(p => p.userId !== payload.participantId));
+        }
+        break;
+
+      case 'room:all-muted':
+        if (user?.role === 'student') {
+          setIsAudioMutedByHost(true);
+          
+          if (localStreamRef.current) {
+            localStreamRef.current.getAudioTracks().forEach(track => {
+              track.enabled = false;
+            });
+            setIsAudioEnabled(false);
+          }
+          
+          toast({
+            variant: 'destructive',
+            title: 'تم كتم الجميع',
+            description: 'قام المشرف بكتم صوت جميع المشاركين'
+          });
+        }
+        break;
+
       default:
         console.log('⚠️ Unknown message type:', type);
     }
@@ -291,6 +372,15 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   };
 
   const toggleAudio = () => {
+    if (isAudioMutedByHost && !isAudioEnabled) {
+      toast({
+        variant: 'destructive',
+        title: 'لا يمكن فتح الميكروفون',
+        description: 'تم كتم صوتك من قبل المشرف'
+      });
+      return;
+    }
+    
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach(track => {
         track.enabled = !track.enabled;
@@ -439,6 +529,79 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
     }
   };
 
+  const toggleHandRaise = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:toggle-hand',
+        payload: { roomToken, userId: user?.id }
+      }));
+    }
+  };
+
+  const sendReaction = (reaction: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:reaction',
+        payload: { roomToken, userId: user?.id, reaction }
+      }));
+      
+      setTimeout(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'room:reaction',
+            payload: { roomToken, userId: user?.id, reaction: null }
+          }));
+        }
+      }, 3000);
+    }
+  };
+
+  const muteParticipant = (participantId: string, shouldMute: boolean) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && (user?.role === 'supervisor' || user?.role === 'admin')) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:mute-participant',
+        payload: { roomToken, participantId, shouldMute }
+      }));
+    }
+  };
+
+  const muteAll = () => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && (user?.role === 'supervisor' || user?.role === 'admin')) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:mute-all',
+        payload: { roomToken }
+      }));
+      
+      toast({
+        title: 'تم كتم الجميع',
+        description: 'تم كتم صوت جميع المشاركين'
+      });
+    }
+  };
+
+  const removeParticipant = (participantId: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && (user?.role === 'supervisor' || user?.role === 'admin')) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:remove-participant',
+        payload: { roomToken, participantId }
+      }));
+    }
+  };
+
+  const lockRoom = (shouldLock: boolean) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN && (user?.role === 'supervisor' || user?.role === 'admin')) {
+      wsRef.current.send(JSON.stringify({
+        type: 'room:lock',
+        payload: { roomToken, isLocked: shouldLock }
+      }));
+      
+      toast({
+        title: shouldLock ? 'تم قفل الغرفة' : 'تم فتح الغرفة',
+        description: shouldLock ? 'لن يتمكن أحد من الدخول' : 'يمكن للجميع الدخول الآن'
+      });
+    }
+  };
+
   return {
     isAudioEnabled,
     isVideoEnabled,
@@ -455,6 +618,13 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
     startScreenShare,
     stopScreenShare,
     sendMessage,
-    leaveRoom
+    leaveRoom,
+    toggleHandRaise,
+    sendReaction,
+    muteParticipant,
+    muteAll,
+    removeParticipant,
+    lockRoom,
+    isAudioMutedByHost
   };
 }

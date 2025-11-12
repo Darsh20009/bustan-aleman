@@ -12,7 +12,9 @@ interface ClientMetadata {
 type InboundMessage = {
   type: "auth" | "chat_message" | "student_update" | "new_student_registration" |
         "assignment_update" | "session_enable" | "error_notification" |
-        "room:join" | "room:leave" | "webrtc:offer" | "webrtc:answer" | "webrtc:ice-candidate";
+        "room:join" | "room:leave" | "webrtc:offer" | "webrtc:answer" | "webrtc:ice-candidate" |
+        "room:hand-raise" | "room:hand-lower" | "room:reaction" | "room:mute-participant" |
+        "room:all-muted" | "room:remove-participant" | "room:lock";
   payload: any;
 };
 
@@ -61,6 +63,25 @@ class WebSocketService {
       case "webrtc:answer":
       case "webrtc:ice-candidate":
         this.handleWebRTCSignal(ws, type, payload);
+        break;
+      case "room:hand-raise":
+      case "room:hand-lower":
+        this.handleHandRaise(ws, type, payload);
+        break;
+      case "room:reaction":
+        this.handleReaction(ws, payload);
+        break;
+      case "room:mute-participant":
+        this.handleParticipantMute(ws, payload);
+        break;
+      case "room:all-muted":
+        this.handleMuteAll(ws, payload);
+        break;
+      case "room:remove-participant":
+        this.handleParticipantRemove(ws, payload);
+        break;
+      case "room:lock":
+        this.handleRoomLock(ws, payload);
         break;
       case "chat_message":
         void this.handleChatMessage(ws, payload);
@@ -310,6 +331,124 @@ class WebSocketService {
 
   public notifyStudentOfNoteUpdate(studentId: string, note: any) {
     this.sendToStudent(studentId, { type: "note_updated", data: note, timestamp: new Date().toISOString() });
+  }
+
+  private handleHandRaise(ws: WebSocket, type: "room:hand-raise" | "room:hand-lower", payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    const isRaised = type === "room:hand-raise";
+
+    this.broadcastToRoom(client.roomToken, {
+      type: isRaised ? "room:hand-raised" : "room:hand-lowered",
+      payload: { userId: client.userId, isHandRaised: isRaised }
+    });
+  }
+
+  private handleReaction(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    const { reaction } = payload;
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "room:reaction",
+      payload: { userId: client.userId, reaction }
+    });
+  }
+
+  private handleParticipantMute(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    if (client.role !== "supervisor" && client.role !== "admin") {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Only supervisors can mute participants" } }));
+      return;
+    }
+
+    const { participantId, shouldMute } = payload;
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "room:participant-muted",
+      payload: { participantId, shouldMute }
+    });
+  }
+
+  private handleMuteAll(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    if (client.role !== "supervisor" && client.role !== "admin") {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Only supervisors can mute all" } }));
+      return;
+    }
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "room:all-muted",
+      payload: { initiatorId: client.userId }
+    });
+  }
+
+  private handleParticipantRemove(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    if (client.role !== "supervisor" && client.role !== "admin") {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Only supervisors can remove participants" } }));
+      return;
+    }
+
+    const { participantId } = payload;
+    const targetClient = this.clients.get(participantId);
+    
+    if (targetClient) {
+      targetClient.ws.send(JSON.stringify({
+        type: "room:kicked",
+        payload: { reason: "Removed by supervisor" }
+      }));
+
+      this.handleRoomLeave(targetClient.ws, client.roomToken);
+    }
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "room:participant-removed",
+      payload: { participantId }
+    });
+  }
+
+  private handleRoomLock(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    if (client.role !== "supervisor" && client.role !== "admin") {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Only supervisors can lock/unlock rooms" } }));
+      return;
+    }
+
+    const { locked } = payload;
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "room:lock-changed",
+      payload: { locked }
+    });
   }
 }
 
