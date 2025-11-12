@@ -66,11 +66,14 @@ export const courses = bustanSchema.table("courses", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date"),
   instructorId: varchar("instructor_id").references(() => instructors.id),
+  createdBy: varchar("created_by").references(() => users.id), // Sheikh who created the course
   level: varchar("level").notNull(), // beginner, intermediate, advanced
   category: varchar("category").notNull(), // quran, fiqh, ramadan
   maxStudents: integer("max_students").default(50),
   currentStudents: integer("current_students").default(0),
   price: integer("price").default(0), // in cents
+  isPaid: boolean("is_paid").default(false), // whether course requires payment
+  thumbnailUrl: varchar("thumbnail_url"), // course thumbnail image
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -360,6 +363,42 @@ export const courseModules = bustanSchema.table("course_modules", {
   videoUrl: varchar("video_url"), // Optional video link
   documentUrl: varchar("document_url"), // Optional document link
   duration: integer("duration"), // Duration in minutes
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Course stages/lessons - for organizing course into stages
+export const courseStages = bustanSchema.table("course_stages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  orderIndex: integer("order_index").notNull().default(0),
+  isLocked: boolean("is_locked").default(false), // locked until previous stage is completed
+  passingScore: integer("passing_score").default(75), // minimum score to pass this stage
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Course uploads - for multimedia content (videos, images, documents)
+export const courseUploads = bustanSchema.table("course_uploads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  stageId: varchar("stage_id").references(() => courseStages.id), // optional - link to specific stage
+  uploadedBy: varchar("uploaded_by").references(() => users.id).notNull(), // Sheikh who uploaded
+  fileUrl: varchar("file_url").notNull(),
+  fileName: varchar("file_name").notNull(),
+  fileType: varchar("file_type").notNull(), // video, image, pdf, document
+  fileSize: integer("file_size"), // in bytes
+  titleAr: varchar("title_ar"),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  orderIndex: integer("order_index").notNull().default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -718,6 +757,18 @@ export const insertCourseModuleSchema = createInsertSchema(courseModules).omit({
   updatedAt: true,
 });
 
+export const insertCourseStageSchema = createInsertSchema(courseStages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCourseUploadSchema = createInsertSchema(courseUploads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertExamQuestionSchema = createInsertSchema(examQuestions).omit({
   id: true,
   createdAt: true,
@@ -842,6 +893,10 @@ export type StudentNote = typeof studentNotes.$inferSelect;
 export type InsertStudentNote = z.infer<typeof insertStudentNoteSchema>;
 export type CourseModule = typeof courseModules.$inferSelect;
 export type InsertCourseModule = z.infer<typeof insertCourseModuleSchema>;
+export type CourseStage = typeof courseStages.$inferSelect;
+export type InsertCourseStage = z.infer<typeof insertCourseStageSchema>;
+export type CourseUpload = typeof courseUploads.$inferSelect;
+export type InsertCourseUpload = z.infer<typeof insertCourseUploadSchema>;
 export type ExamQuestion = typeof examQuestions.$inferSelect;
 export type InsertExamQuestion = z.infer<typeof insertExamQuestionSchema>;
 export type ExamAttempt = typeof examAttempts.$inferSelect;
