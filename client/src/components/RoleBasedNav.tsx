@@ -470,7 +470,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#083530]">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mr-3">
@@ -547,7 +547,6 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           </div>
         </div>
       </header>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Student Profile Section - Only for students */}
