@@ -156,27 +156,48 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
     }
   };
 
+  const isSheikhRole = user?.role === 'supervisor' || user?.role === 'admin';
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-6" dir="rtl">
+      <div className={`min-h-screen ${
+        isSheikhRole
+          ? 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500'
+          : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
+      } flex items-center justify-center p-6`} dir="rtl">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-emerald-700 text-lg font-medium">جاري التحميل...</p>
+          <div className={`w-16 h-16 border-4 ${
+            isSheikhRole 
+              ? 'border-white border-t-transparent'
+              : 'border-emerald-500 border-t-transparent'
+          } rounded-full animate-spin mx-auto mb-4`}></div>
+          <p className={`text-lg font-medium ${
+            isSheikhRole ? 'text-white' : 'text-emerald-700'
+          }`}>جاري التحميل...</p>
         </motion.div>
       </div>
     );
   }
 
   const todaysSessions = sessions.filter(s => s.sessionDate === new Date().toISOString().split('T')[0]);
+  const hasEnabledSession = todaysSessions.some(s => s.isEnabled);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" dir="rtl">
+    <div className={`min-h-screen ${
+      isSheikhRole && hasEnabledSession
+        ? 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500'
+        : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
+    }`} dir="rtl">
       {/* Header with Back Button */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-4 sticky top-0 z-50 shadow-lg">
+      <div className={`${
+        isSheikhRole && hasEnabledSession
+          ? 'bg-gradient-to-r from-emerald-700 to-green-700'
+          : 'bg-gradient-to-r from-emerald-600 to-teal-600'
+      } text-white p-4 sticky top-0 z-50 shadow-lg`}>
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
           <h1 className="text-xl md:text-2xl font-bold">حصتي 📚</h1>
           {onBack && (
@@ -240,16 +261,32 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
 
         {/* Today's Sessions */}
         <div className="space-y-4">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4">حصص اليوم</h2>
+          <h2 className={`text-3xl font-bold mb-4 ${
+            isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
+          }`}>حصص اليوم</h2>
           
           {todaysSessions.length === 0 ? (
-            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+            <Card className={`border-0 shadow-xl ${
+              isSheikhRole && hasEnabledSession 
+                ? 'bg-white/20 backdrop-blur-md'
+                : 'bg-white/80 backdrop-blur-sm'
+            }`}>
               <CardContent className="p-16 text-center">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Calendar className="w-12 h-12 text-gray-400" />
+                <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                  isSheikhRole && hasEnabledSession
+                    ? 'bg-white/20'
+                    : 'bg-gray-100'
+                }`}>
+                  <Calendar className={`w-12 h-12 ${
+                    isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-400'
+                  }`} />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">لا توجد حصص مجدولة اليوم</h3>
-                <p className="text-gray-500 text-lg">ستظهر حصصك هنا عندما يتم جدولتها</p>
+                <h3 className={`text-2xl font-bold mb-2 ${
+                  isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
+                }`}>لا توجد حصص مجدولة اليوم</h3>
+                <p className={`text-lg ${
+                  isSheikhRole && hasEnabledSession ? 'text-white/90' : 'text-gray-500'
+                }`}>ستظهر حصصك هنا عندما يتم جدولتها</p>
               </CardContent>
             </Card>
           ) : (
@@ -332,27 +369,43 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
         {/* All Sessions */}
         {sessions.filter(s => s.sessionDate !== new Date().toISOString().split('T')[0]).length > 0 && (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">الحصص القادمة</h2>
+            <h2 className={`text-2xl font-bold mb-4 ${
+              isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
+            }`}>الحصص القادمة</h2>
             
             <div className="grid gap-3">
               {sessions
                 .filter(s => s.sessionDate !== new Date().toISOString().split('T')[0])
                 .map((session, index) => (
-                  <Card key={session.id} className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+                  <Card key={session.id} className={`border-0 shadow-lg ${
+                    isSheikhRole && hasEnabledSession
+                      ? 'bg-white/20 backdrop-blur-md'
+                      : 'bg-white/80 backdrop-blur-sm'
+                  }`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Calendar className="w-10 h-10 text-blue-600" />
+                          <Calendar className={`w-10 h-10 ${
+                            isSheikhRole && hasEnabledSession ? 'text-white' : 'text-blue-600'
+                          }`} />
                           <div>
-                            <h4 className="font-bold text-gray-800">
+                            <h4 className={`font-bold ${
+                              isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
+                            }`}>
                               {format(new Date(session.sessionDate), 'EEEE، d MMMM yyyy', { locale: ar })}
                             </h4>
-                            <p className="text-gray-600 text-sm">
+                            <p className={`text-sm ${
+                              isSheikhRole && hasEnabledSession ? 'text-white/90' : 'text-gray-600'
+                            }`}>
                               {session.startTime} - {session.endTime}
                             </p>
                           </div>
                         </div>
-                        <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                        <Badge className={
+                          isSheikhRole && hasEnabledSession
+                            ? 'bg-white/30 text-white border-white/50'
+                            : 'bg-blue-100 text-blue-700 border-blue-200'
+                        }>
                           قادمة
                         </Badge>
                       </div>
