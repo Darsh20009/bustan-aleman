@@ -212,7 +212,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
               <Button
                 variant={activeTab === 'whiteboard' ? 'default' : 'ghost'}
                 onClick={() => setActiveTab('whiteboard')}
-                className="flex-1 bg-[#085142]"
+                className={`flex-1 ${activeTab === 'whiteboard' ? 'bg-[#085142]' : ''}`}
                 data-testid="button-view-whiteboard"
               >
                 <Pencil className="w-4 h-4 ml-2" />

@@ -473,10 +473,11 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#083530]">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mr-3">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">بستان الإيمان</h1>
+              <img 
+                src="/logo.png" 
+                alt="بستان الإيمان" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
             
             <div className="flex items-center gap-2">
@@ -637,9 +638,11 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
           {/* Main Content Area (for desktop) */}
           <div className="hidden lg:block flex-1 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/50 p-8">
             <div className="text-center py-12">
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                <BookOpen className="w-10 h-10 text-white" />
-              </div>
+              <img 
+                src="/logo.png" 
+                alt="بستان الإيمان" 
+                className="h-32 w-auto object-contain mx-auto mb-4"
+              />
               <h3 className="text-2xl font-bold text-gray-800 mb-2">مرحباً بك في بستان الإيمان</h3>
               <p className="text-gray-600 mb-6">اختر من القائمة الجانبية للبدء</p>
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 max-w-md mx-auto">
