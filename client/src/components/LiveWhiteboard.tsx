@@ -12,10 +12,14 @@ import {
   Circle,
   ArrowRight,
   Type,
-  PaintBucket
+  PaintBucket,
+  Undo2,
+  Redo2,
+  Save,
+  Upload
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useImperativeHandle, forwardRef, useRef } from 'react';
 
 interface LiveWhiteboardProps {
   roomToken: string;
@@ -32,6 +36,8 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
   onSendCommand,
   onExecuteCommand 
 }, ref) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const {
     canvasRef,
     tool,
@@ -46,13 +52,36 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
     draw,
     stopDrawing,
     clearCanvas,
-    executeRemoteCommand
+    executeRemoteCommand,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    saveAsImage,
+    saveAsJSON,
+    loadFromJSON
   } = useWhiteboard({ 
     roomToken, 
     userId, 
     isEnabled, 
     onSendCommand 
   });
+
+  const handleLoadJSON = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        loadFromJSON(content);
+      };
+      reader.readAsText(file);
+    }
+  };
 
   useEffect(() => {
     onExecuteCommand(executeRemoteCommand);
@@ -248,6 +277,68 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
             </Button>
           )}
 
+          {/* History Controls */}
+          <div className="flex gap-1 border-r border-white/20 pr-2">
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={undo}
+              disabled={!isEnabled || !canUndo}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-whiteboard-undo"
+              title="تراجع"
+            >
+              <Undo2 className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={redo}
+              disabled={!isEnabled || !canRedo}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-whiteboard-redo"
+              title="إعادة"
+            >
+              <Redo2 className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Save/Load Controls - Sheikh only */}
+          {isEnabled && (
+            <div className="flex gap-1 border-r border-white/20 pr-2">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={saveAsImage}
+                className="bg-green-600 hover:bg-green-700"
+                data-testid="button-whiteboard-save-image"
+                title="حفظ كصورة"
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={saveAsJSON}
+                className="bg-green-600 hover:bg-green-700"
+                data-testid="button-whiteboard-save-json"
+                title="حفظ كـ JSON"
+              >
+                <Save className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={handleLoadJSON}
+                className="bg-purple-600 hover:bg-purple-700"
+                data-testid="button-whiteboard-load"
+                title="تحميل"
+              >
+                <Upload className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+
           {/* Clear Button */}
           <Button
             size="icon"
@@ -317,7 +408,7 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
         </div>
 
         {/* Canvas */}
-        <div className="flex-1 bg-white rounded-lg overflow-hidden relative">
+        <div className="flex-1 bg-white rounded-lg overflow-hidden relative min-h-[600px]">
           <canvas
             ref={canvasRef}
             className={`w-full h-full ${isEnabled ? 'cursor-crosshair' : 'cursor-not-allowed'}`}
@@ -340,6 +431,13 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
             </div>
           )}
         </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </CardContent>
     </Card>
   );

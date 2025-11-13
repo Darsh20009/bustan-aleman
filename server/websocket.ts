@@ -1,5 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "http";
+import { drawCommandSchema } from "@shared/schema";
 
 interface ClientMetadata {
   ws: WebSocket;
@@ -408,19 +409,13 @@ class WebSocketService {
 
     const { command } = payload;
 
-    if (!command || typeof command !== 'object') {
-      ws.send(JSON.stringify({ type: "error", payload: { message: "Invalid whiteboard command" } }));
-      return;
-    }
-
-    if (!command.type || typeof command.type !== 'string') {
-      ws.send(JSON.stringify({ type: "error", payload: { message: "Whiteboard command missing type" } }));
-      return;
-    }
-
-    const allowedCommandTypes = ['draw', 'erase', 'clear', 'text', 'line', 'rect', 'circle', 'path', 'pen', 'eraser', 'shape'];
-    if (!allowedCommandTypes.includes(command.type)) {
-      ws.send(JSON.stringify({ type: "error", payload: { message: `Invalid command type: ${command.type}` } }));
+    const validationResult = drawCommandSchema.safeParse(command);
+    if (!validationResult.success) {
+      console.warn('Invalid whiteboard command:', validationResult.error);
+      ws.send(JSON.stringify({ 
+        type: "error", 
+        payload: { message: "Invalid whiteboard command format" } 
+      }));
       return;
     }
 

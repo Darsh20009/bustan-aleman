@@ -452,6 +452,12 @@ export const liveRooms = bustanSchema.table("live_rooms", {
   isEnabled: boolean("is_enabled").default(false),
   enabledAt: timestamp("enabled_at"),
   notes: text("notes"),
+  password: varchar("password"), // Optional password for session
+  allowedStudentIds: varchar("allowed_student_ids").array(), // Array of student IDs allowed to join
+  entryAccessWindowMinutes: integer("entry_access_window_minutes").default(15), // Minutes before/after start time to allow entry
+  cancellationReason: text("cancellation_reason"), // Reason if cancelled
+  cancelledBy: varchar("cancelled_by").references(() => users.id), // Who cancelled the session
+  cancelledAt: timestamp("cancelled_at"), // When it was cancelled
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -949,6 +955,26 @@ export type QuranAyahMarker = typeof quranAyahMarkers.$inferSelect;
 export type InsertQuranAyahMarker = z.infer<typeof insertQuranAyahMarkerSchema>;
 export type QuranRecitationAttempt = typeof quranRecitationAttempts.$inferSelect;
 export type InsertQuranRecitationAttempt = z.infer<typeof insertQuranRecitationAttemptSchema>;
+
+// Draw command schema for whiteboard validation
+export const drawCommandSchema = z.object({
+  type: z.enum(['start', 'draw', 'end', 'clear', 'erase', 'shape', 'text', 'undo', 'redo']),
+  x: z.number().min(0).max(10000).default(0),
+  y: z.number().min(0).max(10000).default(0),
+  x2: z.number().min(0).max(10000).optional(),
+  y2: z.number().min(0).max(10000).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  lineWidth: z.number().min(1).max(50).optional(),
+  id: z.string().optional(),
+  userId: z.string().optional(),
+  commandId: z.string().optional(),
+  clientId: z.string().optional(),
+  shape: z.enum(['rectangle', 'circle', 'line', 'arrow']).optional(),
+  text: z.string().max(500).optional(),
+  filled: z.boolean().optional(),
+});
+
+export type DrawCommand = z.infer<typeof drawCommandSchema>;
 
 // Extended types for Sheikh session view (joins session with student and room data)
 export interface SheikhSessionView extends SessionAccess {

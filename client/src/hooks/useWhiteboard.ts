@@ -1,19 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-
-export interface DrawCommand {
-  type: 'start' | 'draw' | 'end' | 'clear' | 'erase' | 'shape' | 'text';
-  x: number;
-  y: number;
-  x2?: number;
-  y2?: number;
-  color?: string;
-  lineWidth?: number;
-  id?: string;
-  userId?: string;
-  shape?: 'rectangle' | 'circle' | 'line' | 'arrow';
-  text?: string;
-  filled?: boolean;
-}
+import type { DrawCommand } from '@shared/schema';
 
 interface UseWhiteboardProps {
   roomToken: string;
@@ -31,6 +17,9 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
   const [lineWidth, setLineWidth] = useState(3);
   const [filled, setFilled] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
+  const [commandHistory, setCommandHistory] = useState<DrawCommand[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const commandIdMapRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -71,6 +60,25 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     };
   }, []);
 
+  const addToHistory = useCallback((command: DrawCommand, skipDedup = false) => {
+    const commandKey = command.commandId || `${command.clientId || userId}-${Date.now()}-${Math.random()}`;
+    
+    if (!skipDedup && commandIdMapRef.current.has(commandKey)) {
+      return;
+    }
+
+    const commandWithId = { ...command, commandId: commandKey };
+    commandIdMapRef.current.add(commandKey);
+    
+    setHistoryIndex(prevIndex => {
+      setCommandHistory(prevHistory => {
+        const newHistory = [...prevHistory.slice(0, prevIndex + 1), commandWithId];
+        return newHistory;
+      });
+      return prevIndex + 1;
+    });
+  }, [userId]);
+
   const startDrawing = useCallback((x: number, y: number) => {
     if (!isEnabled || !contextRef.current) return;
 
@@ -84,6 +92,7 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         context.fillStyle = color;
         context.fillText(text, x, y);
 
+        const commandId = `${userId}-${Date.now()}-${Math.random()}`;
         const command: DrawCommand = {
           type: 'text',
           x,
@@ -91,9 +100,11 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
           color,
           lineWidth,
           text,
-          id: `${Date.now()}-${Math.random()}`,
+          commandId,
+          clientId: userId,
           userId
         };
+        addToHistory(command);
         onSendCommand?.(command);
       }
       setIsDrawing(false);
@@ -112,17 +123,21 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     context.beginPath();
     context.moveTo(x, y);
 
+    const commandId = `${userId}-${Date.now()}-${Math.random()}`;
     const command: DrawCommand = {
       type: 'start',
       x,
       y,
       color: tool === 'pen' ? color : '#FFFFFF',
       lineWidth: tool === 'pen' ? lineWidth : lineWidth * 3,
+      commandId,
+      clientId: userId,
       userId
     };
 
+    addToHistory(command);
     onSendCommand?.(command);
-  }, [isEnabled, tool, color, lineWidth, userId, onSendCommand]);
+  }, [isEnabled, tool, color, lineWidth, userId, onSendCommand, addToHistory]);
 
   const draw = useCallback((x: number, y: number) => {
     if (!isDrawing || !isEnabled || !contextRef.current) return;
@@ -135,21 +150,26 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     context.lineTo(x, y);
     context.stroke();
 
+    const commandId = `${userId}-${Date.now()}-${Math.random()}`;
     const command: DrawCommand = {
       type: 'draw',
       x,
       y,
+      commandId,
+      clientId: userId,
       userId
     };
 
+    addToHistory(command);
     onSendCommand?.(command);
-  }, [isDrawing, isEnabled, tool, userId, onSendCommand]);
+  }, [isDrawing, isEnabled, tool, userId, onSendCommand, addToHistory]);
 
   const stopDrawing = useCallback((x?: number, y?: number) => {
     if (!isEnabled || !contextRef.current) return;
 
     if (['rectangle', 'circle', 'line', 'arrow'].includes(tool) && startPoint && x !== undefined && y !== undefined) {
       const context = contextRef.current;
+      const commandId = `${userId}-${Date.now()}-${Math.random()}`;
       const command: DrawCommand = {
         type: 'shape',
         x: startPoint.x,
@@ -160,11 +180,13 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         lineWidth,
         filled,
         shape: tool as 'rectangle' | 'circle' | 'line' | 'arrow',
-        id: `${Date.now()}-${Math.random()}`,
+        commandId,
+        clientId: userId,
         userId
       };
 
       drawShape(context, command);
+      addToHistory(command);
       onSendCommand?.(command);
       setStartPoint(null);
     }
@@ -172,15 +194,8 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     setIsDrawing(false);
     if (tool === 'pen' || tool === 'eraser') {
       contextRef.current.closePath();
-      const command: DrawCommand = {
-        type: 'end',
-        x: 0,
-        y: 0,
-        userId
-      };
-      onSendCommand?.(command);
     }
-  }, [isEnabled, tool, startPoint, color, lineWidth, filled, userId, onSendCommand]);
+  }, [isEnabled, tool, startPoint, color, lineWidth, filled, userId, onSendCommand, addToHistory]);
 
   const clearCanvas = useCallback(() => {
     if (!contextRef.current || !canvasRef.current) return;
@@ -188,15 +203,19 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     const context = contextRef.current;
     context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
+    const commandId = `${userId}-${Date.now()}-${Math.random()}`;
     const command: DrawCommand = {
       type: 'clear',
       x: 0,
       y: 0,
-      userId
+      userId,
+      commandId,
+      clientId: userId,
     };
 
+    addToHistory(command);
     onSendCommand?.(command);
-  }, [userId, onSendCommand]);
+  }, [userId, onSendCommand, addToHistory]);
 
   const drawShape = (context: CanvasRenderingContext2D, command: DrawCommand) => {
     if (command.x2 === undefined || command.y2 === undefined) return;
@@ -255,6 +274,32 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
 
     const context = contextRef.current;
 
+    // Handle undo/redo commands (adjust history index and replay)
+    if (command.type === 'undo') {
+      setHistoryIndex(prev => {
+        const newIndex = Math.max(-1, prev - 1);
+        replayHistory(newIndex);
+        return newIndex;
+      });
+      return;
+    }
+
+    if (command.type === 'redo') {
+      setCommandHistory(prevHistory => {
+        setHistoryIndex(prevIndex => {
+          const newIndex = Math.min(prevHistory.length - 1, prevIndex + 1);
+          replayHistory(newIndex);
+          return newIndex;
+        });
+        return prevHistory;
+      });
+      return;
+    }
+
+    // Add remote command to history (with deduplication)
+    addToHistory(command);
+
+    // Execute canvas operation immediately
     switch (command.type) {
       case 'start':
         context.strokeStyle = command.color || '#000000';
@@ -269,9 +314,6 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         context.stroke();
         break;
 
-      case 'end':
-        context.closePath();
-        break;
 
       case 'clear':
         context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -298,7 +340,87 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         }
         break;
     }
+  }, [addToHistory, replayHistory]);
+
+  const undo = useCallback(() => {
+    if (historyIndex < 0) return;
+    
+    const newIndex = historyIndex - 1;
+    setHistoryIndex(newIndex);
+    
+    const command: DrawCommand = {
+      type: 'undo',
+      x: 0,
+      y: 0,
+      userId
+    };
+    
+    onSendCommand?.(command);
+    replayHistory(newIndex);
+  }, [historyIndex, userId, onSendCommand]);
+
+  const redo = useCallback(() => {
+    if (historyIndex >= commandHistory.length - 1) return;
+    
+    const newIndex = historyIndex + 1;
+    setHistoryIndex(newIndex);
+    
+    const command: DrawCommand = {
+      type: 'redo',
+      x: 0,
+      y: 0,
+      userId
+    };
+    
+    onSendCommand?.(command);
+    replayHistory(newIndex);
+  }, [historyIndex, commandHistory.length, userId, onSendCommand]);
+
+  const replayHistory = useCallback((upToIndex: number) => {
+    if (!contextRef.current || !canvasRef.current) return;
+    
+    const context = contextRef.current;
+    context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    
+    for (let i = 0; i <= upToIndex; i++) {
+      executeRemoteCommand(commandHistory[i]);
+    }
+  }, [commandHistory, executeRemoteCommand]);
+
+  const saveAsImage = useCallback(() => {
+    if (!canvasRef.current) return;
+    
+    const link = document.createElement('a');
+    link.download = `whiteboard-${Date.now()}.png`;
+    link.href = canvasRef.current.toDataURL();
+    link.click();
   }, []);
+
+  const saveAsJSON = useCallback(() => {
+    const data = {
+      commands: commandHistory,
+      timestamp: Date.now()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.download = `whiteboard-${Date.now()}.json`;
+    link.href = URL.createObjectURL(blob);
+    link.click();
+  }, [commandHistory]);
+
+  const loadFromJSON = useCallback((jsonData: string) => {
+    try {
+      const data = JSON.parse(jsonData);
+      if (data.commands && Array.isArray(data.commands)) {
+        setCommandHistory(data.commands);
+        setHistoryIndex(data.commands.length - 1);
+        replayHistory(data.commands.length - 1);
+      }
+    } catch (error) {
+      console.error('Failed to load whiteboard data:', error);
+    }
+  }, [replayHistory]);
 
   return {
     canvasRef,
@@ -315,6 +437,13 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     draw,
     stopDrawing,
     clearCanvas,
-    executeRemoteCommand
+    executeRemoteCommand,
+    undo,
+    redo,
+    canUndo: historyIndex >= 0,
+    canRedo: historyIndex < commandHistory.length - 1,
+    saveAsImage,
+    saveAsJSON,
+    loadFromJSON
   };
 }
