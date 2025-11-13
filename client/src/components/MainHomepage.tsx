@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { BookOpen, User, Calendar, Users, MessageCircle, Star, ChevronRight, Info, GraduationCap, Award, Heart, PlayCircle, Sparkles, ExternalLink } from 'lucide-react';
+import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 
 interface MainHomepageProps {
   onLoginClick: () => void;
@@ -25,11 +26,11 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               className="flex items-center justify-center space-x-2 md:space-x-4 space-x-reverse"
             >
               <div className="relative w-12 h-12 md:w-16 md:h-16 ml-2 md:ml-4">
-                {/* Islamic Pattern Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full shadow-lg"></div>
-                <div className="absolute inset-1 bg-white/95 rounded-full flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 md:w-10 md:h-10 text-emerald-600" />
-                </div>
+                <img 
+                  src={logoImage} 
+                  alt="بستان الإيمان" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl md:text-4xl font-bold font-arabic-serif text-white">
@@ -395,10 +396,11 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
         <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
           <div className="flex justify-center items-center mb-4 md:mb-6">
             <div className="relative w-8 h-8 md:w-10 md:h-10 ml-3">
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full"></div>
-              <div className="absolute inset-1 bg-white/90 rounded-full flex items-center justify-center">
-                <BookOpen className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
-              </div>
+              <img 
+                src={logoImage} 
+                alt="بستان الإيمان" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <h4 className="text-lg md:text-2xl font-bold font-amiri">
               بستان الإيمان
