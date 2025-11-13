@@ -1993,7 +1993,28 @@ export class DatabaseStorage implements IStorage {
     
     // First try to find existing room by checking date match
     const existingRooms = await db!
-      .select()
+      .select({
+        id: liveRooms.id,
+        studentId: liveRooms.studentId,
+        sheikhId: liveRooms.sheikhId,
+        sessionDate: liveRooms.sessionDate,
+        sessionTime: liveRooms.sessionTime,
+        roomToken: liveRooms.roomToken,
+        status: liveRooms.status,
+        startedAt: liveRooms.startedAt,
+        endedAt: liveRooms.endedAt,
+        duration: liveRooms.duration,
+        isEnabled: liveRooms.isEnabled,
+        enabledAt: liveRooms.enabledAt,
+        notes: liveRooms.notes,
+        allowedStudentIds: liveRooms.allowedStudentIds,
+        entryAccessWindowMinutes: liveRooms.entryAccessWindowMinutes,
+        cancellationReason: liveRooms.cancellationReason,
+        cancelledBy: liveRooms.cancelledBy,
+        cancelledAt: liveRooms.cancelledAt,
+        createdAt: liveRooms.createdAt,
+        updatedAt: liveRooms.updatedAt,
+      })
       .from(liveRooms)
       .where(
         and(
@@ -2012,7 +2033,7 @@ export class DatabaseStorage implements IStorage {
     });
     
     if (matchingRoom) {
-      return matchingRoom;
+      return matchingRoom as LiveRoom;
     }
     
     // Create new room if none exists
