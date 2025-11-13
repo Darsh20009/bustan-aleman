@@ -418,7 +418,7 @@ class WebSocketService {
       return;
     }
 
-    const allowedCommandTypes = ['draw', 'erase', 'clear', 'text', 'line', 'rect', 'circle', 'path'];
+    const allowedCommandTypes = ['draw', 'erase', 'clear', 'text', 'line', 'rect', 'circle', 'path', 'pen', 'eraser', 'shape'];
     if (!allowedCommandTypes.includes(command.type)) {
       ws.send(JSON.stringify({ type: "error", payload: { message: `Invalid command type: ${command.type}` } }));
       return;
@@ -470,6 +470,21 @@ class WebSocketService {
     }
     if (command.strokeWidth !== undefined && !isNaN(Number(command.strokeWidth))) {
       sanitizedCommand.strokeWidth = Math.max(1, Math.min(100, Number(command.strokeWidth)));
+    }
+    if (command.lineWidth !== undefined && !isNaN(Number(command.lineWidth))) {
+      sanitizedCommand.lineWidth = Math.max(1, Math.min(100, Number(command.lineWidth)));
+    }
+    if (command.shape && typeof command.shape === 'string') {
+      sanitizedCommand.shape = String(command.shape).slice(0, 20);
+    }
+    if (command.filled !== undefined) {
+      sanitizedCommand.filled = Boolean(command.filled);
+    }
+    if (command.x2 !== undefined && !isNaN(Number(command.x2))) {
+      sanitizedCommand.x2 = Number(command.x2);
+    }
+    if (command.y2 !== undefined && !isNaN(Number(command.y2))) {
+      sanitizedCommand.y2 = Number(command.y2);
     }
     
     const sanitizedPoints = sanitizePoints(command.points);

@@ -4,6 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { 
   Video, 
   Mic, 
@@ -46,6 +49,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   const [whiteboardEnabled, setWhiteboardEnabled] = useState(false);
   const [processedWhiteboardCommands, setProcessedWhiteboardCommands] = useState<Set<string>>(new Set());
   const whiteboardExecuteRef = useRef<((command: DrawCommand) => void) | null>(null);
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
   const {
     isAudioEnabled,
@@ -185,6 +189,10 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                   >
                     {isScreenSharing ? <MonitorOff className="w-4 h-4 ml-2" /> : <Monitor className="w-4 h-4 ml-2" />}
                     {isScreenSharing ? 'إيقاف مشاركة الشاشة' : 'مشاركة الشاشة'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowAdvancedOptions(true)} data-testid="menu-advanced-options">
+                    <Settings className="w-4 h-4 ml-2" />
+                    الإعدادات المتقدمة
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -550,6 +558,87 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           </div>
         </div>
       </div>
+
+      {/* Advanced Options Dialog */}
+      <Dialog open={showAdvancedOptions} onOpenChange={setShowAdvancedOptions}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>الإعدادات المتقدمة</DialogTitle>
+            <DialogDescription>
+              تحكم في إعدادات الصوت والفيديو والمشاركة
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Screen Share Options */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">مشاركة الشاشة</h4>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="screen-audio" className="text-sm">
+                  مشاركة صوت النظام
+                </Label>
+                <Switch id="screen-audio" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="high-quality" className="text-sm">
+                  جودة عالية
+                </Label>
+                <Switch id="high-quality" />
+              </div>
+            </div>
+
+            {/* Video Options */}
+            <div className="space-y-3 border-t pt-3">
+              <h4 className="text-sm font-semibold text-foreground">الفيديو</h4>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="hd-video" className="text-sm">
+                  فيديو عالي الدقة
+                </Label>
+                <Switch id="hd-video" defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="mirror-video" className="text-sm">
+                  عكس الفيديو
+                </Label>
+                <Switch id="mirror-video" />
+              </div>
+            </div>
+
+            {/* Audio Options */}
+            <div className="space-y-3 border-t pt-3">
+              <h4 className="text-sm font-semibold text-foreground">الصوت</h4>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="noise-cancel" className="text-sm">
+                  إلغاء الضوضاء
+                </Label>
+                <Switch id="noise-cancel" defaultChecked />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="echo-cancel" className="text-sm">
+                  إلغاء الصدى
+                </Label>
+                <Switch id="echo-cancel" defaultChecked />
+              </div>
+            </div>
+
+            {/* Session Info */}
+            <div className="space-y-2 border-t pt-3">
+              <h4 className="text-sm font-semibold text-foreground">معلومات الجلسة</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div className="flex justify-between">
+                  <span>معرّف الغرفة:</span>
+                  <code className="bg-muted px-2 py-1 rounded text-xs">{roomId.slice(0, 8)}...</code>
+                </div>
+                <div className="flex justify-between">
+                  <span>الحالة:</span>
+                  <Badge variant={isConnected ? "default" : "destructive"} className="text-xs">
+                    {isConnected ? 'متصل' : 'غير متصل'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

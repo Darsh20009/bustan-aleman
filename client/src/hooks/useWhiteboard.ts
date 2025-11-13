@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 export interface DrawCommand {
-  type: 'start' | 'draw' | 'end' | 'clear' | 'erase';
+  type: 'start' | 'draw' | 'end' | 'clear' | 'erase' | 'shape' | 'text';
   x: number;
   y: number;
+  x2?: number;
+  y2?: number;
   color?: string;
   lineWidth?: number;
   id?: string;
   userId?: string;
+  shape?: 'rectangle' | 'circle' | 'line' | 'arrow';
+  text?: string;
+  filled?: boolean;
 }
 
 interface UseWhiteboardProps {
@@ -21,9 +26,11 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
+  const [tool, setTool] = useState<'pen' | 'eraser' | 'rectangle' | 'circle' | 'line' | 'arrow' | 'text'>('pen');
   const [color, setColor] = useState('#000000');
   const [lineWidth, setLineWidth] = useState(3);
+  const [filled, setFilled] = useState(false);
+  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -70,6 +77,34 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     setIsDrawing(true);
     const context = contextRef.current;
 
+    if (tool === 'text') {
+      const text = prompt('أدخل النص:');
+      if (text) {
+        context.font = `${lineWidth * 5}px Arial`;
+        context.fillStyle = color;
+        context.fillText(text, x, y);
+
+        const command: DrawCommand = {
+          type: 'text',
+          x,
+          y,
+          color,
+          lineWidth,
+          text,
+          id: `${Date.now()}-${Math.random()}`,
+          userId
+        };
+        onSendCommand?.(command);
+      }
+      setIsDrawing(false);
+      return;
+    }
+
+    if (['rectangle', 'circle', 'line', 'arrow'].includes(tool)) {
+      setStartPoint({ x, y });
+      return;
+    }
+
     context.strokeStyle = tool === 'pen' ? color : '#FFFFFF';
     context.lineWidth = tool === 'pen' ? lineWidth : lineWidth * 3;
     context.globalCompositeOperation = tool === 'pen' ? 'source-over' : 'destination-out';
@@ -91,6 +126,10 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
 
   const draw = useCallback((x: number, y: number) => {
     if (!isDrawing || !isEnabled || !contextRef.current) return;
+    
+    if (['rectangle', 'circle', 'line', 'arrow', 'text'].includes(tool)) {
+      return;
+    }
 
     const context = contextRef.current;
     context.lineTo(x, y);
@@ -104,23 +143,44 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     };
 
     onSendCommand?.(command);
-  }, [isDrawing, isEnabled, userId, onSendCommand]);
+  }, [isDrawing, isEnabled, tool, userId, onSendCommand]);
 
-  const stopDrawing = useCallback(() => {
+  const stopDrawing = useCallback((x?: number, y?: number) => {
     if (!isEnabled || !contextRef.current) return;
 
+    if (['rectangle', 'circle', 'line', 'arrow'].includes(tool) && startPoint && x !== undefined && y !== undefined) {
+      const context = contextRef.current;
+      const command: DrawCommand = {
+        type: 'shape',
+        x: startPoint.x,
+        y: startPoint.y,
+        x2: x,
+        y2: y,
+        color,
+        lineWidth,
+        filled,
+        shape: tool as 'rectangle' | 'circle' | 'line' | 'arrow',
+        id: `${Date.now()}-${Math.random()}`,
+        userId
+      };
+
+      drawShape(context, command);
+      onSendCommand?.(command);
+      setStartPoint(null);
+    }
+
     setIsDrawing(false);
-    contextRef.current.closePath();
-
-    const command: DrawCommand = {
-      type: 'end',
-      x: 0,
-      y: 0,
-      userId
-    };
-
-    onSendCommand?.(command);
-  }, [isEnabled, userId, onSendCommand]);
+    if (tool === 'pen' || tool === 'eraser') {
+      contextRef.current.closePath();
+      const command: DrawCommand = {
+        type: 'end',
+        x: 0,
+        y: 0,
+        userId
+      };
+      onSendCommand?.(command);
+    }
+  }, [isEnabled, tool, startPoint, color, lineWidth, filled, userId, onSendCommand]);
 
   const clearCanvas = useCallback(() => {
     if (!contextRef.current || !canvasRef.current) return;
@@ -137,6 +197,58 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
 
     onSendCommand?.(command);
   }, [userId, onSendCommand]);
+
+  const drawShape = (context: CanvasRenderingContext2D, command: DrawCommand) => {
+    if (command.x2 === undefined || command.y2 === undefined) return;
+
+    context.globalCompositeOperation = 'source-over';
+    context.strokeStyle = command.color || '#000000';
+    context.fillStyle = command.color || '#000000';
+    context.lineWidth = command.lineWidth || 3;
+
+    switch (command.shape) {
+      case 'rectangle':
+        if (command.filled) {
+          context.fillRect(command.x, command.y, command.x2 - command.x, command.y2 - command.y);
+        } else {
+          context.strokeRect(command.x, command.y, command.x2 - command.x, command.y2 - command.y);
+        }
+        break;
+
+      case 'circle':
+        const radius = Math.sqrt(Math.pow(command.x2 - command.x, 2) + Math.pow(command.y2 - command.y, 2));
+        context.beginPath();
+        context.arc(command.x, command.y, radius, 0, 2 * Math.PI);
+        if (command.filled) {
+          context.fill();
+        } else {
+          context.stroke();
+        }
+        break;
+
+      case 'line':
+        context.beginPath();
+        context.moveTo(command.x, command.y);
+        context.lineTo(command.x2, command.y2);
+        context.stroke();
+        break;
+
+      case 'arrow':
+        const headlen = 15;
+        const dx = command.x2 - command.x;
+        const dy = command.y2 - command.y;
+        const angle = Math.atan2(dy, dx);
+
+        context.beginPath();
+        context.moveTo(command.x, command.y);
+        context.lineTo(command.x2, command.y2);
+        context.lineTo(command.x2 - headlen * Math.cos(angle - Math.PI / 6), command.y2 - headlen * Math.sin(angle - Math.PI / 6));
+        context.moveTo(command.x2, command.y2);
+        context.lineTo(command.x2 - headlen * Math.cos(angle + Math.PI / 6), command.y2 - headlen * Math.sin(angle + Math.PI / 6));
+        context.stroke();
+        break;
+    }
+  };
 
   const executeRemoteCommand = useCallback((command: DrawCommand) => {
     if (!contextRef.current || !canvasRef.current) return;
@@ -172,6 +284,19 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         context.fill();
         context.globalCompositeOperation = 'source-over';
         break;
+
+      case 'shape':
+        drawShape(context, command);
+        break;
+
+      case 'text':
+        if (command.text) {
+          context.globalCompositeOperation = 'source-over';
+          context.font = `${(command.lineWidth || 3) * 5}px Arial`;
+          context.fillStyle = command.color || '#000000';
+          context.fillText(command.text, command.x, command.y);
+        }
+        break;
     }
   }, []);
 
@@ -184,6 +309,8 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     setColor,
     lineWidth,
     setLineWidth,
+    filled,
+    setFilled,
     startDrawing,
     draw,
     stopDrawing,

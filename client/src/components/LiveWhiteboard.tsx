@@ -7,7 +7,12 @@ import {
   Trash2, 
   Palette,
   Minus,
-  Plus
+  Plus,
+  Square,
+  Circle,
+  ArrowRight,
+  Type,
+  PaintBucket
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useEffect, useImperativeHandle, forwardRef } from 'react';
@@ -35,6 +40,8 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
     setColor,
     lineWidth,
     setLineWidth,
+    filled,
+    setFilled,
     startDrawing,
     draw,
     stopDrawing,
@@ -88,9 +95,15 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
     draw(x, y);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isEnabled) return;
-    stopDrawing();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    stopDrawing(x, y);
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
@@ -122,7 +135,18 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
   const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     if (!isEnabled) return;
     e.preventDefault();
-    stopDrawing();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    if (e.changedTouches && e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      const x = touch.clientX - rect.left;
+      const y = touch.clientY - rect.top;
+      stopDrawing(x, y);
+    } else {
+      stopDrawing();
+    }
   };
 
   return (
@@ -130,8 +154,8 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
       <CardContent className="p-4 flex-1 flex flex-col gap-3">
         {/* Toolbar */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Tool Selection */}
-          <div className="flex gap-2">
+          {/* Drawing Tools */}
+          <div className="flex gap-1">
             <Button
               size="icon"
               variant={tool === 'pen' ? 'default' : 'outline'}
@@ -152,16 +176,88 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
             >
               <Eraser className="w-4 h-4" />
             </Button>
+          </div>
+
+          {/* Shape Tools */}
+          <div className="flex gap-1 border-r border-white/20 pr-2">
             <Button
               size="icon"
-              variant="destructive"
-              onClick={clearCanvas}
+              variant={tool === 'rectangle' ? 'default' : 'outline'}
+              onClick={() => setTool('rectangle')}
               disabled={!isEnabled}
-              data-testid="button-whiteboard-clear"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-whiteboard-rectangle"
             >
-              <Trash2 className="w-4 h-4" />
+              <Square className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === 'circle' ? 'default' : 'outline'}
+              onClick={() => setTool('circle')}
+              disabled={!isEnabled}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-whiteboard-circle"
+            >
+              <Circle className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === 'line' ? 'default' : 'outline'}
+              onClick={() => setTool('line')}
+              disabled={!isEnabled}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-whiteboard-line"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <line x1="5" y1="19" x2="19" y2="5" />
+              </svg>
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === 'arrow' ? 'default' : 'outline'}
+              onClick={() => setTool('arrow')}
+              disabled={!isEnabled}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-whiteboard-arrow"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant={tool === 'text' ? 'default' : 'outline'}
+              onClick={() => setTool('text')}
+              disabled={!isEnabled}
+              className="bg-emerald-600 hover:bg-emerald-700"
+              data-testid="button-whiteboard-text"
+            >
+              <Type className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Fill Toggle */}
+          {['rectangle', 'circle', 'line'].includes(tool) && (
+            <Button
+              size="icon"
+              variant={filled ? 'default' : 'outline'}
+              onClick={() => setFilled(!filled)}
+              disabled={!isEnabled}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="button-whiteboard-fill"
+            >
+              <PaintBucket className="w-4 h-4" />
+            </Button>
+          )}
+
+          {/* Clear Button */}
+          <Button
+            size="icon"
+            variant="destructive"
+            onClick={clearCanvas}
+            disabled={!isEnabled}
+            data-testid="button-whiteboard-clear"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
 
           {/* Line Width */}
           <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1">

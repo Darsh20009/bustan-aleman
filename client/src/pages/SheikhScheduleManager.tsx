@@ -5,7 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, Users, Video, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Calendar, Clock, Users, Video, Plus, Trash2, CheckCircle2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
@@ -51,11 +53,13 @@ const DAYS = [
 ];
 
 export default function SheikhScheduleManager() {
-  const [selectedStudent, setSelectedStudent] = useState<string>('');
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [dayOfWeek, setDayOfWeek] = useState<string>('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [scheduleToCancel, setScheduleToCancel] = useState<Schedule | null>(null);
   const { toast } = useToast();
 
   // Fetch all students
@@ -72,15 +76,6 @@ export default function SheikhScheduleManager() {
   const createSchedule = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest('/api/sheikh/schedules', 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/schedules'] });
-      toast({
-        title: '✅ تم إنشاء الجدول',
-        description: 'تم إضافة الحصة للجدول بنجاح',
-      });
-      setDialogOpen(false);
-      resetForm();
     },
     onError: () => {
       toast({
@@ -119,28 +114,58 @@ export default function SheikhScheduleManager() {
   });
 
   const resetForm = () => {
-    setSelectedStudent('');
+    setSelectedStudents([]);
     setDayOfWeek('');
     setStartTime('');
     setEndTime('');
   };
 
-  const handleCreateSchedule = () => {
-    if (!selectedStudent || !dayOfWeek || !startTime || !endTime) {
+  const toggleStudentSelection = (studentId: string) => {
+    setSelectedStudents(prev => 
+      prev.includes(studentId) 
+        ? prev.filter(id => id !== studentId)
+        : [...prev, studentId]
+    );
+  };
+
+  const handleCreateSchedule = async () => {
+    if (selectedStudents.length === 0 || !dayOfWeek || !startTime || !endTime) {
       toast({
         variant: 'destructive',
         title: 'خطأ',
-        description: 'يرجى ملء جميع الحقول المطلوبة',
+        description: 'يرجى اختيار طالب واحد على الأقل وملء جميع الحقول',
       });
       return;
     }
 
-    createSchedule.mutate({
-      studentId: selectedStudent,
-      dayOfWeek: parseInt(dayOfWeek),
-      startTime,
-      endTime,
-    });
+    try {
+      const promises = selectedStudents.map(studentId =>
+        createSchedule.mutateAsync({
+          studentId,
+          dayOfWeek: parseInt(dayOfWeek),
+          startTime,
+          endTime,
+        })
+      );
+      
+      await Promise.all(promises);
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/schedules'] });
+      
+      toast({
+        title: '✅ تم إنشاء الجدول',
+        description: `تم إضافة ${selectedStudents.length} حصة للجدول بنجاح`,
+      });
+      
+      setDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: '❌ خطأ',
+        description: 'فشل إنشاء بعض الجداول',
+      });
+    }
   };
 
   const handleEnableToday = (schedule: Schedule) => {
@@ -191,19 +216,32 @@ export default function SheikhScheduleManager() {
                 
                 <div className="grid gap-6 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="student">الطالب</Label>
-                    <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-                      <SelectTrigger id="student" data-testid="select-student">
-                        <SelectValue placeholder="اختر الطالب" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <Label>الطلاب ({selectedStudents.length} مختار)</Label>
+                    <ScrollArea className="h-48 border rounded-md p-2">
+                      <div className="space-y-2">
                         {students.map((student) => (
-                          <SelectItem key={student.id} value={student.id}>
-                            {student.studentName} - {student.phoneNumber}
-                          </SelectItem>
+                          <div key={student.id} className="flex items-center space-x-2 space-x-reverse">
+                            <Checkbox
+                              id={`student-${student.id}`}
+                              checked={selectedStudents.includes(student.id)}
+                              onCheckedChange={() => toggleStudentSelection(student.id)}
+                              data-testid={`checkbox-student-${student.id}`}
+                            />
+                            <label
+                              htmlFor={`student-${student.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            >
+                              {student.studentName} - {student.phoneNumber}
+                            </label>
+                          </div>
                         ))}
-                      </SelectContent>
-                    </Select>
+                        {students.length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-4">
+                            لا يوجد طلاب
+                          </p>
+                        )}
+                      </div>
+                    </ScrollArea>
                   </div>
 
                   <div className="space-y-2">
