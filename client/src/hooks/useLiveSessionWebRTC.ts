@@ -33,6 +33,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
   const [isConnected, setIsConnected] = useState(false);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [isAudioMutedByHost, setIsAudioMutedByHost] = useState(false);
+  const [whiteboardCommands, setWhiteboardCommands] = useState<any[]>([]);
   
   const wsRef = useRef<WebSocket | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
@@ -166,7 +167,18 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
           userId: payload.senderId || payload.from || 'unknown',
           userName: payload.senderName || payload.userName || 'مستخدم',
           text: payload.content || payload.text || '',
-          timestamp: new Date().toLocaleTimeString('ar-SA')
+          timestamp: payload.createdAt 
+            ? new Date(payload.createdAt).toLocaleTimeString('ar-SA')
+            : new Date().toLocaleTimeString('ar-SA')
+        }]);
+        break;
+
+      case 'whiteboard:command':
+        setWhiteboardCommands(prev => [...prev, {
+          id: payload.id || Date.now().toString(),
+          command: payload.command,
+          userId: payload.userId,
+          timestamp: payload.timestamp
         }]);
         break;
 
@@ -400,14 +412,30 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
 
   const sendMessage = (text: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      const senderName = user?.firstName && user?.lastName 
+        ? `${user.firstName} ${user.lastName}`
+        : user?.firstName || 'مستخدم';
+      
       wsRef.current.send(JSON.stringify({
         type: 'chat_message',
         payload: {
           content: text,
           senderId: user?.id,
+          senderName,
           receiverId: null,
           messageType: 'text',
           isGroupMessage: true
+        }
+      }));
+    }
+  };
+
+  const sendWhiteboardCommand = (command: any) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'whiteboard:command',
+        payload: {
+          command
         }
       }));
     }
@@ -618,6 +646,8 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
     startScreenShare,
     stopScreenShare,
     sendMessage,
+    sendWhiteboardCommand,
+    whiteboardCommands,
     leaveRoom,
     toggleHandRaise,
     sendReaction,

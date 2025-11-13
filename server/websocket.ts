@@ -13,8 +13,9 @@ type InboundMessage = {
   type: "auth" | "chat_message" | "student_update" | "new_student_registration" |
         "assignment_update" | "session_enable" | "error_notification" |
         "room:join" | "room:leave" | "webrtc:offer" | "webrtc:answer" | "webrtc:ice-candidate" |
-        "room:hand-raise" | "room:hand-lower" | "room:reaction" | "room:mute-participant" |
-        "room:all-muted" | "room:remove-participant" | "room:lock";
+        "room:hand-raise" | "room:hand-lower" | "room:toggle-hand" | "room:reaction" | "room:mute-participant" |
+        "room:mute-all" | "room:all-muted" | "room:remove-participant" | "room:lock" |
+        "whiteboard:command";
   payload: any;
 };
 
@@ -68,8 +69,14 @@ class WebSocketService {
       case "room:hand-lower":
         this.handleHandRaise(ws, type, payload);
         break;
+      case "room:toggle-hand":
+        this.handleHandToggle(ws, payload);
+        break;
       case "room:reaction":
         this.handleReaction(ws, payload);
+        break;
+      case "whiteboard:command":
+        this.handleWhiteboardCommand(ws, payload);
         break;
       case "room:mute-participant":
         this.handleParticipantMute(ws, payload);
@@ -156,8 +163,17 @@ class WebSocketService {
     if (!members) return;
 
     members.delete(client.userId);
+    
+    if (this.participantHandStates.has(token)) {
+      this.participantHandStates.get(token)!.delete(client.userId);
+      if (this.participantHandStates.get(token)!.size === 0) {
+        this.participantHandStates.delete(token);
+      }
+    }
+
     if (members.size === 0) {
       this.rooms.delete(token);
+      this.participantHandStates.delete(token);
     }
 
     client.roomToken = undefined;
@@ -345,6 +361,133 @@ class WebSocketService {
     this.broadcastToRoom(client.roomToken, {
       type: isRaised ? "room:hand-raised" : "room:hand-lowered",
       payload: { userId: client.userId, isHandRaised: isRaised }
+    });
+  }
+
+  private handleHandToggle(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    const userId = client.userId;
+    const currentState = this.getParticipantHandState(client.roomToken, userId);
+    const newState = !currentState;
+
+    this.setParticipantHandState(client.roomToken, userId, newState);
+
+    this.broadcastToRoom(client.roomToken, {
+      type: newState ? "room:hand-raised" : "room:hand-lowered",
+      payload: { userId, isHandRaised: newState }
+    });
+  }
+
+  private participantHandStates: Map<string, Map<string, boolean>> = new Map();
+
+  private getParticipantHandState(roomToken: string, userId: string): boolean {
+    if (!this.participantHandStates.has(roomToken)) {
+      this.participantHandStates.set(roomToken, new Map());
+    }
+    return this.participantHandStates.get(roomToken)!.get(userId) || false;
+  }
+
+  private setParticipantHandState(roomToken: string, userId: string, state: boolean): void {
+    if (!this.participantHandStates.has(roomToken)) {
+      this.participantHandStates.set(roomToken, new Map());
+    }
+    this.participantHandStates.get(roomToken)!.set(userId, state);
+  }
+
+  private handleWhiteboardCommand(ws: WebSocket, payload: any) {
+    const client = this.sockets.get(ws);
+    if (!client?.roomToken) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Join a room first" } }));
+      return;
+    }
+
+    const { command } = payload;
+
+    if (!command || typeof command !== 'object') {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Invalid whiteboard command" } }));
+      return;
+    }
+
+    if (!command.type || typeof command.type !== 'string') {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Whiteboard command missing type" } }));
+      return;
+    }
+
+    const allowedCommandTypes = ['draw', 'erase', 'clear', 'text', 'line', 'rect', 'circle', 'path'];
+    if (!allowedCommandTypes.includes(command.type)) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: `Invalid command type: ${command.type}` } }));
+      return;
+    }
+
+    const members = this.rooms.get(client.roomToken);
+    if (!members || !members.has(client.userId)) {
+      ws.send(JSON.stringify({ type: "error", payload: { message: "Not a member of this room" } }));
+      return;
+    }
+
+    const sanitizePoints = (points: any): Array<{x: number, y: number}> | undefined => {
+      if (!Array.isArray(points) || points.length === 0) return undefined;
+      try {
+        return points
+          .filter(p => p && typeof p === 'object')
+          .map(p => ({
+            x: Number(p.x) || 0,
+            y: Number(p.y) || 0
+          }))
+          .slice(0, 10000);
+      } catch {
+        return undefined;
+      }
+    };
+
+    const sanitizedCommand: any = {
+      type: String(command.type).slice(0, 50),
+      userId: client.userId
+    };
+
+    if (command.x !== undefined && !isNaN(Number(command.x))) {
+      sanitizedCommand.x = Number(command.x);
+    }
+    if (command.y !== undefined && !isNaN(Number(command.y))) {
+      sanitizedCommand.y = Number(command.y);
+    }
+    if (command.width !== undefined && !isNaN(Number(command.width))) {
+      sanitizedCommand.width = Math.max(0, Math.min(10000, Number(command.width)));
+    }
+    if (command.height !== undefined && !isNaN(Number(command.height))) {
+      sanitizedCommand.height = Math.max(0, Math.min(10000, Number(command.height)));
+    }
+    if (command.color && typeof command.color === 'string') {
+      sanitizedCommand.color = String(command.color).slice(0, 20);
+    }
+    if (command.text && typeof command.text === 'string') {
+      sanitizedCommand.text = String(command.text).slice(0, 1000);
+    }
+    if (command.strokeWidth !== undefined && !isNaN(Number(command.strokeWidth))) {
+      sanitizedCommand.strokeWidth = Math.max(1, Math.min(100, Number(command.strokeWidth)));
+    }
+    
+    const sanitizedPoints = sanitizePoints(command.points);
+    if (sanitizedPoints) {
+      sanitizedCommand.points = sanitizedPoints;
+    }
+
+    const commandId = `${client.roomToken}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const timestamp = new Date().toISOString();
+
+    this.broadcastToRoom(client.roomToken, {
+      type: "whiteboard:command",
+      payload: {
+        id: commandId,
+        command: sanitizedCommand,
+        userId: client.userId,
+        timestamp
+      }
     });
   }
 

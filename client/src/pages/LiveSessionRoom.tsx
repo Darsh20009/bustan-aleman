@@ -44,7 +44,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   const [newMessage, setNewMessage] = useState('');
   const [activeTab, setActiveTab] = useState<'video' | 'whiteboard'>('video');
   const [whiteboardEnabled, setWhiteboardEnabled] = useState(false);
-  const [processedMessages, setProcessedMessages] = useState<Set<string>>(new Set());
+  const [processedWhiteboardCommands, setProcessedWhiteboardCommands] = useState<Set<string>>(new Set());
   const whiteboardExecuteRef = useRef<((command: DrawCommand) => void) | null>(null);
 
   const {
@@ -62,6 +62,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
     startScreenShare,
     stopScreenShare,
     sendMessage,
+    sendWhiteboardCommand,
+    whiteboardCommands,
     leaveRoom,
     toggleHandRaise,
     sendReaction,
@@ -82,7 +84,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
 
   const handleWhiteboardCommand = (command: DrawCommand) => {
     if (isConnected) {
-      sendMessage(JSON.stringify({ type: 'whiteboard', data: command }));
+      sendWhiteboardCommand(command);
     }
   };
 
@@ -92,24 +94,32 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
     }
   }, []);
 
+  const isValidWhiteboardCommand = (command: any): command is DrawCommand => {
+    if (!command || typeof command !== 'object') return false;
+    if (!command.type || typeof command.type !== 'string') return false;
+    return true;
+  };
+
   useEffect(() => {
-    messages.forEach((msg: any) => {
-      if (processedMessages.has(msg.id)) {
+    whiteboardCommands.forEach((cmdData: any) => {
+      if (processedWhiteboardCommands.has(cmdData.id)) {
         return;
       }
 
-      try {
-        const parsed = JSON.parse(msg.text);
-        if (parsed.type === 'whiteboard' && parsed.data) {
-          if (parsed.data.userId !== user?.id) {
-            handleExecuteRemoteCommand(parsed.data);
-          }
-          setProcessedMessages(prev => new Set(prev).add(msg.id));
-        }
-      } catch {
+      if (!cmdData.id || !cmdData.userId || !cmdData.timestamp) {
+        console.warn('Invalid whiteboard command metadata:', cmdData);
+        setProcessedWhiteboardCommands(prev => new Set(prev).add(cmdData.id || Date.now().toString()));
+        return;
       }
+
+      if (cmdData.command && 
+          cmdData.userId !== user?.id && 
+          isValidWhiteboardCommand(cmdData.command)) {
+        handleExecuteRemoteCommand(cmdData.command);
+      }
+      setProcessedWhiteboardCommands(prev => new Set(prev).add(cmdData.id));
     });
-  }, [messages, processedMessages, user?.id, handleExecuteRemoteCommand]);
+  }, [whiteboardCommands, processedWhiteboardCommands, user?.id, handleExecuteRemoteCommand]);
 
   const toggleWhiteboard = () => {
     setWhiteboardEnabled(!whiteboardEnabled);
@@ -493,43 +503,24 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
               </CardHeader>
               <CardContent className="flex flex-col flex-1 overflow-hidden p-4">
                 <div className="flex-1 overflow-y-auto space-y-2 mb-3 pr-2" style={{ maxHeight: 'calc(500px - 150px)' }}>
-                  {messages.map((msg: any) => {
-                    // Filter out whiteboard commands from display
-                    try {
-                      const parsed = JSON.parse(msg.text);
-                      if (parsed.type === 'whiteboard') {
-                        return null;
-                      }
-                    } catch {
-                      // Not a JSON message, display normally
-                    }
-                    
-                    return (
-                      <div
-                        key={msg.id}
-                        className="bg-white/10 p-3 rounded-lg"
-                        data-testid={`message-${msg.id}`}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-emerald-400 font-medium text-sm">
-                            {msg.userName}
-                          </span>
-                          <span className="text-white/50 text-xs">
-                            {msg.timestamp}
-                          </span>
-                        </div>
-                        <p className="text-white">{msg.text}</p>
+                  {messages.map((msg: any) => (
+                    <div
+                      key={msg.id}
+                      className="bg-white/10 p-3 rounded-lg"
+                      data-testid={`message-${msg.id}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-emerald-400 font-medium text-sm">
+                          {msg.userName}
+                        </span>
+                        <span className="text-white/50 text-xs">
+                          {msg.timestamp}
+                        </span>
                       </div>
-                    );
-                  })}
-                  {messages.filter((msg: any) => {
-                    try {
-                      const parsed = JSON.parse(msg.text);
-                      return parsed.type !== 'whiteboard';
-                    } catch {
-                      return true;
-                    }
-                  }).length === 0 && (
+                      <p className="text-white">{msg.text}</p>
+                    </div>
+                  ))}
+                  {messages.length === 0 && (
                     <div className="text-center text-white/60 py-8">
                       <MessageSquare className="w-12 h-12 mx-auto mb-2 opacity-50" />
                       <p>لا توجد رسائل بعد</p>
