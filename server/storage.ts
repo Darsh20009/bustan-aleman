@@ -1986,6 +1986,11 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     
+    // Normalize sessionDate to YYYY-MM-DD string format
+    const normalizedDate = typeof sessionDate === 'string' 
+      ? sessionDate.split('T')[0] 
+      : sessionDate.toISOString().split('T')[0];
+    
     const existingRooms = await db!
       .select()
       .from(liveRooms)
@@ -1993,7 +1998,7 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(liveRooms.studentId, studentId),
           eq(liveRooms.sheikhId, sheikhId),
-          eq(liveRooms.sessionDate, sessionDate),
+          sql`DATE(${liveRooms.sessionDate}) = ${normalizedDate}`,
           eq(liveRooms.sessionTime, sessionTime)
         )
       );
@@ -2007,7 +2012,7 @@ export class DatabaseStorage implements IStorage {
       .values({
         studentId,
         sheikhId,
-        sessionDate,
+        sessionDate: new Date(normalizedDate),
         sessionTime,
         status: 'scheduled',
         isEnabled: false,
