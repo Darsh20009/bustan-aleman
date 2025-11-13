@@ -1991,22 +1991,52 @@ export class DatabaseStorage implements IStorage {
       ? sessionDate.split('T')[0] 
       : sessionDate.toISOString().split('T')[0];
     
+    // First try to find existing room by checking date match
     const existingRooms = await db!
-      .select()
+      .select({
+        id: liveRooms.id,
+        studentId: liveRooms.studentId,
+        sheikhId: liveRooms.sheikhId,
+        sessionDate: liveRooms.sessionDate,
+        sessionTime: liveRooms.sessionTime,
+        roomToken: liveRooms.roomToken,
+        status: liveRooms.status,
+        startedAt: liveRooms.startedAt,
+        endedAt: liveRooms.endedAt,
+        duration: liveRooms.duration,
+        isEnabled: liveRooms.isEnabled,
+        enabledAt: liveRooms.enabledAt,
+        notes: liveRooms.notes,
+        allowedStudentIds: liveRooms.allowedStudentIds,
+        entryAccessWindowMinutes: liveRooms.entryAccessWindowMinutes,
+        cancellationReason: liveRooms.cancellationReason,
+        cancelledBy: liveRooms.cancelledBy,
+        cancelledAt: liveRooms.cancelledAt,
+        createdAt: liveRooms.createdAt,
+        updatedAt: liveRooms.updatedAt,
+      })
       .from(liveRooms)
       .where(
         and(
           eq(liveRooms.studentId, studentId),
           eq(liveRooms.sheikhId, sheikhId),
-          sql`DATE(${liveRooms.sessionDate}) = ${normalizedDate}`,
           eq(liveRooms.sessionTime, sessionTime)
         )
       );
     
-    if (existingRooms.length > 0) {
-      return existingRooms[0];
+    // Filter by date in JavaScript to avoid SQL date comparison issues
+    const matchingRoom = existingRooms.find(room => {
+      const roomDate = room.sessionDate instanceof Date 
+        ? room.sessionDate.toISOString().split('T')[0]
+        : String(room.sessionDate).split('T')[0];
+      return roomDate === normalizedDate;
+    });
+    
+    if (matchingRoom) {
+      return matchingRoom;
     }
     
+    // Create new room if none exists
     const [newRoom] = await db!
       .insert(liveRooms)
       .values({
