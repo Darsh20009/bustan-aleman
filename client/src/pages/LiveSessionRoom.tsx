@@ -193,7 +193,6 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           </div>
         </div>
       </div>
-
       {/* Main Content */}
       <div className="p-4 pb-8 min-h-[calc(100vh-80px)]">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -414,7 +413,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 bg-[#0a5447]">
                           <p className="text-white font-medium">
                             {participant.role === 'supervisor' ? 'الشيخ' : 'الطالب'}
                           </p>
