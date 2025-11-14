@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { BookOpen, User, Calendar, Users, MessageCircle, Star, ChevronRight, Info, GraduationCap, Award, Heart, PlayCircle, Sparkles, ExternalLink } from 'lucide-react';
+import { BookOpen, User, Calendar, Users, MessageCircle, Star, ChevronRight, Info, GraduationCap, Award, Heart, PlayCircle, Sparkles, ExternalLink, CheckCircle, TrendingUp, Shield, Clock, Globe } from 'lucide-react';
 import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 
 interface MainHomepageProps {
@@ -15,403 +16,386 @@ interface MainHomepageProps {
 
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
   return (
-    <div className="min-h-screen bg-white" dir="rtl">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 py-6">
-          <div className="flex justify-center items-center flex-col gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-orange-50/30" dir="rtl">
+      {/* Enhanced Header with Navigation */}
+      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center justify-center space-x-2 md:space-x-4 space-x-reverse"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center space-x-4 space-x-reverse"
             >
-              <div className="relative w-12 h-12 md:w-16 md:h-16 ml-2 md:ml-4">
+              <div className="relative w-16 h-16">
                 <img 
                   src={logoImage} 
                   alt="بستان الإيمان" 
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain drop-shadow-2xl"
                 />
               </div>
               <div>
-                <h1 className="text-xl md:text-4xl font-bold font-arabic-serif text-white">
+                <h1 className="text-2xl md:text-3xl font-bold font-arabic-serif text-white">
                   بستان الإيمان
                 </h1>
-                <p className="text-white/90 text-sm md:text-lg font-medium">
-                  منصة تعليمية إسلامية متطورة مع خدمات مجانية ومدفوعة
+                <p className="text-white/90 text-sm md:text-base font-medium">
+                  رحلة تعليمية متكاملة نحو القرآن والعلم
                 </p>
               </div>
             </motion.div>
 
-            <div className="flex items-center justify-center space-x-2 space-x-reverse flex-wrap gap-2">
+            <div className="flex items-center space-x-3 space-x-reverse">
               <Button
                 onClick={onLoginClick}
-                className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 md:px-6 py-2 text-sm md:text-base backdrop-blur-sm"
+                className="bg-white/20 hover:bg-white/30 text-white border-0 px-4 md:px-6 py-2 backdrop-blur-sm transition-all hover:scale-105"
               >
-                <User className="w-4 h-4 ml-1" />
+                <User className="w-4 h-4 ml-2" />
                 تسجيل الدخول
               </Button>
               <Button
                 onClick={onRegisterClick}
-                variant="outline"
-                className="!bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-3 md:px-6 py-2 text-sm md:text-base font-bold transition-all shadow-lg"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-4 md:px-6 py-2 font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
-                <Sparkles className="w-4 h-4 ml-1" />
-                ابدأ رحلتك
+                <Sparkles className="w-4 h-4 ml-2" />
+                ابدأ الآن
               </Button>
             </div>
           </div>
+
+          {/* Quick Navigation Links */}
+          <div className="hidden md:flex justify-center mt-4 space-x-6 space-x-reverse border-t border-white/20 pt-4">
+            <button onClick={onAboutUs} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
+              من نحن
+            </button>
+            <button onClick={onCourses} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
+              الدورات
+            </button>
+            <button onClick={onQuranReader} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
+              المصحف الإلكتروني
+            </button>
+          </div>
         </div>
       </div>
-      {/* Hero Section */}
-      <div className="relative bg-white py-12 md:py-24 overflow-hidden">
-        {/* Enhanced Islamic Pattern Background */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-emerald-600 rounded-full"></div>
-          <div className="absolute top-20 right-20 w-24 h-24 border-2 border-orange-500 rotate-45"></div>
-          <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-emerald-600 rounded-full"></div>
-          <div className="absolute top-1/2 left-10 w-16 h-16 border-2 border-orange-500 transform rotate-45"></div>
-          <div className="absolute bottom-20 right-10 w-28 h-28 border-3 border-emerald-600 rounded-full opacity-50"></div>
+
+      {/* Hero Section with Enhanced Design */}
+      <div className="relative py-16 md:py-24 overflow-hidden">
+        {/* Animated Background Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-10 left-10 w-32 h-32 border-4 border-emerald-600 rounded-full animate-pulse"></div>
+          <div className="absolute top-20 right-20 w-24 h-24 border-2 border-orange-500 rotate-45 animate-spin" style={{ animationDuration: '20s' }}></div>
+          <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-emerald-600 rounded-full animate-bounce"></div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-2 md:px-4 text-center relative z-10">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="text-center mb-12"
           >
-            <div className="mb-8 text-center">
-              <h2 className="text-4xl md:text-7xl font-bold text-emerald-600 mb-4 font-arabic-serif leading-tight">
-                رحلات تعليمية ملهمة
-              </h2>
-              <p className="text-lg md:text-2xl text-emerald-700 mb-8 max-w-4xl mx-auto leading-relaxed">
-                نؤمن أن تعلم القرآن ليس مجرد حفظ، بل هو رحلة روحانية متكاملة
-              </p>
-            </div>
-            
-            {/* Educational Journeys Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 max-w-6xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <BookOpen className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-emerald-900/90 to-transparent text-white p-4 md:p-6">
-                  <h3 className="font-bold text-lg md:text-xl mb-2">رحلة إتقان التجويد</h3>
-                  <p className="text-sm md:text-base">مسار تفاعلي يركز على الأحكام النظرية والتطبيق العملي</p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <Heart className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-orange-900/90 to-transparent text-white p-4 md:p-6">
-                  <h3 className="font-bold text-lg md:text-xl mb-2">رحلة حفظ جزء عم</h3>
-                  <p className="text-sm md:text-base">مصممة خصيصاً للصغار والمبتدئين بأساليب تحفيزية</p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="group relative overflow-hidden rounded-2xl shadow-2xl bg-white h-64 md:h-72 transform hover:scale-105 transition-all duration-300"
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <GraduationCap className="w-16 md:w-20 h-16 md:h-20 mx-auto mb-4 drop-shadow-lg" />
-                  </div>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-emerald-900/90 to-transparent text-white p-4 md:p-6">
-                  <h3 className="font-bold text-lg md:text-xl mb-2">رحلة المتون العلمية</h3>
-                  <p className="text-sm md:text-base">دورات متقدمة لحفظ ودراسة متون مثل تحفة الأطفال</p>
-                </div>
-              </motion.div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
-              <Button
-                onClick={onQuranReader}
-                size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 font-arabic-serif px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl w-full sm:w-auto shadow-lg"
-                data-testid="button-quran-reader"
-              >
-                <BookOpen className="ml-2 h-5 w-5 md:h-6 md:w-6" />
-                المصحف التفاعلي
-              </Button>
-              <Button
-                onClick={onCourses}
-                size="lg"
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 font-arabic-serif px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl w-full sm:w-auto shadow-lg"
-                data-testid="button-courses"
-              >
-                <GraduationCap className="ml-2 h-5 w-5 md:h-6 md:w-6" />
-                تصفح الدورات
-              </Button>
-              <Button
-                onClick={onRegisterClick}
-                size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-arabic-serif font-bold px-6 md:px-10 py-4 md:py-5 text-lg md:text-xl w-full sm:w-auto shadow-2xl transform hover:scale-105 transition-all hover:shadow-3xl"
-                data-testid="button-register"
-              >
-                <Sparkles className="ml-2 h-5 w-5 md:h-6 md:w-6" />
-                ابدأ رحلة التعلم 🚀
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      
-
-      {/* Platform Features */}
-      <div className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-2 md:px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="text-center mb-16">
-              <h3 className="text-3xl md:text-5xl font-bold text-emerald-600 mb-6 font-amiri">
-                كنوز المعرفة بين يديك
-              </h3>
-              <p className="text-lg md:text-xl text-emerald-700 max-w-4xl mx-auto">
-                يستطيع المعلم إثراء كل درس بمجموعة من الموارد التي يحول بها الدرس إلى تجربة غامرة
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="group"
-              >
-                <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 h-full">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <BookOpen className="w-10 h-10 text-white" />
-                    </div>
-                    <h4 className="text-xl font-bold text-emerald-600 mb-3">مصحف تفاعلي</h4>
-                    <p className="text-emerald-700 text-sm leading-relaxed">
-                      مصحف تفاعلي لكل طالب مع إمكانية وضع ملاحظات من المشرف مباشرة على الآيات
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="group"
-              >
-                <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 h-full">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <PlayCircle className="w-10 h-10 text-white" />
-                    </div>
-                    <h4 className="text-xl font-bold text-orange-600 mb-3">بث مباشر داخلي</h4>
-                    <p className="text-orange-700 text-sm leading-relaxed">
-                      بث مباشر داخلي بديل عن Zoom مع تسجيل الحصص والموارد التعليمية المتنوعة
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="group"
-              >
-                <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 h-full">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <Users className="w-10 h-10 text-white" />
-                    </div>
-                    <h4 className="text-xl font-bold text-emerald-600 mb-3">نظام طالب ومشرف</h4>
-                    <p className="text-emerald-700 text-sm leading-relaxed">
-                      نظامان متكاملان: نظام طالب ونظام مشرف/معلم مع لوحة إدارة شاملة
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="group"
-              >
-                <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 h-full">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-20 h-20 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform">
-                      <Award className="w-10 h-10 text-white" />
-                    </div>
-                    <h4 className="text-xl font-bold text-orange-600 mb-3">امتحانات وشهادات</h4>
-                    <p className="text-orange-700 text-sm leading-relaxed">
-                      نظام امتحانات متطور مع إصدار شهادات PDF بتصميم إسلامي أصيل ورمز QR
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-      {/* Certificates Section */}
-      <div className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-2 md:px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1 }}
-            className="text-center"
-          >
-            <h3 className="text-3xl md:text-5xl font-bold text-emerald-600 mb-6 font-amiri">
-              شهادات الإتقان: وسام شرف يكلل إنجازك
-            </h3>
-            <p className="text-lg md:text-xl text-emerald-700 mb-12 max-w-4xl mx-auto">
-              عندما يكمل الطالب رحلته التعليمية ويتجاوز اختباراتها بنجاح، يتوج إنجازه بتحفة فنية رقمية تليق بجهده
+            <h2 className="text-4xl md:text-6xl font-bold text-emerald-600 mb-6 font-arabic-serif leading-tight">
+              منصة تعليمية إسلامية شاملة
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed">
+              رحلة تعليمية متكاملة تجمع بين حفظ القرآن الكريم، الدورات الشرعية، والأنشطة التفاعلية
             </p>
+          </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              <Card className="border-2 border-emerald-200 bg-white hover:shadow-xl transition-all">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                    <Sparkles className="w-8 h-8 text-emerald-600" />
-                  </div>
-                  <h4 className="font-bold text-emerald-600 mb-2">تصميم فريد</h4>
-                  <p className="text-emerald-700 text-sm">بزخارف إسلامية أصيلة وخطوط عربية رائعة</p>
-                </CardContent>
-              </Card>
+          {/* Stats Section */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-12">
+            {[
+              { icon: Users, count: '500+', label: 'طالب وطالبة' },
+              { icon: BookOpen, count: '20+', label: 'دورة تعليمية' },
+              { icon: Award, count: '300+', label: 'شهادة صادرة' },
+              { icon: Globe, count: '24/7', label: 'متاح دائماً' }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="border-2 border-emerald-100 bg-white hover:shadow-xl transition-all hover:scale-105">
+                  <CardContent className="p-6 text-center">
+                    <stat.icon className="w-12 h-12 mx-auto mb-3 text-emerald-600" />
+                    <h3 className="text-3xl font-bold text-emerald-600 mb-1">{stat.count}</h3>
+                    <p className="text-sm text-gray-600">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
 
-              <Card className="border-2 border-orange-200 bg-white hover:shadow-xl transition-all">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <Star className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <h4 className="font-bold text-orange-600 mb-2">توثيق رقمي</h4>
-                  <p className="text-orange-700 text-sm">تحمل الشهادة رمز QR فريد للتحقق من صحتها فوراً</p>
-                </CardContent>
-              </Card>
+          {/* Main Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+            <Button
+              onClick={onRegisterClick}
+              size="lg"
+              className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 font-arabic-serif px-10 py-6 text-xl shadow-2xl transform hover:scale-105 transition-all"
+            >
+              <Sparkles className="ml-2 h-6 w-6" />
+              ابدأ رحلتك التعليمية مجاناً
+            </Button>
+            <Button
+              onClick={onQuranReader}
+              size="lg"
+              variant="outline"
+              className="border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 px-10 py-6 text-xl transform hover:scale-105 transition-all"
+            >
+              <BookOpen className="ml-2 h-6 w-6" />
+              المصحف الإلكتروني
+            </Button>
+          </div>
+        </div>
+      </div>
 
-              <Card className="border-2 border-emerald-200 bg-white hover:shadow-xl transition-all">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-                    <User className="w-8 h-8 text-emerald-600" />
-                  </div>
-                  <h4 className="font-bold text-emerald-600 mb-2">تخصيص كامل</h4>
-                  <p className="text-emerald-700 text-sm">تحمل اسم الطالب واسم الرحلة وتوقيع رقمي</p>
-                </CardContent>
-              </Card>
-
-              <Card className="border-2 border-orange-200 bg-white hover:shadow-xl transition-all">
-                <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <Heart className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <h4 className="font-bold text-orange-600 mb-2">مشاركة بفخر</h4>
-                  <p className="text-orange-700 text-sm">تحميلها بصيغة PDF أو مشاركتها على منصات التواصل</p>
-                </CardContent>
-              </Card>
+      {/* Educational Journeys Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <div className="text-center mb-12">
+              <h3 className="text-4xl md:text-5xl font-bold text-emerald-600 mb-4 font-amiri">
+                رحلات تعليمية ملهمة
+              </h3>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                برامج تعليمية مصممة بعناية لتناسب جميع المستويات والأعمار
+              </p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 border-2 border-emerald-200 shadow-lg">
-              <p className="text-xl md:text-2xl text-emerald-700 font-semibold italic">
-                "إنها أكثر من شهادة، إنها وسام شرف رقمي، وذكرى خالدة لرحلة مباركة مع القرآن الكريم"
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[
+                {
+                  title: 'رحلة إتقان التجويد',
+                  description: 'مسار تفاعلي يركز على الأحكام النظرية والتطبيق العملي مع متابعة دقيقة من المشرف',
+                  icon: BookOpen,
+                  gradient: 'from-emerald-500 to-emerald-600',
+                  features: ['دروس مباشرة', 'تصحيح أخطاء التلاوة', 'شهادة معتمدة']
+                },
+                {
+                  title: 'رحلة حفظ جزء عم',
+                  description: 'برنامج مخصص للصغار والمبتدئين بأساليب تحفيزية ممتعة',
+                  icon: Heart,
+                  gradient: 'from-orange-500 to-orange-600',
+                  features: ['أساليب تحفيزية', 'متابعة يومية', 'جوائز وشهادات']
+                },
+                {
+                  title: 'رحلة المتون العلمية',
+                  description: 'دورات متقدمة لحفظ ودراسة متون مثل تحفة الأطفال والجزرية',
+                  icon: GraduationCap,
+                  gradient: 'from-emerald-500 to-teal-600',
+                  features: ['محتوى متقدم', 'إجازة علمية', 'مسار أكاديمي']
+                }
+              ].map((journey, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.2 }}
+                  className="group"
+                >
+                  <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all h-full overflow-hidden">
+                    <div className={`h-2 bg-gradient-to-r ${journey.gradient}`}></div>
+                    <CardContent className="p-6">
+                      <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${journey.gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <journey.icon className="w-8 h-8 text-white" />
+                      </div>
+                      <h4 className="text-2xl font-bold text-emerald-600 mb-3">{journey.title}</h4>
+                      <p className="text-gray-600 mb-4 leading-relaxed">{journey.description}</p>
+                      <div className="space-y-2">
+                        {journey.features.map((feature, i) => (
+                          <div key={i} className="flex items-center text-sm text-gray-600">
+                            <CheckCircle className="w-4 h-4 ml-2 text-emerald-500" />
+                            {feature}
+                          </div>
+                        ))}
+                      </div>
+                      <Button className={`w-full mt-4 bg-gradient-to-r ${journey.gradient} text-white hover:opacity-90`}>
+                        استكشف الرحلة
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         </div>
       </div>
-      {/* تعرّف على معلمنا */}
-      <div className="py-8 md:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
-          <h3 className="text-2xl md:text-4xl font-bold text-emerald-600 mb-4 font-amiri">
-            تعرّف على معلمنا المميز
-          </h3>
-          <p className="text-lg md:text-xl text-emerald-700 mb-8 md:mb-12">
-            خبير متخصص متفان يقود نجاحنا
-          </p>
 
-          <Card className="max-w-2xl mx-auto border-2 border-orange-200 bg-white shadow-lg">
-            <CardContent className="p-6 md:p-8 text-center">
-              <div className="w-24 h-24 md:w-32 md:h-32 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 md:mb-6">
-                <User className="w-12 h-12 md:w-16 md:h-16 text-white" />
+      {/* Platform Features Section */}
+      <div className="py-16 bg-gradient-to-br from-emerald-50 to-orange-50">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h3 className="text-4xl md:text-5xl font-bold text-emerald-600 mb-4 font-amiri">
+              مميزات المنصة الفريدة
+            </h3>
+            <p className="text-xl text-gray-600">تقنيات حديثة في خدمة التعليم الإسلامي</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: BookOpen, title: 'مصحف تفاعلي', desc: 'مصحف إلكتروني مع إمكانية إضافة الملاحظات والتفسير' },
+              { icon: PlayCircle, title: 'بث مباشر', desc: 'حصص مباشرة مع المشرف وتسجيل الجلسات' },
+              { icon: Users, title: 'نظام متكامل', desc: 'لوحة تحكم شاملة للطالب والمشرف' },
+              { icon: Award, title: 'شهادات رقمية', desc: 'شهادات موثقة برمز QR وتصميم احترافي' },
+              { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة لبيانات الطلاب' },
+              { icon: Clock, title: 'متاح دائماً', desc: 'وصول للمحتوى في أي وقت ومن أي مكان' },
+              { icon: TrendingUp, title: 'تتبع التقدم', desc: 'إحصائيات دقيقة لمتابعة مستوى الطالب' },
+              { icon: MessageCircle, title: 'دعم فوري', desc: 'فريق دعم متاح للرد على استفساراتك' }
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.05 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <Card className="border-2 border-emerald-100 bg-white hover:shadow-xl transition-all h-full">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                      <feature.icon className="w-8 h-8 text-white" />
+                    </div>
+                    <h4 className="text-lg font-bold text-emerald-600 mb-2">{feature.title}</h4>
+                    <p className="text-sm text-gray-600">{feature.desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Certificates Section */}
+      <div className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h3 className="text-4xl md:text-5xl font-bold text-emerald-600 mb-4 font-amiri">
+              شهادات معتمدة وموثقة
+            </h3>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              احصل على شهادة رقمية موثقة عند إتمام أي رحلة تعليمية
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: Sparkles, title: 'تصميم احترافي', desc: 'بزخارف إسلامية أصيلة' },
+              { icon: Star, title: 'توثيق رقمي', desc: 'رمز QR للتحقق الفوري' },
+              { icon: User, title: 'تخصيص كامل', desc: 'بيانات الطالب والرحلة' },
+              { icon: Heart, title: 'مشاركة سهلة', desc: 'تحميل PDF ومشاركة' }
+            ].map((item, index) => (
+              <Card key={index} className="border-2 border-orange-200 bg-white hover:shadow-xl transition-all">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 mx-auto bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <item.icon className="w-8 h-8 text-orange-600" />
+                  </div>
+                  <h4 className="font-bold text-orange-600 mb-2">{item.title}</h4>
+                  <p className="text-sm text-gray-600">{item.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Teacher Section */}
+      <div className="py-16 bg-gradient-to-br from-emerald-50 to-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h3 className="text-4xl font-bold text-emerald-600 mb-4 font-amiri">
+            المشرف العام
+          </h3>
+          <Card className="border-2 border-orange-200 bg-white shadow-xl">
+            <CardContent className="p-8">
+              <div className="w-32 h-32 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-6 shadow-lg">
+                <User className="w-16 h-16 text-white" />
               </div>
-              <h4 className="text-xl md:text-2xl font-bold text-emerald-600 mb-2">
+              <h4 className="text-3xl font-bold text-emerald-600 mb-2">
                 الشيخ أحمد عبدالعزيز
               </h4>
-              <p className="text-md md:text-lg text-orange-600 mb-4">
-                مسؤول المنصة
+              <p className="text-lg text-orange-600 mb-4">
+                مؤسس ومشرف المنصة
               </p>
-              <p className="text-sm md:text-base text-emerald-700 leading-relaxed">
-                يكرّس الشيخ أحمد جهوده لابتكار برامج تعليمية مخصّصة لكل طالب بما يتناسب مع تفضيلاته الفريدة.
+              <p className="text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                يكرّس الشيخ أحمد جهوده لابتكار برامج تعليمية مخصّصة تجمع بين الأصالة والمعاصرة،
+                مع متابعة شخصية لكل طالب لضمان تحقيق أفضل النتائج
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
+
       {/* CTA Section */}
-      <div className="py-8 md:py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
-          <h3 className="text-2xl md:text-4xl font-bold text-emerald-600 mb-6 font-amiri">
-            ابدأ رحلتك معنا اليوم
+      <div className="py-16 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h3 className="text-4xl md:text-5xl font-bold mb-6 font-amiri">
+            ابدأ رحلتك التعليمية اليوم
           </h3>
-          <div className="max-w-4xl mx-auto">
-            <p className="text-base md:text-lg text-emerald-700 leading-relaxed mb-8">
-              انضم إلينا في رحلة تعليمية مميزة نحو حفظ القرآن الكريم وتعلم العلوم الشرعية. 
-              نحن هنا لنساعدك على تحقيق أهدافك الدينية والتعليمية بأفضل الطرق الحديثة.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 sm:space-x-reverse">
-              <Button
-                onClick={onRegisterClick}
-                size="lg"
-                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl hover:from-emerald-600 hover:to-emerald-700 w-full sm:w-auto shadow-lg"
-              >
-                انطلق معنا في الرحلة
-              </Button>
-              <Button
-                onClick={onAboutUs}
-                size="lg"
-                variant="outline"
-                className="border-2 border-orange-500 text-orange-600 px-8 md:px-12 py-3 md:py-4 text-lg md:text-xl hover:bg-orange-50 w-full sm:w-auto"
-              >
-                اعرف المزيد عنا
-              </Button>
-            </div>
+          <p className="text-xl mb-8 text-white/90 leading-relaxed">
+            انضم إلى مئات الطلاب الذين يتعلمون القرآن الكريم والعلوم الشرعية معنا
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Button
+              onClick={onRegisterClick}
+              size="lg"
+              className="bg-white text-emerald-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-xl transform hover:scale-105 transition-all"
+            >
+              <Sparkles className="ml-2 h-6 w-6" />
+              سجل الآن مجاناً
+            </Button>
+            <Button
+              onClick={onAboutUs}
+              size="lg"
+              variant="outline"
+              className="border-2 border-white text-white hover:bg-white/10 px-12 py-6 text-xl transform hover:scale-105 transition-all"
+            >
+              <Info className="ml-2 h-6 w-6" />
+              اعرف المزيد
+            </Button>
           </div>
         </div>
       </div>
+
       {/* Footer */}
-      <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white py-8 md:py-12">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 text-center">
-          <div className="flex justify-center items-center mb-4 md:mb-6">
-            <div className="relative w-8 h-8 md:w-10 md:h-10 ml-3">
-              <img 
-                src={logoImage} 
-                alt="بستان الإيمان" 
-                className="w-full h-full object-contain"
-              />
+      <div className="bg-gradient-to-r from-emerald-800 to-emerald-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center mb-4">
+                <div className="relative w-12 h-12 ml-3">
+                  <img src={logoImage} alt="بستان الإيمان" className="w-full h-full object-contain" />
+                </div>
+                <h4 className="text-2xl font-bold font-amiri">بستان الإيمان</h4>
+              </div>
+              <p className="text-white/80 leading-relaxed">
+                منصة تعليمية إسلامية متكاملة لحفظ القرآن الكريم والعلوم الشرعية
+              </p>
             </div>
-            <h4 className="text-lg md:text-2xl font-bold font-amiri">
-              بستان الإيمان
-            </h4>
+
+            <div>
+              <h5 className="text-xl font-bold mb-4">روابط سريعة</h5>
+              <div className="space-y-2">
+                <button onClick={onAboutUs} className="block text-white/80 hover:text-white transition-colors">من نحن</button>
+                <button onClick={onCourses} className="block text-white/80 hover:text-white transition-colors">الدورات</button>
+                <button onClick={onQuranReader} className="block text-white/80 hover:text-white transition-colors">المصحف الإلكتروني</button>
+              </div>
+            </div>
+
+            <div>
+              <h5 className="text-xl font-bold mb-4">تواصل معنا</h5>
+              <div className="space-y-2 text-white/80">
+                <p>📱 واتساب: 0532441566</p>
+                <p>📞 هاتف: 0549947386</p>
+                <p>✉️ البريد: bustan.aleman.2025@gmail.com</p>
+              </div>
+            </div>
           </div>
-          <p className="text-white/90 text-sm md:text-base mb-2">
-            منصة تعليمية إسلامية متطورة لحفظ القرآن الكريم والعلوم الشرعية
-          </p>
-          <p className="text-white/80 text-xs md:text-sm">
-            للتواصل: +966549947386 • خدمات مجانية ومدفوعة متاحة
-          </p>
+
+          <div className="border-t border-white/20 pt-6 text-center">
+            <p className="text-white/70">
+              جميع الحقوق محفوظة © {new Date().getFullYear()} بستان الإيمان
+            </p>
+          </div>
         </div>
       </div>
     </div>
