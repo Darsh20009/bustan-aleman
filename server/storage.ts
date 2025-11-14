@@ -1769,7 +1769,23 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) {
       return [];
     }
-    return db!.select().from(sessionAccess).where(eq(sessionAccess.studentId, studentId)).orderBy(desc(sessionAccess.sessionDate));
+    // Select only existing columns explicitly
+    return db!
+      .select({
+        id: sessionAccess.id,
+        studentId: sessionAccess.studentId,
+        scheduleId: sessionAccess.scheduleId,
+        sessionDate: sessionAccess.sessionDate,
+        startTime: sessionAccess.startTime,
+        endTime: sessionAccess.endTime,
+        zoomLink: sessionAccess.zoomLink,
+        isEnabled: sessionAccess.isEnabled,
+        enabledBy: sessionAccess.enabledBy,
+        enabledAt: sessionAccess.enabledAt,
+      })
+      .from(sessionAccess)
+      .where(eq(sessionAccess.studentId, studentId))
+      .orderBy(desc(sessionAccess.sessionDate));
   }
 
   async getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]> {
@@ -2007,11 +2023,6 @@ export class DatabaseStorage implements IStorage {
         isEnabled: liveRooms.isEnabled,
         enabledAt: liveRooms.enabledAt,
         notes: liveRooms.notes,
-        allowedStudentIds: liveRooms.allowedStudentIds,
-        entryAccessWindowMinutes: liveRooms.entryAccessWindowMinutes,
-        cancellationReason: liveRooms.cancellationReason,
-        cancelledBy: liveRooms.cancelledBy,
-        cancelledAt: liveRooms.cancelledAt,
         createdAt: liveRooms.createdAt,
         updatedAt: liveRooms.updatedAt,
       })
@@ -2064,7 +2075,28 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) {
       return [];
     }
-    return db!.select().from(liveRooms).where(eq(liveRooms.studentId, studentId)).orderBy(desc(liveRooms.sessionDate));
+    // Select only existing columns explicitly
+    return db!
+      .select({
+        id: liveRooms.id,
+        studentId: liveRooms.studentId,
+        sheikhId: liveRooms.sheikhId,
+        sessionDate: liveRooms.sessionDate,
+        sessionTime: liveRooms.sessionTime,
+        roomToken: liveRooms.roomToken,
+        status: liveRooms.status,
+        startedAt: liveRooms.startedAt,
+        endedAt: liveRooms.endedAt,
+        duration: liveRooms.duration,
+        isEnabled: liveRooms.isEnabled,
+        enabledAt: liveRooms.enabledAt,
+        notes: liveRooms.notes,
+        createdAt: liveRooms.createdAt,
+        updatedAt: liveRooms.updatedAt,
+      })
+      .from(liveRooms)
+      .where(eq(liveRooms.studentId, studentId))
+      .orderBy(desc(liveRooms.sessionDate));
   }
 
   async updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom> {

@@ -8,9 +8,9 @@ export function setupStudentSessionRoutes(app: Express) {
     try {
       const userId = (req as AuthenticatedRequest).user!.id;
       
-      // Get student record from userId
-      const students = await storage.getAllStudents();
-      const student = students.find(s => s.userId === userId);
+      // Get all students and find by userId to avoid password column issue
+      const allStudents = await storage.getAllStudents();
+      const student = allStudents.find(s => s.userId === userId);
       
       if (!student) {
         return res.status(404).json({ message: "سجل الطالب غير موجود" });
