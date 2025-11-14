@@ -123,6 +123,26 @@ app.use((req, res, next) => {
     // Initialize WebSocket server
     wsService.initialize(server);
     console.log("✅ WebSocket initialized");
+    
+    // جدولة تنظيف الحصص المنتهية كل ساعة
+    const { storage } = await import("./storage");
+    setInterval(async () => {
+      try {
+        await storage.cleanupExpiredSessions();
+      } catch (error) {
+        console.error('❌ خطأ في تنظيف الحصص المنتهية:', error);
+      }
+    }, 60 * 60 * 1000); // كل ساعة
+    
+    // تنفيذ تنظيف فوري عند بدء السيرفر
+    setTimeout(async () => {
+      try {
+        await storage.cleanupExpiredSessions();
+        console.log("✅ تم تنظيف الحصص المنتهية");
+      } catch (error) {
+        console.error('❌ خطأ في تنظيف الحصص المنتهية:', error);
+      }
+    }, 5000); // بعد 5 ثواني من بدء السيرفر
 
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;

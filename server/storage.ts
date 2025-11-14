@@ -286,6 +286,7 @@ export interface IStorage {
   
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
+  cleanupExpiredSessions(): Promise<number>;
   
   // Live annotation operations
   createLiveAnnotation(annotation: InsertLiveAnnotation): Promise<LiveAnnotation>;
@@ -1786,6 +1787,53 @@ export class DatabaseStorage implements IStorage {
       .from(sessionAccess)
       .where(eq(sessionAccess.studentId, studentId))
       .orderBy(desc(sessionAccess.sessionDate));
+  }
+
+  async cleanupExpiredSessions(): Promise<number> {
+    if (!this.isDbAvailable()) {
+      return 0;
+    }
+    
+    try {
+      const { lte, lt } = await import('drizzle-orm');
+      
+      // حذف الحصص التي انتهت (تاريخها + وقتها أقدم من الوقت الحالي)
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().slice(0, 5); // HH:mm
+      
+      // حذف الحصص من الأيام الماضية (قبل اليوم)
+      const deletedOldDays = await db!.delete(sessionAccess)
+        .where(lt(sessionAccess.sessionDate, today))
+        .returning({ id: sessionAccess.id });
+      
+      // حذف الحصص من اليوم الحالي التي انتهى وقتها
+      const deletedToday = await db!.delete(sessionAccess)
+        .where(
+          and(
+            eq(sessionAccess.sessionDate, today),
+            lte(sessionAccess.endTime, currentTime)
+          )
+        )
+        .returning({ id: sessionAccess.id });
+      
+      // حذف LiveRooms المنتهية (التي أقدم من 24 ساعة)
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const deletedRooms = await db!.delete(liveRooms)
+        .where(lt(liveRooms.sessionDate, oneDayAgo))
+        .returning({ id: liveRooms.id });
+      
+      const totalDeleted = deletedOldDays.length + deletedToday.length + deletedRooms.length;
+      
+      if (totalDeleted > 0) {
+        console.log(`🗑️  تم تنظيف ${totalDeleted} حصة منتهية (${deletedOldDays.length + deletedToday.length} حصص + ${deletedRooms.length} غرف مباشرة)`);
+      }
+      
+      return totalDeleted;
+    } catch (error) {
+      console.error('❌ خطأ في تنظيف الحصص المنتهية:', error);
+      return 0;
+    }
   }
 
   async getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]> {

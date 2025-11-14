@@ -66,10 +66,38 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
       const data = JSON.parse(event.data);
       if (data.type === 'session_enabled') {
         console.log('📢 Session enabled notification received:', data.data);
+        
+        // تحديث الحصة المفعّلة مباشرة في state
+        if (data.data.roomToken && data.data.id) {
+          setSessions(prevSessions => {
+            const updatedSessions = prevSessions.map(session => {
+              if (session.id === data.data.id) {
+                return {
+                  ...session,
+                  isEnabled: true,
+                  roomToken: data.data.roomToken,
+                  roomId: data.data.roomId,
+                };
+              }
+              return session;
+            });
+            
+            // إذا لم توجد الحصة، أضفها
+            const sessionExists = prevSessions.some(s => s.id === data.data.id);
+            if (!sessionExists) {
+              return [...prevSessions, data.data];
+            }
+            
+            return updatedSessions;
+          });
+        }
+        
         toast({
           title: "🎉 تم تفعيل الحصة!",
           description: "يمكنك الآن الدخول للحصة المباشرة",
         });
+        
+        // أيضاً جلب البيانات من السيرفر لضمان التزامن
         fetchSessions();
       } else if (data.type === 'new_assignment') {
         toast({

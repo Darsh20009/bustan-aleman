@@ -118,6 +118,17 @@ export function SheikhDashboard() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Session enabled response:', data);
+        
+        if (!data.roomToken) {
+          toast({
+            title: "خطأ",
+            description: "فشل في إنشاء رمز الغرفة",
+            variant: "destructive",
+          });
+          return;
+        }
+        
         toast({
           title: "تم تفعيل الحصة ✅",
           description: "جاري فتح غرفة الحصة المباشرة...",
@@ -128,6 +139,13 @@ export function SheikhDashboard() {
           setActiveRoomId(data.roomToken);
           setActiveStudentId(studentId);
         }, 500);
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "خطأ",
+          description: errorData.message || "فشل في تفعيل الحصة",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error enabling session:', error);
