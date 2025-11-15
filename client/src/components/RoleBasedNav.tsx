@@ -8,6 +8,7 @@ import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calenda
 import { useQuery } from '@tanstack/react-query';
 import { SheikhDashboard } from './SheikhDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -394,9 +395,20 @@ const roleNavigation = {
 export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => void } = {}) {
   const { user, logout, isLoading } = useAuth();
   const [activeRoomId, setActiveRoomId] = React.useState<string | null>(null);
+  const { toast } = useToast();
   
   // Default navigation handler - normalizes paths before navigation
   const handleNavigation = (path: string) => {
+    // منع التنقل إذا كانت هناك حصة نشطة
+    if (activeRoomId) {
+      toast({
+        variant: 'destructive',
+        title: 'لا يمكن التنقل',
+        description: 'يجب عليك مغادرة الحصة أولاً قبل الانتقال إلى صفحة أخرى',
+      });
+      return;
+    }
+    
     // Ensure path has leading slash for URL navigation
     const fullPath = path.startsWith('/') ? path : `/${path}`;
     
@@ -558,7 +570,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
         {/* Supervisor/Sheikh Dashboard */}
         {user.role === 'supervisor' && (
           <div className="mb-8">
-            <SheikhDashboard />
+            <SheikhDashboard onActiveRoomChange={setActiveRoomId} />
           </div>
         )}
 
