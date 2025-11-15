@@ -5,21 +5,21 @@
 
 :root {
   --background: 160 55% 30%;
-  --foreground: 0 0% 100%;
+  --foreground: 160 85% 85%;
   --card: 160 50% 35%;
-  --card-foreground: 0 0% 100%;
+  --card-foreground: 160 85% 85%;
   --popover: 160 55% 30%;
-  --popover-foreground: 0 0% 100%;
+  --popover-foreground: 160 85% 85%;
   --primary: 160 65% 45%;
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 160 85% 85%;
   --secondary: 45 75% 65%;
   --secondary-foreground: 160 55% 30%;
   --muted: 160 40% 40%;
-  --muted-foreground: 0 0% 90%;
+  --muted-foreground: 160 70% 75%;
   --accent: 160 45% 38%;
-  --accent-foreground: 0 0% 100%;
+  --accent-foreground: 160 85% 85%;
   --destructive: 0 70% 55%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive-foreground: 160 85% 85%;
   --border: 160 45% 38%;
   --input: 160 50% 35%;
   --ring: 160 65% 45%;
@@ -28,13 +28,13 @@
   --chart-3: 25 65% 58%;
   --chart-4: 160 45% 38%;
   --chart-5: 45 55% 48%;
-  --sidebar: 48 25% 96%;
-  --sidebar-foreground: 215 28% 17%;
+  --sidebar: 160 50% 35%;
+  --sidebar-foreground: 160 85% 85%;
   --sidebar-primary: 160 55% 30%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 48 28% 90%;
-  --sidebar-accent-foreground: 160 55% 30%;
-  --sidebar-border: 48 22% 82%;
+  --sidebar-primary-foreground: 160 85% 85%;
+  --sidebar-accent: 160 45% 38%;
+  --sidebar-accent-foreground: 160 85% 85%;
+  --sidebar-border: 160 45% 38%;
   --sidebar-ring: 160 55% 30%;
   --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
   --font-serif: 'Amiri', serif;
@@ -48,12 +48,12 @@
   --antique-gold: 38 92% 50%;
   --persian-blue: 174 72% 56%;
   --mosque-green: 160 85% 39%;
-  --desert-sand: 48 30% 98%;
-  --marble-white: 0 0% 100%;
-  --pearl-cream: 48 25% 96%;
-  --midnight-navy: 215 28% 17%;
+  --desert-sand: 160 40% 40%;
+  --marble-white: 160 85% 85%;
+  --pearl-cream: 160 50% 35%;
+  --midnight-navy: 160 55% 30%;
   --copper-bronze: 25 95% 53%;
-  --moonlight-silver: 220 10% 95%;
+  --moonlight-silver: 160 70% 75%;
   
   /* Backward compatibility aliases */
   --islamic-green: var(--islamic-emerald);
@@ -65,24 +65,24 @@
 }
 
 .dark {
-  --background: 0 0% 8%;
-  --foreground: 160 10% 90%;
-  --card: 160 8% 12%;
-  --card-foreground: 160 10% 90%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 160 10% 90%;
+  --background: 160 60% 15%;
+  --foreground: 160 85% 85%;
+  --card: 160 55% 20%;
+  --card-foreground: 160 85% 85%;
+  --popover: 160 60% 15%;
+  --popover-foreground: 160 85% 85%;
   --primary: 160 65% 45%;
-  --primary-foreground: 0 0% 0%;
+  --primary-foreground: 160 85% 85%;
   --secondary: 160 50% 35%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 160 5% 18%;
-  --muted-foreground: 160 8% 65%;
-  --accent: 160 15% 20%;
-  --accent-foreground: 160 65% 50%;
+  --secondary-foreground: 160 85% 85%;
+  --muted: 160 50% 25%;
+  --muted-foreground: 160 70% 75%;
+  --accent: 160 55% 30%;
+  --accent-foreground: 160 85% 85%;
   --destructive: 0 70% 55%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 160 10% 25%;
-  --input: 160 8% 15%;
+  --destructive-foreground: 160 85% 85%;
+  --border: 160 50% 30%;
+  --input: 160 55% 20%;
   --ring: 160 65% 45%;
 }
 
@@ -283,7 +283,7 @@
   /* Enhanced Islamic button styles */
   .btn-islamic-primary {
     background-color: var(--islamic-emerald);
-    color: white;
+    color: var(--marble-white);
     transition: all 0.3s ease;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     transform: translateY(0);
@@ -318,12 +318,12 @@
   
   .btn-islamic-outline:hover {
     background-color: var(--islamic-emerald);
-    color: white;
+    color: var(--marble-white);
   }
   
   .btn-islamic-gradient {
     background: linear-gradient(135deg, var(--islamic-emerald) 0%, var(--islamic-teal) 100%);
-    color: white;
+    color: var(--marble-white);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     transform: scale(1);
@@ -434,7 +434,7 @@
   /* Hero section */
   .hero-section {
     background: linear-gradient(135deg, var(--islamic-emerald) 0%, var(--islamic-teal) 100%);
-    color: white;
+    color: var(--marble-white);
     position: relative;
     overflow: hidden;
   }
