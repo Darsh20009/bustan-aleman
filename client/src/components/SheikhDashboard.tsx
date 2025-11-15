@@ -292,11 +292,8 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     };
   }, [activeRoomId, onActiveRoomChange]);
 
-  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
-  // استخدام render مشروط بدلاً من early return لتجنب مشاكل Hooks
-  const shouldShowLiveRoom = activeRoomId && activeStudentId && user?.id;
-  
-  if (shouldShowLiveRoom) {
+  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة فقط إذا كانت جميع البيانات جاهزة
+  if (activeRoomId && activeStudentId && user?.id) {
     return (
       <LiveSessionRoom
         roomId={activeRoomId}
