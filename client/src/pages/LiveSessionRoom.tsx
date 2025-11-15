@@ -133,13 +133,13 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   };
 
   return (
-    <div className="h-screen overflow-y-auto bg-[#1f1f1f]" dir="rtl">
+    <div className="h-screen overflow-y-auto bg-[#1a1a1a]" dir="rtl">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#2d2d2d] p-2 md:p-4 shadow-lg border-b border-[#3d3d3d]">
+      <div className="sticky top-0 z-50 bg-[#232323] p-2 md:p-4 shadow-lg border-b border-[#404040]">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#3d3d3d] rounded-full flex items-center justify-center">
-              <Video className="w-4 h-4 md:w-6 md:h-6 text-blue-500" />
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#2d2d2d] rounded-full flex items-center justify-center">
+              <Video className="w-4 h-4 md:w-6 md:h-6 text-blue-400" />
             </div>
             <div>
               <h2 className="text-base md:text-2xl font-bold text-white">الحصة المباشرة</h2>
@@ -216,10 +216,10 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           {/* Video & Whiteboard Section */}
           <div className="lg:col-span-2 space-y-4">
             {/* View Toggle Buttons */}
-            <div className="flex gap-2 bg-[#2d2d2d] p-1 rounded-lg">
+            <div className="flex gap-2 bg-[#232323] p-1 rounded-lg border border-[#404040]">
               <Button
                 onClick={() => setActiveTab('video')}
-                className={`flex-1 ${activeTab === 'video' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#3d3d3d] hover:bg-[#4d4d4d] text-gray-300'}`}
+                className={`flex-1 ${activeTab === 'video' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#2d2d2d] hover:bg-[#383838] text-gray-300'}`}
                 data-testid="button-view-video"
               >
                 <Video className="w-4 h-4 ml-2" />
@@ -227,7 +227,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
               </Button>
               <Button
                 onClick={() => setActiveTab('whiteboard')}
-                className={`flex-1 ${activeTab === 'whiteboard' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#3d3d3d] hover:bg-[#4d4d4d] text-gray-300'}`}
+                className={`flex-1 ${activeTab === 'whiteboard' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#2d2d2d] hover:bg-[#383838] text-gray-300'}`}
                 data-testid="button-view-whiteboard"
               >
                 <Pencil className="w-4 h-4 ml-2" />
@@ -238,9 +238,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             {/* Video Section - Always mounted, hidden when whiteboard active */}
             <div className={activeTab === 'video' ? 'block space-y-4' : 'hidden'}>
               {/* Remote Video */}
-              <Card className="bg-[#2d2d2d] border-[#3d3d3d] h-[400px] md:h-[500px]">
+              <Card className="bg-[#232323] border-[#404040] h-[400px] md:h-[500px]">
                 <CardContent className="p-4 h-full">
-                  <div className="relative h-full bg-[#1a1a1a] rounded-lg overflow-hidden">
+                  <div className="relative h-full bg-[#0a0a0a] rounded-lg overflow-hidden">
                     <video
                       ref={remoteVideoRef}
                       autoPlay
@@ -382,8 +382,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Participants */}
-            <Card className="bg-[#2d2d2d] border-[#3d3d3d]">
-              <CardHeader className="pb-3 border-b border-[#3d3d3d]">
+            <Card className="bg-[#232323] border-[#404040]">
+              <CardHeader className="pb-3 border-b border-[#404040]">
                 <CardTitle className="text-white flex items-center gap-2">
                   <Users className="w-5 h-5" />
                   المشاركون ({participants.length})
@@ -491,8 +491,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             </Card>
 
             {/* Chat */}
-            <Card className="bg-[#2d2d2d] border-[#3d3d3d] flex flex-col max-h-[500px]">
-              <CardHeader className="pb-3 flex-shrink-0 border-b border-[#3d3d3d]">
+            <Card className="bg-[#232323] border-[#404040] flex flex-col max-h-[500px]">
+              <CardHeader className="pb-3 flex-shrink-0 border-b border-[#404040]">
                 <CardTitle className="text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   المحادثة

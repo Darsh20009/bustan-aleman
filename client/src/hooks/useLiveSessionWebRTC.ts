@@ -46,8 +46,8 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (!user?.id) {
-      console.warn('⚠️ No user ID, skipping WebSocket connection');
+    if (!user?.id || !roomToken) {
+      console.warn('⚠️ Missing user ID or room token, skipping WebSocket connection');
       return;
     }
 
@@ -57,71 +57,75 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
     console.log('🔌 Connecting to WebSocket:', wsUrl);
     
     let ws: WebSocket;
-    try {
-      ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-    } catch (error) {
-      console.error('❌ Failed to create WebSocket:', error);
-      toast({
-        variant: 'destructive',
-        title: 'خطأ في الاتصال',
-        description: 'فشل في إنشاء اتصال بالحصة'
-      });
-      return;
-    }
-
-    ws.onopen = () => {
-      console.log('🔌 WebSocket connected to live session');
-      
+    let reconnectTimeout: NodeJS.Timeout;
+    
+    const connect = () => {
       try {
-        ws.send(JSON.stringify({
-          type: 'auth',
-          payload: { userId: user.id, role: user.role, studentId: user.role === 'student' ? user.id : undefined }
-        }));
-        
-        ws.send(JSON.stringify({
-          type: 'room:join',
-          payload: { roomToken }
-        }));
-        
-        setIsConnected(true);
+        ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          console.log('🔌 WebSocket connected to live session');
+          
+          try {
+            ws.send(JSON.stringify({
+              type: 'auth',
+              payload: { 
+                userId: user.id, 
+                role: user.role, 
+                studentId: user.role === 'student' ? user.id : undefined 
+              }
+            }));
+            
+            setTimeout(() => {
+              if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                  type: 'room:join',
+                  payload: { roomToken }
+                }));
+                
+                setIsConnected(true);
+              }
+            }, 100);
+          } catch (error) {
+            console.error('❌ Error sending initial messages:', error);
+          }
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            handleWebSocketMessage(message);
+          } catch (error) {
+            console.error('❌ Error parsing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('❌ WebSocket error:', error);
+        };
+
+        ws.onclose = (event) => {
+          console.log('👋 WebSocket disconnected:', event.code, event.reason);
+          setIsConnected(false);
+          wsRef.current = null;
+        };
       } catch (error) {
-        console.error('❌ Error sending initial messages:', error);
-      }
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        handleWebSocketMessage(message);
-      } catch (error) {
-        console.error('❌ Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-      toast({
-        variant: 'destructive',
-        title: 'خطأ في الاتصال',
-        description: 'حدث خطأ في الاتصال بالحصة. جاري المحاولة مرة أخرى...'
-      });
-    };
-
-    ws.onclose = (event) => {
-      console.log('👋 WebSocket disconnected:', event.code, event.reason);
-      setIsConnected(false);
-      
-      if (!event.wasClean) {
+        console.error('❌ Failed to create WebSocket:', error);
         toast({
           variant: 'destructive',
-          title: 'انقطع الاتصال',
-          description: 'تم قطع الاتصال بالحصة'
+          title: 'خطأ في الاتصال',
+          description: 'فشل في إنشاء اتصال بالحصة'
         });
       }
     };
 
+    connect();
+
     return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
       if (ws && ws.readyState === WebSocket.OPEN) {
         try {
           ws.send(JSON.stringify({
@@ -137,7 +141,7 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
       }
       cleanupMedia();
     };
-  }, [roomToken, user]);
+  }, [roomToken, user?.id, user?.role]);
 
   // Get user media on mount
   useEffect(() => {

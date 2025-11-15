@@ -211,6 +211,18 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     monthlyPrice: '0'
   });
 
+  // جميع useEffect يجب أن تكون قبل أي return مشروط
+  useEffect(() => {
+    if (activeRoomId && onActiveRoomChange) {
+      onActiveRoomChange(activeRoomId);
+    }
+    return () => {
+      if (onActiveRoomChange) {
+        onActiveRoomChange(null);
+      }
+    };
+  }, [activeRoomId, onActiveRoomChange]);
+
   const createStudent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -280,19 +292,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     }
   };
 
-  // useEffect يجب أن يكون دائماً في نفس الترتيب - قبل أي return مشروط
-  useEffect(() => {
-    if (activeRoomId && onActiveRoomChange) {
-      onActiveRoomChange(activeRoomId);
-    }
-    return () => {
-      if (onActiveRoomChange) {
-        onActiveRoomChange(null);
-      }
-    };
-  }, [activeRoomId, onActiveRoomChange]);
-
-  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة فقط إذا كانت جميع البيانات جاهزة
+  // عرض غرفة الحصة المباشرة إذا كانت جميع البيانات جاهزة
   if (activeRoomId && activeStudentId && user?.id) {
     return (
       <LiveSessionRoom
