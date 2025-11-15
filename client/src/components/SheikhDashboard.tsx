@@ -280,20 +280,20 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     }
   };
 
+  // useEffect يجب أن يكون دائماً في نفس الترتيب
+  useEffect(() => {
+    if (activeRoomId && onActiveRoomChange) {
+      onActiveRoomChange(activeRoomId);
+    }
+    return () => {
+      if (onActiveRoomChange) {
+        onActiveRoomChange(null);
+      }
+    };
+  }, [activeRoomId, onActiveRoomChange]);
+
   // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
   if (activeRoomId && activeStudentId && user?.id) {
-    // إخطار الـ parent component بوجود حصة نشطة
-    useEffect(() => {
-      if (onActiveRoomChange) {
-        onActiveRoomChange(activeRoomId);
-      }
-      return () => {
-        if (onActiveRoomChange) {
-          onActiveRoomChange(null);
-        }
-      };
-    }, [activeRoomId]);
-
     return (
       <LiveSessionRoom
         roomId={activeRoomId}
