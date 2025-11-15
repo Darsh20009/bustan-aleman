@@ -280,7 +280,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     }
   };
 
-  // useEffect يجب أن يكون دائماً في نفس الترتيب
+  // useEffect يجب أن يكون دائماً في نفس الترتيب - قبل أي return مشروط
   useEffect(() => {
     if (activeRoomId && onActiveRoomChange) {
       onActiveRoomChange(activeRoomId);
@@ -293,7 +293,10 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
   }, [activeRoomId, onActiveRoomChange]);
 
   // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
-  if (activeRoomId && activeStudentId && user?.id) {
+  // استخدام render مشروط بدلاً من early return لتجنب مشاكل Hooks
+  const shouldShowLiveRoom = activeRoomId && activeStudentId && user?.id;
+  
+  if (shouldShowLiveRoom) {
     return (
       <LiveSessionRoom
         roomId={activeRoomId}

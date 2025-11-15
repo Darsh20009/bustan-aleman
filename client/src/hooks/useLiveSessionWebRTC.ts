@@ -46,29 +46,57 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
 
   // Initialize WebSocket connection
   useEffect(() => {
-    const wsUrl = window.location.origin.replace(/^http/, 'ws') + '/ws';
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    if (!user?.id) {
+      console.warn('⚠️ No user ID, skipping WebSocket connection');
+      return;
+    }
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    console.log('🔌 Connecting to WebSocket:', wsUrl);
+    
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+    } catch (error) {
+      console.error('❌ Failed to create WebSocket:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الاتصال',
+        description: 'فشل في إنشاء اتصال بالحصة'
+      });
+      return;
+    }
 
     ws.onopen = () => {
       console.log('🔌 WebSocket connected to live session');
       
-      ws.send(JSON.stringify({
-        type: 'auth',
-        payload: { userId: user?.id, role: user?.role, studentId: user?.role === 'student' ? user?.id : undefined }
-      }));
-      
-      ws.send(JSON.stringify({
-        type: 'room:join',
-        payload: { roomToken }
-      }));
-      
-      setIsConnected(true);
+      try {
+        ws.send(JSON.stringify({
+          type: 'auth',
+          payload: { userId: user.id, role: user.role, studentId: user.role === 'student' ? user.id : undefined }
+        }));
+        
+        ws.send(JSON.stringify({
+          type: 'room:join',
+          payload: { roomToken }
+        }));
+        
+        setIsConnected(true);
+      } catch (error) {
+        console.error('❌ Error sending initial messages:', error);
+      }
     };
 
     ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      handleWebSocketMessage(message);
+      try {
+        const message = JSON.parse(event.data);
+        handleWebSocketMessage(message);
+      } catch (error) {
+        console.error('❌ Error parsing WebSocket message:', error);
+      }
     };
 
     ws.onerror = (error) => {
@@ -76,23 +104,37 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
       toast({
         variant: 'destructive',
         title: 'خطأ في الاتصال',
-        description: 'حدث خطأ في الاتصال بالحصة'
+        description: 'حدث خطأ في الاتصال بالحصة. جاري المحاولة مرة أخرى...'
       });
     };
 
-    ws.onclose = () => {
-      console.log('👋 WebSocket disconnected');
+    ws.onclose = (event) => {
+      console.log('👋 WebSocket disconnected:', event.code, event.reason);
       setIsConnected(false);
+      
+      if (!event.wasClean) {
+        toast({
+          variant: 'destructive',
+          title: 'انقطع الاتصال',
+          description: 'تم قطع الاتصال بالحصة'
+        });
+      }
     };
 
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'room:leave',
-          payload: { roomToken }
-        }));
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({
+            type: 'room:leave',
+            payload: { roomToken }
+          }));
+        } catch (error) {
+          console.error('❌ Error sending leave message:', error);
+        }
       }
-      ws.close();
+      if (ws) {
+        ws.close();
+      }
       cleanupMedia();
     };
   }, [roomToken, user]);
