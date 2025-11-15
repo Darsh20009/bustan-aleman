@@ -133,18 +133,18 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
   };
 
   return (
-    <div className="h-screen overflow-y-auto bg-[#1a1a1a]" dir="rtl">
+    <div className="h-screen overflow-y-auto bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900" dir="rtl">
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-[#232323] p-2 md:p-4 shadow-lg border-b border-[#404040]">
+      <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-teal-600 p-2 md:p-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-[#2d2d2d] rounded-full flex items-center justify-center">
-              <Video className="w-4 h-4 md:w-6 md:h-6 text-blue-400" />
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white/20 rounded-full flex items-center justify-center">
+              <Video className="w-4 h-4 md:w-6 md:h-6 text-white" />
             </div>
             <div>
               <h2 className="text-base md:text-2xl font-bold text-white">الحصة المباشرة</h2>
-              <div className="flex items-center gap-2 md:gap-3 text-gray-400 text-xs md:text-sm flex-wrap">
-                <Badge className="bg-green-600 text-white text-xs border-0">
+              <div className="flex items-center gap-2 md:gap-3 text-white/80 text-xs md:text-sm flex-wrap">
+                <Badge className="bg-green-500 text-white text-xs">
                   <span className="w-2 h-2 bg-white rounded-full inline-block ml-1 animate-pulse"></span>
                   {isConnected ? 'متصل' : 'غير متصل'}
                 </Badge>
@@ -153,7 +153,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                   {participants.length} مشاركين
                 </span>
                 {isShamsikh && (
-                  <Badge className="bg-blue-600 text-white flex items-center gap-1 text-xs border-0">
+                  <Badge className="bg-amber-500 text-white flex items-center gap-1 text-xs">
                     <Shield className="w-3 h-3" />
                     <span className="hidden md:inline">مشرف</span>
                   </Badge>
@@ -169,7 +169,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="sm"
-                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white border-0"
+                    variant="outline"
+                    className="flex items-center gap-1 md:gap-2 text-xs md:text-sm"
                     data-testid="button-controls-menu"
                   >
                     <Settings className="w-4 h-4" />
@@ -216,18 +217,20 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           {/* Video & Whiteboard Section */}
           <div className="lg:col-span-2 space-y-4">
             {/* View Toggle Buttons */}
-            <div className="flex gap-2 bg-[#232323] p-1 rounded-lg border border-[#404040]">
+            <div className="flex gap-2 bg-black/40 p-1 rounded-lg">
               <Button
+                variant={activeTab === 'video' ? 'default' : 'ghost'}
                 onClick={() => setActiveTab('video')}
-                className={`flex-1 ${activeTab === 'video' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#2d2d2d] hover:bg-[#383838] text-gray-300'}`}
+                className="flex-1"
                 data-testid="button-view-video"
               >
                 <Video className="w-4 h-4 ml-2" />
                 الفيديو
               </Button>
               <Button
+                variant={activeTab === 'whiteboard' ? 'default' : 'ghost'}
                 onClick={() => setActiveTab('whiteboard')}
-                className={`flex-1 ${activeTab === 'whiteboard' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-[#2d2d2d] hover:bg-[#383838] text-gray-300'}`}
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 flex-1 bg-[#095241]"
                 data-testid="button-view-whiteboard"
               >
                 <Pencil className="w-4 h-4 ml-2" />
@@ -238,9 +241,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             {/* Video Section - Always mounted, hidden when whiteboard active */}
             <div className={activeTab === 'video' ? 'block space-y-4' : 'hidden'}>
               {/* Remote Video */}
-              <Card className="bg-[#232323] border-[#404040] h-[400px] md:h-[500px]">
+              <Card className="bg-black/40 border-emerald-500/30 h-[400px] md:h-[500px]">
                 <CardContent className="p-4 h-full">
-                  <div className="relative h-full bg-[#0a0a0a] rounded-lg overflow-hidden">
+                  <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
                     <video
                       ref={remoteVideoRef}
                       autoPlay
@@ -269,9 +272,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
               </Card>
 
               {/* Local Video */}
-              <Card className="bg-[#2d2d2d] border-[#3d3d3d] h-[250px] md:h-[300px]">
+              <Card className="bg-black/40 border-emerald-500/30 h-[250px] md:h-[300px]">
                 <CardContent className="p-4 h-full">
-                  <div className="relative h-full bg-[#1a1a1a] rounded-lg overflow-hidden">
+                  <div className="relative h-full bg-gray-900 rounded-lg overflow-hidden">
                     <video
                       ref={localVideoRef}
                       autoPlay
@@ -285,8 +288,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                       <div className="flex items-center gap-3">
                         <Button
                           size="icon"
+                          variant={isAudioEnabled ? "default" : "destructive"}
                           onClick={toggleAudio}
-                          className={`rounded-full w-12 h-12 ${isAudioEnabled ? 'bg-[#3d3d3d] hover:bg-[#4d4d4d]' : 'bg-red-600 hover:bg-red-700'} text-white`}
+                          className="rounded-full w-12 h-12"
                           data-testid="button-toggle-audio"
                           disabled={isAudioMutedByHost}
                           title={isAudioMutedByHost ? "تم كتم صوتك من قبل المشرف" : ""}
@@ -296,8 +300,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
 
                         <Button
                           size="icon"
+                          variant={isVideoEnabled ? "default" : "destructive"}
                           onClick={toggleVideo}
-                          className={`rounded-full w-12 h-12 ${isVideoEnabled ? 'bg-[#3d3d3d] hover:bg-[#4d4d4d]' : 'bg-red-600 hover:bg-red-700'} text-white`}
+                          className="rounded-full w-12 h-12"
                           data-testid="button-toggle-video"
                         >
                           {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
@@ -306,8 +311,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                         {!isShamsikh && (
                           <Button
                             size="icon"
+                            variant="outline"
                             onClick={toggleHandRaise}
-                            className="rounded-full w-12 h-12 bg-[#3d3d3d] hover:bg-[#4d4d4d] border-0 text-white"
+                            className="rounded-full w-12 h-12 bg-white/10 border-white/30"
                             data-testid="button-raise-hand"
                           >
                             <Hand className="w-5 h-5 text-yellow-400" />
@@ -317,35 +323,39 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                       
                       {/* Reaction Buttons */}
                       {!isShamsikh && (
-                        <div className="flex items-center gap-2 bg-[#3d3d3d] px-3 py-2 rounded-full">
+                        <div className="flex items-center gap-2 bg-black/50 px-3 py-2 rounded-full">
                           <Button
                             size="sm"
+                            variant="ghost"
                             onClick={() => sendReaction('👍')}
-                            className="w-10 h-10 text-2xl p-0 bg-transparent hover:bg-[#4d4d4d]"
+                            className="w-10 h-10 text-2xl p-0"
                             data-testid="button-reaction-thumbsup"
                           >
                             👍
                           </Button>
                           <Button
                             size="sm"
+                            variant="ghost"
                             onClick={() => sendReaction('❤️')}
-                            className="w-10 h-10 text-2xl p-0 bg-transparent hover:bg-[#4d4d4d]"
+                            className="w-10 h-10 text-2xl p-0"
                             data-testid="button-reaction-heart"
                           >
                             ❤️
                           </Button>
                           <Button
                             size="sm"
+                            variant="ghost"
                             onClick={() => sendReaction('👏')}
-                            className="w-10 h-10 text-2xl p-0 bg-transparent hover:bg-[#4d4d4d]"
+                            className="w-10 h-10 text-2xl p-0"
                             data-testid="button-reaction-clap"
                           >
                             👏
                           </Button>
                           <Button
                             size="sm"
+                            variant="ghost"
                             onClick={() => sendReaction('✋')}
-                            className="w-10 h-10 text-2xl p-0 bg-transparent hover:bg-[#4d4d4d]"
+                            className="w-10 h-10 text-2xl p-0"
                             data-testid="button-reaction-raise"
                           >
                             ✋
@@ -382,8 +392,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
           {/* Sidebar */}
           <div className="space-y-4">
             {/* Participants */}
-            <Card className="bg-[#232323] border-[#404040]">
-              <CardHeader className="pb-3 border-b border-[#404040]">
+            <Card className="bg-black/40 border-emerald-500/30">
+              <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2">
                   <Users className="w-5 h-5" />
                   المشاركون ({participants.length})
@@ -394,8 +404,9 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                   <div className="flex gap-2 mb-3">
                     <Button
                       size="sm"
+                      variant="outline"
                       onClick={muteAll}
-                      className="flex-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white border-0"
+                      className="flex-1 bg-white/10 border-white/30 text-white hover:bg-white/20"
                       data-testid="button-mute-all"
                     >
                       <MicOff className="w-4 h-4 ml-2" />
@@ -407,7 +418,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                 {participants.map((participant: any) => (
                   <div
                     key={participant.userId}
-                    className="relative p-3 bg-[#3d3d3d] rounded-lg hover:bg-[#4d4d4d] transition-colors"
+                    className="relative p-3 bg-white/10 rounded-lg"
                     data-testid={`participant-${participant.userId}`}
                   >
                     <div className="flex items-center gap-3">
@@ -491,8 +502,8 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
             </Card>
 
             {/* Chat */}
-            <Card className="bg-[#232323] border-[#404040] flex flex-col max-h-[500px]">
-              <CardHeader className="pb-3 flex-shrink-0 border-b border-[#404040]">
+            <Card className="bg-black/40 border-emerald-500/30 flex flex-col max-h-[500px]">
+              <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-white flex items-center gap-2">
                   <MessageSquare className="w-5 h-5" />
                   المحادثة
@@ -503,7 +514,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                   {messages.map((msg: any) => (
                     <div
                       key={msg.id}
-                      className="bg-[#3d3d3d] p-3 rounded-lg"
+                      className="bg-white/10 p-3 rounded-lg"
                       data-testid={`message-${msg.id}`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -531,12 +542,12 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                     placeholder="اكتب رسالة..."
-                    className="flex-1 bg-[#3d3d3d] border-[#4d4d4d] text-white placeholder:text-gray-500"
+                    className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/50"
                     data-testid="input-chat-message"
                   />
                   <Button
                     onClick={handleSendMessage}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-emerald-600 hover:bg-emerald-700"
                     data-testid="button-send-message"
                   >
                     <Send className="w-5 h-5" />

@@ -46,102 +46,56 @@ export function useLiveSessionWebRTC(roomToken: string, onDisconnect?: () => voi
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (!user?.id || !roomToken) {
-      console.warn('⚠️ Missing user ID or room token, skipping WebSocket connection');
-      return;
-    }
+    const wsUrl = window.location.origin.replace(/^http/, 'ws') + '/ws';
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    console.log('🔌 Connecting to WebSocket:', wsUrl);
-    
-    let ws: WebSocket;
-    let reconnectTimeout: NodeJS.Timeout;
-    
-    const connect = () => {
-      try {
-        ws = new WebSocket(wsUrl);
-        wsRef.current = ws;
-
-        ws.onopen = () => {
-          console.log('🔌 WebSocket connected to live session');
-          
-          try {
-            ws.send(JSON.stringify({
-              type: 'auth',
-              payload: { 
-                userId: user.id, 
-                role: user.role, 
-                studentId: user.role === 'student' ? user.id : undefined 
-              }
-            }));
-            
-            setTimeout(() => {
-              if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                  type: 'room:join',
-                  payload: { roomToken }
-                }));
-                
-                setIsConnected(true);
-              }
-            }, 100);
-          } catch (error) {
-            console.error('❌ Error sending initial messages:', error);
-          }
-        };
-
-        ws.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-            handleWebSocketMessage(message);
-          } catch (error) {
-            console.error('❌ Error parsing WebSocket message:', error);
-          }
-        };
-
-        ws.onerror = (error) => {
-          console.error('❌ WebSocket error:', error);
-        };
-
-        ws.onclose = (event) => {
-          console.log('👋 WebSocket disconnected:', event.code, event.reason);
-          setIsConnected(false);
-          wsRef.current = null;
-        };
-      } catch (error) {
-        console.error('❌ Failed to create WebSocket:', error);
-        toast({
-          variant: 'destructive',
-          title: 'خطأ في الاتصال',
-          description: 'فشل في إنشاء اتصال بالحصة'
-        });
-      }
+    ws.onopen = () => {
+      console.log('🔌 WebSocket connected to live session');
+      
+      ws.send(JSON.stringify({
+        type: 'auth',
+        payload: { userId: user?.id, role: user?.role, studentId: user?.role === 'student' ? user?.id : undefined }
+      }));
+      
+      ws.send(JSON.stringify({
+        type: 'room:join',
+        payload: { roomToken }
+      }));
+      
+      setIsConnected(true);
     };
 
-    connect();
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      handleWebSocketMessage(message);
+    };
+
+    ws.onerror = (error) => {
+      console.error('❌ WebSocket error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'خطأ في الاتصال',
+        description: 'حدث خطأ في الاتصال بالحصة'
+      });
+    };
+
+    ws.onclose = () => {
+      console.log('👋 WebSocket disconnected');
+      setIsConnected(false);
+    };
 
     return () => {
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'room:leave',
+          payload: { roomToken }
+        }));
       }
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        try {
-          ws.send(JSON.stringify({
-            type: 'room:leave',
-            payload: { roomToken }
-          }));
-        } catch (error) {
-          console.error('❌ Error sending leave message:', error);
-        }
-      }
-      if (ws) {
-        ws.close();
-      }
+      ws.close();
       cleanupMedia();
     };
-  }, [roomToken, user?.id, user?.role]);
+  }, [roomToken, user]);
 
   // Get user media on mount
   useEffect(() => {

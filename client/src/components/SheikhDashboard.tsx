@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -26,11 +27,7 @@ interface Student {
   progress?: any;
 }
 
-interface SheikhDashboardProps {
-  onActiveRoomChange?: (roomId: string | null) => void;
-}
-
-export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {}) {
+export function SheikhDashboard() {
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,10 +50,10 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
   });
   const { toast} = useToast();
   const { user } = useAuth();
-
+  
   useEffect(() => {
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
-
+    
     ws.onopen = () => {
       console.log('WebSocket connected');
       const userId = sessionStorage.getItem('userId');
@@ -67,7 +64,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
         }));
       }
     };
-
+    
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'new_student') {
@@ -78,14 +75,14 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
         fetchStudents();
       }
     };
-
+    
     return () => ws.close();
   }, []);
-
+  
   useEffect(() => {
     fetchStudents();
   }, []);
-
+  
   const fetchStudents = async () => {
     try {
       const response = await fetch('/api/sheikh/students');
@@ -104,7 +101,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
       setLoading(false);
     }
   };
-
+  
   const enableSession = async (studentId: string, schedule: any) => {
     try {
       const response = await fetch('/api/sheikh/enable-session', {
@@ -118,11 +115,11 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
           endTime: schedule.endTime,
         }),
       });
-
+      
       if (response.ok) {
         const data = await response.json();
         console.log('📊 Session enabled response:', data);
-
+        
         if (!data.roomToken) {
           toast({
             title: "خطأ",
@@ -131,12 +128,12 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
           });
           return;
         }
-
+        
         toast({
           title: "تم تفعيل الحصة ✅",
           description: "جاري فتح غرفة الحصة المباشرة...",
         });
-
+        
         // فتح غرفة الحصة المباشرة للشيخ باستخدام roomToken الموحد
         setTimeout(() => {
           setActiveRoomId(data.roomToken);
@@ -159,7 +156,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
       });
     }
   };
-
+  
   const [memorizationRanges, setMemorizationRanges] = useState('');
   const [reviewRanges, setReviewRanges] = useState('');
   const [mistakes, setMistakes] = useState('');
@@ -168,7 +165,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
   const createAssignment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedStudent) return;
-
+    
     try {
       const response = await fetch('/api/sheikh/assignments', {
         method: 'POST',
@@ -182,7 +179,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
           notes: notes,
         }),
       });
-
+      
       if (response.ok) {
         toast({
           title: "تم إنشاء التكليف ✅",
@@ -211,28 +208,16 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     monthlyPrice: '0'
   });
 
-  // جميع useEffect يجب أن تكون قبل أي return مشروط
-  useEffect(() => {
-    if (activeRoomId && onActiveRoomChange) {
-      onActiveRoomChange(activeRoomId);
-    }
-    return () => {
-      if (onActiveRoomChange) {
-        onActiveRoomChange(null);
-      }
-    };
-  }, [activeRoomId, onActiveRoomChange]);
-
   const createStudent = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     try {
       const response = await fetch('/api/sheikh/students/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newStudentData),
       });
-
+      
       if (response.ok) {
         toast({
           title: "تم إضافة الطالب ✅",
@@ -260,14 +245,14 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
 
   const createSchedule = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     try {
       const response = await fetch('/api/sheikh/schedules', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSchedule),
       });
-
+      
       if (response.ok) {
         toast({
           title: "تم إضافة الجدول ✅",
@@ -292,7 +277,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
     }
   };
 
-  // عرض غرفة الحصة المباشرة إذا كانت جميع البيانات جاهزة
+  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
   if (activeRoomId && activeStudentId && user?.id) {
     return (
       <LiveSessionRoom
@@ -555,7 +540,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         data-testid="input-student-name"
                       />
                     </div>
-
+                    
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-gray-700">رقم الهاتف *</Label>
                       <Input
@@ -567,7 +552,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         data-testid="input-phone-number"
                       />
                     </div>
-
+                    
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-gray-700">كلمة المرور *</Label>
                       <Input
@@ -580,7 +565,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         data-testid="input-password"
                       />
                     </div>
-
+                    
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-gray-700">المستوى</Label>
                       <Select 
@@ -597,7 +582,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         </SelectContent>
                       </Select>
                     </div>
-
+                    
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-gray-700">الرسوم الشهرية (ريال)</Label>
                       <Input
@@ -612,7 +597,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                       />
                     </div>
                   </div>
-
+                  
                   <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white py-6 text-lg shadow-lg">
                     <UserPlus className="w-5 h-5 ml-2" />
                     إضافة الطالب
@@ -716,13 +701,13 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                       value={memorizationRanges}
                       onChange={setMemorizationRanges}
                     />
-
+                    
                     <SurahAyahSelector
                       label="المراجعة"
                       value={reviewRanges}
                       onChange={setReviewRanges}
                     />
-
+                    
                     <div className="space-y-2">
                       <Label className="text-lg font-bold text-gray-800">الأخطاء</Label>
                       <Textarea
@@ -733,7 +718,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         rows={3}
                       />
                     </div>
-
+                    
                     <div className="space-y-2">
                       <Label className="text-lg font-bold text-gray-800">ملاحظات</Label>
                       <Textarea
@@ -744,7 +729,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                         rows={3}
                       />
                     </div>
-
+                    
                     <Button type="submit" className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-6 text-lg shadow-lg">
                       <CheckCircle2 className="w-5 h-5 ml-2" />
                       إنشاء التكليف وإرساله
@@ -789,7 +774,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                     <CardContent className="p-6">
                       <form onSubmit={createSchedule} className="space-y-4">
                         <h3 className="text-lg font-bold text-gray-800 mb-4">إضافة جدول حصة جديد</h3>
-
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2 md:col-span-2">
                             <Label className="text-sm font-bold">اختر الطالب</Label>
@@ -810,7 +795,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                               </SelectContent>
                             </Select>
                           </div>
-
+                          
                           <div className="space-y-2">
                             <Label className="text-sm font-bold">اليوم</Label>
                             <Select 
@@ -831,7 +816,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                               </SelectContent>
                             </Select>
                           </div>
-
+                          
                           <div className="space-y-2">
                             <Label className="text-sm font-bold">وقت البداية</Label>
                             <Input
@@ -842,7 +827,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                               data-testid="input-start-time"
                             />
                           </div>
-
+                          
                           <div className="space-y-2">
                             <Label className="text-sm font-bold">وقت النهاية</Label>
                             <Input
@@ -854,7 +839,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                             />
                           </div>
                         </div>
-
+                        
                         <div className="flex gap-2">
                           <Button type="submit" className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white">
                             <CheckCircle2 className="w-4 h-4 ml-2" />
@@ -873,7 +858,7 @@ export function SheikhDashboard({ onActiveRoomChange }: SheikhDashboardProps = {
                     </CardContent>
                   </Card>
                 )}
-
+                
                 <div className="space-y-4">
                   {students.filter(s => s.schedules && s.schedules.length > 0).length === 0 ? (
                     <motion.div
