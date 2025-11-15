@@ -173,36 +173,37 @@ export function setupSheikhRoutes(app: Express) {
       const sessionData = sessionEnableSchema.parse(req.body);
       const sheikhId = req.user!.id;
       
-      // Create or get live room with unique roomToken
-      const liveRoom = await storage.createOrGetLiveRoom(
+      // Create or activate live room atomically
+      const liveRoom = await storage.createOrActivateLiveRoom(
         sessionData.studentId,
         sheikhId,
         new Date(sessionData.sessionDate),
         sessionData.startTime
       );
       
-      // Update room to enabled status
-      await storage.updateLiveRoomStatus(liveRoom.id, 'active');
-      
-      const sessionAccess = await storage.enableSessionAccess({
+      // Upsert session access (prevents duplicates)
+      const sessionAccess = await storage.upsertSessionAccess({
         ...sessionData,
         zoomLink: "", // Default zoom link (will be added later if needed)
         isEnabled: true,
         enabledBy: sheikhId,
       });
       
-      // Notify student via WebSocket
-      wsService.enableSessionAccess(sessionData.studentId, {
+      // Prepare enriched session data for WebSocket notification
+      const enrichedSessionData = {
         ...sessionAccess,
         roomToken: liveRoom.roomToken,
         roomId: liveRoom.id,
-      });
+        scheduleId: sessionData.scheduleId,
+        status: liveRoom.status,
+        isEnabled: liveRoom.isEnabled,
+        enabledAt: liveRoom.enabledAt,
+      };
       
-      res.status(201).json({
-        ...sessionAccess,
-        roomToken: liveRoom.roomToken,
-        roomId: liveRoom.id,
-      });
+      // Notify student via WebSocket with full room context
+      wsService.enableSessionAccess(sessionData.studentId, enrichedSessionData);
+      
+      res.status(201).json(enrichedSessionData);
     } catch (error) {
       console.error("Error enabling session:", error);
       res.status(500).json({ message: "خطأ في تفعيل الحصة" });

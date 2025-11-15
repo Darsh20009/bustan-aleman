@@ -286,6 +286,7 @@ export interface IStorage {
   
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
+  upsertSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
   cleanupExpiredSessions(): Promise<number>;
   
   // Live annotation operations
@@ -300,6 +301,7 @@ export interface IStorage {
   
   // Live room operations
   createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
+  createOrActivateLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
   getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined>;
   getLiveRoomsByStudent(studentId: string): Promise<LiveRoom[]>;
   updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom>;
@@ -1757,6 +1759,39 @@ export class DatabaseStorage implements IStorage {
     return newAccess;
   }
 
+  async upsertSessionAccess(access: InsertSessionAccess): Promise<SessionAccess> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    // Check if session access exists for this student, schedule and date
+    const existing = await db!.select().from(sessionAccess)
+      .where(and(
+        eq(sessionAccess.studentId, access.studentId),
+        eq(sessionAccess.scheduleId, access.scheduleId!),
+        eq(sessionAccess.sessionDate, access.sessionDate)
+      ));
+    
+    if (existing.length > 0) {
+      // Update existing session access
+      const [updated] = await db!.update(sessionAccess)
+        .set({
+          ...access,
+          enabledAt: new Date(),
+        })
+        .where(eq(sessionAccess.id, existing[0].id))
+        .returning();
+      return updated;
+    } else {
+      // Insert new session access
+      const [newAccess] = await db!.insert(sessionAccess).values({
+        ...access,
+        enabledAt: new Date(),
+      }).returning();
+      return newAccess;
+    }
+  }
+
   async getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined> {
     if (!this.isDbAvailable()) {
       return undefined;
@@ -2095,6 +2130,20 @@ export class DatabaseStorage implements IStorage {
     return newRoom;
   }
 
+  async createOrActivateLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    // First create or get the room
+    const room = await this.createOrGetLiveRoom(studentId, sheikhId, sessionDate, sessionTime);
+    
+    // Then activate it
+    const activatedRoom = await this.updateLiveRoomStatus(room.id, 'active');
+    
+    return activatedRoom;
+  }
+
   async getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined> {
     if (!this.isDbAvailable()) {
       return undefined;
@@ -2135,9 +2184,24 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) {
       throw new Error("Database not available");
     }
+    const updates: any = { 
+      status, 
+      updatedAt: new Date() 
+    };
+    
+    // If activating the room, also set isEnabled and enabledAt
+    if (status === 'active') {
+      updates.isEnabled = true;
+      updates.enabledAt = new Date();
+    } else if (status === 'scheduled' || status === 'ended') {
+      // Clear enablement when room is deactivated
+      updates.isEnabled = false;
+      updates.enabledAt = null;
+    }
+    
     const [updatedRoom] = await db!
       .update(liveRooms)
-      .set({ status, updatedAt: new Date() })
+      .set(updates)
       .where(eq(liveRooms.id, roomId))
       .returning();
     return updatedRoom;

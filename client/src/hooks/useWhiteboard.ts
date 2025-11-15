@@ -274,30 +274,15 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
 
     const context = contextRef.current;
 
-    // Handle undo/redo commands (adjust history index and replay)
-    if (command.type === 'undo') {
-      setHistoryIndex(prev => {
-        const newIndex = Math.max(-1, prev - 1);
-        replayHistory(newIndex);
-        return newIndex;
-      });
-      return;
-    }
-
-    if (command.type === 'redo') {
-      setCommandHistory(prevHistory => {
-        setHistoryIndex(prevIndex => {
-          const newIndex = Math.min(prevHistory.length - 1, prevIndex + 1);
-          replayHistory(newIndex);
-          return newIndex;
-        });
-        return prevHistory;
-      });
+    // Handle undo/redo commands - they will be handled separately
+    if (command.type === 'undo' || command.type === 'redo') {
       return;
     }
 
     // Add remote command to history (with deduplication)
-    addToHistory(command);
+    if (command.type !== 'undo' && command.type !== 'redo') {
+      addToHistory(command);
+    }
 
     // Execute canvas operation immediately
     switch (command.type) {
@@ -340,7 +325,59 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
         }
         break;
     }
-  }, [addToHistory, replayHistory]);
+  }, [addToHistory]);
+
+  const replayHistory = useCallback((upToIndex: number) => {
+    if (!contextRef.current || !canvasRef.current) return;
+    
+    const context = contextRef.current;
+    context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    
+    for (let i = 0; i <= upToIndex; i++) {
+      const command = commandHistory[i];
+      if (!command) continue;
+      
+      switch (command.type) {
+        case 'start':
+          context.strokeStyle = command.color || '#000000';
+          context.lineWidth = command.lineWidth || 3;
+          context.globalCompositeOperation = command.color === '#FFFFFF' ? 'destination-out' : 'source-over';
+          context.beginPath();
+          context.moveTo(command.x, command.y);
+          break;
+
+        case 'draw':
+          context.lineTo(command.x, command.y);
+          context.stroke();
+          break;
+
+        case 'clear':
+          context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          break;
+
+        case 'erase':
+          context.globalCompositeOperation = 'destination-out';
+          context.beginPath();
+          context.arc(command.x, command.y, command.lineWidth || 10, 0, Math.PI * 2);
+          context.fill();
+          context.globalCompositeOperation = 'source-over';
+          break;
+
+        case 'shape':
+          drawShape(context, command);
+          break;
+
+        case 'text':
+          if (command.text) {
+            context.globalCompositeOperation = 'source-over';
+            context.font = `${(command.lineWidth || 3) * 5}px Arial`;
+            context.fillStyle = command.color || '#000000';
+            context.fillText(command.text, command.x, command.y);
+          }
+          break;
+      }
+    }
+  }, [commandHistory]);
 
   const undo = useCallback(() => {
     if (historyIndex < 0) return;
@@ -357,7 +394,7 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     
     onSendCommand?.(command);
     replayHistory(newIndex);
-  }, [historyIndex, userId, onSendCommand]);
+  }, [historyIndex, userId, onSendCommand, replayHistory]);
 
   const redo = useCallback(() => {
     if (historyIndex >= commandHistory.length - 1) return;
@@ -374,18 +411,7 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
     
     onSendCommand?.(command);
     replayHistory(newIndex);
-  }, [historyIndex, commandHistory.length, userId, onSendCommand]);
-
-  const replayHistory = useCallback((upToIndex: number) => {
-    if (!contextRef.current || !canvasRef.current) return;
-    
-    const context = contextRef.current;
-    context.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    
-    for (let i = 0; i <= upToIndex; i++) {
-      executeRemoteCommand(commandHistory[i]);
-    }
-  }, [commandHistory, executeRemoteCommand]);
+  }, [historyIndex, commandHistory.length, userId, onSendCommand, replayHistory]);
 
   const saveAsImage = useCallback(() => {
     if (!canvasRef.current) return;

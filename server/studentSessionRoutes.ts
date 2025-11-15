@@ -19,19 +19,27 @@ export function setupStudentSessionRoutes(app: Express) {
       const sessions = await storage.getAllSessionAccess(student.id);
       const liveRooms = await storage.getLiveRoomsByStudent(student.id);
       
-      // Merge roomToken into sessions
-      const sessionsWithRoomToken = sessions.map(session => {
-        const room = liveRooms.find(r => 
-          r.sessionDate.toISOString().split('T')[0] === session.sessionDate
-        );
+      // Merge roomToken into sessions with better matching logic
+      const sessionsWithRoomInfo = sessions.map(session => {
+        // Match by date AND time to support multiple sessions per day
+        const room = liveRooms.find(r => {
+          const roomDate = r.sessionDate instanceof Date
+            ? r.sessionDate.toISOString().split('T')[0]
+            : String(r.sessionDate).split('T')[0];
+          return roomDate === session.sessionDate && r.sessionTime === session.startTime;
+        });
+        
         return {
           ...session,
-          roomToken: room?.roomToken,
-          roomId: room?.id,
+          roomToken: room?.roomToken || null,
+          roomId: room?.id || null,
+          roomStatus: room?.status || null,
+          roomIsEnabled: room?.isEnabled || false,
+          roomEnabledAt: room?.enabledAt || null,
         };
       });
       
-      res.json(sessionsWithRoomToken);
+      res.json(sessionsWithRoomInfo);
     } catch (error) {
       console.error("Error fetching student sessions:", error);
       res.status(500).json({ message: "خطأ في جلب الحصص" });
