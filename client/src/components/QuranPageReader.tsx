@@ -498,8 +498,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               >
                 {reciters.map(reciter => (
                   <option key={reciter.id} value={reciter.id}>
-                    <span className="hidden sm:inline">{reciter.name} ({reciter.style})</span>
-                    <span className="sm:hidden">{reciter.name}</span>
+                    {reciter.name} ({reciter.style})
                   </option>
                 ))}
               </select>
