@@ -50,21 +50,21 @@ const ENABLE_AWS_RDS = process.env.ENABLE_AWS_RDS === 'true';
 async function tryAwsRdsConnection(): Promise<boolean> {
   if (!ENABLE_AWS_RDS) return false;
   
-  if (!process.env.AWS_DB_HOST || !process.env.AWS_DB_PORT || 
-      !process.env.AWS_DB_NAME || !process.env.AWS_DB_USER || 
-      !process.env.AWS_DB_PASSWORD) {
+  if (!process.env.AWS_DATABASE_HOST || !process.env.AWS_DATABASE_PORT || 
+      !process.env.AWS_DATABASE_NAME || !process.env.AWS_DATABASE_USER || 
+      !process.env.AWS_DATABASE_PASSWORD) {
     console.log('⚠️  AWS RDS credentials incomplete, skipping...');
     return false;
   }
 
-  console.log(`🔗 Attempting to connect to AWS RDS at ${process.env.AWS_DB_HOST}:${process.env.AWS_DB_PORT}`);
+  console.log(`🔗 Attempting to connect to AWS RDS at ${process.env.AWS_DATABASE_HOST}:${process.env.AWS_DATABASE_PORT}`);
   
   const pgPool = new PgPool({
-    host: process.env.AWS_DB_HOST,
-    port: parseInt(process.env.AWS_DB_PORT || '5432'),
-    database: process.env.AWS_DB_NAME,
-    user: process.env.AWS_DB_USER,
-    password: process.env.AWS_DB_PASSWORD,
+    host: process.env.AWS_DATABASE_HOST,
+    port: parseInt(process.env.AWS_DATABASE_PORT || '5432'),
+    database: process.env.AWS_DATABASE_NAME,
+    user: process.env.AWS_DATABASE_USER,
+    password: process.env.AWS_DATABASE_PASSWORD,
     ssl: {
       rejectUnauthorized: false  // TODO: Use AWS RDS CA certificate in production
     },
@@ -114,7 +114,7 @@ function initializeLocalDatabase() {
     db = drizzleNeon(neonPool, { schema });
     const dbSource = process.env.EXTERNAL_DATABASE_URL ? "External Render" : "Local";
     console.log(`✅ Database connection initialized (${dbSource})`);
-    if (!ENABLE_AWS_RDS && process.env.AWS_DB_HOST) {
+    if (!ENABLE_AWS_RDS && process.env.AWS_DATABASE_HOST) {
       console.log(`⚠️  AWS RDS database available but disabled. Set environment variable ENABLE_AWS_RDS=true to use it.`);
     }
   }
