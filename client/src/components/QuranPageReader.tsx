@@ -661,7 +661,23 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                       {globalSearchResults.map((result, idx) => (
                         <button
                           key={idx}
-                          onClick={() => goToPage(result.page)}
+                          onClick={() => {
+                            goToPage(result.page);
+                            setSearchMode(false);
+                            setSearchQuery('');
+                            setGlobalSearchResults([]);
+                            
+                            setTimeout(() => {
+                              const ayahElement = document.querySelector(`[data-testid="ayah-container-${result.ayahNumber}"]`);
+                              if (ayahElement) {
+                                ayahElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                ayahElement.classList.add('ring-4', 'ring-emerald-400', 'ring-opacity-50');
+                                setTimeout(() => {
+                                  ayahElement.classList.remove('ring-4', 'ring-emerald-400', 'ring-opacity-50');
+                                }, 2000);
+                              }
+                            }, 300);
+                          }}
                           className="w-full text-right p-3 bg-white hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-2 mb-2">
