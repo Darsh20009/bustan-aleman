@@ -44,14 +44,14 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
 
   useEffect(() => {
     if (!user) return;
-    
+
     fetchSessions();
     if (user.role === 'student') {
       fetchTodayAssignment();
     }
 
     const ws = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
-    
+
     ws.onopen = () => {
       const userId = sessionStorage.getItem('userId');
       if (userId && user.role) {
@@ -61,12 +61,12 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
         }));
       }
     };
-    
+
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'session_enabled') {
         console.log('📢 Session enabled notification received:', data.data);
-        
+
         // تحديث الحصة المفعّلة مباشرة في state
         if (data.data.roomToken && data.data.id) {
           setSessions(prevSessions => {
@@ -81,22 +81,22 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
               }
               return session;
             });
-            
+
             // إذا لم توجد الحصة، أضفها
             const sessionExists = prevSessions.some(s => s.id === data.data.id);
             if (!sessionExists) {
               return [...prevSessions, data.data];
             }
-            
+
             return updatedSessions;
           });
         }
-        
+
         toast({
           title: "🎉 تم تفعيل الحصة!",
           description: "يمكنك الآن الدخول للحصة المباشرة",
         });
-        
+
         // أيضاً جلب البيانات من السيرفر لضمان التزامن
         fetchSessions();
       } else if (data.type === 'new_assignment') {
@@ -107,13 +107,13 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
         fetchTodayAssignment();
       }
     };
-    
+
     return () => ws.close();
   }, [user]);
 
   const fetchSessions = async () => {
     try {
-      const endpoint = user?.role === 'supervisor' || user?.role === 'admin' 
+      const endpoint = user?.role === 'supervisor' || user?.role === 'admin'
         ? '/api/sheikh/sessions?range=upcoming'
         : '/api/student/sessions';
       const response = await fetch(endpoint);
@@ -160,11 +160,11 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
     }
 
     setJoiningSession(session.id);
-    
+
     setTimeout(() => {
       window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
       setJoiningSession(null);
-      
+
       toast({
         title: "🎉 تم فتح الحصة",
         description: "تم فتح الحصة المباشرة في نافذة جديدة",
@@ -191,15 +191,15 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
       <div className={`min-h-screen ${
         isSheikhRole
           ? 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500'
-          : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
+          : 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-700'
       } flex items-center justify-center p-6`} dir="rtl">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
           <div className={`w-16 h-16 border-4 ${
-            isSheikhRole 
+            isSheikhRole
               ? 'border-white border-t-transparent'
               : 'border-emerald-500 border-t-transparent'
           } rounded-full animate-spin mx-auto mb-4`}></div>
@@ -218,7 +218,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
     <div className={`min-h-screen ${
       isSheikhRole && hasEnabledSession
         ? 'bg-gradient-to-br from-emerald-400 via-green-500 to-teal-500'
-        : 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
+        : 'bg-gradient-to-br from-emerald-600 via-teal-600 to-green-700'
     }`} dir="rtl">
       {/* Header with Back Button */}
       <div className={`${
@@ -227,7 +227,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
           : 'bg-gradient-to-r from-emerald-600 to-teal-600'
       } text-white p-4 sticky top-0 z-50 shadow-lg`}>
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
-          <h1 className="text-xl md:text-2xl font-bold">حصتي 📚</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-white">حصتي 📚</h1>
           {onBack && (
             <Button
               onClick={onBack}
@@ -252,7 +252,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
             <Card className="border-0 shadow-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
               <CardHeader className="relative z-10">
-                <CardTitle className="text-2xl flex items-center gap-3">
+                <CardTitle className="text-2xl flex items-center gap-3 text-white">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                     📖
                   </div>
@@ -262,22 +262,22 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
               <CardContent className="relative z-10 space-y-4">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3">
                   <div>
-                    <h4 className="font-bold text-lg mb-2">الحفظ الجديد:</h4>
+                    <h4 className="font-bold text-lg mb-2 text-white">الحفظ الجديد:</h4>
                     <p className="text-amber-50 text-lg">{parseAssignmentRanges(todayAssignment.memorization)}</p>
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg mb-2">المراجعة:</h4>
+                    <h4 className="font-bold text-lg mb-2 text-white">المراجعة:</h4>
                     <p className="text-amber-50 text-lg">{parseAssignmentRanges(todayAssignment.review)}</p>
                   </div>
                   {todayAssignment.mistakes && (
                     <div>
-                      <h4 className="font-bold text-lg mb-2">الأخطاء:</h4>
+                      <h4 className="font-bold text-lg mb-2 text-white">الأخطاء:</h4>
                       <p className="text-amber-50">{todayAssignment.mistakes}</p>
                     </div>
                   )}
                   {todayAssignment.notes && (
                     <div>
-                      <h4 className="font-bold text-lg mb-2">ملاحظات:</h4>
+                      <h4 className="font-bold text-lg mb-2 text-white">ملاحظات:</h4>
                       <p className="text-amber-50">{todayAssignment.notes}</p>
                     </div>
                   )}
@@ -289,15 +289,13 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
 
         {/* Today's Sessions */}
         <div className="space-y-4">
-          <h2 className={`text-3xl font-bold mb-4 ${
-            isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
-          }`}>حصص اليوم</h2>
-          
+          <h2 className={`text-3xl font-bold mb-4 text-white`}>حصص اليوم</h2>
+
           {todaysSessions.length === 0 ? (
             <Card className={`border-0 shadow-xl ${
-              isSheikhRole && hasEnabledSession 
+              isSheikhRole && hasEnabledSession
                 ? 'bg-white/20 backdrop-blur-md'
-                : 'bg-white/80 backdrop-blur-sm'
+                : 'bg-white/20 backdrop-blur-md'
             }`}>
               <CardContent className="p-16 text-center">
                 <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${
@@ -309,12 +307,8 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                     isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-400'
                   }`} />
                 </div>
-                <h3 className={`text-2xl font-bold mb-2 ${
-                  isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
-                }`}>لا توجد حصص مجدولة اليوم</h3>
-                <p className={`text-lg ${
-                  isSheikhRole && hasEnabledSession ? 'text-white/90' : 'text-gray-500'
-                }`}>ستظهر حصصك هنا عندما يتم جدولتها</p>
+                <h3 className={`text-2xl font-bold mb-2 text-white`}>لا توجد حصص مجدولة اليوم</h3>
+                <p className={`text-lg text-white/90`}>ستظهر حصصك هنا عندما يتم جدولتها</p>
               </CardContent>
             </Card>
           ) : (
@@ -329,7 +323,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                     transition={{ delay: index * 0.1 }}
                   >
                     <Card className={`border-0 shadow-xl overflow-hidden ${
-                      session.isEnabled 
+                      session.isEnabled
                         ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
                         : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
                     }`}>
@@ -338,17 +332,17 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-3">
                               <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                                <Video className="w-7 h-7" />
+                                <Video className="w-7 h-7 text-white" />
                               </div>
                               <div>
-                                <h3 className="text-2xl font-bold">الحصة المباشرة</h3>
-                                <div className="flex items-center gap-2 text-sm opacity-90 mt-1">
+                                <h3 className="text-2xl font-bold text-white">الحصة المباشرة</h3>
+                                <div className="flex items-center gap-2 text-sm opacity-90 mt-1 text-white">
                                   <Clock className="w-4 h-4" />
                                   <span>{session.startTime} - {session.endTime}</span>
                                 </div>
                               </div>
                             </div>
-                            
+
                             {session.isEnabled ? (
                               <Badge className="bg-white/30 text-white border-white/50 text-sm px-3 py-1">
                                 <CheckCircle2 className="w-4 h-4 ml-1" />
@@ -361,7 +355,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                               </Badge>
                             )}
                           </div>
-                          
+
                           <Button
                             onClick={() => joinSession(session)}
                             disabled={!session.isEnabled || joiningSession === session.id}
@@ -397,10 +391,8 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
         {/* All Sessions */}
         {sessions.filter(s => s.sessionDate !== new Date().toISOString().split('T')[0]).length > 0 && (
           <div className="space-y-4">
-            <h2 className={`text-2xl font-bold mb-4 ${
-              isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
-            }`}>الحصص القادمة</h2>
-            
+            <h2 className={`text-2xl font-bold mb-4 text-white`}>الحصص القادمة</h2>
+
             <div className="grid gap-3">
               {sessions
                 .filter(s => s.sessionDate !== new Date().toISOString().split('T')[0])
@@ -408,23 +400,19 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                   <Card key={session.id} className={`border-0 shadow-lg ${
                     isSheikhRole && hasEnabledSession
                       ? 'bg-white/20 backdrop-blur-md'
-                      : 'bg-white/80 backdrop-blur-sm'
+                      : 'bg-white/20 backdrop-blur-md'
                   }`}>
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Calendar className={`w-10 h-10 ${
-                            isSheikhRole && hasEnabledSession ? 'text-white' : 'text-blue-600'
+                            isSheikhRole && hasEnabledSession ? 'text-white' : 'text-white'
                           }`} />
                           <div>
-                            <h4 className={`font-bold ${
-                              isSheikhRole && hasEnabledSession ? 'text-white' : 'text-gray-800'
-                            }`}>
+                            <h4 className={`font-bold text-white`}>
                               {format(new Date(session.sessionDate), 'EEEE، d MMMM yyyy', { locale: ar })}
                             </h4>
-                            <p className={`text-sm ${
-                              isSheikhRole && hasEnabledSession ? 'text-white/90' : 'text-gray-600'
-                            }`}>
+                            <p className={`text-sm text-white/90`}>
                               {session.startTime} - {session.endTime}
                             </p>
                           </div>
