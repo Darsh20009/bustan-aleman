@@ -288,15 +288,31 @@ class QuranService {
       .trim();
   }
 
+  private normalizeArabicForSearch(text: string): string {
+    // إزالة التشكيل أولاً
+    let normalized = this.removeDiacritics(text);
+    
+    // توحيد الهمزات
+    normalized = normalized
+      .replace(/[أإآ]/g, 'ا') // توحيد جميع أشكال الألف
+      .replace(/[ؤ]/g, 'و') // همزة على الواو
+      .replace(/[ئ]/g, 'ي') // همزة على الياء
+      .replace(/[ة]/g, 'ه') // تاء مربوطة إلى هاء
+      .replace(/[ى]/g, 'ي') // ألف مقصورة إلى ياء
+      .replace(/[ّ]/g, ''); // إزالة الشدة إن وجدت
+    
+    return normalized.toLowerCase().trim();
+  }
+
   async searchQuran(query: string): Promise<any[]> {
     if (!this.quranData?.data?.surahs || !query.trim()) return [];
     
-    const normalizedQuery = this.removeDiacritics(query.trim()).toLowerCase();
+    const normalizedQuery = this.normalizeArabicForSearch(query);
     const results: any[] = [];
     
     this.quranData.data.surahs.forEach((surah: QuranSurah) => {
       surah.ayahs.forEach((ayah: QuranAyah) => {
-        const normalizedText = this.removeDiacritics(ayah.text).toLowerCase();
+        const normalizedText = this.normalizeArabicForSearch(ayah.text);
         
         if (normalizedText.includes(normalizedQuery)) {
           results.push({
@@ -310,7 +326,7 @@ class QuranService {
       });
     });
 
-    return results.slice(0, 50); // Limit results
+    return results.slice(0, 100); // زيادة عدد النتائج
   }
 
   async getAyahTafsir(surahNumber: number, ayahNumber: number): Promise<string | null> {

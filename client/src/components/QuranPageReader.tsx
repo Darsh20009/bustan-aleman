@@ -267,9 +267,35 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     );
   };
 
+  const normalizeArabicForSearch = (text: string): string => {
+    // إزالة التشكيل
+    let normalized = text
+      .replace(/[\u064B-\u065F]/g, '') // تشكيل
+      .replace(/[\u0670]/g, '')
+      .replace(/[\u06D6-\u06DC]/g, '')
+      .replace(/[\u06DF-\u06E8]/g, '')
+      .replace(/[\u06EA-\u06ED]/g, '')
+      .replace(/[\u08D3-\u08E1]/g, '')
+      .replace(/[\u08E3-\u08FF]/g, '');
+    
+    // توحيد الحروف المتشابهة
+    normalized = normalized
+      .replace(/[أإآ]/g, 'ا') // توحيد الألف
+      .replace(/[ؤ]/g, 'و') // همزة على واو
+      .replace(/[ئ]/g, 'ي') // همزة على ياء
+      .replace(/[ة]/g, 'ه') // تاء مربوطة
+      .replace(/[ى]/g, 'ي') // ألف مقصورة
+      .toLowerCase()
+      .trim();
+    
+    return normalized;
+  };
+
   const matchesSearch = (ayah: Ayah) => {
     if (!searchQuery.trim()) return true;
-    return ayah.text.includes(searchQuery.trim());
+    const normalizedQuery = normalizeArabicForSearch(searchQuery);
+    const normalizedText = normalizeArabicForSearch(ayah.text);
+    return normalizedText.includes(normalizedQuery);
   };
 
   const filteredAyahs = pageData?.ayahs.filter(matchesSearch) || [];
@@ -506,7 +532,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ابحث عن آية..."
+                    placeholder="ابحث عن آية... (بدون تشكيل)"
                     className="w-full px-4 py-2 pr-10 text-sm sm:text-base rounded-lg text-emerald-900 border-2 border-emerald-300"
                     data-testid="input-search-ayah"
                   />
@@ -526,6 +552,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 {searchQuery && (
                   <p className="text-xs text-emerald-100 mt-1">
                     {filteredAyahs.length} آية من أصل {pageData?.ayahs.length || 0}
+                    <span className="mr-2 opacity-75">(البحث يتجاهل التشكيل والهمزات)</span>
                   </p>
                 )}
               </motion.div>
