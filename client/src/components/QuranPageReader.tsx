@@ -355,41 +355,49 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-100 to-green-50" dir="rtl">
-      <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+      <motion.div 
+        className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg backdrop-blur-sm"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+          {/* الصف الأول: العودة ومعلومات الصفحة */}
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
               {onBack && (
                 <Button
                   onClick={onBack}
                   size="sm"
                   variant="ghost"
-                  className="text-white hover:bg-emerald-700"
+                  className="text-white hover:bg-emerald-700 px-2 sm:px-3"
                   data-testid="button-back-home"
                 >
-                  ← العودة
+                  <span className="hidden sm:inline">← العودة</span>
+                  <span className="sm:hidden">←</span>
                 </Button>
               )}
-              <div className="flex items-center gap-3">
-                <BookOpen className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 <div className="text-white">
-                  <div className="text-lg font-bold">صفحة {currentPage}</div>
+                  <div className="text-sm sm:text-lg font-bold">صفحة {currentPage}</div>
                   <div className="text-xs opacity-90">من 604</div>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* أزرار التنقل */}
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="text-white hover:bg-emerald-700 disabled:opacity-50 px-2 sm:px-3"
                 data-testid="button-previous-page"
               >
-                <ChevronRight className="w-5 h-5" />
-                <span className="mr-1">السابق</span>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline mr-1">السابق</span>
               </Button>
 
               <input
@@ -398,7 +406,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 max="604"
                 value={currentPage}
                 onChange={(e) => goToPage(Number(e.target.value))}
-                className="w-20 px-2 py-1 text-center rounded-md border-2 border-emerald-300 bg-white text-emerald-900 font-bold"
+                className="w-14 sm:w-20 px-1 sm:px-2 py-1 text-center text-sm sm:text-base rounded-md border-2 border-emerald-300 bg-white text-emerald-900 font-bold"
                 data-testid="input-page-number"
               />
 
@@ -407,24 +415,29 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 disabled={currentPage === 604}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700 disabled:opacity-50"
+                className="text-white hover:bg-emerald-700 disabled:opacity-50 px-2 sm:px-3"
                 data-testid="button-next-page"
               >
-                <span className="ml-1">التالي</span>
-                <ChevronLeft className="w-5 h-5" />
+                <span className="hidden sm:inline ml-1">التالي</span>
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
+          {/* الصف الثاني: أدوات القراءة */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* القارئ والبحث */}
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
               <select
                 value={selectedReciter}
                 onChange={(e) => setSelectedReciter(e.target.value)}
-                className="px-3 py-1.5 rounded-md bg-emerald-700 text-white text-sm border-2 border-emerald-500"
+                className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md bg-emerald-700 text-white border-2 border-emerald-500 max-w-[150px] sm:max-w-none"
                 data-testid="select-reciter"
               >
                 {reciters.map(reciter => (
                   <option key={reciter.id} value={reciter.id}>
-                    {reciter.name} ({reciter.style})
+                    <span className="hidden sm:inline">{reciter.name} ({reciter.style})</span>
+                    <span className="sm:hidden">{reciter.name}</span>
                   </option>
                 ))}
               </select>
@@ -433,90 +446,110 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 onClick={() => setSearchMode(!searchMode)}
                 size="sm"
                 variant="ghost"
-                className={`text-white hover:bg-emerald-700 ${searchMode ? 'bg-emerald-700' : ''}`}
+                className={`text-white hover:bg-emerald-700 p-1.5 sm:p-2 ${searchMode ? 'bg-emerald-700' : ''}`}
                 data-testid="button-toggle-search"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
+            </div>
 
+            {/* أدوات حجم الخط */}
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 onClick={decreaseFontSize}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700"
+                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
                 data-testid="button-decrease-font"
               >
-                <ZoomOut className="w-5 h-5" />
+                <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
 
-              <span className="text-white text-sm min-w-[3rem] text-center">
-                {fontSize[0]}px
+              <span className="text-white text-xs sm:text-sm min-w-[2.5rem] sm:min-w-[3rem] text-center">
+                {fontSize[0]}
               </span>
 
               <Button
                 onClick={increaseFontSize}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700"
+                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
                 data-testid="button-increase-font"
               >
-                <ZoomIn className="w-5 h-5" />
+                <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
 
               <Button
                 onClick={resetSettings}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700"
+                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
                 data-testid="button-reset-settings"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
           </div>
 
-          {searchMode && (
-            <div className="mt-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن آية..."
-                  className="w-full px-4 py-2 pr-10 rounded-lg text-emerald-900 border-2 border-emerald-300"
-                  data-testid="input-search-ayah"
-                />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-emerald-600" />
+          {/* شريط البحث */}
+          <AnimatePresence>
+            {searchMode && (
+              <motion.div 
+                className="mt-3"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="ابحث عن آية..."
+                    className="w-full px-4 py-2 pr-10 text-sm sm:text-base rounded-lg text-emerald-900 border-2 border-emerald-300"
+                    data-testid="input-search-ayah"
+                  />
+                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+                  {searchQuery && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                      data-testid="button-clear-search"
+                    >
+                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </Button>
+                  )}
+                </div>
                 {searchQuery && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-                    data-testid="button-clear-search"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <p className="text-xs text-emerald-100 mt-1">
+                    {filteredAyahs.length} آية من أصل {pageData?.ayahs.length || 0}
+                  </p>
                 )}
-              </div>
-              {searchQuery && (
-                <p className="text-xs text-emerald-100 mt-1">
-                  {filteredAyahs.length} آية من أصل {pageData?.ayahs.length || 0}
-                </p>
-              )}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div className="mt-3">
-            <div className="w-full bg-emerald-800/30 rounded-full h-2">
-              <div
-                className="bg-emerald-200 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(currentPage / 604) * 100}%` }}
+          {/* شريط التقدم */}
+          <motion.div 
+            className="mt-3"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <div className="w-full bg-emerald-800/30 rounded-full h-1.5 sm:h-2 overflow-hidden">
+              <motion.div
+                className="bg-emerald-200 h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${(currentPage / 604) * 100}%` }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
