@@ -207,7 +207,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-800 via-green-900 to-emerald-950" dir="rtl">
       {/* Header with Back Button */}
-      <div className="bg-gradient-to-r from-green-900 to-emerald-950 text-white p-4 sticky top-0 z-50 shadow-lg"></div>
+      <div className="bg-gradient-to-r from-green-900 to-emerald-950 text-white p-4 sticky top-0 z-50 shadow-lg">
         <div className="max-w-6xl mx-auto flex justify-between items-center gap-4">
           <h1 className="text-xl md:text-2xl font-bold text-white">حصتي 📚</h1>
           {onBack && (
