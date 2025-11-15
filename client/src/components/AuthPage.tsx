@@ -25,9 +25,10 @@ const registerSchema = z.object({
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   confirmPassword: z.string().min(1, "تأكيد كلمة المرور مطلوب"),
   phoneNumber: z.string().min(10, "رقم الهاتف مطلوب"),
-  age: z.number().min(5).max(100).optional(),
-  educationLevel: z.string().optional(),
-  quranExperience: z.string().optional(),
+  age: z.number().min(5, "العمر يجب أن يكون 5 سنوات على الأقل").max(100, "العمر غير صحيح"),
+  educationLevel: z.string().min(1, "المستوى التعليمي مطلوب"),
+  quranExperience: z.string().min(1, "الخبرة في القرآن مطلوبة"),
+  memorization_level: z.string().min(1, "مستوى الحفظ مطلوب"),
   learningGoals: z.string().optional(),
   preferredTime: z.string().optional(),
   whatsappNumber: z.string().optional(),
@@ -74,6 +75,7 @@ export function AuthPage() {
       age: undefined,
       educationLevel: "",
       quranExperience: "",
+      memorization_level: "",
       learningGoals: "",
       preferredTime: "",
       whatsappNumber: "",
@@ -362,10 +364,141 @@ export function AuthPage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Phone className="w-4 h-4" />
-                          رقم الهاتف
+                          رقم الهاتف *
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="+966501234567" {...field} data-testid="input-phone" />
+                          <Input placeholder="+966501234567" {...field} data-testid="input-phone" dir="ltr" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={registerForm.control}
+                      name="age"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>العمر *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="مثال: 25"
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                              data-testid="input-age" 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={registerForm.control}
+                      name="educationLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>المستوى التعليمي *</FormLabel>
+                          <FormControl>
+                            <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" data-testid="select-education-level">
+                              <option value="">اختر المستوى</option>
+                              <option value="ابتدائي">ابتدائي</option>
+                              <option value="متوسط">متوسط</option>
+                              <option value="ثانوي">ثانوي</option>
+                              <option value="جامعي">جامعي</option>
+                              <option value="دراسات عليا">دراسات عليا</option>
+                              <option value="أخرى">أخرى</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={registerForm.control}
+                    name="quranExperience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>الخبرة في قراءة القرآن *</FormLabel>
+                        <FormControl>
+                          <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" data-testid="select-quran-experience">
+                            <option value="">اختر مستوى الخبرة</option>
+                            <option value="مبتدئ - لا أعرف القراءة">مبتدئ - لا أعرف القراءة</option>
+                            <option value="أعرف الحروف فقط">أعرف الحروف فقط</option>
+                            <option value="أقرأ بصعوبة">أقرأ بصعوبة</option>
+                            <option value="أقرأ بشكل جيد">أقرأ بشكل جيد</option>
+                            <option value="أقرأ بطلاقة">أقرأ بطلاقة</option>
+                            <option value="حافظ وأجيد التجويد">حافظ وأجيد التجويد</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control}
+                    name="memorization_level"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>مستوى الحفظ الحالي *</FormLabel>
+                        <FormControl>
+                          <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" data-testid="select-memorization-level">
+                            <option value="">اختر مستوى الحفظ</option>
+                            <option value="لم أبدأ الحفظ بعد">لم أبدأ الحفظ بعد</option>
+                            <option value="أقل من جزء">أقل من جزء</option>
+                            <option value="جزء واحد">جزء واحد (جزء عم مثلاً)</option>
+                            <option value="جزءان">جزءان</option>
+                            <option value="ثلاثة أجزاء">ثلاثة أجزاء</option>
+                            <option value="أكثر من 3 أجزاء">أكثر من 3 أجزاء</option>
+                            <option value="نصف القرآن">نصف القرآن (15 جزء)</option>
+                            <option value="أكثر من نصف القرآن">أكثر من نصف القرآن</option>
+                            <option value="القرآن كاملاً">القرآن كاملاً بفضل الله</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control}
+                    name="learningGoals"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>أهدافك في تعلم القرآن (اختياري)</FormLabel>
+                        <FormControl>
+                          <textarea 
+                            {...field}
+                            placeholder="مثال: أريد حفظ القرآن كاملاً، تحسين التجويد، إتقان التلاوة..."
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                            data-testid="textarea-learning-goals"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registerForm.control}
+                    name="preferredTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>الوقت المفضل للدروس (اختياري)</FormLabel>
+                        <FormControl>
+                          <select {...field} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" data-testid="select-preferred-time">
+                            <option value="">اختر الوقت المناسب</option>
+                            <option value="صباحاً (6-12)">صباحاً (6-12)</option>
+                            <option value="ظهراً (12-3)">ظهراً (12-3)</option>
+                            <option value="عصراً (3-6)">عصراً (3-6)</option>
+                            <option value="مساءً (6-9)">مساءً (6-9)</option>
+                            <option value="ليلاً (9-12)">ليلاً (9-12)</option>
+                          </select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
