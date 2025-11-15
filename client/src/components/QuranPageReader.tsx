@@ -92,6 +92,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [showTafsir, setShowTafsir] = useState<{ [key: number]: boolean }>({});
   const [tafsirData, setTafsirData] = useState<{ [key: number]: string }>({});
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(true);
+  const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   const reciters: Reciter[] = [
     { id: 'ar.alafasy', name: 'مشاري العفاسي', style: 'مرتل' },
@@ -291,6 +293,40 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     return normalized;
   };
 
+  // البحث الشامل في القرآن كاملاً
+  const searchInQuran = async (query: string) => {
+    if (!query.trim() || query.trim().length < 2) {
+      setGlobalSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(`/api/quran/search?q=${encodeURIComponent(query)}`);
+      if (response.ok) {
+        const results = await response.json();
+        setGlobalSearchResults(results);
+      }
+    } catch (error) {
+      console.error('خطأ في البحث:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // استخدام useEffect للبحث عند تغيير النص
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length >= 2) {
+        searchInQuran(searchQuery);
+      } else {
+        setGlobalSearchResults([]);
+      }
+    }, 500); // تأخير نصف ثانية لتجنب البحث مع كل حرف
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const matchesSearch = (ayah: Ayah) => {
     if (!searchQuery.trim()) return true;
     const normalizedQuery = normalizeArabicForSearch(searchQuery);
@@ -298,7 +334,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     return normalizedText.includes(normalizedQuery);
   };
 
-  const filteredAyahs = pageData?.ayahs.filter(matchesSearch) || [];
+  const filteredAyahs = searchQuery.trim() ? pageData?.ayahs.filter(matchesSearch) || [] : pageData?.ayahs || [];
 
   const playAyah = async (ayah: Ayah) => {
     if (currentAudio) {
@@ -550,10 +586,15 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   )}
                 </div>
                 {searchQuery && (
-                  <p className="text-xs text-emerald-100 mt-1">
-                    {filteredAyahs.length} آية من أصل {pageData?.ayahs.length || 0}
-                    <span className="mr-2 opacity-75">(البحث يتجاهل التشكيل والهمزات)</span>
-                  </p>
+                  <div className="text-xs text-emerald-100 mt-2 space-y-1">
+                    <p>
+                      {isSearching ? '🔍 جاري البحث...' : `✅ وجدت ${globalSearchResults.length} نتيجة في القرآن كاملاً`}
+                      <span className="mr-2 opacity-75">(البحث يتجاهل التشكيل والهمزات)</span>
+                    </p>
+                    <p className="opacity-90">
+                      {filteredAyahs.length} آية في الصفحة الحالية
+                    </p>
+                  </div>
                 )}
               </motion.div>
             )}
@@ -609,6 +650,37 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </div>
 
               <div className="p-8 md:p-12">
+                {/* نتائج البحث الشامل */}
+                {searchQuery.trim() && globalSearchResults.length > 0 && (
+                  <div className="mb-6 bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4">
+                    <h3 className="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
+                      <Search className="w-5 h-5" />
+                      نتائج البحث في القرآن كاملاً ({globalSearchResults.length} نتيجة)
+                    </h3>
+                    <div className="max-h-96 overflow-y-auto space-y-2">
+                      {globalSearchResults.map((result, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => goToPage(result.page)}
+                          className="w-full text-right p-3 bg-white hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <Badge className="bg-emerald-600 text-white text-xs">
+                              {result.surahName}
+                            </Badge>
+                            <span className="text-xs text-emerald-600">
+                              آية {result.ayahNumber} - صفحة {result.page}
+                            </span>
+                          </div>
+                          <p className="text-sm text-emerald-900 leading-relaxed">
+                            {result.ayahText}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {isLoading ? (
                   <div className="flex items-center justify-center h-96">
                     <div className="text-center">
