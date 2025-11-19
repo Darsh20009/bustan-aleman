@@ -27,27 +27,27 @@ export default function Home() {
       {/* Welcome Section */}
       <section className="hero-section dark:bg-gradient-to-b dark:from-gray-900 dark:to-gray-800">
         <div className="islamic-pattern-overlay dark:opacity-30"></div>
-        <div className="hero-content container mx-auto px-4">
+        <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8">
           <h1 
-            className="text-4xl md:text-5xl font-bold font-arabic-serif mb-6 text-white dark:text-white"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-arabic-serif mb-4 sm:mb-6 text-white dark:text-white"
             data-testid="welcome-title"
           >
             أهلاً وسهلاً {(user as any)?.firstName || 'بك'}
           </h1>
-          <p className="text-xl mb-8 opacity-90 text-white dark:text-gray-200">
+          <p className="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 opacity-90 text-white dark:text-gray-200">
             في بستان الإيمان - رحلتك نحو التعلم والإيمان تبدأ من هنا
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
+          <div className="flex flex-wrap gap-3 sm:gap-4 justify-center">
             <Button 
               onClick={() => setLocation("/courses")}
-              className="btn-islamic-secondary px-6 py-3"
+              className="btn-islamic-secondary px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base"
               data-testid="button-browse-courses"
             >
               استكشف الدورات
             </Button>
             <Button 
               onClick={() => setLocation("/quran")}
-              className="btn-islamic-primary px-6 py-3"
+              className="btn-islamic-primary px-4 py-2 sm:px-6 sm:py-3 text-sm sm:text-base"
               data-testid="button-quran-section"
             >
               قسم القرآن الكريم
@@ -57,42 +57,42 @@ export default function Home() {
       </section>
 
       {/* Dashboard Stats */}
-      <section className="py-12 bg-light-beige dark:bg-gray-900 transition-colors">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="py-8 sm:py-12 bg-light-beige dark:bg-gray-900 transition-colors">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
-              <CardContent className="p-6">
-                <BookOpen className="text-3xl text-islamic-green dark:text-green-400 mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-islamic-green dark:text-green-400 mb-2">
+              <CardContent className="p-3 sm:p-6">
+                <BookOpen className="text-islamic-green dark:text-green-400 mb-2 sm:mb-4 mx-auto" size={32} />
+                <h3 className="text-xl sm:text-2xl font-bold text-islamic-green dark:text-green-400 mb-1 sm:mb-2">
                   {Array.isArray(enrollments) ? enrollments.length : 0}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">الدورات المسجلة</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">الدورات المسجلة</p>
               </CardContent>
             </Card>
             
             <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
-              <CardContent className="p-6">
-                <Calendar className="text-3xl text-warm-gold dark:text-yellow-400 mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-warm-gold dark:text-yellow-400 mb-2">
+              <CardContent className="p-3 sm:p-6">
+                <Calendar className="text-warm-gold dark:text-yellow-400 mb-2 sm:mb-4 mx-auto" size={32} />
+                <h3 className="text-xl sm:text-2xl font-bold text-warm-gold dark:text-yellow-400 mb-1 sm:mb-2">
                   {Array.isArray(courses) ? courses.filter((c: any) => new Date(c.startDate) > new Date()).length : 0}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300">الدورات القادمة</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">الدورات القادمة</p>
               </CardContent>
             </Card>
             
             <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
-              <CardContent className="p-6">
-                <Trophy className="text-3xl text-earth-brown dark:text-orange-400 mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-earth-brown dark:text-orange-400 mb-2">0</h3>
-                <p className="text-gray-600 dark:text-gray-300">الإنجازات</p>
+              <CardContent className="p-3 sm:p-6">
+                <Trophy className="text-earth-brown dark:text-orange-400 mb-2 sm:mb-4 mx-auto" size={32} />
+                <h3 className="text-xl sm:text-2xl font-bold text-earth-brown dark:text-orange-400 mb-1 sm:mb-2">0</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">الإنجازات</p>
               </CardContent>
             </Card>
             
             <Card className="islamic-card text-center dark:bg-gray-800 dark:border-gray-700">
-              <CardContent className="p-6">
-                <Users className="text-3xl text-islamic-green dark:text-green-400 mb-4 mx-auto" size={48} />
-                <h3 className="text-2xl font-bold text-islamic-green dark:text-green-400 mb-2">50+</h3>
-                <p className="text-gray-600 dark:text-gray-300">زملاء الدراسة</p>
+              <CardContent className="p-3 sm:p-6">
+                <Users className="text-islamic-green dark:text-green-400 mb-2 sm:mb-4 mx-auto" size={32} />
+                <h3 className="text-xl sm:text-2xl font-bold text-islamic-green dark:text-green-400 mb-1 sm:mb-2">50+</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">زملاء الدراسة</p>
               </CardContent>
             </Card>
           </div>
@@ -100,15 +100,17 @@ export default function Home() {
       </section>
 
       {/* My Enrollments */}
-      <section className="py-16 bg-white dark:bg-gray-950 transition-colors">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl font-bold font-arabic-serif text-islamic-green dark:text-green-400">
+      <section className="py-10 sm:py-16 bg-white dark:bg-gray-950 transition-colors">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap justify-between items-center mb-6 sm:mb-8 gap-3">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-arabic-serif text-islamic-green dark:text-green-400">
               دوراتي المسجلة
             </h2>
             <Button 
               onClick={() => setLocation("/courses")}
               variant="outline"
+              size="sm"
+              className="text-sm"
               data-testid="button-view-all-courses"
             >
               عرض جميع الدورات
@@ -170,33 +172,33 @@ export default function Home() {
       </section>
 
       {/* Quick Actions */}
-      <section className="py-16 bg-light-beige">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold font-arabic-serif text-islamic-green text-center mb-12">
+      <section className="py-10 sm:py-16 bg-light-beige">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-2xl sm:text-3xl font-bold font-arabic-serif text-islamic-green text-center mb-8 sm:mb-12">
             إجراءات سريعة
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="islamic-card cursor-pointer" onClick={() => setLocation("/quran")}>
-              <CardContent className="p-6 text-center">
-                <BookOpen className="text-4xl text-islamic-green mb-4 mx-auto" size={64} />
-                <h3 className="text-xl font-bold mb-2">قسم القرآن الكريم</h3>
-                <p className="text-gray-600">ابدأ رحلة حفظ القرآن الكريم</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <Card className="islamic-card cursor-pointer hover-elevate" onClick={() => setLocation("/quran")}>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <BookOpen className="text-islamic-green mb-3 sm:mb-4 mx-auto" size={48} />
+                <h3 className="text-lg sm:text-xl font-bold mb-2">قسم القرآن الكريم</h3>
+                <p className="text-sm sm:text-base text-gray-600">ابدأ رحلة حفظ القرآن الكريم</p>
               </CardContent>
             </Card>
             
-            <Card className="islamic-card cursor-pointer" onClick={() => setLocation("/courses")}>
-              <CardContent className="p-6 text-center">
-                <Calendar className="text-4xl text-warm-gold mb-4 mx-auto" size={64} />
-                <h3 className="text-xl font-bold mb-2">الدورات المتاحة</h3>
-                <p className="text-gray-600">تصفح جميع الدورات التعليمية</p>
+            <Card className="islamic-card cursor-pointer hover-elevate" onClick={() => setLocation("/courses")}>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <Calendar className="text-warm-gold mb-3 sm:mb-4 mx-auto" size={48} />
+                <h3 className="text-lg sm:text-xl font-bold mb-2">الدورات المتاحة</h3>
+                <p className="text-sm sm:text-base text-gray-600">تصفح جميع الدورات التعليمية</p>
               </CardContent>
             </Card>
             
-            <Card className="islamic-card cursor-pointer" onClick={() => setLocation("/about")}>
-              <CardContent className="p-6 text-center">
-                <Users className="text-4xl text-earth-brown mb-4 mx-auto" size={64} />
-                <h3 className="text-xl font-bold mb-2">من نحن</h3>
-                <p className="text-gray-600">تعرف على رسالتنا ورؤيتنا</p>
+            <Card className="islamic-card cursor-pointer hover-elevate" onClick={() => setLocation("/about")}>
+              <CardContent className="p-4 sm:p-6 text-center">
+                <Users className="text-earth-brown mb-3 sm:mb-4 mx-auto" size={48} />
+                <h3 className="text-lg sm:text-xl font-bold mb-2">من نحن</h3>
+                <p className="text-sm sm:text-base text-gray-600">تعرف على رسالتنا ورؤيتنا</p>
               </CardContent>
             </Card>
           </div>
