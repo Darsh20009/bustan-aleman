@@ -56,7 +56,7 @@ export const users = bustanSchema.table("users", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Courses table
+// Courses table - Enhanced with color customization
 export const courses = bustanSchema.table("courses", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   titleAr: varchar("title_ar").notNull(),
@@ -74,6 +74,13 @@ export const courses = bustanSchema.table("courses", {
   price: integer("price").default(0), // in cents
   isPaid: boolean("is_paid").default(false), // whether course requires payment
   thumbnailUrl: varchar("thumbnail_url"), // course thumbnail image
+  // Custom branding and colors for course
+  primaryColor: varchar("primary_color").default("#10b981"), // Main course color
+  secondaryColor: varchar("secondary_color").default("#f97316"), // Secondary course color
+  backgroundColor: varchar("background_color").default("#ffffff"), // Background color
+  textColor: varchar("text_color").default("#1f2937"), // Text color
+  // Student access control
+  selectedStudentIds: varchar("selected_student_ids").array().default(sql`ARRAY[]::varchar[]`), // Specific students who can access (empty = all enrolled)
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -436,6 +443,46 @@ export const examAttempts = bustanSchema.table("exam_attempts", {
   certificateIssued: boolean("certificate_issued").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Shopping cart for course purchases
+export const shoppingCart = bustanSchema.table("shopping_cart", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  addedAt: timestamp("added_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Course payments - for paid course enrollments with receipt upload
+export const coursePayments = bustanSchema.table("course_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  amount: integer("amount").notNull(), // Amount in cents
+  paymentMethod: varchar("payment_method").notNull(), // bank_transfer, instapay, etisalat_pay
+  // Payment details for different methods
+  bankAccountNumber: varchar("bank_account_number").default("eg0123456789"), // For bank transfer
+  ewalletNumber: varchar("ewallet_number").default("01155201921"), // For InstaPay/Etisalat Pay
+  // Payment receipt
+  receiptUrl: varchar("receipt_url").notNull(), // URL of uploaded payment receipt
+  receiptFileName: varchar("receipt_file_name"),
+  receiptFileSize: integer("receipt_file_size"),
+  // Payment status
+  status: varchar("status").default("pending"), // pending, approved, rejected
+  reviewedBy: varchar("reviewed_by").references(() => users.id), // Sheikh who reviewed
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"), // Sheikh's notes about the payment
+  // Transaction details
+  transactionId: varchar("transaction_id"), // Optional transaction ID from payment provider
+  paymentDate: timestamp("payment_date").defaultNow(),
+  approvedAt: timestamp("approved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("course_payments_user_idx").on(table.userId),
+  index("course_payments_course_idx").on(table.courseId),
+  index("course_payments_status_idx").on(table.status),
+]);
 
 // Live session rooms - for built-in live classes (replaces Zoom)
 export const liveRooms = bustanSchema.table("live_rooms", {
@@ -804,6 +851,19 @@ export const insertExamAttemptSchema = createInsertSchema(examAttempts).omit({
   createdAt: true,
 });
 
+export const insertShoppingCartSchema = createInsertSchema(shoppingCart).omit({
+  id: true,
+  createdAt: true,
+  addedAt: true,
+});
+
+export const insertCoursePaymentSchema = createInsertSchema(coursePayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  paymentDate: true,
+});
+
 export const insertSessionAccessControlSchema = createInsertSchema(sessionAccessControl).omit({
   id: true,
   createdAt: true,
@@ -931,6 +991,10 @@ export type ExamQuestion = typeof examQuestions.$inferSelect;
 export type InsertExamQuestion = z.infer<typeof insertExamQuestionSchema>;
 export type ExamAttempt = typeof examAttempts.$inferSelect;
 export type InsertExamAttempt = z.infer<typeof insertExamAttemptSchema>;
+export type ShoppingCartItem = typeof shoppingCart.$inferSelect;
+export type InsertShoppingCartItem = z.infer<typeof insertShoppingCartSchema>;
+export type CoursePayment = typeof coursePayments.$inferSelect;
+export type InsertCoursePayment = z.infer<typeof insertCoursePaymentSchema>;
 export type SessionAccessControl = typeof sessionAccessControl.$inferSelect;
 export type InsertSessionAccessControl = z.infer<typeof insertSessionAccessControlSchema>;
 export type Certificate = typeof certificates.$inferSelect;

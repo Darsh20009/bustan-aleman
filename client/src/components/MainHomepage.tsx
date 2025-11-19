@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { BookOpen, User, Calendar, Users, MessageCircle, Star, ChevronRight, Info, GraduationCap, Award, Heart, PlayCircle, Sparkles, ExternalLink, CheckCircle, TrendingUp, Shield, Clock, Globe } from 'lucide-react';
@@ -15,66 +15,198 @@ interface MainHomepageProps {
 }
 
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
+  const [scrolled, setScrolled] = useState(false);
+  const { scrollY } = useScroll();
+  const headerOpacity = useTransform(scrollY, [0, 100], [0.95, 1]);
+  const headerScale = useTransform(scrollY, [0, 100], [1, 0.98]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { label: 'من نحن', onClick: onAboutUs },
+    { label: 'الدورات', onClick: onCourses },
+    { label: 'المصحف الإلكتروني', onClick: onQuranReader }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-orange-50/30" dir="rtl">
-      {/* Enhanced Header with Navigation */}
-      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+      {/* Animated Floating Particles */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-emerald-400/20 rounded-full"
+            initial={{ 
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight
+            }}
+            animate={{
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+            }}
+            transition={{
+              duration: Math.random() * 20 + 10,
+              repeat: Infinity,
+              repeatType: "reverse"
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Enhanced Header with Advanced Animations */}
+      <motion.div 
+        className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm"
+        style={{ opacity: headerOpacity, scale: headerScale }}
+      >
+        {/* Animated Gradient Overlay */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0"
+          animate={{
+            x: ['-100%', '100%'],
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
+        
+        <div className="max-w-7xl mx-auto px-4 py-4 relative z-10">
           <div className="flex justify-between items-center">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-4 space-x-reverse"
             >
-              <div className="relative w-16 h-16">
-                <img 
+              <motion.div 
+                className="relative w-16 h-16"
+                animate={{
+                  rotate: [0, 5, -5, 0],
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <motion.img 
                   src={logoImage} 
                   alt="بستان الإيمان" 
                   className="w-full h-full object-contain drop-shadow-2xl"
+                  whileHover={{ scale: 1.1, rotate: 360 }}
+                  transition={{ duration: 0.6 }}
                 />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold font-arabic-serif text-white">
+                {/* Glow Effect */}
+                <motion.div
+                  className="absolute inset-0 bg-orange-400/30 rounded-full blur-xl"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.3, 0.6, 0.3]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity
+                  }}
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <motion.h1 
+                  className="text-2xl md:text-3xl font-bold font-arabic-serif text-white"
+                  animate={{
+                    textShadow: [
+                      '0 0 10px rgba(255,255,255,0.3)',
+                      '0 0 20px rgba(255,255,255,0.5)',
+                      '0 0 10px rgba(255,255,255,0.3)'
+                    ]
+                  }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
                   بستان الإيمان
-                </h1>
+                </motion.h1>
                 <p className="text-white/90 text-sm md:text-base font-medium">
                   رحلة تعليمية متكاملة نحو القرآن والعلم
                 </p>
-              </div>
+              </motion.div>
             </motion.div>
 
-            <div className="flex items-center space-x-3 space-x-reverse">
-              <Button
-                onClick={onLoginClick}
-                className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base backdrop-blur-sm transition-all hover:scale-105"
+            <motion.div 
+              className="flex items-center space-x-3 space-x-reverse"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={onLoginClick}
+                  className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base backdrop-blur-sm transition-all"
+                  data-testid="button-login-header"
+                >
+                  <User className="w-4 h-4 ml-2" />
+                  تسجيل الدخول
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                animate={{
+                  boxShadow: [
+                    '0 0 20px rgba(251,146,60,0.3)',
+                    '0 0 30px rgba(251,146,60,0.5)',
+                    '0 0 20px rgba(251,146,60,0.3)'
+                  ]
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="rounded-md"
               >
-                <User className="w-4 h-4 ml-2" />
-                تسجيل الدخول
-              </Button>
-              <Button
-                onClick={onRegisterClick}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                <Sparkles className="w-4 h-4 ml-2" />
-                ابدأ الآن
-              </Button>
-            </div>
+                <Button
+                  onClick={onRegisterClick}
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base font-bold transition-all shadow-lg"
+                  data-testid="button-register-header"
+                >
+                  <Sparkles className="w-4 h-4 ml-2" />
+                  ابدأ الآن
+                </Button>
+              </motion.div>
+            </motion.div>
           </div>
 
-          {/* Quick Navigation Links */}
+          {/* Quick Navigation Links with Staggered Animation */}
           <div className="hidden md:flex justify-center mt-4 space-x-6 space-x-reverse border-t border-white/20 pt-4">
-            <button onClick={onAboutUs} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
-              من نحن
-            </button>
-            <button onClick={onCourses} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
-              الدورات
-            </button>
-            <button onClick={onQuranReader} className="text-white/80 hover:text-white transition-colors text-sm font-medium">
-              المصحف الإلكتروني
-            </button>
+            {navLinks.map((link, index) => (
+              <motion.button
+                key={link.label}
+                onClick={link.onClick}
+                className="text-white/80 hover:text-white transition-colors text-sm font-medium relative group"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.1 }}
+                whileHover={{ scale: 1.05 }}
+                data-testid={`link-nav-${index}`}
+              >
+                {link.label}
+                {/* Animated Underline */}
+                <motion.div
+                  className="absolute bottom-0 right-0 h-0.5 bg-orange-400"
+                  initial={{ width: 0 }}
+                  whileHover={{ width: '100%' }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.button>
+            ))}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Hero Section with Enhanced Design */}
       <div className="relative py-16 md:py-24 overflow-hidden">
