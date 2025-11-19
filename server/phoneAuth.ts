@@ -22,28 +22,44 @@ export function getPhoneSession() {
 export async function initializePreregisteredUsers() {
   try {
     console.log(`🔄 Initializing ${preregisteredUsers.length} pre-registered users...`);
+    
     for (const user of preregisteredUsers) {
-      console.log(`🔄 Checking user: ${user.name} (${user.phoneNumber})`);
-      // Check if user already exists by phone number
-      const existingUser = await storage.getUserByPhone(user.phoneNumber);
-      console.log(`  ${existingUser ? '✓ User exists' : '✗ User not found, creating...'}`);
-      
-      if (!existingUser) {
-        // Hash password
-        const passwordHash = await bcrypt.hash(user.password, 10);
+      try {
+        console.log(`🔄 Checking user: ${user.name} (${user.phoneNumber})`);
+        // Check if user already exists by phone number
+        const existingUser = await storage.getUserByPhone(user.phoneNumber);
+        console.log(`  ${existingUser ? '✓ User exists' : '✗ User not found, creating...'}`);
         
-        // Create user
-        await storage.createUserWithPhone({
-          firstName: user.name,
-          phoneNumber: user.phoneNumber,
-          passwordHash,
-          role: user.role,
-        });
-        console.log(`✅ Created pre-registered user: ${user.name} (${user.phoneNumber})`);
+        if (!existingUser) {
+          // Hash password
+          const passwordHash = await bcrypt.hash(user.password, 10);
+          
+          // Create user
+          await storage.createUserWithPhone({
+            firstName: user.name,
+            phoneNumber: user.phoneNumber,
+            passwordHash,
+            role: user.role,
+          });
+          console.log(`✅ Created pre-registered user: ${user.name} (${user.phoneNumber})`);
+        }
+      } catch (userError: any) {
+        // If we're in JSON mode, skip user creation gracefully
+        if (userError.message?.includes("not available in JSON mode")) {
+          console.log(`⚠️  Skipping user creation in JSON mode: ${user.name} (${user.phoneNumber})`);
+          continue;
+        }
+        // Re-throw other errors
+        throw userError;
       }
     }
     console.log("✅ All pre-registered users initialized");
-  } catch (error) {
+  } catch (error: any) {
+    // If we're in JSON mode, just log a warning and continue
+    if (error.message?.includes("not available in JSON mode")) {
+      console.log("⚠️  Pre-registered users initialization skipped (JSON mode)");
+      return;
+    }
     console.error("❌ Error initializing pre-registered users:", error);
     throw error;
   }

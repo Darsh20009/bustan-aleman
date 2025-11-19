@@ -1,0 +1,163 @@
+==> Downloading cache...
+==> Cloning from https://github.com/Darsh20009/bustan-aleman
+==> Checking out commit 4545269bc2624eba5353619911a736a5f7d638c2 in branch main
+==> Downloaded 230MB in 4s. Extraction took 5s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+up to date, audited 695 packages in 2s
+132 packages are looking for funding
+  run `npm fund` for details
+14 vulnerabilities (1 low, 10 moderate, 1 high, 2 critical)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+vite v5.4.19 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 3751 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                                                2.98 kB │ gzip:   1.18 kB
+../dist/public/assets/bustan aleman logo_1763041603537--oKRUZ4K.png  1,500.01 kB
+../dist/public/assets/index-BgV9JfOS.css                               145.25 kB │ gzip:  21.88 kB
+../dist/public/assets/index-DPNG1N_i.js                              1,339.86 kB │ gzip: 377.54 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.84s
+  dist/index.js  361.5kb
+⚡ Done in 61ms
+==> Uploading build...
+==> Uploaded in 10.3s. Compression took 4.5s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+⚠️  AWS RDS credentials incomplete, skipping...
+⚠️  No database URL found. Using JSON storage fallback.
+✅ Database connection initialized
+🔒 Starting password migration...
+✅ Password migration completed. Migrated 0 passwords.
+✅ Password migration completed
+6:19:03 PM [telegram] ⚠️ رمز بوت التليجرام غير موجود - تم تخطي تشغيل البوت
+✅ Telegram bot initialized
+✅ Auth routes setup
+✅ Additional routes setup
+✅ JSON routes setup
+✅ Sheikh routes setup
+✅ Student session routes setup
+✅ Surah routes setup
+✅ Course routes setup
+🔄 Starting registerRoutes...
+🔄 registerRoutes: Setting up phone auth...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+🔄 registerRoutes: Initializing pre-registered users...
+🔄 Initializing 4 pre-registered users...
+🔄 Checking user: يوسف (0532441566)
+  ✗ User not found, creating...
+❌ Error initializing pre-registered users: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
+❌ Fatal error during server startup: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+⚠️  AWS RDS credentials incomplete, skipping...
+⚠️  No database URL found. Using JSON storage fallback.
+✅ Database connection initialized
+🔒 Starting password migration...
+✅ Password migration completed. Migrated 0 passwords.
+✅ Password migration completed
+6:19:23 PM [telegram] ⚠️ رمز بوت التليجرام غير موجود - تم تخطي تشغيل البوت
+✅ Telegram bot initialized
+✅ Auth routes setup
+✅ Additional routes setup
+✅ JSON routes setup
+✅ Sheikh routes setup
+✅ Student session routes setup
+✅ Surah routes setup
+✅ Course routes setup
+🔄 Starting registerRoutes...
+🔄 registerRoutes: Setting up phone auth...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+🔄 registerRoutes: Initializing pre-registered users...
+🔄 Initializing 4 pre-registered users...
+🔄 Checking user: يوسف (0532441566)
+  ✗ User not found, creating...
+❌ Error initializing pre-registered users: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
+❌ Fatal error during server startup: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+⚠️  AWS RDS credentials incomplete, skipping...
+⚠️  No database URL found. Using JSON storage fallback.
+✅ Database connection initialized
+🔒 Starting password migration...
+✅ Password migration completed. Migrated 0 passwords.
+✅ Password migration completed
+6:20:01 PM [telegram] ⚠️ رمز بوت التليجرام غير موجود - تم تخطي تشغيل البوت
+✅ Telegram bot initialized
+✅ Auth routes setup
+✅ Additional routes setup
+✅ JSON routes setup
+✅ Sheikh routes setup
+✅ Student session routes setup
+✅ Surah routes setup
+✅ Course routes setup
+🔄 Starting registerRoutes...
+🔄 registerRoutes: Setting up phone auth...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+🔄 registerRoutes: Initializing pre-registered users...
+🔄 Initializing 4 pre-registered users...
+🔄 Checking user: يوسف (0532441566)
+  ✗ User not found, creating...
+❌ Error initializing pre-registered users: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
+❌ Fatal error during server startup: Error: User creation not available in JSON mode
+    at DatabaseStorage.createUserWithPhone (file:///opt/render/project/src/dist/index.js:1665:17)
+    at initializePreregisteredUsers (file:///opt/render/project/src/dist/index.js:4458:23)
+    at async registerRoutes (file:///opt/render/project/src/dist/index.js:5260:3)
+    at async file:///opt/render/project/src/dist/index.js:8329:20
