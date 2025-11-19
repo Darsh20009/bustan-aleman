@@ -10,9 +10,9 @@ interface AboutUsPageProps {
 
 export function AboutUsPage({ onBack }: AboutUsPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-orange-50/30" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-800 to-orange-700 text-white">
+      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white shadow-2xl">
         <div className="max-w-7xl mx-auto px-2 md:px-4 py-6">
           <div className="flex justify-between items-center">
             <motion.div
@@ -20,14 +20,14 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center space-x-2 md:space-x-4 space-x-reverse"
             >
-              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center ml-2 md:ml-4">
+              <div className="w-12 h-12 md:w-16 md:h-16 bg-white/20 rounded-full flex items-center justify-center ml-2 md:ml-4 shadow-lg">
                 <BookOpen className="w-6 h-6 md:w-10 md:h-10 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-4xl font-bold font-amiri">
+                <h1 className="text-2xl md:text-4xl font-bold font-arabic-serif">
                   تعرف علينا
                 </h1>
-                <p className="text-amber-200 text-sm md:text-lg">
+                <p className="text-white/90 text-sm md:text-lg font-arabic-sans">
                   تعرف على بستان الإيمان ورسالتنا
                 </p>
               </div>
@@ -35,7 +35,8 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
 
             <Button
               onClick={onBack}
-              className="bg-white/20 hover:bg-white/30 text-white border-0 px-4 py-2 text-sm md:px-6 md:text-base"
+              className="bg-white/20 hover:bg-white/30 text-white border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans"
+              data-testid="button-back-to-home"
             >
               <ArrowRight className="ml-2 h-4 w-4" />
               العودة للرئيسية
@@ -53,38 +54,38 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
             animate={{ opacity: 1, y: 0 }}
             className="mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-amber-900 text-center mb-8 font-amiri">
+            <h2 className="text-3xl md:text-4xl font-bold text-emerald-600 text-center mb-8 font-arabic-serif">
               من نحن
             </h2>
             
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
-                <p className="text-lg text-amber-800 leading-relaxed mb-8">
+                <p className="text-lg text-gray-700 leading-relaxed mb-8 font-arabic-sans">
                   مرحبًا بكم في بستان الإيمان، المنصة التي تُلهم القلوب وتنير العقول برحلة مميزة نحو العلم والإيمان. هنا تجدون مزيجًا متكاملاً بين تحفيظ القرآن الكريم، تعلم الفقه بأسلوب مبسط، والاستمتاع بألعاب رمضانية تعليمية مصممة خصيصًا للأطفال لتغرس فيهم القيم الدينية منذ الصغر.
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Card className="border-amber-200">
+                  <Card className="border-2 border-emerald-100 hover:shadow-xl transition-all">
                     <CardHeader>
-                      <CardTitle className="text-amber-800 text-right">
+                      <CardTitle className="text-emerald-600 text-right font-arabic-serif">
                         رسالتنا
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-amber-700 text-right">
+                      <p className="text-sm text-gray-600 text-right font-arabic-sans leading-relaxed">
                         في بستان الإيمان، نؤمن بأن الإيمان يبدأ من القلب ويكبر بالعلم والعمل. رسالتنا هي أن نوفر لكل فرد فرصة لتعزيز علاقته بالله.
                       </p>
                     </CardContent>
                   </Card>
 
-                  <Card className="border-orange-200">
+                  <Card className="border-2 border-orange-100 hover:shadow-xl transition-all">
                     <CardHeader>
-                      <CardTitle className="text-orange-800 text-right">
+                      <CardTitle className="text-orange-600 text-right font-arabic-serif">
                         رؤيتنا
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-orange-700 text-right">
+                      <p className="text-sm text-gray-600 text-right font-arabic-sans leading-relaxed">
                         أن نكون الوجهة الأولى لكل من يبحث عن تعليم ديني متكامل، يجمع بين الأصالة الإسلامية والأساليب التعليمية الحديثة.
                       </p>
                     </CardContent>
@@ -92,8 +93,8 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-amber-200 to-orange-300 rounded-xl p-8 flex items-center justify-center">
-                <BookOpen className="w-48 h-48 text-amber-800" />
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-8 flex items-center justify-center shadow-xl">
+                <BookOpen className="w-48 h-48 text-white" />
               </div>
             </div>
           </motion.div>
@@ -105,62 +106,62 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
             transition={{ delay: 0.2 }}
             className="mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-amber-900 text-center mb-8 font-amiri">
+            <h2 className="text-3xl md:text-4xl font-bold text-emerald-600 text-center mb-8 font-arabic-serif">
               ما هي قيمنا؟
             </h2>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="text-center border-amber-200 hover:border-amber-400 transition-colors">
+              <Card className="text-center border-2 border-emerald-100 hover:shadow-xl transition-all">
                 <CardHeader>
-                  <div className="w-16 h-16 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-amber-600" />
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                    <BookOpen className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-amber-800">الإخلاص</CardTitle>
+                  <CardTitle className="text-emerald-600 font-arabic-serif">الإخلاص</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-amber-700">
+                  <p className="text-sm text-gray-600 font-arabic-sans">
                     كل ما نقدمه يهدف إلى رضا الله
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="text-center border-green-200 hover:border-green-400 transition-colors">
+              <Card className="text-center border-2 border-emerald-100 hover:shadow-xl transition-all">
                 <CardHeader>
-                  <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-green-600" />
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                    <BookOpen className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-green-800">الجودة</CardTitle>
+                  <CardTitle className="text-emerald-600 font-arabic-serif">الجودة</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-green-700">
+                  <p className="text-sm text-gray-600 font-arabic-sans">
                     نحرص على تقديم محتوى تعليمي وترفيهي بمستوى عالٍ من الاحترافية
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="text-center border-blue-200 hover:border-blue-400 transition-colors">
+              <Card className="text-center border-2 border-emerald-100 hover:shadow-xl transition-all">
                 <CardHeader>
-                  <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-blue-600" />
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                    <BookOpen className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-blue-800">الشمولية</CardTitle>
+                  <CardTitle className="text-emerald-600 font-arabic-serif">الشمولية</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-blue-700">
+                  <p className="text-sm text-gray-600 font-arabic-sans">
                     نهتم بتلبية احتياجات جميع الفئات العمرية
                   </p>
                 </CardContent>
               </Card>
 
-              <Card className="text-center border-purple-200 hover:border-purple-400 transition-colors">
+              <Card className="text-center border-2 border-orange-100 hover:shadow-xl transition-all">
                 <CardHeader>
-                  <div className="w-16 h-16 mx-auto bg-purple-100 rounded-full flex items-center justify-center mb-4">
-                    <BookOpen className="w-8 h-8 text-purple-600" />
+                  <div className="w-16 h-16 mx-auto bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                    <BookOpen className="w-8 h-8 text-white" />
                   </div>
-                  <CardTitle className="text-purple-800">الإبداع</CardTitle>
+                  <CardTitle className="text-orange-600 font-arabic-serif">الإبداع</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-purple-700">
+                  <p className="text-sm text-gray-600 font-arabic-sans">
                     نبتكر طرقًا جديدة تجمع بين التعليم والمتعة لتعزيز الإيمان
                   </p>
                 </CardContent>
@@ -173,16 +174,16 @@ export function AboutUsPage({ onBack }: AboutUsPageProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-center bg-white rounded-xl p-8 shadow-lg"
+            className="text-center bg-white rounded-xl p-8 shadow-xl border-2 border-emerald-100"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-amber-900 mb-8 font-amiri">
+            <h2 className="text-3xl md:text-4xl font-bold text-emerald-600 mb-8 font-arabic-serif">
               تعرف على التزامنا
             </h2>
             <div className="max-w-4xl mx-auto">
-              <p className="text-lg text-amber-800 leading-relaxed mb-8">
+              <p className="text-lg text-gray-700 leading-relaxed mb-8 font-arabic-sans">
                 نحن في بستان الإيمان ملتزمون بأن نكون شريكك الدائم في رحلتك نحو رضا الله. هدفنا هو تقديم تجربة تعليمية فريدة تشعل شغفك بالدين، وتمنحك الأدوات اللازمة لنقل هذا الشغف إلى من حولك.
               </p>
-              <p className="text-xl text-amber-900 font-bold mb-8">
+              <p className="text-xl text-emerald-600 font-bold mb-8 font-arabic-serif">
                 انضم إلينا اليوم وازرع في قلبك بذرة الإيمان، لتنمو وتُثمر نورًا وهداية!
               </p>
             </div>
