@@ -46,16 +46,16 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
             <div className="flex items-center space-x-3 space-x-reverse">
               <Button
                 onClick={onLoginClick}
-                className="bg-white/20 hover:bg-white/30 text-white border-0 px-4 md:px-6 py-2 backdrop-blur-sm transition-all hover:scale-105"
+                className="bg-white/20 hover:bg-white/30 text-white border-0 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base backdrop-blur-sm transition-all hover:scale-105"
               >
-                <User className="w-4 h-4 ml-2" />
+                <User className="w-4 h-4 mr-2" />
                 تسجيل الدخول
               </Button>
               <Button
                 onClick={onRegisterClick}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-4 md:px-6 py-2 font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                className="bg-gradient-to-r from-orange-500 to-orange-600 border-0 text-white hover:from-orange-600 hover:to-orange-700 px-3 sm:px-4 md:px-6 py-2 text-sm sm:text-base font-bold transition-all shadow-lg hover:shadow-xl hover:scale-105"
               >
-                <Sparkles className="w-4 h-4 ml-2" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 ابدأ الآن
               </Button>
             </div>
@@ -130,18 +130,18 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 font-arabic-serif px-10 py-6 text-xl shadow-2xl transform hover:scale-105 transition-all"
+              className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 font-arabic-serif px-6 sm:px-10 py-4 sm:py-6 text-lg sm:text-xl shadow-2xl transform hover:scale-105 transition-all"
             >
-              <Sparkles className="ml-2 h-6 w-6" />
+              <Sparkles className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
               ابدأ رحلتك التعليمية مجاناً
             </Button>
             <Button
               onClick={onQuranReader}
               size="lg"
               variant="outline"
-              className="border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 px-10 py-6 text-xl transform hover:scale-105 transition-all"
+              className="border-2 border-emerald-500 text-emerald-700 hover:bg-emerald-50 px-6 sm:px-10 py-4 sm:py-6 text-lg sm:text-xl transform hover:scale-105 transition-all"
             >
-              <BookOpen className="ml-2 h-6 w-6" />
+              <BookOpen className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
               المصحف الإلكتروني
             </Button>
           </div>
@@ -206,7 +206,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                       <div className="space-y-2">
                         {journey.features.map((feature, i) => (
                           <div key={i} className="flex items-center text-sm text-gray-600">
-                            <CheckCircle className="w-4 h-4 ml-2 text-emerald-500" />
+                            <CheckCircle className="w-4 h-4 mr-2 text-emerald-500" />
                             {feature}
                           </div>
                         ))}
@@ -338,18 +338,18 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-white text-emerald-600 hover:bg-gray-100 px-12 py-6 text-xl font-bold shadow-xl transform hover:scale-105 transition-all"
+              className="bg-white text-emerald-600 hover:bg-gray-100 px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl font-bold shadow-xl transform hover:scale-105 transition-all"
             >
-              <Sparkles className="ml-2 h-6 w-6" />
+              <Sparkles className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
               سجل الآن مجاناً
             </Button>
             <Button
               onClick={onAboutUs}
               size="lg"
               variant="outline"
-              className="border-2 border-white text-white hover:bg-white/10 px-12 py-6 text-xl transform hover:scale-105 transition-all"
+              className="border-2 border-white text-white hover:bg-white/10 px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl transform hover:scale-105 transition-all"
             >
-              <Info className="ml-2 h-6 w-6" />
+              <Info className="mr-2 h-5 w-5 sm:h-6 sm:w-6" />
               اعرف المزيد
             </Button>
           </div>
@@ -362,7 +362,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center mb-4">
-                <div className="relative w-12 h-12 ml-3">
+                <div className="relative w-12 h-12 mr-3">
                   <img src={logoImage} alt="بستان الإيمان" className="w-full h-full object-contain" />
                 </div>
                 <h4 className="text-2xl font-bold font-amiri">بستان الإيمان</h4>
