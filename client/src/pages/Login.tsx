@@ -89,26 +89,26 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-warm-white flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-md">
         <Card className="islamic-card">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-islamic-green rounded-full flex items-center justify-center">
-                <BookOpen className="text-white" size={32} />
+          <CardHeader className="text-center p-4 sm:p-6">
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-islamic-green rounded-full flex items-center justify-center">
+                <BookOpen className="text-white" size={28} />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold font-arabic-serif text-islamic-green">
+            <CardTitle className="text-xl sm:text-2xl font-bold font-arabic-serif text-islamic-green">
               تسجيل الدخول
             </CardTitle>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 text-sm sm:text-base">
               مرحبًا بك في بستان الإيمان
             </p>
           </CardHeader>
           
-          <CardContent className="space-y-6">
-            <div className="text-center mb-6">
-              <p className="text-gray-700 mb-6 arabic-text">
+          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+            <div className="text-center mb-4 sm:mb-6">
+              <p className="text-gray-700 mb-4 sm:mb-6 arabic-text text-sm sm:text-base">
                 سجل دخولك للوصول إلى دوراتك وتتبع تقدمك في حفظ القرآن الكريم
               </p>
             </div>
@@ -167,11 +167,11 @@ export default function Login() {
 
                 <Button 
                   type="submit"
-                  className="btn-islamic-primary w-full py-3 text-lg font-semibold"
+                  className="btn-islamic-primary w-full py-2.5 sm:py-3 text-base sm:text-lg font-semibold"
                   disabled={loginMutation.isPending}
                   data-testid="button-login"
                 >
-                  <LogIn className="ml-2" size={20} />
+                  <LogIn className="ml-2" size={18} />
                   {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
                 </Button>
               </form>
@@ -205,23 +205,23 @@ export default function Login() {
         </Card>
 
         {/* Features Section */}
-        <div className="mt-8 grid grid-cols-1 gap-4">
+        <div className="mt-6 sm:mt-8 grid grid-cols-1 gap-3 sm:gap-4">
           <Card className="islamic-card">
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <BookOpen className="text-islamic-green" size={24} />
-                <div>
-                  <h3 className="font-semibold">حفظ القرآن الكريم</h3>
-                  <p className="text-sm text-gray-600">تتبع تقدمك في الحفظ</p>
+                <BookOpen className="text-islamic-green flex-shrink-0" size={20} />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">حفظ القرآن الكريم</h3>
+                  <p className="text-xs sm:text-sm text-gray-600">تتبع تقدمك في الحفظ</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="islamic-card">
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <LogIn className="text-warm-gold" size={24} />
+                <LogIn className="text-warm-gold flex-shrink-0" size={20} />
                 <div>
                   <h3 className="font-semibold">الدورات التعليمية</h3>
                   <p className="text-sm text-gray-600">التسجيل في الدورات الإسلامية</p>

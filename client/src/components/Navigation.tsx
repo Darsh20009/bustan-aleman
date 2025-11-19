@@ -49,15 +49,15 @@ export default function Navigation() {
 
   return (
     <nav className="bg-white dark:bg-gray-900 shadow-lg sticky top-0 z-50 transition-colors">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center py-4">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="flex justify-between items-center py-3 sm:py-4">
           {/* Logo */}
           <Link href="/">
-            <div className="flex items-center space-x-reverse space-x-4 cursor-pointer">
+            <div className="flex items-center space-x-reverse space-x-2 sm:space-x-4 cursor-pointer">
               <img 
                 src="/bustan-logo.png" 
                 alt="بستان الإيمان" 
-                className="h-16 w-auto object-contain"
+                className="h-12 sm:h-16 w-auto object-contain"
               />
             </div>
           </Link>
@@ -68,28 +68,29 @@ export default function Navigation() {
           </div>
 
           {/* Auth Buttons */}
-          <div className="flex items-center space-x-reverse space-x-4">
+          <div className="flex items-center space-x-reverse space-x-2 sm:space-x-4">
             <ThemeToggle />
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="flex items-center space-x-reverse space-x-2"
+                    size="sm"
+                    className="flex items-center space-x-reverse space-x-2 px-2 sm:px-3"
                     data-testid="user-menu-trigger"
                   >
                     {(user as any)?.profileImageUrl ? (
                       <img 
                         src={(user as any).profileImageUrl} 
                         alt={(user as any)?.firstName || "المستخدم"} 
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-islamic-green rounded-full flex items-center justify-center">
-                        <User className="text-white" size={16} />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-islamic-green rounded-full flex items-center justify-center">
+                        <User className="text-white" size={14} />
                       </div>
                     )}
-                    <span className="hidden sm:block">
+                    <span className="hidden sm:block text-sm">
                       {(user as any)?.firstName || "المستخدم"}
                     </span>
                   </Button>
@@ -121,15 +122,17 @@ export default function Navigation() {
                 <Link href="/login">
                   <Button 
                     variant="outline"
-                    className="hidden sm:flex px-4 py-2 text-islamic-green hover:bg-islamic-green hover:text-white transition-colors rounded-lg border border-islamic-green"
+                    size="sm"
+                    className="hidden sm:flex px-3 sm:px-4 text-islamic-green hover:bg-islamic-green hover:text-white transition-colors rounded-lg border border-islamic-green"
                     data-testid="button-login"
                   >
-                    تسجيل الدخول
+                    <span className="text-sm">تسجيل الدخول</span>
                   </Button>
                 </Link>
                 <Link href="/register">
                   <Button 
-                    className="btn-islamic-primary px-4 py-2"
+                    size="sm"
+                    className="btn-islamic-primary px-3 sm:px-4 text-xs sm:text-sm"
                     data-testid="button-register"
                   >
                     إنشاء حساب

@@ -39,22 +39,22 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="hero-section">
         <div className="islamic-pattern-overlay"></div>
-        <div className="hero-content container mx-auto px-4">
+        <div className="hero-content container mx-auto px-4 sm:px-6 lg:px-8">
           <h1 
-            className="text-5xl md:text-6xl font-bold font-arabic-serif mb-6 animate-fade-in"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold font-arabic-serif mb-4 sm:mb-6 animate-fade-in"
             data-testid="hero-title"
           >
             بستان الإيمان
           </h1>
-          <p className="text-xl md:text-2xl mb-4 opacity-90 animate-slide-in-right">
+          <p className="text-lg sm:text-xl md:text-2xl mb-3 sm:mb-4 opacity-90 animate-slide-in-right">
             فلنستكشف تعاليم الدين
           </p>
-          <p className="text-lg mb-8 opacity-80 animate-slide-in-left">
+          <p className="text-base sm:text-lg mb-6 sm:mb-8 opacity-80 animate-slide-in-left">
             مع القارئ الشيخ: أحمد عبدالعزيز (أبو مازن)
           </p>
           <Button 
             onClick={() => setLocation("/courses")}
-            className="btn-islamic-secondary px-8 py-3 text-lg font-semibold animate-fade-in"
+            className="btn-islamic-secondary px-6 py-2.5 sm:px-8 sm:py-3 text-base sm:text-lg font-semibold animate-fade-in"
             data-testid="button-start-journey"
           >
             ابدأ رحلتك الآن
@@ -63,25 +63,25 @@ export default function Landing() {
       </section>
 
       {/* Hero Images Section */}
-      <section className="py-12 bg-light-beige">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="py-8 sm:py-12 bg-light-beige">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             <img 
               src="https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
               alt="Islamic architecture" 
-              className="rounded-xl shadow-lg w-full h-64 object-cover animate-fade-in"
+              className="rounded-lg sm:rounded-xl shadow-lg w-full h-48 sm:h-56 md:h-64 object-cover animate-fade-in"
               data-testid="img-islamic-architecture"
             />
             <img 
               src="https://images.unsplash.com/photo-1544816155-12df9643f363?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
               alt="Person holding Quran" 
-              className="rounded-xl shadow-lg w-full h-64 object-cover animate-fade-in"
+              className="rounded-lg sm:rounded-xl shadow-lg w-full h-48 sm:h-56 md:h-64 object-cover animate-fade-in"
               data-testid="img-quran-reading"
             />
             <img 
               src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
               alt="Student reading book" 
-              className="rounded-xl shadow-lg w-full h-64 object-cover animate-fade-in"
+              className="rounded-lg sm:rounded-xl shadow-lg w-full h-48 sm:h-56 md:h-64 object-cover animate-fade-in"
               data-testid="img-student-reading"
             />
           </div>
@@ -89,13 +89,13 @@ export default function Landing() {
       </section>
 
       {/* Upcoming Courses Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold font-arabic-serif text-islamic-green mb-4">
+      <section className="py-10 sm:py-16 bg-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-arabic-serif text-islamic-green mb-3 sm:mb-4">
               الدورات القادمة
             </h2>
-            <p className="text-xl text-gray-600">رحلة تعليمية حول العالم</p>
+            <p className="text-base sm:text-lg md:text-xl text-gray-600">رحلة تعليمية حول العالم</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-testid="courses-grid">
@@ -123,30 +123,30 @@ export default function Landing() {
       </section>
 
       {/* What We Can Do Section */}
-      <section className="py-16 bg-light-beige">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
+      <section className="py-10 sm:py-16 bg-light-beige">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+            <div className="order-2 lg:order-1">
               <img 
                 src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
                 alt="Islamic lamp on table" 
-                className="rounded-xl shadow-lg w-full h-auto"
+                className="rounded-lg sm:rounded-xl shadow-lg w-full h-auto"
                 data-testid="img-islamic-lamp"
               />
             </div>
-            <div className="animate-slide-in-left">
-              <h2 className="text-4xl font-bold font-arabic-serif text-islamic-green mb-6">
+            <div className="animate-slide-in-left order-1 lg:order-2">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-arabic-serif text-islamic-green mb-4 sm:mb-6">
                 ما يمكننا فعله من أجلك
               </h2>
-              <p className="text-lg text-gray-700 leading-relaxed mb-6 arabic-text">
+              <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-4 sm:mb-6 arabic-text">
                 نحن هنا لنساعدك على تحقيق أهدافك الدينية والتعليمية. سواء كنت تسعى لحفظ القرآن الكريم، تعلم الفقه، أو تحسين علاقتك مع الله، فريقنا هنا لدعمك بكل ما تحتاجه.
               </p>
-              <p className="text-lg text-gray-700 leading-relaxed mb-8 arabic-text">
+              <p className="text-base sm:text-lg text-gray-700 leading-relaxed mb-6 sm:mb-8 arabic-text">
                 في كل خطوة على الطريق، نحن معك لتحقيق التميز والارتقاء الروحي. فهل أنت مستعد للانطلاق في رحلة العلم والإيمان؟ نحن هنا من أجلك!
               </p>
               <Button 
                 onClick={() => setLocation("/about")}
-                className="btn-islamic-primary px-8 py-3 font-semibold"
+                className="btn-islamic-primary px-6 py-2.5 sm:px-8 sm:py-3 font-semibold text-sm sm:text-base"
                 data-testid="button-learn-more"
               >
                 تعرف علينا أكثر
