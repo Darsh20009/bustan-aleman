@@ -1,0 +1,45 @@
+==> Downloading cache...
+==> Cloning from https://github.com/Darsh20009/youspeak
+==> Checking out commit c7d52015f39cd4dc2d7d09c312469ac716efdc17 in branch main
+==> Downloaded 596MB in 4s. Extraction took 11s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+> youspeak@0.1.0 postinstall
+> prisma generate
+Prisma schema loaded from prisma/schema.prisma
+✔ Generated Prisma Client (v6.19.0) to ./node_modules/@prisma/client in 290ms
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+up to date, audited 506 packages in 3s
+164 packages are looking for funding
+  run `npm fund` for details
+5 vulnerabilities (3 low, 1 moderate, 1 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+Some issues need review, and may require choosing
+a different dependency.
+Run `npm audit` for details.
+> youspeak@0.1.0 build
+> next build
+   ▲ Next.js 16.0.1 (Turbopack)
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 14.1s
+   Running TypeScript ...
+Failed to compile.
+./app/dashboard/student/StudentDashboardClient.tsx:250:55
+Type error: Type '{ isActive: boolean; onCartUpdate: () => Promise<void>; }' is not assignable to type 'IntrinsicAttributes'.
+  Property 'isActive' does not exist on type 'IntrinsicAttributes'.
+  248 |             {activeTab === 'sessions' && <SessionsTab isActive={isActive} />}
+  249 |             {activeTab === 'homework' && <HomeworkTab isActive={isActive} />}
+> 250 |             {activeTab === 'packages' && <PackagesTab isActive={isActive} onCartUpdate={fetchCartCount} />}
+      |                                                       ^
+  251 |             {activeTab === 'chat' && isActive && <ChatTab />}
+  252 |           </div>
+  253 |         </div>
+Next.js build worker exited with code: 1 and signal: null
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
