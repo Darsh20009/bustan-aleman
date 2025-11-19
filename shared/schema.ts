@@ -81,6 +81,10 @@ export const courses = bustanSchema.table("courses", {
   textColor: varchar("text_color").default("#1f2937"), // Text color
   // Student access control
   selectedStudentIds: varchar("selected_student_ids").array().default(sql`ARRAY[]::varchar[]`), // Specific students who can access (empty = all enrolled)
+  // Certificate customization
+  certificateTemplateUrl: varchar("certificate_template_url"), // Custom certificate template/design uploaded by sheikh
+  generateCertificate: boolean("generate_certificate").default(true), // Auto-generate certificate on course completion
+  certificateType: varchar("certificate_type").default("auto"), // auto, custom, none
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -415,13 +419,15 @@ export const courseUploads = bustanSchema.table("course_uploads", {
 export const examQuestions = bustanSchema.table("exam_questions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
+  questionType: varchar("question_type").default("multiple_choice"), // multiple_choice, essay, mixed
   questionAr: text("question_ar").notNull(),
   questionEn: text("question_en"),
-  optionsAr: text("options_ar").notNull(), // JSON array of options in Arabic
-  optionsEn: text("options_en"), // JSON array of options in English
-  correctAnswer: integer("correct_answer").notNull(), // Index of correct option (0-based)
+  optionsAr: text("options_ar"), // JSON array of options in Arabic (nullable for essay questions)
+  optionsEn: text("options_en"), // JSON array of options in English (nullable for essay questions)
+  correctAnswer: integer("correct_answer"), // Index of correct option (0-based) - null for essay
   explanation: text("explanation"), // Explanation for the correct answer
   points: integer("points").default(1), // Points for this question
+  gradingType: varchar("grading_type").default("auto"), // auto, manual, mixed
   orderIndex: integer("order_index").notNull().default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -433,9 +439,15 @@ export const examAttempts = bustanSchema.table("exam_attempts", {
   studentId: varchar("student_id").references(() => users.id).notNull(),
   courseId: varchar("course_id").references(() => courses.id).notNull(),
   answers: text("answers").notNull(), // JSON object mapping question ID to answer index
-  score: integer("score").notNull(), // Total score achieved
+  score: integer("score").notNull(), // Total score achieved (auto-graded)
   totalPoints: integer("total_points").notNull(), // Total possible points
   percentage: decimal("percentage", { precision: 5, scale: 2 }).notNull(), // Percentage score
+  // Manual grading fields
+  manualScore: integer("manual_score"), // Manual score from sheikh (overrides auto score)
+  manualFeedback: text("manual_feedback"), // Sheikh's feedback on essay/manual questions
+  gradedBy: varchar("graded_by").references(() => users.id), // Sheikh who manually graded
+  gradedAt: timestamp("graded_at"), // When manual grading was completed
+  gradingStatus: varchar("grading_status").default("auto_graded"), // auto_graded, pending_manual, manually_graded
   passed: boolean("passed").notNull().default(false), // true if >= 75%
   startTime: timestamp("start_time").notNull(),
   submitTime: timestamp("submit_time").notNull(),
@@ -482,6 +494,25 @@ export const coursePayments = bustanSchema.table("course_payments", {
   index("course_payments_user_idx").on(table.userId),
   index("course_payments_course_idx").on(table.courseId),
   index("course_payments_status_idx").on(table.status),
+]);
+
+// Course reviews - expert reviews and ratings for courses
+export const courseReviews = bustanSchema.table("course_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  reviewerId: varchar("reviewer_id").references(() => users.id).notNull(), // Expert reviewer
+  rating: integer("rating").notNull(), // 1-5 stars
+  reviewTextAr: text("review_text_ar"),
+  reviewTextEn: text("review_text_en"),
+  strengths: text("strengths"), // JSON array of course strengths
+  improvements: text("improvements"), // JSON array of suggested improvements
+  isPublic: boolean("is_public").default(true), // Show to students
+  reviewStatus: varchar("review_status").default("published"), // draft, published, archived
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("course_reviews_course_idx").on(table.courseId),
+  index("course_reviews_reviewer_idx").on(table.reviewerId),
 ]);
 
 // Live session rooms - for built-in live classes (replaces Zoom)
@@ -864,6 +895,12 @@ export const insertCoursePaymentSchema = createInsertSchema(coursePayments).omit
   paymentDate: true,
 });
 
+export const insertCourseReviewSchema = createInsertSchema(courseReviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertSessionAccessControlSchema = createInsertSchema(sessionAccessControl).omit({
   id: true,
   createdAt: true,
@@ -995,6 +1032,8 @@ export type ShoppingCartItem = typeof shoppingCart.$inferSelect;
 export type InsertShoppingCartItem = z.infer<typeof insertShoppingCartSchema>;
 export type CoursePayment = typeof coursePayments.$inferSelect;
 export type InsertCoursePayment = z.infer<typeof insertCoursePaymentSchema>;
+export type CourseReview = typeof courseReviews.$inferSelect;
+export type InsertCourseReview = z.infer<typeof insertCourseReviewSchema>;
 export type SessionAccessControl = typeof sessionAccessControl.$inferSelect;
 export type InsertSessionAccessControl = z.infer<typeof insertSessionAccessControlSchema>;
 export type Certificate = typeof certificates.$inferSelect;

@@ -35,6 +35,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   **Quran Reader**: Displays Quran text, translations, tafsir, and allows selection of various reciters with audio playback. Includes features for word-level highlights and notes, memorization progress tracking (range-based, mastery levels, review scheduling), and daily reading statistics.
 -   **Student Dashboard**: Personalised welcome, profile information, stats cards (enrolled courses, certificates, memorized surahs), news/announcements, and quick action buttons.
 -   **Splash Screen**: Animated Quran book opening sequence with a green/orange theme and loading progress.
+-   **Course Management**: Sheikh can create customizable courses with colors, videos, files, and content. Supports both auto and manual grading for exams, certificate customization (upload templates or auto-generate), and expert reviews for courses.
 
 ### System Design Choices
 -   **Type Safety**: Achieved across the stack using TypeScript and Drizzle ORM.
