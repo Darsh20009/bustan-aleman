@@ -29,7 +29,8 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   **Real-time Communication**: WebSocket server (`ws`) is implemented on `/ws` for teacher-student chat, with messages stored in a dedicated database table.
 -   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using PostgreSQL-backed Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin).
 -   **Quran Integration**: Comprehensive integration with AlQuran.Cloud API for 114 surahs, Arabic text (Uthmani), English translations (Sahih International), Arabic Tafsir, and audio recitations from 8 renowned reciters. Features dynamic audio loading, auto-play, repeat, and continuous playback.
--   **Database**: PostgreSQL is used with Drizzle ORM. Local development uses a local PostgreSQL instance (Helium), while production targets Neon Serverless. Supports automatic bcrypt password upgrades for legacy accounts.
+-   **Database**: PostgreSQL with Drizzle ORM. **Production uses AWS RDS (eu-north-1)** with secure SSL connections using official AWS CA certificates (`rejectUnauthorized: true`). Local development can use Neon Serverless or local PostgreSQL. Supports automatic bcrypt password upgrades for legacy accounts.
+-   **SEO & Performance**: Enhanced meta tags for search engines and social media (Open Graph, Twitter cards), dns-prefetch for fonts, optimized font loading with media="print" technique, and PWA-ready meta tags for mobile app experience.
 
 ### Feature Specifications
 -   **Quran Reader**: Displays Quran text, translations, tafsir, and allows selection of various reciters with audio playback. Includes features for word-level highlights and notes, memorization progress tracking (range-based, mastery levels, review scheduling), and daily reading statistics.

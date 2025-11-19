@@ -4,8 +4,23 @@ import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const { Pool: PgPool } = pg;
+
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load AWS RDS CA certificate bundle for secure SSL connections
+let awsRdsCa: string | undefined;
+try {
+  awsRdsCa = readFileSync(join(__dirname, 'aws-rds-global-bundle.pem'), 'utf8');
+} catch (err) {
+  console.log('⚠️  AWS RDS CA certificate not found, SSL verification will be disabled');
+}
 
 // Configure WebSocket to accept self-signed certificates in development (for Neon)
 class CustomWebSocket extends ws {
@@ -59,15 +74,29 @@ async function tryAwsRdsConnection(): Promise<boolean> {
 
   console.log(`🔗 Attempting to connect to AWS RDS at ${process.env.AWS_DATABASE_HOST}:${process.env.AWS_DATABASE_PORT}`);
   
+  // Configure SSL with proper AWS RDS CA certificate
+  const sslConfig = awsRdsCa 
+    ? {
+        rejectUnauthorized: true,
+        ca: awsRdsCa,
+      }
+    : {
+        rejectUnauthorized: false,  // Fallback if CA certificate is not available
+      };
+  
+  if (!awsRdsCa) {
+    console.log('⚠️  AWS RDS SSL: Using insecure connection (CA certificate missing)');
+  } else {
+    console.log('🔒 AWS RDS SSL: Using secure connection with official CA certificate');
+  }
+  
   const pgPool = new PgPool({
     host: process.env.AWS_DATABASE_HOST,
     port: parseInt(process.env.AWS_DATABASE_PORT || '5432'),
     database: process.env.AWS_DATABASE_NAME,
     user: process.env.AWS_DATABASE_USER,
     password: process.env.AWS_DATABASE_PASSWORD,
-    ssl: {
-      rejectUnauthorized: false  // TODO: Use AWS RDS CA certificate in production
-    },
+    ssl: sslConfig,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
