@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import bustanLogo from "@assets/bustan aleman logo_1762998406195.png";
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -55,7 +56,7 @@ export default function Navigation() {
           <Link href="/">
             <div className="flex items-center space-x-reverse space-x-2 sm:space-x-4 cursor-pointer">
               <img 
-                src="/bustan-logo.png" 
+                src={bustanLogo} 
                 alt="بستان الإيمان" 
                 className="h-12 sm:h-16 w-auto object-contain"
               />

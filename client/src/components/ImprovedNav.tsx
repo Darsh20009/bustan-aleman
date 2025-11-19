@@ -12,6 +12,7 @@ import {
 } from './ui/dropdown-menu';
 import { Badge } from './ui/badge';
 import { useQuery } from '@tanstack/react-query';
+import bustanLogo from "@assets/bustan aleman logo_1762998406195.png";
 
 interface ImprovedNavProps {
   onNavigate: (path: string) => void;
@@ -84,7 +85,7 @@ export function ImprovedNav({ onNavigate }: ImprovedNavProps) {
             data-testid="button-logo"
           >
             <img 
-              src="/bustan-logo.png" 
+              src={bustanLogo} 
               alt="بستان الإيمان" 
               className="h-12 w-auto object-contain"
             />
