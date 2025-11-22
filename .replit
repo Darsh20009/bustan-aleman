@@ -45,3 +45,18 @@ waitForPort = 5000
 [agent]
 integrations = ["javascript_log_in_with_replit==1.0.0", "javascript_database==1.0.0", "javascript_mem_db==1.0.0"]
 expertMode = true
+
+[userenv]
+
+[userenv.shared]
+AWS_PGHOST = "bustanaleman.cfcagsig2mjq.eu-north-1.rds.amazonaws.com"
+AWS_PGPORT = "5432"
+AWS_PGUSER = "postgres"
+AWS_PGPASSWORD = "18082009"
+AWS_PGDATABASE = "postgres"
+AWS_DATABASE_HOST = "bustanaleman.cfcagsig2mjq.eu-north-1.rds.amazonaws.com"
+AWS_DATABASE_PORT = "5432"
+AWS_DATABASE_USER = "postgres"
+AWS_DATABASE_PASSWORD = "18082009"
+AWS_DATABASE_NAME = "postgres"
+ENABLE_AWS_RDS = "true"
