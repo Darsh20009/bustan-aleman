@@ -231,8 +231,8 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="border-0 shadow-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+            <Card className="border-0 shadow-2xl bg-white/10 backdrop-blur-md text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
               <CardHeader className="relative z-10">
                 <CardTitle className="text-2xl flex items-center gap-3 text-white">
                   <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -245,22 +245,22 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 space-y-3">
                   <div>
                     <h4 className="font-bold text-lg mb-2 text-white">الحفظ الجديد:</h4>
-                    <p className="text-amber-50 text-lg">{parseAssignmentRanges(todayAssignment.memorization)}</p>
+                    <p className="text-white/90 text-lg">{parseAssignmentRanges(todayAssignment.memorization)}</p>
                   </div>
                   <div>
                     <h4 className="font-bold text-lg mb-2 text-white">المراجعة:</h4>
-                    <p className="text-amber-50 text-lg">{parseAssignmentRanges(todayAssignment.review)}</p>
+                    <p className="text-white/90 text-lg">{parseAssignmentRanges(todayAssignment.review)}</p>
                   </div>
                   {todayAssignment.mistakes && (
                     <div>
                       <h4 className="font-bold text-lg mb-2 text-white">الأخطاء:</h4>
-                      <p className="text-amber-50">{todayAssignment.mistakes}</p>
+                      <p className="text-white/90">{todayAssignment.mistakes}</p>
                     </div>
                   )}
                   {todayAssignment.notes && (
                     <div>
                       <h4 className="font-bold text-lg mb-2 text-white">ملاحظات:</h4>
-                      <p className="text-amber-50">{todayAssignment.notes}</p>
+                      <p className="text-white/90">{todayAssignment.notes}</p>
                     </div>
                   )}
                 </div>
@@ -296,8 +296,8 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                   >
                     <Card className={`border-0 shadow-xl overflow-hidden ${
                       session.isEnabled
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                        : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white'
+                        ? 'bg-white/20 backdrop-blur-md text-white border border-white/30'
+                        : 'bg-white/10 backdrop-blur-md text-white border border-white/20'
                     }`}>
                       <CardContent className="p-6">
                         <div className="flex items-center justify-between">
@@ -333,7 +333,7 @@ export default function MySessionPage({ onBack }: MySessionPageProps = {}) {
                             disabled={!session.isEnabled || joiningSession === session.id}
                             className={`${
                               session.isEnabled
-                                ? 'bg-white text-emerald-700 hover:bg-emerald-50'
+                                ? 'bg-white text-green-800 hover:bg-white/90'
                                 : 'bg-white/20 text-white cursor-not-allowed'
                             } shadow-lg px-8 py-6 text-lg font-bold`}
                             data-testid={`button-join-session-${session.id}`}

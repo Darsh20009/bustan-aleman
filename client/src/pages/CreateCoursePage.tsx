@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, queryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import { queryClient } from '../lib/queryClient';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
@@ -66,10 +67,8 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
 
   const createCourseMutation = useMutation({
     mutationFn: async (data: CourseFormData & { modules: typeof modules }) => {
-      return await apiRequest('/api/supervisor/courses', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('/api/supervisor/courses', 'POST', data);
+      return response;
     },
     onSuccess: () => {
       toast({
