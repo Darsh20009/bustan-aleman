@@ -192,7 +192,7 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
 
             <Button
               onClick={onBack}
-              className="btn-islamic-secondary text-islamic-emerald border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans backdrop-blur-sm"
+              className="btn-islamic-secondary border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans backdrop-blur-sm text-[#062909] bg-[#d4191900]"
               data-testid="button-back-to-home"
             >
               <ArrowRight className="ml-2 h-4 w-4" />
