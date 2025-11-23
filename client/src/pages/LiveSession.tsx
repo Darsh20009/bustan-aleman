@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { useRoute } from 'wouter';
-import LiveSessionRoom from './LiveSessionRoom';
+import JitsiMeetSession from './JitsiMeetSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { Loader2 } from 'lucide-react';
 
 export default function LiveSession() {
-  const [, params] = useRoute('/session/:roomToken');
+  const [, params] = useRoute('/session/:sessionId');
   const { user, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -19,15 +19,15 @@ export default function LiveSession() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      setLocation('/login');
+      setLocation('/');
     }
   }, [isLoading, user, setLocation]);
 
   useEffect(() => {
-    if (!isLoading && user && !params?.roomToken) {
+    if (!isLoading && user && !params?.sessionId) {
       setLocation('/my-session');
     }
-  }, [isLoading, user, params?.roomToken, setLocation]);
+  }, [isLoading, user, params?.sessionId, setLocation]);
 
   if (isLoading) {
     return (
@@ -40,7 +40,7 @@ export default function LiveSession() {
     );
   }
 
-  if (!user || !params?.roomToken) {
+  if (!user || !params?.sessionId) {
     return null;
   }
 
@@ -49,10 +49,8 @@ export default function LiveSession() {
   };
 
   return (
-    <LiveSessionRoom
-      roomId={params.roomToken}
-      studentId={user.role === 'student' ? user.id : ''}
-      sheikhId={user.role === 'supervisor' ? user.id : ''}
+    <JitsiMeetSession
+      sessionId={params.sessionId}
       onLeave={handleLeave}
     />
   );
