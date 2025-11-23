@@ -30,6 +30,17 @@ interface StudentErrorsPageProps {
   onBack?: () => void;
 }
 
+interface StudentError {
+  id: string;
+  studentId: string;
+  surahNumber: number;
+  ayahNumber: number;
+  errorType: 'pronunciation' | 'tajweed' | 'memorization';
+  errorDescription: string;
+  recordedAt?: string;
+  sheikhId?: string;
+}
+
 export default function StudentErrorsPage({ studentId, onBack }: StudentErrorsPageProps) {
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -40,8 +51,15 @@ export default function StudentErrorsPage({ studentId, onBack }: StudentErrorsPa
     errorDescription: '',
   });
 
-  const { data: errors = [], isLoading } = useQuery({
+  const { data: errors = [], isLoading } = useQuery<StudentError[]>({
     queryKey: ['/api/sheikh/student-errors', studentId],
+    queryFn: async () => {
+      if (!studentId) return [];
+      const response = await fetch(`/api/sheikh/student-errors?studentId=${studentId}`);
+      if (!response.ok) throw new Error('Failed to fetch errors');
+      return response.json();
+    },
+    enabled: !!studentId,
   });
 
   const createErrorMutation = useMutation({
