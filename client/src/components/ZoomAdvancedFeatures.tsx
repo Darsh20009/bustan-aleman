@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -85,63 +87,66 @@ export default function ZoomAdvancedFeatures({
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const recordingRefRef = useRef<{ isRecording: boolean; chunks: BlobPart[] }>({ isRecording: false, chunks: [] });
 
-  // Recording controls - captures canvas frames and encodes to video
+  // Recording controls - capture screen instead of just canvas
   const startRecording = async () => {
     try {
-      const canvas = document.querySelector('canvas[data-testid="canvas-whiteboard"]') as HTMLCanvasElement;
-      if (!canvas) {
-        alert('لم يتم العثور على السبورة');
-        return;
-      }
-
       recordingRefRef.current = { isRecording: true, chunks: [] };
 
-      // Try captureStream first
       let stream: MediaStream | null = null;
+      
+      // Method 1: Try to get display media (entire screen/window)
       try {
-        stream = (canvas as any).captureStream?.(30);
+        stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            cursor: 'always',
+            displaySurface: 'window'
+          } as any,
+          audio: false
+        });
       } catch (e) {
-        console.warn('captureStream not supported, using manual frame capture');
+        console.warn('getDisplayMedia failed, trying canvas capture:', e);
+      }
+
+      // Method 2: Fallback to canvas capture
+      if (!stream) {
+        const canvas = document.querySelector('canvas[data-testid="canvas-whiteboard"]') as HTMLCanvasElement;
+        if (canvas && (canvas as any).captureStream) {
+          try {
+            stream = (canvas as any).captureStream(30);
+          } catch (e) {
+            console.warn('Canvas captureStream failed:', e);
+          }
+        }
       }
 
       if (!stream) {
-        // Fallback: Manual frame capture from canvas
-        const ctx = document.createElement('canvas').getContext('2d');
-        if (!ctx) throw new Error('Cannot create canvas context');
-        
-        // Create a writable stream using MediaRecorder with fake stream
-        const fakeStream = new MediaStream();
-        const videoTrack = new (window as any).OffscreenCanvas(canvas.width, canvas.height).convertToBlob();
-        
-        // Use canvas directly with canvas stream as fallback
-        const offscreenCanvas = canvas.cloneNode(true) as HTMLCanvasElement;
-        stream = (offscreenCanvas as any).captureStream?.(30);
-      }
-
-      if (!stream) {
-        alert('تعذر بدء التسجيل على هذا المتصفح');
+        alert('تعذر بدء التسجيل - يرجى السماح باستخدام الشاشة');
         return;
       }
 
       let mediaRecorder: MediaRecorder;
       try {
         mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'video/webm',
-          videoBitsPerSecond: 2500000
+          mimeType: 'video/webm;codecs=vp9'
         });
       } catch (e: any) {
-        console.warn('webm not supported, using default codec:', e);
-        mediaRecorder = new MediaRecorder(stream);
+        try {
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: 'video/webm;codecs=vp8'
+          });
+        } catch (e2: any) {
+          mediaRecorder = new MediaRecorder(stream);
+        }
       }
 
-      setupRecording(mediaRecorder, canvas);
+      setupRecording(mediaRecorder, stream);
     } catch (error) {
       console.error('❌ Recording error:', error);
       alert('خطأ في بدء التسجيل: ' + (error as any).message);
     }
   };
 
-  const setupRecording = (mediaRecorder: MediaRecorder, canvas: HTMLCanvasElement) => {
+  const setupRecording = (mediaRecorder: MediaRecorder, streamOrCanvas: MediaStream | HTMLCanvasElement) => {
     const chunks: BlobPart[] = [];
 
     mediaRecorder.ondataavailable = (e) => {
@@ -189,8 +194,57 @@ export default function ZoomAdvancedFeatures({
     setRecordingDuration(0);
   };
 
-  const downloadRecording = () => {
-    if (recordedBlob) {
+  const downloadRecording = async () => {
+    if (!recordedBlob) return;
+    
+    try {
+      // Show loading state
+      const progressAlert = alert('جاري تحويل التسجيل إلى MP4... يرجى الانتظار');
+      
+      const ffmpeg = new FFmpeg();
+      const baseURL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
+      
+      if (!ffmpeg.loaded) {
+        await ffmpeg.load({
+          coreURL: `${baseURL}/ffmpeg-core.js`,
+        });
+      }
+      
+      // Write WebM file to FFmpeg filesystem
+      await ffmpeg.writeFile('input.webm', await fetchFile(recordedBlob));
+      
+      // Convert WebM to MP4
+      await ffmpeg.exec([
+        '-i', 'input.webm',
+        '-c:v', 'libx264',
+        '-preset', 'ultrafast',
+        '-crf', '28',
+        '-c:a', 'aac',
+        'output.mp4'
+      ]);
+      
+      // Read output MP4
+      const data = await ffmpeg.readFile('output.mp4');
+      const mp4Blob = new Blob([data instanceof Uint8Array ? data : new TextEncoder().encode(data as string)], { type: 'video/mp4' });
+      
+      // Clean up
+      await ffmpeg.deleteFile('input.webm');
+      await ffmpeg.deleteFile('output.mp4');
+      
+      // Download MP4
+      const url = URL.createObjectURL(mp4Blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recording-${Date.now()}.mp4`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      alert('✅ تم تحميل التسجيل بنجاح');
+    } catch (error) {
+      console.error('❌ Conversion error:', error);
+      alert('خطأ في التحويل: ' + (error as any).message);
+      
+      // Fallback: Download as WebM
       const url = URL.createObjectURL(recordedBlob);
       const a = document.createElement('a');
       a.href = url;
@@ -337,9 +391,10 @@ export default function ZoomAdvancedFeatures({
                   onClick={downloadRecording}
                   className="flex-1 bg-white/10 border-white/20 hover:bg-white/20"
                   data-testid="button-download-recording"
+                  disabled={!recordedBlob}
                 >
                   <Download className="w-4 h-4 ml-2" />
-                  تحميل التسجيل
+                  تحميل MP4
                 </Button>
                 <Button
                   size="sm"
