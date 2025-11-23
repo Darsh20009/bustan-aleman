@@ -84,30 +84,41 @@ export default function ZoomAdvancedFeatures({
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
 
-  // Recording controls with actual MediaRecorder
+  // Recording controls - captures canvas (whiteboard) directly
   const startRecording = async () => {
     try {
       const canvas = document.querySelector('canvas[data-testid="canvas-whiteboard"]') as HTMLCanvasElement;
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { mediaSource: 'screen' },
-        audio: false
-      });
+      if (!canvas) {
+        alert('لم يتم العثور على السبورة');
+        return;
+      }
 
-      const audioContext = new AudioContext();
-      const mediaRecorder = new MediaRecorder(screenStream);
+      // Capture canvas stream at 30 FPS
+      const canvasStream = (canvas as any).captureStream(30);
+      const mediaRecorder = new MediaRecorder(canvasStream, {
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 2500000
+      });
+      
       const chunks: BlobPart[] = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        chunks.push(e.data);
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
       };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         setRecordedBlob(blob);
-        console.log('✅ Recording saved');
+        console.log('✅ Recording saved:', blob.size, 'bytes');
       };
 
-      mediaRecorder.start();
+      mediaRecorder.onerror = (error: any) => {
+        console.error('❌ Recording error:', error);
+      };
+
+      mediaRecorder.start(1000); // Collect data every 1 second
       setMediaRecorder(mediaRecorder);
       setIsRecording(true);
 
@@ -117,6 +128,7 @@ export default function ZoomAdvancedFeatures({
       (window as any).recordingInterval = interval;
     } catch (error) {
       console.error('❌ Recording error:', error);
+      alert('خطأ في بدء التسجيل: ' + (error as any).message);
     }
   };
 
@@ -224,7 +236,7 @@ export default function ZoomAdvancedFeatures({
               التسجيل
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 {isRecording ? (
@@ -237,6 +249,10 @@ export default function ZoomAdvancedFeatures({
                       {formatDuration(recordingDuration)}
                     </span>
                   </>
+                ) : recordedBlob ? (
+                  <Badge variant="secondary" className="bg-green-600/20">
+                    ✅ تم الحفظ بنجاح
+                  </Badge>
                 ) : (
                   <span className="text-white/60">لم يتم البدء</span>
                 )}
@@ -253,29 +269,44 @@ export default function ZoomAdvancedFeatures({
                     بدء التسجيل
                   </Button>
                 ) : (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={stopRecording}
-                      data-testid="button-stop-recording"
-                    >
-                      <Square className="w-4 h-4 ml-2" />
-                      إيقاف
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {}}
-                      data-testid="button-pause-recording"
-                    >
-                      <Pause className="w-4 h-4 ml-2" />
-                      إيقاف مؤقت
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={stopRecording}
+                    data-testid="button-stop-recording"
+                  >
+                    <Square className="w-4 h-4 ml-2" />
+                    إيقاف التسجيل
+                  </Button>
                 )}
               </div>
             </div>
+
+            {/* Download and Share Controls */}
+            {recordedBlob && !isRecording && (
+              <div className="flex gap-2 pt-3 border-t border-white/10">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={downloadRecording}
+                  className="flex-1 bg-white/10 border-white/20 hover:bg-white/20"
+                  data-testid="button-download-recording"
+                >
+                  <Download className="w-4 h-4 ml-2" />
+                  تحميل التسجيل
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={shareRecordingUrl}
+                  className="flex-1 bg-white/10 border-white/20 hover:bg-white/20"
+                  data-testid="button-share-recording"
+                >
+                  <Share2 className="w-4 h-4 ml-2" />
+                  مشاركة مع الطلاب
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
