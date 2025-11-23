@@ -170,7 +170,7 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
     <div className="min-h-screen bg-gradient-to-br from-pearl-cream via-desert-sand to-warm-white" dir="rtl">
       {/* Header */}
       <div className="bg-gradient-to-r from-islamic-emerald via-islamic-teal to-persian-blue text-white shadow-2xl">
-        <div className="max-w-7xl mx-auto px-2 md:px-4 py-6">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 py-6 bg-[#6d8f51] text-[#ffffff]">
           <div className="flex justify-between items-center">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -201,7 +201,6 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
           </div>
         </div>
       </div>
-
       {/* Courses Section */}
       <div className="py-8 md:py-16">
         <div className="max-w-7xl mx-auto px-2 md:px-4">
