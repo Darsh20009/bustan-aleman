@@ -14,17 +14,28 @@ import { z } from "zod";
 import { TelegramLoginForm } from './TelegramLoginForm';
 
 const loginSchema = z.object({
-  phoneNumber: z.string().min(10, "رقم الجوال مطلوب"),
+  emailOrPhone: z.string().min(5, "البريد الإلكتروني أو رقم الجوال مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
+}).refine((data) => {
+  // Check if it's a valid email OR a valid phone (10 digits max)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const phoneRegex = /^\d{1,10}$/;
+  return emailRegex.test(data.emailOrPhone) || phoneRegex.test(data.emailOrPhone);
+}, {
+  message: "يجب إدخال بريد إلكتروني صحيح أو رقم جوال (10 أرقام كحد أقصى)",
+  path: ["emailOrPhone"],
 });
 
 const registerSchema = z.object({
   firstName: z.string().min(2, "الاسم الأول مطلوب"),
   lastName: z.string().min(2, "اسم العائلة مطلوب"),
-  email: z.string().email("بريد إلكتروني صالح مطلوب"),
+  email: z.string().email("بريد إلكتروني صالح مطلوب").optional().or(z.literal("")),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   confirmPassword: z.string().min(1, "تأكيد كلمة المرور مطلوب"),
-  phoneNumber: z.string().min(10, "رقم الهاتف مطلوب"),
+  phoneNumber: z.string()
+    .min(1, "رقم الهاتف مطلوب")
+    .max(10, "رقم الهاتف لا يجب أن يزيد عن 10 أرقام")
+    .regex(/^\d+$/, "رقم الهاتف يجب أن يحتوي على أرقام فقط"),
   age: z.number().min(5, "العمر يجب أن يكون 5 سنوات على الأقل").max(100, "العمر غير صحيح"),
   educationLevel: z.string().min(1, "المستوى التعليمي مطلوب"),
   quranExperience: z.string().min(1, "الخبرة في القرآن مطلوبة"),
@@ -58,7 +69,7 @@ export function AuthPage() {
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      phoneNumber: "",
+      emailOrPhone: "",
       password: "",
     },
   });
@@ -84,11 +95,18 @@ export function AuthPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
+      // Convert emailOrPhone to either email or phoneNumber based on format
+      const isEmail = data.emailOrPhone.includes('@');
+      const loginData = {
+        ...(isEmail ? { email: data.emailOrPhone } : { phoneNumber: data.emailOrPhone }),
+        password: data.password,
+      };
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: JSON.stringify(loginData),
       });
 
       if (!response.ok) {
@@ -239,19 +257,19 @@ export function AuthPage() {
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                   <FormField
                     control={loginForm.control}
-                    name="phoneNumber"
+                    name="emailOrPhone"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
+                          <Mail className="w-4 h-4 ml-1" />
                           <Phone className="w-4 h-4" />
-                          رقم الجوال
+                          البريد الإلكتروني أو رقم الجوال
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            type="tel"
-                            placeholder="0532441566"
+                            placeholder="example@email.com أو 0532441566"
                             {...field} 
-                            data-testid="input-phone-number"
+                            data-testid="input-email-or-phone"
                             dir="ltr"
                           />
                         </FormControl>
@@ -364,10 +382,17 @@ export function AuthPage() {
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <Phone className="w-4 h-4" />
-                          رقم الهاتف *
+                          رقم الهاتف * (10 أرقام كحد أقصى)
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="+966501234567" {...field} data-testid="input-phone" dir="ltr" />
+                          <Input 
+                            placeholder="0501234567" 
+                            {...field} 
+                            data-testid="input-phone" 
+                            dir="ltr"
+                            maxLength={10}
+                            inputMode="numeric"
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
