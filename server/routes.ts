@@ -2150,6 +2150,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Student sessions endpoints
+  app.get('/api/student/sessions', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      if (!userId) {
+        return res.status(401).json({ message: 'غير مسجل الدخول' });
+      }
+      
+      const allSessions = await storage.getAllStudentSessions();
+      // Filter sessions to show upcoming sessions
+      const todaySessions = allSessions.filter((session: any) => {
+        if (!session.sessionDate) return false;
+        const sessionDate = new Date(session.sessionDate).toISOString().split('T')[0];
+        const today = new Date().toISOString().split('T')[0];
+        return sessionDate === today;
+      });
+      
+      res.json(todaySessions);
+    } catch (error) {
+      console.error('Error fetching student sessions:', error);
+      res.status(500).json({ message: 'فشل جلب الحصص' });
+    }
+  });
+
+  // Sheikh sessions endpoints
+  app.get('/api/sheikh/sessions', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const range = req.query.range || 'upcoming';
+      const allSessions = await storage.getAllStudentSessions();
+      
+      if (range === 'upcoming') {
+        // Return sessions that haven't happened yet
+        const upcomingSessions = allSessions.filter((session: any) => {
+          if (!session.sessionDate) return false;
+          const sessionDate = new Date(session.sessionDate);
+          return sessionDate >= new Date();
+        });
+        return res.json(upcomingSessions);
+      }
+      
+      res.json(allSessions);
+    } catch (error) {
+      console.error('Error fetching sheikh sessions:', error);
+      res.status(500).json({ message: 'فشل جلب الحصص' });
+    }
+  });
+
   app.get('/api/admin/stats', isPhoneAuthenticated, isTeacher, async (req: any, res) => {
     try {
       const students = await storage.getAllStudents();
