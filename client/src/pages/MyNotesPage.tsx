@@ -7,7 +7,8 @@ import { Badge } from '../components/ui/badge';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useToast } from '../hooks/use-toast';
-import { BookOpen, Plus, Trash2, Edit2, Save, X } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import { BookOpen, Plus, Trash2, Edit2, Save, X, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface QuranNote {
@@ -35,6 +36,7 @@ const SURAH_NAMES = [
 ];
 
 export default function MyNotesPage() {
+  const { user } = useAuth();
   const [notes, setNotes] = useState<QuranNote[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -46,6 +48,26 @@ export default function MyNotesPage() {
     note: ''
   });
   const { toast } = useToast();
+
+  // Only supervisors/sheikhs can manage notes
+  if (user?.role === 'student') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex items-center justify-center p-6" dir="rtl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Lock className="w-10 h-10 text-red-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">الوصول مقيد</h2>
+          <p className="text-xl text-gray-600 mb-6">هذه الميزة متاحة فقط للمشرفين والمعلمين</p>
+          <p className="text-sm text-gray-500">إذا كنت تريد إدارة الملاحظات، يرجى التواصل مع الشيخ</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchNotes();

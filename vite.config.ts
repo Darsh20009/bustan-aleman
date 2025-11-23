@@ -34,10 +34,10 @@ export default defineConfig({
       deny: ["**/.*"],
     },
     host: '0.0.0.0',
-    hmr: {
-      host: process.env.REPLIT_DEV_DOMAIN || 'localhost',
-      port: process.env.REPLIT_DEV_DOMAIN ? 443 : 5000,
-      protocol: process.env.REPLIT_DEV_DOMAIN ? 'wss' : 'ws',
-    },
+    hmr: process.env.REPLIT_DEV_DOMAIN ? {
+      host: process.env.REPLIT_DEV_DOMAIN,
+      port: 443,
+      protocol: 'wss',
+    } : false,
   },
 });
