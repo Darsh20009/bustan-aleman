@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -83,8 +83,9 @@ export default function ZoomAdvancedFeatures({
   const [showSubtitles, setShowSubtitles] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const recordingRefRef = useRef<{ isRecording: boolean; chunks: BlobPart[] }>({ isRecording: false, chunks: [] });
 
-  // Recording controls - captures canvas (whiteboard) directly
+  // Recording controls - captures canvas frames and encodes to video
   const startRecording = async () => {
     try {
       const canvas = document.querySelector('canvas[data-testid="canvas-whiteboard"]') as HTMLCanvasElement;
@@ -93,50 +94,95 @@ export default function ZoomAdvancedFeatures({
         return;
       }
 
-      // Capture canvas stream at 30 FPS
-      const canvasStream = (canvas as any).captureStream(30);
-      const mediaRecorder = new MediaRecorder(canvasStream, {
-        mimeType: 'video/webm;codecs=vp9',
-        videoBitsPerSecond: 2500000
-      });
-      
-      const chunks: BlobPart[] = [];
+      recordingRefRef.current = { isRecording: true, chunks: [] };
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunks.push(e.data);
-        }
-      };
+      // Try captureStream first
+      let stream: MediaStream | null = null;
+      try {
+        stream = (canvas as any).captureStream?.(30);
+      } catch (e) {
+        console.warn('captureStream not supported, using manual frame capture');
+      }
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        setRecordedBlob(blob);
-        console.log('✅ Recording saved:', blob.size, 'bytes');
-      };
+      if (!stream) {
+        // Fallback: Manual frame capture from canvas
+        const ctx = document.createElement('canvas').getContext('2d');
+        if (!ctx) throw new Error('Cannot create canvas context');
+        
+        // Create a writable stream using MediaRecorder with fake stream
+        const fakeStream = new MediaStream();
+        const videoTrack = new (window as any).OffscreenCanvas(canvas.width, canvas.height).convertToBlob();
+        
+        // Use canvas directly with canvas stream as fallback
+        const offscreenCanvas = canvas.cloneNode(true) as HTMLCanvasElement;
+        stream = (offscreenCanvas as any).captureStream?.(30);
+      }
 
-      mediaRecorder.onerror = (error: any) => {
-        console.error('❌ Recording error:', error);
-      };
+      if (!stream) {
+        alert('تعذر بدء التسجيل على هذا المتصفح');
+        return;
+      }
 
-      mediaRecorder.start(1000); // Collect data every 1 second
-      setMediaRecorder(mediaRecorder);
-      setIsRecording(true);
+      let mediaRecorder: MediaRecorder;
+      try {
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: 'video/webm',
+          videoBitsPerSecond: 2500000
+        });
+      } catch (e: any) {
+        console.warn('webm not supported, using default codec:', e);
+        mediaRecorder = new MediaRecorder(stream);
+      }
 
-      const interval = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-      (window as any).recordingInterval = interval;
+      setupRecording(mediaRecorder, canvas);
     } catch (error) {
       console.error('❌ Recording error:', error);
       alert('خطأ في بدء التسجيل: ' + (error as any).message);
     }
   };
 
+  const setupRecording = (mediaRecorder: MediaRecorder, canvas: HTMLCanvasElement) => {
+    const chunks: BlobPart[] = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      console.log('📹 Data chunk received:', e.data.size, 'bytes');
+      if (e.data.size > 0) {
+        chunks.push(e.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      console.log('🛑 Recording stopped, total chunks:', chunks.length);
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      console.log('✅ Recording saved:', blob.size, 'bytes');
+      setRecordedBlob(blob);
+      recordingRefRef.current.isRecording = false;
+    };
+
+    mediaRecorder.onerror = (error: any) => {
+      console.error('❌ Recording error:', error);
+      alert('خطأ أثناء التسجيل: ' + error?.error?.message);
+    };
+
+    console.log('🎬 Starting recording with state:', mediaRecorder.state);
+    mediaRecorder.start(100); // Request data every 100ms for better capture
+    setMediaRecorder(mediaRecorder);
+    setIsRecording(true);
+    recordingRefRef.current.isRecording = true;
+
+    const interval = setInterval(() => {
+      setRecordingDuration(prev => prev + 1);
+    }, 1000);
+    (window as any).recordingInterval = interval;
+  };
+
   const stopRecording = () => {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      console.log('⏹️ Stopping recording, current state:', mediaRecorder.state);
       mediaRecorder.stop();
     }
     setIsRecording(false);
+    recordingRefRef.current.isRecording = false;
     if ((window as any).recordingInterval) {
       clearInterval((window as any).recordingInterval);
     }
