@@ -380,7 +380,7 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                 <LiveWhiteboard
                   roomToken={roomId}
                   userId={user?.id || ''}
-                  isEnabled={isShamsikh || whiteboardEnabled}
+                  isEnabled={isShamsikh ? true : whiteboardEnabled}
                   onSendCommand={handleWhiteboardCommand}
                   onExecuteCommand={(executeFunc) => {
                     whiteboardExecuteRef.current = executeFunc;
