@@ -514,7 +514,7 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
                     <MoreVertical className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72 max-h-96 overflow-y-auto">
+                <DropdownMenuContent align="end" className="w-72 max-h-96 overflow-y-auto text-[#23252f] bg-[#18ad7e]">
                   <DropdownMenuLabel className="text-right text-emerald-700 font-bold">
                     القائمة الرئيسية
                   </DropdownMenuLabel>
