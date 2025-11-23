@@ -439,6 +439,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get my courses for student view
+  app.get('/api/my-courses', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const enrollments = await storage.getUserEnrollments(userId);
+      
+      // Get full course details for each enrollment
+      const enrollmentsWithCourses = await Promise.all(
+        enrollments.map(async (enrollment: any) => {
+          const course = await storage.getCourse(enrollment.courseId);
+          return {
+            ...enrollment,
+            course: course || {
+              id: enrollment.courseId,
+              titleAr: 'دورة',
+              titleEn: 'Course',
+              category: 'quran',
+              level: 'beginner',
+              startDate: new Date(),
+              currentStudents: 0,
+              maxStudents: 50,
+              schedule: { days: [], time: '', duration: '' },
+              instructor: 'شيخ',
+              curriculum: []
+            }
+          };
+        })
+      );
+      
+      res.json(enrollmentsWithCourses);
+    } catch (error) {
+      console.error("Error fetching my courses:", error);
+      res.status(500).json({ message: "فشل في جلب الدورات" });
+    }
+  });
+
   // Shopping cart routes
   app.get('/api/cart', isPhoneAuthenticated, async (req: any, res) => {
     try {
