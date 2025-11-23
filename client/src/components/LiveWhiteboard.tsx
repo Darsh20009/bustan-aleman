@@ -103,6 +103,7 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
   ];
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (!isEnabled) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -110,10 +111,12 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    console.log('🖱️ Mouse down:', { x, y, isEnabled, tool });
     startDrawing(x, y);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (!isEnabled) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -125,6 +128,7 @@ export const LiveWhiteboard = forwardRef<any, LiveWhiteboardProps>(({
   };
 
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
     if (!isEnabled) return;
     const canvas = canvasRef.current;
     if (!canvas) return;

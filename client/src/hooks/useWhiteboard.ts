@@ -162,7 +162,7 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
       userId
     };
 
-    addToHistory(command);
+    addToHistory(command, true);
     onSendCommand?.(command);
   }, [isDrawing, isEnabled, tool, userId, onSendCommand, addToHistory]);
 

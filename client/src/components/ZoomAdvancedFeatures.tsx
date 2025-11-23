@@ -81,18 +81,49 @@ export default function ZoomAdvancedFeatures({
   const [newPollQuestion, setNewPollQuestion] = useState('');
   const [newPollOptions, setNewPollOptions] = useState(['', '', '', '']);
   const [showSubtitles, setShowSubtitles] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
 
-  // Recording controls
-  const startRecording = () => {
-    setIsRecording(true);
-    const interval = setInterval(() => {
-      setRecordingDuration(prev => prev + 1);
-    }, 1000);
-    // Store interval ID to clear later
-    (window as any).recordingInterval = interval;
+  // Recording controls with actual MediaRecorder
+  const startRecording = async () => {
+    try {
+      const canvas = document.querySelector('canvas[data-testid="canvas-whiteboard"]') as HTMLCanvasElement;
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { mediaSource: 'screen' },
+        audio: false
+      });
+
+      const audioContext = new AudioContext();
+      const mediaRecorder = new MediaRecorder(screenStream);
+      const chunks: BlobPart[] = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        setRecordedBlob(blob);
+        console.log('✅ Recording saved');
+      };
+
+      mediaRecorder.start();
+      setMediaRecorder(mediaRecorder);
+      setIsRecording(true);
+
+      const interval = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      (window as any).recordingInterval = interval;
+    } catch (error) {
+      console.error('❌ Recording error:', error);
+    }
   };
 
   const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
     setIsRecording(false);
     if ((window as any).recordingInterval) {
       clearInterval((window as any).recordingInterval);
@@ -100,10 +131,30 @@ export default function ZoomAdvancedFeatures({
     setRecordingDuration(0);
   };
 
+  const downloadRecording = () => {
+    if (recordedBlob) {
+      const url = URL.createObjectURL(recordedBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `recording-${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  };
+
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const shareRecordingUrl = () => {
+    if (recordedBlob) {
+      const url = URL.createObjectURL(recordedBlob);
+      const shareUrl = `${window.location.origin}?recording=${encodeURIComponent(url)}`;
+      navigator.clipboard.writeText(shareUrl);
+      alert('تم نسخ رابط التسجيل');
+    }
   };
 
   // Breakout rooms
