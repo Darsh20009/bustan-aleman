@@ -31,6 +31,7 @@ import {
   roomParticipants,
   messages,
   notifications,
+  shoppingCart,
   type User,
   type UpsertUser,
   type Course,
@@ -95,6 +96,8 @@ import {
   type InsertMessage,
   type Notification,
   type InsertNotification,
+  type ShoppingCartItem,
+  type InsertShoppingCartItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -297,6 +300,12 @@ export interface IStorage {
   deleteLiveAnnotation(id: string): Promise<void>;
   getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined>;
   getAllSessionAccess(studentId: string): Promise<SessionAccess[]>;
+  
+  // Shopping cart operations
+  addToCart(item: InsertShoppingCartItem): Promise<ShoppingCartItem>;
+  getCartItems(userId: string): Promise<ShoppingCartItem[]>;
+  removeFromCart(userId: string, courseId: string): Promise<void>;
+  clearCart(userId: string): Promise<void>;
   getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]>;
   
   // Live room operations
@@ -2326,6 +2335,75 @@ export class DatabaseStorage implements IStorage {
     
     const [newMessage] = await db!.insert(messages).values(message).returning();
     return newMessage;
+  }
+
+  // Shopping cart operations
+  async addToCart(item: InsertShoppingCartItem): Promise<ShoppingCartItem> {
+    if (!this.isDbAvailable()) {
+      const mockCartItem: ShoppingCartItem = {
+        id: `cart_${Date.now()}`,
+        userId: item.userId,
+        courseId: item.courseId,
+        addedAt: new Date(),
+        createdAt: new Date(),
+      };
+      return mockCartItem;
+    }
+    
+    // Check if item already exists in cart (prevent duplicates)
+    const existingItem = await db!
+      .select()
+      .from(shoppingCart)
+      .where(and(
+        eq(shoppingCart.userId, item.userId),
+        eq(shoppingCart.courseId, item.courseId)
+      ))
+      .limit(1);
+    
+    if (existingItem.length > 0) {
+      // Item already in cart, return existing item
+      return existingItem[0];
+    }
+    
+    const [newCartItem] = await db!.insert(shoppingCart).values(item).returning();
+    return newCartItem;
+  }
+
+  async getCartItems(userId: string): Promise<ShoppingCartItem[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    
+    const cartItems = await db!
+      .select()
+      .from(shoppingCart)
+      .where(eq(shoppingCart.userId, userId))
+      .orderBy(desc(shoppingCart.addedAt));
+    
+    return cartItems;
+  }
+
+  async removeFromCart(userId: string, courseId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      return;
+    }
+    
+    await db!
+      .delete(shoppingCart)
+      .where(and(
+        eq(shoppingCart.userId, userId),
+        eq(shoppingCart.courseId, courseId)
+      ));
+  }
+
+  async clearCart(userId: string): Promise<void> {
+    if (!this.isDbAvailable()) {
+      return;
+    }
+    
+    await db!
+      .delete(shoppingCart)
+      .where(eq(shoppingCart.userId, userId));
   }
 
   // Notification operations

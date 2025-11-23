@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { BookOpen, Calendar, Users, Star } from "lucide-react";
+import { BookOpen, Calendar, Users, Star, ShoppingCart } from "lucide-react";
 import type { Course } from "@shared/schema";
 
 interface CourseCardProps {
@@ -47,6 +47,26 @@ export default function CourseCard({ course }: CourseCardProps) {
       toast({
         title: "خطأ في التسجيل",
         description: error.message || "حدث خطأ أثناء التسجيل في الدورة",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addToCartMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('/api/cart', 'POST', { courseId: course.id });
+    },
+    onSuccess: () => {
+      toast({
+        title: "✅ تمت الإضافة",
+        description: `تم إضافة ${course.titleAr} للعربة`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشلت الإضافة للعربة",
         variant: "destructive",
       });
     },
@@ -170,29 +190,46 @@ export default function CourseCard({ course }: CourseCardProps) {
             </div>
           )}
 
-          <Button 
-            onClick={() => {
-              if (!isAuthenticated) {
-                window.location.href = "/api/login";
-                return;
+          <div className="flex gap-2">
+            <Button 
+              onClick={() => {
+                if (!isAuthenticated) {
+                  window.location.href = "/api/login";
+                  return;
+                }
+                addToCartMutation.mutate();
+              }}
+              variant="outline"
+              className="flex-1 border-2"
+              disabled={!isUpcoming || isRegistrationFull || addToCartMutation.isPending}
+              data-testid={`button-add-to-cart-${course.id}`}
+            >
+              <ShoppingCart className="w-4 h-4 ml-1" />
+              {addToCartMutation.isPending ? "جاري..." : "للعربة"}
+            </Button>
+
+            <Button 
+              onClick={() => {
+                if (!isAuthenticated) {
+                  window.location.href = "/api/login";
+                  return;
+                }
+                enrollMutation.mutate();
+              }}
+              className={`flex-1 ${categoryInfo.bgColor} text-white hover:opacity-90 transition-all`}
+              disabled={!isUpcoming || isRegistrationFull || enrollMutation.isPending}
+              data-testid={`button-enroll-${course.id}`}
+            >
+              {enrollMutation.isPending 
+                ? "جاري..." 
+                : !isUpcoming 
+                  ? "انتهت" 
+                  : isRegistrationFull 
+                    ? "مكتملة"
+                    : "سجل الآن"
               }
-              enrollMutation.mutate();
-            }}
-            className={`w-full ${categoryInfo.bgColor} text-white hover:opacity-90 transition-all`}
-            disabled={!isUpcoming || isRegistrationFull || enrollMutation.isPending}
-            data-testid={`button-enroll-${course.id}`}
-          >
-            {enrollMutation.isPending 
-              ? "جاري التسجيل..." 
-              : !isUpcoming 
-                ? "انتهت الدورة" 
-                : isRegistrationFull 
-                  ? "الدورة مكتملة"
-                  : isAuthenticated 
-                    ? "سجل الآن" 
-                    : "سجل دخولك للتسجيل"
-            }
-          </Button>
+            </Button>
+          </div>
 
           {!isUpcoming && (
             <p className="text-xs text-gray-500 mt-2">

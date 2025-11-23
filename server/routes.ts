@@ -26,6 +26,7 @@ import {
   insertQuranReadingStatsSchema,
   insertQuranAyahMarkerSchema,
   insertQuranRecitationAttemptSchema,
+  insertShoppingCartSchema,
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -435,6 +436,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user enrollments:", error);
       res.status(500).json({ message: "Failed to fetch enrollments" });
+    }
+  });
+
+  // Shopping cart routes
+  app.get('/api/cart', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const cartItems = await storage.getCartItems(userId);
+      res.json(cartItems);
+    } catch (error) {
+      console.error("Error fetching cart items:", error);
+      res.status(500).json({ message: "فشل في جلب عناصر العربة" });
+    }
+  });
+
+  app.post('/api/cart', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { courseId } = req.body;
+      
+      if (!courseId) {
+        return res.status(400).json({ message: "معرف الدورة مطلوب" });
+      }
+      
+      // Validate course exists
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "الدورة غير موجودة" });
+      }
+      
+      // Check if user is already enrolled in this course
+      const courseEnrollments = await storage.getCourseEnrollments(courseId);
+      const alreadyEnrolled = courseEnrollments.some(e => e.userId === userId);
+      if (alreadyEnrolled) {
+        return res.status(400).json({ message: "أنت مسجل بالفعل في هذه الدورة" });
+      }
+      
+      const cartItemData = insertShoppingCartSchema.parse({
+        userId,
+        courseId,
+      });
+      
+      const cartItem = await storage.addToCart(cartItemData);
+      res.status(201).json(cartItem);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      res.status(500).json({ message: "فشل في إضافة الدورة للعربة" });
+    }
+  });
+
+  app.delete('/api/cart/:courseId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { courseId } = req.params;
+      
+      await storage.removeFromCart(userId, courseId);
+      res.json({ message: "تم حذف الدورة من العربة" });
+    } catch (error) {
+      console.error("Error removing from cart:", error);
+      res.status(500).json({ message: "فشل في حذف الدورة من العربة" });
+    }
+  });
+
+  app.post('/api/cart/checkout', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      
+      // Get all cart items
+      const cartItems = await storage.getCartItems(userId);
+      
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: "العربة فارغة" });
+      }
+      
+      // Enroll in all courses (skip already enrolled)
+      const enrollments = [];
+      const userEnrollments = await storage.getUserEnrollments(userId);
+      const enrolledCourseIds = new Set(userEnrollments.map(e => e.courseId));
+      
+      for (const item of cartItems) {
+        // Skip if already enrolled
+        if (enrolledCourseIds.has(item.courseId)) {
+          continue;
+        }
+        
+        const enrollmentData = insertEnrollmentSchema.parse({
+          userId,
+          courseId: item.courseId,
+          status: 'enrolled',
+          progress: 0,
+        });
+        
+        const enrollment = await storage.enrollUserInCourse(enrollmentData);
+        enrollments.push(enrollment);
+      }
+      
+      // Clear the cart
+      await storage.clearCart(userId);
+      
+      res.json({
+        message: "تم شراء جميع الدورات بنجاح",
+        enrollments,
+      });
+    } catch (error) {
+      console.error("Error during checkout:", error);
+      res.status(500).json({ message: "فشل في إتمام عملية الشراء" });
     }
   });
 
