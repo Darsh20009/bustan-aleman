@@ -34,6 +34,7 @@ import { useLiveSessionWebRTC } from '@/hooks/useLiveSessionWebRTC';
 import { LiveWhiteboard } from '@/components/LiveWhiteboard';
 import { useAuth } from '@/hooks/useAuth';
 import type { DrawCommand } from '@/hooks/useWhiteboard';
+import ZoomAdvancedFeatures from '@/components/ZoomAdvancedFeatures';
 
 interface LiveSessionRoomProps {
   roomId: string;
@@ -555,6 +556,15 @@ export default function LiveSessionRoom({ roomId, onLeave }: LiveSessionRoomProp
                 </div>
               </CardContent>
             </Card>
+
+            {/* Zoom Advanced Features - Only for host */}
+            {isShamsikh && (
+              <ZoomAdvancedFeatures
+                isHost={isShamsikh}
+                roomToken={roomId}
+                participants={participants}
+              />
+            )}
           </div>
         </div>
       </div>

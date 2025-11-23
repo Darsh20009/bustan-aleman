@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { DrawCommand } from '@shared/schema';
 
+export type { DrawCommand };
+
 interface UseWhiteboardProps {
   roomToken: string;
   userId: string;
@@ -274,15 +276,8 @@ export function useWhiteboard({ roomToken, userId, isEnabled, onSendCommand }: U
 
     const context = contextRef.current;
 
-    // Handle undo/redo commands - they will be handled separately
-    if (command.type === 'undo' || command.type === 'redo') {
-      return;
-    }
-
     // Add remote command to history (with deduplication)
-    if (command.type !== 'undo' && command.type !== 'redo') {
-      addToHistory(command);
-    }
+    addToHistory(command);
 
     // Execute canvas operation immediately
     switch (command.type) {
