@@ -317,6 +317,13 @@ const roleNavigation = {
       gradient: 'from-blue-500 to-cyan-500'
     },
     { 
+      title: 'إنشاء دورة جديدة', 
+      path: '/create-course', 
+      description: 'إضافة دورة تعليمية جديدة للطلاب', 
+      icon: BookOpen,
+      gradient: 'from-green-500 to-emerald-500'
+    },
+    { 
       title: 'إدارة جدول الحصص', 
       path: '/sheikh-schedule', 
       description: 'إدارة المواعيد الأسبوعية للحصص المباشرة', 

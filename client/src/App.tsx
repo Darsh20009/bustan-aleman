@@ -32,12 +32,13 @@ import SheikhScheduleManager from "./pages/SheikhScheduleManager";
 import SheikhQuranEditing from "./pages/SheikhQuranEditing";
 import DataManagement from "./pages/DataManagement";
 import LiveSession from "./pages/LiveSession";
+import { CreateCoursePage } from "./pages/CreateCoursePage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course'];
   return validStates.includes(path as AppState);
 };
 
@@ -254,6 +255,13 @@ function AppContent() {
       case 'data-management':
         if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
           return <DataManagement />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'create-course':
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
+          return <CreateCoursePage onBack={() => setAppState('dashboard')} />;
         } else {
           return <AuthPage />;
         }
