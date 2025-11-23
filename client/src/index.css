@@ -4,86 +4,72 @@
 @tailwind utilities;
 
 :root {
-  --background: 160 55% 30%;
-  --foreground: 160 85% 85%;
-  --card: 160 50% 35%;
-  --card-foreground: 160 85% 85%;
-  --popover: 160 55% 30%;
-  --popover-foreground: 160 85% 85%;
-  --primary: 160 65% 45%;
-  --primary-foreground: 160 85% 85%;
-  --secondary: 45 75% 65%;
-  --secondary-foreground: 160 55% 30%;
-  --muted: 160 40% 40%;
-  --muted-foreground: 160 70% 75%;
-  --accent: 160 45% 38%;
-  --accent-foreground: 160 85% 85%;
+  --background: 0 0% 100%;
+  --foreground: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 0%;
+  --primary: 160 85% 39%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 25 95% 53%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 80%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 160 85% 39%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 55%;
-  --destructive-foreground: 160 85% 85%;
-  --border: 160 45% 38%;
-  --input: 160 50% 35%;
-  --ring: 160 65% 45%;
-  --chart-1: 160 55% 30%;
-  --chart-2: 45 75% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 90%;
+  --input: 0 0% 100%;
+  --ring: 160 85% 39%;
+  --chart-1: 160 85% 39%;
+  --chart-2: 25 95% 53%;
   --chart-3: 25 65% 58%;
   --chart-4: 160 45% 38%;
   --chart-5: 45 55% 48%;
-  --sidebar: 160 50% 35%;
-  --sidebar-foreground: 160 85% 85%;
-  --sidebar-primary: 160 55% 30%;
-  --sidebar-primary-foreground: 160 85% 85%;
-  --sidebar-accent: 160 45% 38%;
-  --sidebar-accent-foreground: 160 85% 85%;
-  --sidebar-border: 160 45% 38%;
-  --sidebar-ring: 160 55% 30%;
+  --sidebar: 160 85% 39%;
+  --sidebar-foreground: 0 0% 100%;
+  --sidebar-primary: 160 85% 39%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 25 95% 53%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 160 85% 39%;
+  --sidebar-ring: 160 85% 39%;
   --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
   --font-serif: 'Amiri', serif;
   --font-mono: 'Courier New', monospace;
   --radius: 0.75rem;
   
-  /* Enhanced Islamic theme colors - Unified Green, White, Orange Palette */
-  --islamic-emerald: 160 85% 39%;
-  --islamic-teal: 174 72% 56%;
-  --royal-gold: 25 95% 53%;
-  --antique-gold: 38 92% 50%;
-  --persian-blue: 174 72% 56%;
-  --mosque-green: 160 85% 39%;
-  --desert-sand: 160 40% 40%;
-  --marble-white: 160 85% 85%;
-  --pearl-cream: 160 50% 35%;
-  --midnight-navy: 160 55% 30%;
-  --copper-bronze: 25 95% 53%;
-  --moonlight-silver: 160 70% 75%;
-  
-  /* Backward compatibility aliases */
-  --islamic-green: var(--islamic-emerald);
-  --warm-gold: var(--royal-gold);
-  --earth-brown: var(--copper-bronze);
-  --warm-white: var(--marble-white);
-  --light-beige: var(--pearl-cream);
-  --dark-charcoal: var(--midnight-navy);
+  /* Islamic theme colors */
+  --islamic-green: 160 85% 39%;
+  --warm-gold: 25 95% 53%;
+  --earth-brown: 25 95% 53%;
+  --warm-white: 0 0% 100%;
+  --light-beige: 0 0% 95%;
+  --dark-charcoal: 0 0% 20%;
 }
 
 .dark {
-  --background: 160 60% 15%;
-  --foreground: 160 85% 85%;
-  --card: 160 55% 20%;
-  --card-foreground: 160 85% 85%;
-  --popover: 160 60% 15%;
-  --popover-foreground: 160 85% 85%;
-  --primary: 160 65% 45%;
-  --primary-foreground: 160 85% 85%;
-  --secondary: 160 50% 35%;
-  --secondary-foreground: 160 85% 85%;
-  --muted: 160 50% 25%;
-  --muted-foreground: 160 70% 75%;
-  --accent: 160 55% 30%;
-  --accent-foreground: 160 85% 85%;
+  --background: 0 0% 10%;
+  --foreground: 0 0% 95%;
+  --card: 0 0% 15%;
+  --card-foreground: 0 0% 95%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 160 85% 39%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 25 95% 53%;
+  --secondary-foreground: 0 0% 0%;
+  --muted: 0 0% 30%;
+  --muted-foreground: 0 0% 70%;
+  --accent: 160 85% 39%;
+  --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 55%;
-  --destructive-foreground: 160 85% 85%;
-  --border: 160 50% 30%;
-  --input: 160 55% 20%;
-  --ring: 160 65% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 25%;
+  --input: 0 0% 15%;
+  --ring: 160 85% 39%;
 }
 
 @layer base {

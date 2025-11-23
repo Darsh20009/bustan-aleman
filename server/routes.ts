@@ -492,8 +492,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.session as any).userId;
       const { courseId } = req.body;
       
-      if (!courseId) {
-        return res.status(400).json({ message: "معرف الدورة مطلوب" });
+      if (!courseId || !userId) {
+        return res.status(400).json({ message: "معرف الدورة والمستخدم مطلوب" });
       }
       
       // Validate course exists
@@ -504,7 +504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if user is already enrolled in this course
       const courseEnrollments = await storage.getCourseEnrollments(courseId);
-      const alreadyEnrolled = courseEnrollments.some(e => e.userId === userId);
+      const alreadyEnrolled = courseEnrollments.some((e: any) => e.userId === userId);
       if (alreadyEnrolled) {
         return res.status(400).json({ message: "أنت مسجل بالفعل في هذه الدورة" });
       }

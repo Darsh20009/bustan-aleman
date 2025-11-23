@@ -54,11 +54,11 @@ export default function CourseCard({ course }: CourseCardProps) {
 
   const addToCartMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest('/api/cart', 'POST', { courseId: course.id });
+      return await apiRequest('POST', '/api/cart', { courseId: course.id });
     },
     onSuccess: () => {
       toast({
-        title: "✅ تمت الإضافة",
+        title: "تمت الإضافة",
         description: `تم إضافة ${course.titleAr} للعربة`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
