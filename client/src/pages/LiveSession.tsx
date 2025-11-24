@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useRoute } from 'wouter';
-import JitsiMeetSession from './JitsiMeetSession';
+import BigBlueButtonSession from './BigBlueButtonSession';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { Loader2 } from 'lucide-react';
@@ -49,7 +49,7 @@ export default function LiveSession() {
   };
 
   return (
-    <JitsiMeetSession
+    <BigBlueButtonSession
       sessionId={params.sessionId}
       onLeave={handleLeave}
     />
