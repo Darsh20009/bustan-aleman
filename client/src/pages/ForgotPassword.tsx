@@ -211,7 +211,7 @@ export default function ForgotPassword({ onBack }: ForgotPasswordProps) {
                     type="button"
                     variant="ghost"
                     className="w-full"
-                    onClick={() => setLocation('/auth')}
+                    onClick={() => onBack?.()}
                     data-testid="button-back-to-login"
                   >
                     <ArrowRight className="ml-2" size={18} />
@@ -316,7 +316,7 @@ export default function ForgotPassword({ onBack }: ForgotPasswordProps) {
                 <h3 className="text-xl font-bold text-emerald-800">تم تحديث كلمة المرور بنجاح!</h3>
                 <p className="text-emerald-600">يمكنك الآن تسجيل الدخول باستخدام كلمة المرور الجديدة</p>
                 <Button
-                  onClick={() => setLocation('/auth')}
+                  onClick={() => onBack?.()}
                   className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
                   data-testid="button-go-to-login"
                 >
