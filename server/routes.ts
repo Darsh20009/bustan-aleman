@@ -2471,38 +2471,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // BigBlueButton Join URL with Checksum
   app.get('/api/bbb-join-url', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const { meetingID } = req.query;
+      let meetingID = req.query.meetingID;
       const user = (req.session as any);
       
       if (!meetingID) {
         return res.status(400).json({ message: 'meetingID مطلوب' });
       }
 
-      const displayName = user.firstName || 'Guest';
+      // Ensure meetingID is a string and properly decoded
+      if (Array.isArray(meetingID)) {
+        meetingID = meetingID[0];
+      }
+      meetingID = String(meetingID).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'");
+
+      const displayName = (user.firstName || 'Guest').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
       const bbbServer = (process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org').trim();
       const bbbSecret = (process.env.VITE_BBB_SECRET || 'bbb_secret').trim();
+
+      // For the join API, BigBlueButton requires a password (usually "mp" for moderator)
+      const password = 'mp';
 
       console.log('🔐 BBB Config:', {
         server: bbbServer,
         secretLength: bbbSecret.length,
-        secretPreview: bbbSecret.substring(0, 10) + '...'
       });
 
-      // Decode meetingID in case it has encoded characters
-      const decodedMeetingID = decodeURIComponent(meetingID);
+      // Build query parameters in the order BigBlueButton expects
+      // Format: fullName=X&meetingID=Y&password=Z
+      const queryString = `fullName=${displayName}&meetingID=${meetingID}&password=${password}`;
       
-      // Build query parameters WITHOUT encoding for checksum (plain text)
-      // BigBlueButton checksum calculation expects UNENCODED parameter string
-      const checksumParams = `meetingID=${decodedMeetingID}&fullName=${displayName}`;
-      
-      // BigBlueButton checksum format: SHA1(join + params + secret)
-      const checksumString = `join${checksumParams}${bbbSecret}`;
+      // BigBlueButton checksum format: SHA1(join + queryString + secret)
+      const checksumString = `join${queryString}${bbbSecret}`;
       
       console.log('🔐 Checksum Calculation:', {
-        method: 'join',
-        meetingID: decodedMeetingID,
+        callName: 'join',
+        meetingID: meetingID,
         displayName: displayName,
-        params: checksumParams,
+        password: password,
+        queryString: queryString,
         checksumString: checksumString.substring(0, 100) + '...'
       });
       
@@ -2510,16 +2516,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const crypto = await import('crypto');
       const checksum = crypto.createHash('sha1').update(checksumString).digest('hex');
 
-      // Build final URL with proper URL encoding for transmission
-      const finalParams = `meetingID=${encodeURIComponent(decodedMeetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true&checksum=${checksum}`;
-      const joinUrl = `${bbbServer}/api/join?${finalParams}`;
+      // Build final URL with all required parameters
+      const joinUrl = `${bbbServer}/api/join?${queryString}&checksum=${checksum}`;
 
       console.log('✅ BBB Join URL Generated:', {
-        meetingID: decodedMeetingID.substring(0, 30) + '...',
-        displayName,
         server: bbbServer,
-        checksumHex: checksum,
-        fullUrl: joinUrl.substring(0, 150) + '...'
+        meetingID,
+        displayName,
+        checksum: checksum,
+        fullUrl: joinUrl.substring(0, 200) + '...'
       });
 
       res.json({ joinUrl });
