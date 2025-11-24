@@ -2488,33 +2488,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         secretPreview: bbbSecret.substring(0, 10) + '...'
       });
 
-      // Build query parameters for BigBlueButton API
-      // Don't include redirect in checksum calculation, only in final URL
-      const checksumParams = `meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}`;
+      // Decode meetingID in case it has encoded characters
+      const decodedMeetingID = decodeURIComponent(meetingID);
+      
+      // Build query parameters WITHOUT encoding for checksum (plain text)
+      // BigBlueButton checksum calculation expects UNENCODED parameter string
+      const checksumParams = `meetingID=${decodedMeetingID}&fullName=${displayName}`;
       
       // BigBlueButton checksum format: SHA1(join + params + secret)
-      // Note: Some versions need "join" as method prefix
       const checksumString = `join${checksumParams}${bbbSecret}`;
       
-      console.log('🔐 Checksum Input:', {
+      console.log('🔐 Checksum Calculation:', {
         method: 'join',
+        meetingID: decodedMeetingID,
+        displayName: displayName,
         params: checksumParams,
-        fullString: checksumString.substring(0, 80) + '...'
+        checksumString: checksumString.substring(0, 100) + '...'
       });
       
       // Generate checksum using SHA1
       const crypto = await import('crypto');
       const checksum = crypto.createHash('sha1').update(checksumString).digest('hex');
 
-      // Build final URL with redirect
-      const joinUrl = `${bbbServer}/api/join?${checksumParams}&redirect=true&checksum=${checksum}`;
+      // Build final URL with proper URL encoding for transmission
+      const finalParams = `meetingID=${encodeURIComponent(decodedMeetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true&checksum=${checksum}`;
+      const joinUrl = `${bbbServer}/api/join?${finalParams}`;
 
-      console.log('✅ BBB Join URL Ready:', {
-        meetingID: meetingID.substring(0, 20) + '...',
+      console.log('✅ BBB Join URL Generated:', {
+        meetingID: decodedMeetingID.substring(0, 30) + '...',
         displayName,
         server: bbbServer,
-        checksum: checksum.substring(0, 20) + '...',
-        fullUrl: joinUrl.substring(0, 120) + '...'
+        checksumHex: checksum,
+        fullUrl: joinUrl.substring(0, 150) + '...'
       });
 
       res.json({ joinUrl });
