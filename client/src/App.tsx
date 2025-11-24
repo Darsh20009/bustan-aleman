@@ -140,7 +140,7 @@ function AppContent() {
             }
           }} />;
         }
-        return <AuthPage />;
+        return <AuthPage onForgotPasswordClick={() => setAppState('forgot-password')} />;
       
       case 'dashboard':
         // Use the new role-based navigation instead of old dashboard
@@ -284,7 +284,7 @@ function AppContent() {
         }
       
       case 'forgot-password':
-        return <ForgotPassword />;
+        return <ForgotPassword onBack={() => setAppState('auth')} />;
       
       case 'memorization':
         if (isAuthenticated && user) {

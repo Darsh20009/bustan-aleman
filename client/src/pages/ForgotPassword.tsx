@@ -30,7 +30,11 @@ const resetSchema = z.object({
 type VerifyForm = z.infer<typeof verifySchema>;
 type ResetForm = z.infer<typeof resetSchema>;
 
-export default function ForgotPassword() {
+interface ForgotPasswordProps {
+  onBack?: () => void;
+}
+
+export default function ForgotPassword({ onBack }: ForgotPasswordProps) {
   const [step, setStep] = useState<'verify' | 'reset' | 'success'>('verify');
   const [userId, setUserId] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState<string | null>(null);

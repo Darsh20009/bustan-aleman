@@ -51,7 +51,11 @@ const registerSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 type RegisterForm = z.infer<typeof registerSchema>;
 
-export function AuthPage() {
+interface AuthPageProps {
+  onForgotPasswordClick?: () => void;
+}
+
+export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'register' | 'replit' | 'telegram'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -323,7 +327,7 @@ export function AuthPage() {
                     type="button"
                     variant="ghost"
                     className="w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                    onClick={() => setLocation('/forgot-password')}
+                    onClick={() => onForgotPasswordClick?.()}
                     data-testid="button-forgot-password"
                   >
                     هل نسيت كلمة المرور؟
