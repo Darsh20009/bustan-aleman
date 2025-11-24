@@ -8,8 +8,8 @@ export function getPhoneSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   return session({
     secret: process.env.SESSION_SECRET || "ZkkGjcF7yHW5r+3ca/QIiT+Yz3h/W+aHmpAFspW38Ss=",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
       httpOnly: true,
       secure: false,
