@@ -23,19 +23,26 @@ export default function LiveSession() {
     }
 
     if (!isLoading && user && params?.sessionId) {
-      // Redirect directly to BigBlueButton
-      const displayName = user?.firstName || 'Guest';
+      // Get secure join URL from backend with checksum
       const meetingID = `bustan_${params.sessionId}`;
-      const bbbServer = import.meta.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org';
 
-      console.log('BBB Direct Join:', { meetingID, displayName, bbbServer });
+      console.log('🔐 Requesting secure BBB join URL:', { meetingID });
 
-      const joinUrl = `${bbbServer}/api/join?meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true`;
-      
-      console.log('Redirecting to:', joinUrl);
-      
-      // Redirect directly
-      window.location.href = joinUrl;
+      fetch(`/api/bbb-join-url?meetingID=${encodeURIComponent(meetingID)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.joinUrl) {
+            console.log('✅ Redirecting to BBB:', data.joinUrl);
+            window.location.href = data.joinUrl;
+          } else {
+            console.error('No joinUrl in response:', data);
+            setLocation('/');
+          }
+        })
+        .catch(error => {
+          console.error('Error getting BBB join URL:', error);
+          setLocation('/');
+        });
     }
   }, [isLoading, user, params?.sessionId, setLocation]);
 

@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { createHmac } from "crypto";
 import { storage } from "./storage";
 import { setupPhoneAuth, isPhoneAuthenticated, isTeacher, initializePreregisteredUsers } from "./phoneAuth";
 import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type AuthenticatedRequest } from "./authMiddleware";
@@ -2465,6 +2466,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: error.message || 'فشل إرسال الرسالة' 
       });
+    }
+  });
+
+  // BigBlueButton Join URL with Checksum
+  app.get('/api/bbb-join-url', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { meetingID } = req.query;
+      const user = (req.session as any);
+      
+      if (!meetingID) {
+        return res.status(400).json({ message: 'meetingID مطلوب' });
+      }
+
+      const displayName = user.firstName || 'Guest';
+      const bbbServer = process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org';
+      const bbbSecret = process.env.VITE_BBB_SECRET || 'bbb_secret';
+
+      // Build the checksum query string
+      const params = `meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true`;
+      const checksumString = `join${params}${bbbSecret}`;
+      
+      // Generate checksum using SHA1
+      const checksum = createHmac('sha1', bbbSecret)
+        .update(checksumString)
+        .digest('hex');
+
+      const joinUrl = `${bbbServer}/api/join?${params}&checksum=${checksum}`;
+
+      console.log('✅ BBB Join URL:', { meetingID, displayName, bbbServer });
+
+      res.json({ joinUrl });
+    } catch (error) {
+      console.error('Error generating BBB join URL:', error);
+      res.status(500).json({ message: 'فشل في توليد رابط الحصة' });
     }
   });
 
