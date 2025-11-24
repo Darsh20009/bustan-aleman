@@ -2482,9 +2482,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (Array.isArray(meetingID)) {
         meetingID = meetingID[0];
       }
-      meetingID = String(meetingID).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'");
-
-      const displayName = (user.firstName || 'Guest').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      
+      // Helper function to decode HTML entities
+      const decodeHtmlEntities = (str: string) => {
+        return String(str)
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'");
+      };
+      
+      meetingID = decodeHtmlEntities(meetingID);
+      const displayName = decodeHtmlEntities(user.firstName || 'Guest');
       const bbbServer = (process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org').trim();
       const bbbSecret = (process.env.VITE_BBB_SECRET || 'bbb_secret').trim();
 
@@ -2497,7 +2507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       // Build query parameters in the order BigBlueButton expects
-      // Format: fullName=X&meetingID=Y&password=Z
+      // Format: fullName=X&meetingID=Y&password=Z (NO HTML entities, plain text)
       const queryString = `fullName=${displayName}&meetingID=${meetingID}&password=${password}`;
       
       // BigBlueButton checksum format: SHA1(join + queryString + secret)
@@ -2509,14 +2519,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName: displayName,
         password: password,
         queryString: queryString,
-        checksumString: checksumString.substring(0, 100) + '...'
+        fullChecksumString: checksumString
       });
       
       // Generate checksum using SHA1
       const crypto = await import('crypto');
       const checksum = crypto.createHash('sha1').update(checksumString).digest('hex');
 
-      // Build final URL with all required parameters
+      // Build final URL with all required parameters (no HTML entities)
       const joinUrl = `${bbbServer}/api/join?${queryString}&checksum=${checksum}`;
 
       console.log('✅ BBB Join URL Generated:', {
