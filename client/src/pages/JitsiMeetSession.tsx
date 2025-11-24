@@ -48,38 +48,46 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
 
     const roomName = `bustan_${sessionId}`;
     const displayName = user?.firstName || 'Guest';
+    
+    // Use Jitsi as a Service (JaaS) if configured, otherwise use free meet.jit.si
+    const jitsiDomain = import.meta.env.VITE_JITSI_DOMAIN || 'meet.jit.si';
+    const isJaaS = jitsiDomain !== 'meet.jit.si';
 
     try {
-      const api = new window.JitsiMeetExternalAPI(
-        'meet.jit.si',
-        {
-          roomName: roomName,
-          parentNode: containerRef.current,
-          configOverwrite: {
-            startWithAudioMuted: false,
-            startWithVideoMuted: false,
-            disableDeepLinking: true,
-            prejoinPageEnabled: false, // فوري بدون صفحة pre-join
-            openNewWindowForScreenShare: true,
-          },
-          interfaceConfigOverwrite: {
-            TOOLBAR_BUTTONS: [
-              'microphone',
-              'camera',
-              'desktop',
-              'chat',
-              'settings',
-            ],
-            SHOW_JITSI_WATERMARK: false,
-          },
-          userInfo: {
-            displayName: displayName,
-          },
-        }
-      );
+      const config: any = {
+        roomName: roomName,
+        parentNode: containerRef.current,
+        configOverwrite: {
+          startWithAudioMuted: false,
+          startWithVideoMuted: false,
+          disableDeepLinking: true,
+          prejoinPageEnabled: false,
+          openNewWindowForScreenShare: true,
+        },
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS: [
+            'microphone',
+            'camera',
+            'desktop',
+            'chat',
+            'settings',
+          ],
+          SHOW_JITSI_WATERMARK: false,
+        },
+        userInfo: {
+          displayName: displayName,
+        },
+      };
 
-      // Don't auto-leave when conference ends - let user decide when to close
-      // Users can close the window manually when they're done
+      // Add JaaS token if using Jitsi as a Service
+      if (isJaaS && import.meta.env.VITE_JITSI_APP_ID) {
+        config.jwt = import.meta.env.VITE_JITSI_TOKEN;
+      }
+
+      const api = new window.JitsiMeetExternalAPI(
+        jitsiDomain,
+        config
+      );
 
       // Store API reference for cleanup
       (window as any).jitsiApiInstance = api;
