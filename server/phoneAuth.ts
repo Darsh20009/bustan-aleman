@@ -95,15 +95,23 @@ export function setupPhoneAuth(app: Express) {
       // Set session
       (req.session as any).userId = user.id;
       (req.session as any).role = user.role;
-
-      res.json({
-        message: "تم تسجيل الدخول بنجاح",
-        user: {
-          id: user.id,
-          firstName: user.firstName,
-          phoneNumber: user.phoneNumber,
-          role: user.role,
-        },
+      
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "حدث خطأ أثناء حفظ الجلسة" });
+        }
+        
+        res.json({
+          message: "تم تسجيل الدخول بنجاح",
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            phoneNumber: user.phoneNumber,
+            role: user.role,
+          },
+        });
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -242,9 +250,9 @@ export const isPhoneAuthenticated: RequestHandler = (req, res, next) => {
 };
 
 export const isTeacher: RequestHandler = (req, res, next) => {
-  const userRole = (req.session as any).userRole;
+  const role = (req.session as any).role;
   
-  if (userRole !== "teacher") {
+  if (role !== "teacher") {
     return res.status(403).json({ message: "غير مصرح لك بالوصول" });
   }
   
