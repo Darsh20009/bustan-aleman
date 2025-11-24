@@ -757,7 +757,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete schedule
   app.post('/api/schedules/:scheduleId/delete', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       if (role !== 'supervisor' && role !== 'admin') {
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }
@@ -2200,7 +2200,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sheikh sessions endpoints
   app.get('/api/sheikh/sessions', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       if (role !== 'supervisor' && role !== 'admin') {
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }
@@ -2228,7 +2228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sheikh student errors endpoints
   app.get('/api/sheikh/student-errors', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       if (role !== 'supervisor' && role !== 'admin') {
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }
@@ -2267,7 +2267,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sheikh/sessions/:sessionId/enable', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       const { sessionId } = req.params;
       
       console.log('🎥 Enable session request:', { userId, role, sessionId });
@@ -2300,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sheikh/sessions/:sessionId/disable', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       const { sessionId } = req.params;
       
       console.log('🎥 Disable session request:', { userId, role, sessionId });
@@ -2332,7 +2332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/sheikh/sessions/:sessionId/delete', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       const { sessionId } = req.params;
       const { reason } = req.body;
       
@@ -2366,7 +2366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/sheikh/student-errors', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      const role = (req.session as any).role;
+      const role = (req.session as any).userRole;
       if (role !== 'supervisor' && role !== 'admin') {
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }

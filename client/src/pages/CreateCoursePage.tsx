@@ -155,7 +155,7 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
       uploads: Upload[];
       zoomSessions: ZoomSession[];
     }) => {
-      const response = await apiRequest('/api/supervisor/courses', 'POST', data);
+      const response = await apiRequest('/api/courses', 'POST', data);
       return response;
     },
     onSuccess: () => {
