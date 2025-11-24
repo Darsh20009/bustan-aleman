@@ -108,18 +108,21 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
       addCertificate: boolean;
       certificateName: string;
     }) => {
+      console.log('📤 Creating course with data:', data);
       const response = await apiRequest('/api/courses', 'POST', data);
+      console.log('✅ Course created:', response);
       return response;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: 'تم إنشاء الدورة بنجاح',
-        description: 'تم إضافة الدورة الجديدة مع جميع المحتويات',
+        description: `تم إضافة "${data.titleAr}" بنجاح`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
-      onBack();
+      setTimeout(onBack, 1500);
     },
     onError: (error: any) => {
+      console.error('❌ Error creating course:', error);
       toast({
         title: 'خطأ',
         description: error.message || 'فشل في إنشاء الدورة',

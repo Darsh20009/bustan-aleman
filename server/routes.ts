@@ -161,7 +161,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/courses', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
-      const courseData = insertCourseSchema.parse(req.body);
+      // Extract course data and additional fields
+      const { uploads, quizQuestions, addQuiz, addCertificate, certificateName, ...courseBody } = req.body;
+      
+      // Add default startDate if not provided
+      const courseDataWithDefaults = {
+        ...courseBody,
+        startDate: courseBody.startDate || new Date(),
+      };
+      
+      const courseData = insertCourseSchema.parse(courseDataWithDefaults);
       
       // Only admins can create paid courses
       if (courseData.isPaid && req.user?.role !== 'admin') {
@@ -172,10 +181,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const course = await storage.createCourse(courseData);
+      
+      // TODO: Handle uploads, quiz questions, certificate in future
+      console.log(`📚 Course created: ${course.id}, uploads: ${uploads?.length || 0}, quiz: ${addQuiz}`);
+      
       res.status(201).json(course);
     } catch (error) {
       console.error("Error creating course:", error);
-      res.status(500).json({ message: "Failed to create course" });
+      res.status(500).json({ message: "Failed to create course", error: error instanceof Error ? error.message : String(error) });
     }
   });
 
