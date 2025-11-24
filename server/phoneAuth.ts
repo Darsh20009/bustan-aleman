@@ -94,7 +94,12 @@ export function setupPhoneAuth(app: Express) {
 
       // Set session
       (req.session as any).userId = user.id;
-      (req.session as any).role = user.role;
+      (req.session as any).userRole = user.role;
+      
+      // If student, add studentId
+      if (user.role === 'student') {
+        (req.session as any).studentId = user.id;
+      }
       
       // Save session explicitly
       req.session.save((err) => {
@@ -250,9 +255,9 @@ export const isPhoneAuthenticated: RequestHandler = (req, res, next) => {
 };
 
 export const isTeacher: RequestHandler = (req, res, next) => {
-  const role = (req.session as any).role;
+  const role = (req.session as any).userRole;
   
-  if (role !== "teacher") {
+  if (role !== "supervisor" && role !== "admin") {
     return res.status(403).json({ message: "غير مصرح لك بالوصول" });
   }
   
