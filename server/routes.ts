@@ -2468,79 +2468,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // BigBlueButton Join URL with Checksum
-  app.get('/api/bbb-join-url', isPhoneAuthenticated, async (req: any, res) => {
+  // ZegoCloud Token Generation
+  app.get('/api/zego-token', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      let meetingID = req.query.meetingID;
-      const user = (req.session as any);
+      let { roomID, userID, userName } = req.query;
       
-      if (!meetingID) {
-        return res.status(400).json({ message: 'meetingID مطلوب' });
+      if (!roomID || !userID || !userName) {
+        return res.status(400).json({ message: 'roomID, userID, userName مطلوب' });
       }
 
-      // Ensure meetingID is a string and properly decoded
-      if (Array.isArray(meetingID)) {
-        meetingID = meetingID[0];
+      // Ensure strings
+      roomID = String(roomID);
+      userID = String(userID);
+      userName = String(userName);
+
+      const appID = parseInt(process.env.VITE_ZEGO_APP_ID || '0');
+      const serverSecret = (process.env.VITE_ZEGO_SERVER_SECRET || '').trim();
+      
+      if (!appID || !serverSecret) {
+        console.error('❌ Missing ZegoCloud credentials');
+        return res.status(500).json({ message: 'بيانات الخادم غير كاملة' });
       }
-      
-      // Helper function to decode HTML entities
-      const decodeHtmlEntities = (str: string) => {
-        return String(str)
-          .replace(/&amp;/g, '&')
-          .replace(/&lt;/g, '<')
-          .replace(/&gt;/g, '>')
-          .replace(/&quot;/g, '"')
-          .replace(/&#039;/g, "'");
-      };
-      
-      meetingID = decodeHtmlEntities(meetingID);
-      const displayName = decodeHtmlEntities(user.firstName || 'Guest');
-      const bbbServer = (process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org').trim();
-      const bbbSecret = (process.env.VITE_BBB_SECRET || 'bbb_secret').trim();
 
-      // For the join API, BigBlueButton requires a password (usually "mp" for moderator)
-      const password = 'mp';
-
-      console.log('🔐 BBB Config:', {
-        server: bbbServer,
-        secretLength: bbbSecret.length,
+      console.log('🎥 ZegoCloud Token Generation:', {
+        appID,
+        roomID,
+        userID,
+        userName,
       });
 
-      // Build query parameters in the order BigBlueButton expects
-      // Format: fullName=X&meetingID=Y&password=Z (NO HTML entities, plain text)
-      const queryString = `fullName=${displayName}&meetingID=${meetingID}&password=${password}`;
-      
-      // BigBlueButton checksum format: SHA1(join + queryString + secret)
-      const checksumString = `join${queryString}${bbbSecret}`;
-      
-      console.log('🔐 Checksum Calculation:', {
-        callName: 'join',
-        meetingID: meetingID,
-        displayName: displayName,
-        password: password,
-        queryString: queryString,
-        fullChecksumString: checksumString
-      });
-      
-      // Generate checksum using SHA1
+      // ZegoCloud token generation using HMAC-SHA256
+      // This is the proper method for generating access tokens
       const crypto = await import('crypto');
-      const checksum = crypto.createHash('sha1').update(checksumString).digest('hex');
+      
+      // Generate random nonce
+      const nonce = crypto.randomBytes(8).toString('hex');
+      
+      // Current timestamp
+      const timestamp = Math.floor(Date.now() / 1000);
+      
+      // Build signature string: appID + roomID + userID + timestamp + nonce + serverSecret
+      const signatureString = `${appID}${roomID}${userID}${timestamp}${nonce}${serverSecret}`;
+      
+      // Generate signature using HMAC-SHA256
+      const signature = crypto
+        .createHmac('sha256', serverSecret)
+        .update(signatureString)
+        .digest('hex');
 
-      // Build final URL with all required parameters (no HTML entities)
-      const joinUrl = `${bbbServer}/api/join?${queryString}&checksum=${checksum}`;
+      // Format token
+      const token = `${appID}:${roomID}:${userID}:${timestamp}:${nonce}:${signature}`;
 
-      console.log('✅ BBB Join URL Generated:', {
-        server: bbbServer,
-        meetingID,
-        displayName,
-        checksum: checksum,
-        fullUrl: joinUrl.substring(0, 200) + '...'
+      console.log('✅ ZegoCloud Token Generated:', {
+        appID,
+        roomID,
+        userID,
+        userName,
+        expiresIn: '1 hour',
       });
 
-      res.json({ joinUrl });
+      res.json({ token });
     } catch (error) {
-      console.error('❌ Error generating BBB join URL:', error);
-      res.status(500).json({ message: 'فشل في توليد رابط الحصة' });
+      console.error('❌ Error generating ZegoCloud token:', error);
+      res.status(500).json({ message: 'فشل في توليد رمز الجلسة' });
     }
   });
 
