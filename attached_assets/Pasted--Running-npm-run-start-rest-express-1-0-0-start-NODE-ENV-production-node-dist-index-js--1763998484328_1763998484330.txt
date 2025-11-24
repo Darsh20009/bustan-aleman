@@ -1,0 +1,53 @@
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+⚠️  AWS RDS CA certificate not found, SSL verification will be disabled
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+⚠️  AWS RDS credentials incomplete, skipping...
+⚠️  No database URL found. Using JSON storage fallback.
+✅ Database connection initialized
+🔒 Starting password migration...
+✅ Password migration completed. Migrated 0 passwords.
+✅ Password migration completed
+3:31:58 PM [telegram] ⚠️ رمز بوت التليجرام غير موجود - تم تخطي تشغيل البوت
+✅ Telegram bot initialized
+✅ Auth routes setup
+✅ Additional routes setup
+✅ JSON routes setup
+✅ Sheikh routes setup
+✅ Student session routes setup
+✅ Surah routes setup
+✅ Course routes setup
+🔄 Starting registerRoutes...
+🔄 registerRoutes: Setting up phone auth...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+🔄 registerRoutes: Initializing pre-registered users...
+🔄 Initializing 4 pre-registered users...
+🔄 Checking user: يوسف (0532441566)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: يوسف (0532441566)
+🔄 Checking user: أحمد أبو مازن (0549947386)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: أحمد أبو مازن (0549947386)
+🔄 Checking user: أحمد (0532449303)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: أحمد (0532449303)
+🔄 Checking user: محمود (0598765966)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: محمود (0598765966)
+✅ All pre-registered users initialized
+✅ registerRoutes: Pre-registered users initialized
+✅ Routes registered
+✅ WebSocket server initialized on /ws
+✅ WebSocket initialized
+✅ Static files serving
+3:32:00 PM [express] serving on port 10000
+✅ تم تنظيف الحصص المنتهية
+3:32:13 PM [express] POST /api/init-data 200 in 2ms :: {"message":"Default students initialization is handled by phoneAuth system"}
+3:32:13 PM [express] GET /api/auth/user 401 in 0ms :: {"message":"غير مسجل الدخول"}
+3:33:14 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"غير مسجل الدخول"}
+3:33:17 PM [express] POST /api/auth/login 401 in 2ms :: {"message":"بيانات الدخول غير صحيحة"}
