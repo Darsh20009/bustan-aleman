@@ -2223,6 +2223,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live Session Management Endpoints
+  app.get('/api/student/live-sessions', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const allSessions = await storage.getAllLiveRooms();
+      
+      const studentSessions = allSessions.filter((session: any) => 
+        session.isEnabled && session.status !== 'cancelled'
+      );
+      
+      res.json(studentSessions);
+    } catch (error) {
+      console.error('Error fetching live sessions:', error);
+      res.status(500).json({ message: 'فشل جلب الحصص المباشرة' });
+    }
+  });
+
+  // Enable Session (Teacher)
+  app.post('/api/sheikh/sessions/:sessionId/enable', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { sessionId } = req.params;
+      const userId = (req.session as any).userId;
+      
+      const updated = await storage.updateLiveRoom(sessionId, {
+        isEnabled: true,
+        enabledAt: new Date(),
+        status: 'active',
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'تم تفعيل الحصة بنجاح',
+        session: updated 
+      });
+    } catch (error) {
+      console.error('Error enabling session:', error);
+      res.status(500).json({ message: 'فشل تفعيل الحصة' });
+    }
+  });
+
+  // Disable Session (Teacher)
+  app.post('/api/sheikh/sessions/:sessionId/disable', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { sessionId } = req.params;
+      
+      const updated = await storage.updateLiveRoom(sessionId, {
+        isEnabled: false,
+        status: 'scheduled',
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'تم تعطيل الحصة بنجاح',
+        session: updated 
+      });
+    } catch (error) {
+      console.error('Error disabling session:', error);
+      res.status(500).json({ message: 'فشل تعطيل الحصة' });
+    }
+  });
+
+  // Delete/Cancel Session (Teacher)
+  app.post('/api/sheikh/sessions/:sessionId/delete', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { sessionId } = req.params;
+      const { reason } = req.body;
+      const userId = (req.session as any).userId;
+      
+      const updated = await storage.updateLiveRoom(sessionId, {
+        status: 'cancelled',
+        isEnabled: false,
+        cancellationReason: reason || 'تم الإلغاء من قبل الشيخ',
+        cancelledBy: userId,
+        cancelledAt: new Date(),
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'تم إلغاء الحصة بنجاح',
+        session: updated 
+      });
+    } catch (error) {
+      console.error('Error cancelling session:', error);
+      res.status(500).json({ message: 'فشل إلغاء الحصة' });
+    }
+  });
+
   app.post('/api/sheikh/student-errors', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const role = (req.session as any).role;

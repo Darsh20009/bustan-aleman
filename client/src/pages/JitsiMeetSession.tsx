@@ -60,6 +60,7 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
             startWithVideoMuted: false,
             disableDeepLinking: true,
             prejoinPageEnabled: false, // فوري بدون صفحة pre-join
+            openNewWindowForScreenShare: true,
           },
           interfaceConfigOverwrite: {
             TOOLBAR_BUTTONS: [

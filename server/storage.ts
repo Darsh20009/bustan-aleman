@@ -313,7 +313,9 @@ export interface IStorage {
   createOrActivateLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
   getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined>;
   getLiveRoomsByStudent(studentId: string): Promise<LiveRoom[]>;
+  getAllLiveRooms(): Promise<LiveRoom[]>;
   updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom>;
+  updateLiveRoom(roomId: string, updates: Partial<LiveRoom>): Promise<LiveRoom>;
   addRoomParticipant(participant: InsertRoomParticipant): Promise<RoomParticipant>;
   removeRoomParticipant(roomId: string, userId: string): Promise<void>;
   getRoomParticipants(roomId: string): Promise<RoomParticipant[]>;
@@ -2189,6 +2191,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(liveRooms.sessionDate));
   }
 
+  async getAllLiveRooms(): Promise<LiveRoom[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return db!.select().from(liveRooms).orderBy(desc(liveRooms.sessionDate));
+  }
+
   async updateLiveRoomStatus(roomId: string, status: string): Promise<LiveRoom> {
     if (!this.isDbAvailable()) {
       throw new Error("Database not available");
@@ -2211,6 +2220,23 @@ export class DatabaseStorage implements IStorage {
     const [updatedRoom] = await db!
       .update(liveRooms)
       .set(updates)
+      .where(eq(liveRooms.id, roomId))
+      .returning();
+    return updatedRoom;
+  }
+
+  async updateLiveRoom(roomId: string, updates: Partial<LiveRoom>): Promise<LiveRoom> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const updateData = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+    
+    const [updatedRoom] = await db!
+      .update(liveRooms)
+      .set(updateData)
       .where(eq(liveRooms.id, roomId))
       .returning();
     return updatedRoom;
