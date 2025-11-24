@@ -2243,13 +2243,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enable Session (Teacher)
   app.post('/api/sheikh/sessions/:sessionId/enable', isPhoneAuthenticated, async (req: any, res) => {
     try {
+      const userId = (req.session as any).userId;
       const role = (req.session as any).role;
+      const { sessionId } = req.params;
+      
+      console.log('🎥 Enable session request:', { userId, role, sessionId });
+      
       if (role !== 'supervisor' && role !== 'admin') {
+        console.log('❌ Permission denied for user:', { userId, role });
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }
-      
-      const { sessionId } = req.params;
-      const userId = (req.session as any).userId;
       
       const updated = await storage.updateLiveRoom(sessionId, {
         isEnabled: true,
@@ -2257,13 +2260,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: 'active',
       });
       
+      console.log('✅ Session enabled:', { sessionId, updated });
+      
       res.json({ 
         success: true, 
         message: 'تم تفعيل الحصة بنجاح',
         session: updated 
       });
     } catch (error) {
-      console.error('Error enabling session:', error);
+      console.error('❌ Error enabling session:', error);
       res.status(500).json({ message: 'فشل تفعيل الحصة' });
     }
   });
@@ -2271,17 +2276,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Disable Session (Teacher)
   app.post('/api/sheikh/sessions/:sessionId/disable', isPhoneAuthenticated, async (req: any, res) => {
     try {
+      const userId = (req.session as any).userId;
       const role = (req.session as any).role;
+      const { sessionId } = req.params;
+      
+      console.log('🎥 Disable session request:', { userId, role, sessionId });
+      
       if (role !== 'supervisor' && role !== 'admin') {
+        console.log('❌ Permission denied for user:', { userId, role });
         return res.status(403).json({ message: 'ليس لديك الصلاحية' });
       }
-      
-      const { sessionId } = req.params;
       
       const updated = await storage.updateLiveRoom(sessionId, {
         isEnabled: false,
         status: 'scheduled',
       });
+      
+      console.log('✅ Session disabled:', { sessionId, updated });
       
       res.json({ 
         success: true, 
@@ -2289,7 +2300,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         session: updated 
       });
     } catch (error) {
-      console.error('Error disabling session:', error);
+      console.error('❌ Error disabling session:', error);
       res.status(500).json({ message: 'فشل تعطيل الحصة' });
     }
   });
@@ -2297,14 +2308,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete/Cancel Session (Teacher)
   app.post('/api/sheikh/sessions/:sessionId/delete', isPhoneAuthenticated, async (req: any, res) => {
     try {
+      const userId = (req.session as any).userId;
       const role = (req.session as any).role;
-      if (role !== 'supervisor' && role !== 'admin') {
-        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
-      }
-      
       const { sessionId } = req.params;
       const { reason } = req.body;
-      const userId = (req.session as any).userId;
+      
+      console.log('🎥 Cancel session request:', { userId, role, sessionId, reason });
+      
+      if (role !== 'supervisor' && role !== 'admin') {
+        console.log('❌ Permission denied for user:', { userId, role });
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
       
       const updated = await storage.updateLiveRoom(sessionId, {
         status: 'cancelled',
@@ -2314,13 +2328,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cancelledAt: new Date(),
       });
       
+      console.log('✅ Session cancelled:', { sessionId, updated });
+      
       res.json({ 
         success: true, 
         message: 'تم إلغاء الحصة بنجاح',
         session: updated 
       });
     } catch (error) {
-      console.error('Error cancelling session:', error);
+      console.error('❌ Error cancelling session:', error);
       res.status(500).json({ message: 'فشل إلغاء الحصة' });
     }
   });

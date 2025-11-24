@@ -29,9 +29,11 @@ interface Student {
 interface LiveSession {
   id: string;
   studentId: string;
-  sheikhId: string;
+  sheikhId?: string;
   sessionDate: string;
-  sessionTime: string;
+  startTime?: string;
+  endTime?: string;
+  sessionTime?: string;
   roomToken: string;
   status: 'scheduled' | 'active' | 'completed' | 'cancelled';
   isEnabled: boolean;
@@ -871,7 +873,7 @@ export function SheikhDashboard() {
                                 </div>
                                 <div>
                                   <h3 className="font-bold text-lg text-gray-800">
-                                    {session.sessionDate} - {session.sessionTime}
+                                    {session.sessionDate} - {session.startTime || session.sessionTime || 'وقت غير محدد'}
                                   </h3>
                                   <p className="text-gray-600 text-sm flex items-center gap-2">
                                     <Badge className={session.isEnabled ? "bg-emerald-600" : "bg-gray-500"}>
