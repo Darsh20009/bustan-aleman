@@ -12,7 +12,6 @@ import { motion } from 'framer-motion';
 import { SurahAyahSelector } from './SurahAyahSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Label } from './ui/label';
-import LiveSessionRoom from '../pages/LiveSessionRoom';
 import { useAuth } from '../hooks/useAuth';
 
 interface Student {
@@ -33,8 +32,6 @@ export function SheikhDashboard() {
   const [loading, setLoading] = useState(true);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
   const [showAddScheduleDialog, setShowAddScheduleDialog] = useState(false);
-  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
-  const [activeStudentId, setActiveStudentId] = useState<string | null>(null);
   const [newStudent, setNewStudent] = useState({
     studentName: '',
     phoneNumber: '',
@@ -134,10 +131,9 @@ export function SheikhDashboard() {
           description: "جاري فتح غرفة الحصة المباشرة...",
         });
         
-        // فتح غرفة الحصة المباشرة للشيخ باستخدام roomToken الموحد
+        // فتح غرفة الحصة المباشرة باستخدام Jitsi Meet في نافذة جديدة
         setTimeout(() => {
-          setActiveRoomId(data.roomToken);
-          setActiveStudentId(studentId);
+          window.open(`/session/${data.roomToken}`, '_blank', 'noopener,noreferrer');
         }, 500);
       } else {
         const errorData = await response.json();
@@ -276,25 +272,6 @@ export function SheikhDashboard() {
       });
     }
   };
-
-  // إذا كان هناك حصة نشطة، اعرض غرفة الحصة المباشرة
-  if (activeRoomId && activeStudentId && user?.id) {
-    return (
-      <LiveSessionRoom
-        roomId={activeRoomId}
-        studentId={activeStudentId}
-        sheikhId={user.id}
-        onLeave={() => {
-          setActiveRoomId(null);
-          setActiveStudentId(null);
-          toast({
-            title: "تم مغادرة الحصة",
-            description: "عودة إلى لوحة التحكم",
-          });
-        }}
-      />
-    );
-  }
 
   if (loading) {
     return (
