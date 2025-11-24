@@ -267,7 +267,7 @@ export function AuthPage() {
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="example@email.com أو 0532441566"
+                            placeholder="أدخل البريد الإلكتروني أو رقم الجوال"
                             {...field} 
                             data-testid="input-email-or-phone"
                             dir="ltr"
@@ -336,7 +336,7 @@ export function AuthPage() {
                             الاسم الأول
                           </FormLabel>
                           <FormControl>
-                            <Input placeholder="محمد" {...field} data-testid="input-first-name" />
+                            <Input placeholder="أدخل الاسم الأول" {...field} data-testid="input-first-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -350,7 +350,7 @@ export function AuthPage() {
                         <FormItem>
                           <FormLabel>اسم العائلة</FormLabel>
                           <FormControl>
-                            <Input placeholder="أحمد" {...field} data-testid="input-last-name" />
+                            <Input placeholder="أدخل اسم العائلة" {...field} data-testid="input-last-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -368,7 +368,7 @@ export function AuthPage() {
                           البريد الإلكتروني
                         </FormLabel>
                         <FormControl>
-                          <Input type="email" placeholder="example@email.com" {...field} data-testid="input-email" />
+                          <Input type="email" placeholder="أدخل البريد الإلكتروني" {...field} data-testid="input-email" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -386,7 +386,7 @@ export function AuthPage() {
                         </FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="0501234567" 
+                            placeholder="أدخل رقم الجوال (10 أرقام)" 
                             {...field} 
                             data-testid="input-phone" 
                             dir="ltr"
@@ -409,7 +409,7 @@ export function AuthPage() {
                           <FormControl>
                             <Input 
                               type="number" 
-                              placeholder="مثال: 25"
+                              placeholder="أدخل العمر"
                               {...field}
                               onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                               data-testid="input-age" 
@@ -499,7 +499,7 @@ export function AuthPage() {
                         <FormControl>
                           <textarea 
                             {...field}
-                            placeholder="مثال: أريد حفظ القرآن كاملاً، تحسين التجويد، إتقان التلاوة..."
+                            placeholder="أدخل أهدافك في تعلم القرآن الكريم"
                             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                             data-testid="textarea-learning-goals"
                           />
