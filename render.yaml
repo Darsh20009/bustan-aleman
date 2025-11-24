@@ -2,5 +2,5 @@ services:
   - type: web
     name: bustan-aleman
     env: node
-    buildCommand: npm ci --include=dev && npm run build
+    buildCommand: bash build.sh
     startCommand: npm run start
