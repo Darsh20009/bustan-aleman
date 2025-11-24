@@ -16,6 +16,10 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
+localPort = 37225
+externalPort = 3001
+
+[[ports]]
 localPort = 44965
 externalPort = 3000
 
@@ -68,3 +72,4 @@ VITE_BBB_SERVER = "https://demo.bigbluebutton.org"
 VITE_ZEGO_APP_ID = "499288133"
 VITE_ZEGO_SERVER_SECRET = "9948285f589febe75d440d0017a7e8be"
 VITE_ZEGO_USER_ID = "532441566"
+DATABASE_URL = "postgresql://postgres:18082009@bustanaleman.cfcagsig2mjq.eu-north-1.rds.amazonaws.com:5432/postgres?sslmode=require"
