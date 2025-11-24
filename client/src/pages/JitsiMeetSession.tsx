@@ -46,7 +46,7 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
   const initializeJitsi = () => {
     if (!containerRef.current || !window.JitsiMeetExternalAPI) return;
 
-    const roomName = `YouSpeak_${sessionId}`;
+    const roomName = `bustan_${sessionId}`;
     const displayName = user?.firstName || 'Guest';
 
     try {
@@ -122,7 +122,7 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
       <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 shadow-lg flex items-center justify-between">
         <div>
           <h2 className="text-white font-bold text-lg">الحصة المباشرة</h2>
-          <p className="text-white/80 text-sm">YouSpeak_Sessions</p>
+          <p className="text-white/80 text-sm">bustan_Sessions</p>
         </div>
         <Button
           variant="destructive"
