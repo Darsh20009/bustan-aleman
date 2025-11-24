@@ -94,7 +94,7 @@ export function setupPhoneAuth(app: Express) {
 
       // Set session
       (req.session as any).userId = user.id;
-      (req.session as any).userRole = user.role;
+      (req.session as any).role = user.role;
 
       res.json({
         message: "تم تسجيل الدخول بنجاح",
