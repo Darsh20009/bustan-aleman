@@ -318,6 +318,16 @@ export function AuthPage() {
                     <LogIn className="ml-2" size={20} />
                     {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
                   </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => setLocation('/forgot-password')}
+                    data-testid="button-forgot-password"
+                  >
+                    هل نسيت كلمة المرور؟
+                  </Button>
                 </form>
               </Form>
             )}

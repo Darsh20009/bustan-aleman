@@ -27,7 +27,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   **Frontend**: React 18 with TypeScript, Vite for fast development, shadcn/ui and Radix UI for accessible components, TanStack Query for server state, Wouter for routing, and Tailwind CSS for styling.
 -   **Backend**: Express.js for RESTful APIs, PostgreSQL with Drizzle ORM for type-safe database operations, and a custom phone-based authentication system with bcrypt for secure password hashing.
 -   **Real-time Communication**: WebSocket server (`ws`) is implemented on `/ws` for teacher-student chat, with messages stored in a dedicated database table.
--   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using PostgreSQL-backed Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin).
+-   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using PostgreSQL-backed Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin). Features include password recovery with email and phone verification.
 -   **Quran Integration**: Comprehensive integration with AlQuran.Cloud API for 114 surahs, Arabic text (Uthmani), English translations (Sahih International), Arabic Tafsir, and audio recitations from 8 renowned reciters. Features dynamic audio loading, auto-play, repeat, and continuous playback.
 -   **Database**: PostgreSQL with Drizzle ORM. **Production uses AWS RDS (eu-north-1)** with secure SSL connections using official AWS CA certificates (`rejectUnauthorized: true`). Local development can use Neon Serverless or local PostgreSQL. Supports automatic bcrypt password upgrades for legacy accounts.
 -   **SEO & Performance**: Enhanced meta tags for search engines and social media (Open Graph, Twitter cards), dns-prefetch for fonts, optimized font loading with media="print" technique, and PWA-ready meta tags for mobile app experience.
@@ -38,6 +38,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   **Splash Screen**: Animated Quran book opening sequence with a green/orange theme and loading progress.
 -   **Course Management**: Sheikh can create customizable courses with colors, videos, files, and content. Supports both auto and manual grading for exams, certificate customization (upload templates or auto-generate), and expert reviews for courses.
 -   **Live Sessions**: Integrated with Jitsi Meet for video conferencing. Sessions are launched in separate windows using room names formatted as `YouSpeak_${sessionId}`. Both sheikhs and students join the same Jitsi rooms with instant joining (no pre-join page). Features include microphone, camera, screen sharing, chat, and settings. The legacy custom WebRTC system has been fully removed in favor of this simpler, more reliable solution.
+-   **Password Recovery**: "Forgot Password" feature allowing users to recover access by verifying their email and phone number. Users can view their current password and set a new one with validation.
 
 ### System Design Choices
 -   **Type Safety**: Achieved across the stack using TypeScript and Drizzle ORM.

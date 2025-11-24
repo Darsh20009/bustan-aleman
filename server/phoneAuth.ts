@@ -150,6 +150,85 @@ export function setupPhoneAuth(app: Express) {
       res.json({ message: "تم تسجيل الخروج بنجاح" });
     });
   });
+
+  // Verify account for password recovery
+  app.post("/api/auth/verify-account", async (req, res) => {
+    try {
+      const { email, phoneNumber } = req.body;
+
+      if (!email || !phoneNumber) {
+        return res.status(400).json({ message: "البريد الإلكتروني ورقم الجوال مطلوبان" });
+      }
+
+      // Find user by email AND phone number
+      const user = await storage.getUser(email) || 
+                   (await Promise.resolve(
+                     storage.getAllUsers().then((users: any[]) => 
+                       users.find((u: any) => u.email === email && u.phoneNumber === phoneNumber)
+                     )
+                   ));
+
+      // Fallback: search by phone and verify email
+      if (!user) {
+        const userByPhone = await storage.getUserByPhone(phoneNumber);
+        if (!userByPhone || userByPhone.email !== email) {
+          return res.status(401).json({ message: "البريد الإلكتروني ورقم الجوال غير متطابقين" });
+        }
+      } else if (user.phoneNumber !== phoneNumber) {
+        return res.status(401).json({ message: "البريد الإلكتروني ورقم الجوال غير متطابقين" });
+      }
+
+      const finalUser = user || (await storage.getUserByPhone(phoneNumber));
+
+      if (!finalUser) {
+        return res.status(401).json({ message: "المستخدم غير موجود" });
+      }
+
+      // Return current password hash (will be displayed to user for reference)
+      res.json({
+        userId: finalUser.id,
+        currentPassword: finalUser.passwordHash || "••••••••",
+        message: "تم التحقق بنجاح",
+      });
+    } catch (error) {
+      console.error("Verify account error:", error);
+      res.status(500).json({ message: "حدث خطأ أثناء التحقق من الحساب" });
+    }
+  });
+
+  // Reset password
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { userId, newPassword } = req.body;
+
+      if (!userId || !newPassword) {
+        return res.status(400).json({ message: "معرف المستخدم وكلمة المرور الجديدة مطلوبة" });
+      }
+
+      if (newPassword.length < 8) {
+        return res.status(400).json({ message: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" });
+      }
+
+      // Get user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "المستخدم غير موجود" });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update user password
+      await storage.updateUserProfile(userId, { passwordHash: hashedPassword });
+
+      res.json({
+        message: "تم تحديث كلمة المرور بنجاح",
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "حدث خطأ أثناء تحديث كلمة المرور" });
+    }
+  });
 }
 
 export const isPhoneAuthenticated: RequestHandler = (req, res, next) => {
