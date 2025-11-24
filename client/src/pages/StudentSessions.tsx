@@ -48,7 +48,8 @@ export default function StudentSessions() {
   };
 
   const joinSession = (roomToken: string) => {
-    window.open(`/session/${roomToken}`, '_blank', 'noopener,noreferrer');
+    // Open session in same window - navigate directly
+    window.location.href = `/session/${roomToken}`;
   };
 
   const getStatusBadge = (status: string, isEnabled: boolean) => {

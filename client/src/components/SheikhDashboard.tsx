@@ -26,8 +26,21 @@ interface Student {
   progress?: any;
 }
 
+interface LiveSession {
+  id: string;
+  studentId: string;
+  sheikhId: string;
+  sessionDate: string;
+  sessionTime: string;
+  roomToken: string;
+  status: 'scheduled' | 'active' | 'completed' | 'cancelled';
+  isEnabled: boolean;
+  enabledAt?: string;
+}
+
 export function SheikhDashboard() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [liveSessions, setLiveSessions] = useState<LiveSession[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddStudentDialog, setShowAddStudentDialog] = useState(false);
@@ -78,7 +91,20 @@ export function SheikhDashboard() {
   
   useEffect(() => {
     fetchStudents();
+    fetchLiveSessions();
   }, []);
+
+  const fetchLiveSessions = async () => {
+    try {
+      const response = await fetch('/api/student/live-sessions');
+      if (response.ok) {
+        const data = await response.json();
+        setLiveSessions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching live sessions:', error);
+    }
+  };
   
   const fetchStudents = async () => {
     try {
@@ -268,6 +294,84 @@ export function SheikhDashboard() {
       toast({
         title: "خطأ",
         description: "فشل في إضافة الجدول",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const enableLiveSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sheikh/sessions/${sessionId}/enable`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "تم تفعيل الحصة ✅",
+          description: "تم تفعيل الحصة بنجاح - الطلاب يمكنهم الآن الدخول",
+        });
+        fetchLiveSessions();
+      } else {
+        throw new Error('Failed to enable session');
+      }
+    } catch (error) {
+      console.error('Error enabling session:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تفعيل الحصة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const disableLiveSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sheikh/sessions/${sessionId}/disable`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "تم تعطيل الحصة ✅",
+          description: "تم تعطيل الحصة بنجاح",
+        });
+        fetchLiveSessions();
+      } else {
+        throw new Error('Failed to disable session');
+      }
+    } catch (error) {
+      console.error('Error disabling session:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في تعطيل الحصة",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelLiveSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`/api/sheikh/sessions/${sessionId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "تم إلغاء الحصة ✅",
+          description: "تم إلغاء الحصة بنجاح",
+        });
+        fetchLiveSessions();
+      } else {
+        throw new Error('Failed to cancel session');
+      }
+    } catch (error) {
+      console.error('Error canceling session:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في إلغاء الحصة",
         variant: "destructive",
       });
     }
@@ -728,6 +832,96 @@ export function SheikhDashboard() {
           </TabsContent>
 
           <TabsContent value="sessions">
+            {/* Live Sessions Management */}
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm mb-8">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center gap-2 text-2xl text-gray-800">
+                  <Video className="w-6 h-6 text-orange-600" />
+                  إدارة الحصص المباشرة
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {liveSessions.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-12"
+                    >
+                      <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Video className="w-12 h-12 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">لا توجد حصص مباشرة</h3>
+                      <p className="text-gray-500">سيتم عرض الحصص المباشرة هنا عند إنشاؤها</p>
+                    </motion.div>
+                  ) : (
+                    liveSessions.map((session: LiveSession, index: number) => (
+                      <motion.div
+                        key={session.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-white to-orange-50">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                                  <Video className="w-6 h-6" />
+                                </div>
+                                <div>
+                                  <h3 className="font-bold text-lg text-gray-800">
+                                    {session.sessionDate} - {session.sessionTime}
+                                  </h3>
+                                  <p className="text-gray-600 text-sm flex items-center gap-2">
+                                    <Badge className={session.isEnabled ? "bg-emerald-600" : "bg-gray-500"}>
+                                      {session.isEnabled ? "مفعلة" : "معطلة"}
+                                    </Badge>
+                                    <span>{session.status === 'active' ? 'نشطة' : session.status === 'scheduled' ? 'مجدولة' : session.status}</span>
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                {!session.isEnabled && session.status !== 'cancelled' && (
+                                  <Button
+                                    onClick={() => enableLiveSession(session.id)}
+                                    className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                                    data-testid={`button-enable-session-${session.id}`}
+                                  >
+                                    تفعيل
+                                  </Button>
+                                )}
+                                {session.isEnabled && (
+                                  <Button
+                                    onClick={() => disableLiveSession(session.id)}
+                                    className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white"
+                                    data-testid={`button-disable-session-${session.id}`}
+                                  >
+                                    تعطيل
+                                  </Button>
+                                )}
+                                {session.status !== 'cancelled' && (
+                                  <Button
+                                    onClick={() => cancelLiveSession(session.id)}
+                                    variant="destructive"
+                                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                                    data-testid={`button-cancel-session-${session.id}`}
+                                  >
+                                    إلغاء
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Scheduled Sessions */}
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
               <CardHeader className="border-b border-gray-100">
                 <CardTitle className="flex items-center justify-between">

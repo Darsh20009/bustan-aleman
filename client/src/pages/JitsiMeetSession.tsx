@@ -78,14 +78,8 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
         }
       );
 
-      // Handle events
-      api.addEventListener('readyToClose', () => {
-        handleLeaveSession();
-      });
-
-      api.addEventListener('videoConferenceLeft', () => {
-        handleLeaveSession();
-      });
+      // Don't auto-leave when conference ends - let user decide when to close
+      // Users can close the window manually when they're done
 
       // Store API reference for cleanup
       (window as any).jitsiApiInstance = api;
@@ -103,7 +97,8 @@ export default function JitsiMeetSession({ sessionId, onLeave }: JitsiMeetSessio
         console.error('Error disposing Jitsi API:', error);
       }
     }
-    onLeave();
+    // Don't navigate away - let the user stay in the window
+    // They can close it manually when done
   };
 
   if (isLoading) {
