@@ -2468,20 +2468,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ZegoCloud Token Generation
-  app.get('/api/zego-token', isPhoneAuthenticated, async (req: any, res) => {
+  // ZegoCloud Configuration Endpoint (for token generation on frontend)
+  app.get('/api/zego-config', isPhoneAuthenticated, async (req: any, res) => {
     try {
-      let { roomID, userID, userName } = req.query;
-      
-      if (!roomID || !userID || !userName) {
-        return res.status(400).json({ message: 'roomID, userID, userName مطلوب' });
-      }
-
-      // Ensure strings
-      roomID = String(roomID);
-      userID = String(userID);
-      userName = String(userName);
-
       const appID = parseInt(process.env.VITE_ZEGO_APP_ID || '0');
       const serverSecret = (process.env.VITE_ZEGO_SERVER_SECRET || '').trim();
       
@@ -2490,47 +2479,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: 'بيانات الخادم غير كاملة' });
       }
 
-      console.log('🎥 ZegoCloud Token Generation:', {
+      console.log('🎥 ZegoCloud Configuration Retrieved');
+
+      // Send config to frontend for client-side token generation
+      res.json({
         appID,
-        roomID,
-        userID,
-        userName,
+        serverSecret,
       });
-
-      // ZegoCloud token generation using HMAC-SHA256
-      // This is the proper method for generating access tokens
-      const crypto = await import('crypto');
-      
-      // Generate random nonce
-      const nonce = crypto.randomBytes(8).toString('hex');
-      
-      // Current timestamp
-      const timestamp = Math.floor(Date.now() / 1000);
-      
-      // Build signature string: appID + roomID + userID + timestamp + nonce + serverSecret
-      const signatureString = `${appID}${roomID}${userID}${timestamp}${nonce}${serverSecret}`;
-      
-      // Generate signature using HMAC-SHA256
-      const signature = crypto
-        .createHmac('sha256', serverSecret)
-        .update(signatureString)
-        .digest('hex');
-
-      // Format token
-      const token = `${appID}:${roomID}:${userID}:${timestamp}:${nonce}:${signature}`;
-
-      console.log('✅ ZegoCloud Token Generated:', {
-        appID,
-        roomID,
-        userID,
-        userName,
-        expiresIn: '1 hour',
-      });
-
-      res.json({ token });
     } catch (error) {
-      console.error('❌ Error generating ZegoCloud token:', error);
-      res.status(500).json({ message: 'فشل في توليد رمز الجلسة' });
+      console.error('❌ Error retrieving ZegoCloud config:', error);
+      res.status(500).json({ message: 'فشل في الحصول على بيانات الجلسة' });
     }
   });
 

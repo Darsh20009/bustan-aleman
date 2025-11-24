@@ -3,7 +3,13 @@ import { useRoute } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { Loader2 } from 'lucide-react';
+import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
 import ZegoSession from '@/components/ZegoSession';
+
+interface ZegoConfig {
+  appID: number;
+  serverSecret: string;
+}
 
 export default function LiveSession() {
   const [, params] = useRoute('/session/:sessionId');
@@ -30,22 +36,39 @@ export default function LiveSession() {
       const userID = user.id;
       const userName = user.firstName || 'Guest';
 
-      console.log('🎥 Requesting ZegoCloud token:', { roomID, userID, userName });
+      console.log('🎥 Requesting ZegoCloud config:', { roomID, userID, userName });
 
-      fetch(`/api/zego-token?roomID=${encodeURIComponent(roomID)}&userID=${encodeURIComponent(userID)}&userName=${encodeURIComponent(userName)}`)
+      fetch('/api/zego-config')
         .then(res => res.json())
-        .then(data => {
-          if (data.token) {
-            console.log('✅ ZegoCloud token received');
-            setZegoToken(data.token);
+        .then((config: ZegoConfig) => {
+          if (config.appID && config.serverSecret) {
+            console.log('✅ ZegoCloud config received, generating token...');
+            
+            try {
+              // Generate token on frontend using official method
+              const kitToken = ZegoUIKitPrebuilt.generateKitTokenForTest(
+                config.appID,
+                config.serverSecret,
+                roomID,
+                userID,
+                userName
+              );
+              
+              console.log('✅ ZegoCloud token generated:', { roomID, userID, userName });
+              setZegoToken(kitToken);
+            } catch (error) {
+              console.error('❌ Error generating token:', error);
+              setLoadingError('فشل في توليد رمز الجلسة');
+              setTimeout(() => setLocation('/'), 3000);
+            }
           } else {
-            console.error('No token in response:', data);
-            setLoadingError(data.message || 'فشل في الحصول على رمز الجلسة');
+            console.error('Invalid config:', config);
+            setLoadingError('بيانات الخادم غير كاملة');
             setTimeout(() => setLocation('/'), 3000);
           }
         })
         .catch(error => {
-          console.error('Error getting ZegoCloud token:', error);
+          console.error('Error getting ZegoCloud config:', error);
           setLoadingError('خطأ في الاتصال بالخادم');
           setTimeout(() => setLocation('/'), 3000);
         });
