@@ -5,17 +5,16 @@ import { Button } from '@/components/ui/button';
 import { Loader2, PhoneOff } from 'lucide-react';
 
 interface BigBlueButtonSessionProps {
-  sessionId: string;
+  sessionId: string; // This is roomToken passed from URL
   onLeave: () => void;
 }
 
 export default function BigBlueButtonSession({ sessionId, onLeave }: BigBlueButtonSessionProps) {
   const { user, isLoading } = useAuth();
-  const containerRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
-  const [joinUrl, setJoinUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [error, setError] = useState('');
+  const windowRef = useRef<Window | null>(null);
 
   useEffect(() => {
     // Ensure user is authenticated
@@ -31,21 +30,34 @@ export default function BigBlueButtonSession({ sessionId, onLeave }: BigBlueButt
     const initializeBBB = async () => {
       try {
         const displayName = user?.firstName || 'Guest';
+        // sessionId here is actually the roomToken
         const meetingID = `bustan_${sessionId}`;
         
         // Get BBB server URL from env or use demo
         const bbbServer = import.meta.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org';
 
-        // For demo.bigbluebutton.org, use direct join URL without authentication
-        // For production BBB servers, you'd need to implement checksum-based authentication
-        const joinUrl = bbbServer.includes('demo.bigbluebutton.org') 
-          ? `${bbbServer}/api/join?meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true`
-          : `${bbbServer}/api/join?meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true`;
+        console.log('BBB Session Info:', { meetingID, displayName, bbbServer });
+
+        // Create join URL - BigBlueButton API
+        // The demo server doesn't require authentication, just pass the meeting ID and name
+        const params = new URLSearchParams({
+          meetingID: meetingID,
+          fullName: displayName,
+          redirect: 'true'
+        });
+
+        const joinUrl = `${bbbServer}/api/join?${params.toString()}`;
         
-        setJoinUrl(joinUrl);
+        console.log('BBB Join URL:', joinUrl);
+
+        // Instead of iframe, redirect to the join URL directly
+        // This is more reliable for BigBlueButton
+        window.location.href = joinUrl;
+        
         setLoading(false);
       } catch (error) {
         console.error('Error initializing BigBlueButton:', error);
+        setError('فشل في تحميل الحصة');
         setLoading(false);
       }
     };
@@ -54,11 +66,14 @@ export default function BigBlueButtonSession({ sessionId, onLeave }: BigBlueButt
   }, [isLoading, user, sessionId]);
 
   const handleLeaveSession = () => {
-    // Clean up and navigate away
+    // Close the window if it was opened by us
+    if (windowRef.current && !windowRef.current.closed) {
+      windowRef.current.close();
+    }
     onLeave?.();
   };
 
-  if (isLoading || loading) {
+  if (isLoading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 flex items-center justify-center">
         <div className="text-center">
@@ -69,53 +84,37 @@ export default function BigBlueButtonSession({ sessionId, onLeave }: BigBlueButt
     );
   }
 
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-red-600 text-white p-6 rounded-lg">
+            <p className="text-xl font-bold">{error}</p>
+            <Button 
+              variant="secondary" 
+              onClick={handleLeaveSession}
+              className="mt-4"
+            >
+              العودة
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (!user) {
     return null;
   }
 
+  // Loading screen while redirecting
   return (
-    <div className="h-screen flex flex-col bg-black" dir="rtl">
-      {/* Control Bar */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 shadow-lg flex items-center justify-between">
-        <div>
-          <h2 className="text-white font-bold text-lg">الحصة المباشرة</h2>
-          <p className="text-white/80 text-sm">bustan_Sessions</p>
-        </div>
-        <Button
-          variant="destructive"
-          onClick={handleLeaveSession}
-          className="flex items-center gap-2"
-          data-testid="button-leave-bbb"
-        >
-          <PhoneOff className="w-4 h-4" />
-          مغادرة
-        </Button>
-      </div>
-
-      {/* BBB Container */}
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-hidden flex items-center justify-center bg-black"
-        id="bbb-container"
-      >
-        {joinUrl && (
-          <iframe
-            ref={iframeRef}
-            src={joinUrl}
-            allow="camera; microphone; display-capture"
-            allowFullScreen
-            className="w-full h-full border-0"
-            title="BigBlueButton Session"
-          />
-        )}
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 flex items-center justify-center">
+      <div className="text-center">
+        <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
+        <p className="text-white text-xl">جاري الاتصال بـ BigBlueButton...</p>
+        <p className="text-white text-sm mt-2">سيتم فتح الحصة في نافذة جديدة</p>
       </div>
     </div>
   );
-}
-
-// Type declaration for BigBlueButton
-declare global {
-  interface Window {
-    bbbApiInstance?: any;
-  }
 }
