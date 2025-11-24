@@ -1,6 +1,5 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { createHmac } from "crypto";
 import { storage } from "./storage";
 import { setupPhoneAuth, isPhoneAuthenticated, isTeacher, initializePreregisteredUsers } from "./phoneAuth";
 import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type AuthenticatedRequest } from "./authMiddleware";
@@ -2480,25 +2479,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const displayName = user.firstName || 'Guest';
-      const bbbServer = process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org';
-      const bbbSecret = process.env.VITE_BBB_SECRET || 'bbb_secret';
+      const bbbServer = (process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org').trim();
+      const bbbSecret = (process.env.VITE_BBB_SECRET || 'bbb_secret').trim();
 
-      // Build the checksum query string
-      const params = `meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}&redirect=true`;
-      const checksumString = `join${params}${bbbSecret}`;
+      console.log('🔐 BBB Config:', {
+        server: bbbServer,
+        secretLength: bbbSecret.length,
+        secretPreview: bbbSecret.substring(0, 10) + '...'
+      });
+
+      // Build query parameters for BigBlueButton API
+      // Don't include redirect in checksum calculation, only in final URL
+      const checksumParams = `meetingID=${encodeURIComponent(meetingID)}&fullName=${encodeURIComponent(displayName)}`;
+      
+      // BigBlueButton checksum format: SHA1(join + params + secret)
+      // Note: Some versions need "join" as method prefix
+      const checksumString = `join${checksumParams}${bbbSecret}`;
+      
+      console.log('🔐 Checksum Input:', {
+        method: 'join',
+        params: checksumParams,
+        fullString: checksumString.substring(0, 80) + '...'
+      });
       
       // Generate checksum using SHA1
-      const checksum = createHmac('sha1', bbbSecret)
-        .update(checksumString)
-        .digest('hex');
+      const crypto = await import('crypto');
+      const checksum = crypto.createHash('sha1').update(checksumString).digest('hex');
 
-      const joinUrl = `${bbbServer}/api/join?${params}&checksum=${checksum}`;
+      // Build final URL with redirect
+      const joinUrl = `${bbbServer}/api/join?${checksumParams}&redirect=true&checksum=${checksum}`;
 
-      console.log('✅ BBB Join URL:', { meetingID, displayName, bbbServer });
+      console.log('✅ BBB Join URL Ready:', {
+        meetingID: meetingID.substring(0, 20) + '...',
+        displayName,
+        server: bbbServer,
+        checksum: checksum.substring(0, 20) + '...',
+        fullUrl: joinUrl.substring(0, 120) + '...'
+      });
 
       res.json({ joinUrl });
     } catch (error) {
-      console.error('Error generating BBB join URL:', error);
+      console.error('❌ Error generating BBB join URL:', error);
       res.status(500).json({ message: 'فشل في توليد رابط الحصة' });
     }
   });
