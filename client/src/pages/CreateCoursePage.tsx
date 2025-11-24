@@ -109,9 +109,10 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
       certificateName: string;
     }) => {
       console.log('📤 Creating course with data:', data);
-      const response = await apiRequest('/api/courses', 'POST', data);
-      console.log('✅ Course created:', response);
-      return response;
+      const response = await apiRequest('POST', '/api/courses', data);
+      const json = await response.json();
+      console.log('✅ Course created:', json);
+      return json;
     },
     onSuccess: (data: any) => {
       toast({
