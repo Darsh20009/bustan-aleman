@@ -754,6 +754,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete schedule
+  app.post('/api/schedules/:scheduleId/delete', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+
+      const { scheduleId } = req.params;
+      
+      // Delete the schedule
+      await storage.deleteClassSchedule(scheduleId);
+      
+      res.json({ 
+        success: true, 
+        message: 'تم حذف الجدول بنجاح'
+      });
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      res.status(500).json({ message: 'فشل حذف الجدول' });
+    }
+  });
+
   // Quran API routes
   app.get('/api/quran/surahs', async (req, res) => {
     try {

@@ -301,6 +301,32 @@ export function SheikhDashboard() {
     }
   };
 
+  const deleteSchedule = async (scheduleId: string) => {
+    try {
+      const response = await fetch(`/api/schedules/${scheduleId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "تم حذف الجدول ✅",
+          description: "تم حذف جدول الحصة بنجاح",
+        });
+        fetchStudents();
+      } else {
+        throw new Error('Failed to delete schedule');
+      }
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      toast({
+        title: "خطأ",
+        description: "فشل في حذف الجدول",
+        variant: "destructive",
+      });
+    }
+  };
+
   const enableLiveSession = async (sessionId: string) => {
     try {
       const response = await fetch(`/api/sheikh/sessions/${sessionId}/enable`, {
@@ -1056,7 +1082,7 @@ export function SheikhDashboard() {
                         >
                           <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-white to-blue-50">
                             <CardContent className="p-6">
-                              <div className="flex items-center justify-between">
+                              <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div className="flex items-center gap-4">
                                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
                                     {student.studentName.charAt(0)}
@@ -1071,13 +1097,24 @@ export function SheikhDashboard() {
                                     </p>
                                   </div>
                                 </div>
-                                <Button
-                                  onClick={() => enableSession(student.id, schedule)}
-                                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
-                                >
-                                  <Video className="w-4 h-4 ml-2" />
-                                  تفعيل الحلقة
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => enableSession(student.id, schedule)}
+                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-lg"
+                                    data-testid={`button-enable-session-${schedule.id}`}
+                                  >
+                                    <Video className="w-4 h-4 ml-2" />
+                                    تفعيل الحلقة
+                                  </Button>
+                                  <Button
+                                    onClick={() => deleteSchedule(schedule.id)}
+                                    variant="destructive"
+                                    className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800"
+                                    data-testid={`button-delete-schedule-${schedule.id}`}
+                                  >
+                                    إلغاء
+                                  </Button>
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
