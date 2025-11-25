@@ -23,45 +23,75 @@ export async function initializePreregisteredUsers() {
   try {
     console.log(`🔄 Initializing ${preregisteredUsers.length} pre-registered users...`);
     
+    const createdUsers: string[] = [];
+    const existingUsers: string[] = [];
+    const failedUsers: { name: string; phone: string; error: string }[] = [];
+    
     for (const user of preregisteredUsers) {
       try {
         console.log(`🔄 Checking user: ${user.name} (${user.phoneNumber})`);
         // Check if user already exists by phone number
         const existingUser = await storage.getUserByPhone(user.phoneNumber);
-        console.log(`  ${existingUser ? '✓ User exists' : '✗ User not found, creating...'}`);
         
-        if (!existingUser) {
+        if (existingUser) {
+          console.log(`  ✓ User exists (ID: ${existingUser.id})`);
+          existingUsers.push(user.phoneNumber);
+        } else {
+          console.log(`  ✗ User not found, creating...`);
           // Hash password
           const passwordHash = await bcrypt.hash(user.password, 10);
           
           // Create user
-          await storage.createUserWithPhone({
+          const newUser = await storage.createUserWithPhone({
             firstName: user.name,
             phoneNumber: user.phoneNumber,
             passwordHash,
             role: user.role,
           });
-          console.log(`✅ Created pre-registered user: ${user.name} (${user.phoneNumber})`);
+          console.log(`✅ Created pre-registered user: ${user.name} (${user.phoneNumber}) - ID: ${newUser.id}`);
+          createdUsers.push(user.phoneNumber);
         }
       } catch (userError: any) {
+        const errorMsg = userError?.message || String(userError);
+        console.error(`❌ Error processing user ${user.name} (${user.phoneNumber}):`, errorMsg);
+        
         // If we're in JSON mode, skip user creation gracefully
-        if (userError.message?.includes("not available in JSON mode")) {
+        if (errorMsg.includes("not available in JSON mode")) {
           console.log(`⚠️  Skipping user creation in JSON mode: ${user.name} (${user.phoneNumber})`);
           continue;
         }
-        // Re-throw other errors
-        throw userError;
+        
+        // Log failure but continue with other users
+        failedUsers.push({ name: user.name, phone: user.phoneNumber, error: errorMsg });
       }
     }
-    console.log("✅ All pre-registered users initialized");
+    
+    console.log(`\n📊 Pre-registered users initialization summary:`);
+    console.log(`  ✅ Created: ${createdUsers.length} users`);
+    console.log(`  ✓ Existing: ${existingUsers.length} users`);
+    console.log(`  ❌ Failed: ${failedUsers.length} users`);
+    
+    if (failedUsers.length > 0) {
+      console.error(`Failed users:`, failedUsers);
+    }
+    
+    if (createdUsers.length > 0 || existingUsers.length > 0) {
+      console.log("✅ All pre-registered users initialized successfully");
+    } else if (failedUsers.length > 0) {
+      console.error("⚠️  No users were created or found - there were only failures");
+    }
   } catch (error: any) {
+    const errorMsg = error?.message || String(error);
+    
     // If we're in JSON mode, just log a warning and continue
-    if (error.message?.includes("not available in JSON mode")) {
+    if (errorMsg.includes("not available in JSON mode")) {
       console.log("⚠️  Pre-registered users initialization skipped (JSON mode)");
       return;
     }
-    console.error("❌ Error initializing pre-registered users:", error);
-    throw error;
+    
+    console.error("❌ Error initializing pre-registered users:", errorMsg);
+    // Don't re-throw - allow server to continue even if user initialization fails
+    // This is important for production environments
   }
 }
 
