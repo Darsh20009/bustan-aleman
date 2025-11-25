@@ -161,14 +161,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/courses', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
+      console.log('📝 Creating course request received:', req.body);
+      
       // Extract course data and additional fields
       const { uploads, quizQuestions, addQuiz, addCertificate, certificateName, ...courseBody } = req.body;
       
-      // Add default startDate if not provided
+      // Add default values and created by user
       const courseDataWithDefaults = {
         ...courseBody,
         startDate: courseBody.startDate || new Date(),
+        createdBy: req.user!.id, // Auto-assign the creator
       };
+      
+      console.log('📝 Course data with defaults:', courseDataWithDefaults);
       
       const courseData = insertCourseSchema.parse(courseDataWithDefaults);
       
@@ -180,14 +185,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      console.log('✅ Validation passed, creating course in database...');
       const course = await storage.createCourse(courseData);
+      console.log(`📚 Course created successfully: ${course.id}`);
       
       // TODO: Handle uploads, quiz questions, certificate in future
-      console.log(`📚 Course created: ${course.id}, uploads: ${uploads?.length || 0}, quiz: ${addQuiz}`);
+      console.log(`📚 Additional data: uploads: ${uploads?.length || 0}, quiz: ${addQuiz}, certificate: ${addCertificate}`);
       
       res.status(201).json(course);
     } catch (error) {
-      console.error("Error creating course:", error);
+      console.error("❌ Error creating course:", error);
       res.status(500).json({ message: "Failed to create course", error: error instanceof Error ? error.message : String(error) });
     }
   });

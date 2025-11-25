@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Menu, User, LogOut } from "lucide-react";
+import { BookOpen, Menu, User, LogOut, ShoppingCart } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +19,14 @@ export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  
+  // Get cart items for students
+  const { data: cartItems } = useQuery<any[]>({
+    queryKey: ['/api/cart'],
+    enabled: isAuthenticated && user?.role === 'student',
+  });
+  
+  const cartItemsCount = Array.isArray(cartItems) ? cartItems.length : 0;
 
   const navItems = [
     { href: "/", label: "الرئيسية" },
@@ -71,6 +81,29 @@ export default function Navigation() {
           {/* Auth Buttons */}
           <div className="flex items-center space-x-reverse space-x-2 sm:space-x-4">
             <ThemeToggle />
+            
+            {/* Cart Button for Students */}
+            {isAuthenticated && user?.role === 'student' && (
+              <Link href="/cart">
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="relative"
+                  data-testid="button-cart"
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartItemsCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    >
+                      {cartItemsCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Link>
+            )}
+            
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

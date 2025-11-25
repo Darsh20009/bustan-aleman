@@ -266,16 +266,22 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
                             {course.description}
                           </p>
                           
-                          <div className="space-y-2 mb-4 text-xs text-copper-bronze font-arabic-sans">
-                            <div className="flex items-center justify-end gap-2">
-                              <span>{course.schedule.time} - {course.schedule.duration}</span>
-                              <Clock className="w-3 h-3" />
+                          {course.schedule && (
+                            <div className="space-y-2 mb-4 text-xs text-copper-bronze font-arabic-sans">
+                              {course.schedule.time && (
+                                <div className="flex items-center justify-end gap-2">
+                                  <span>{course.schedule.time} - {course.schedule.duration}</span>
+                                  <Clock className="w-3 h-3" />
+                                </div>
+                              )}
+                              {course.schedule.days && (
+                                <div className="flex items-center justify-end gap-2">
+                                  <span>{course.schedule.days.join('، ')}</span>
+                                  <Calendar className="w-3 h-3" />
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center justify-end gap-2">
-                              <span>{course.schedule.days.join('، ')}</span>
-                              <Calendar className="w-3 h-3" />
-                            </div>
-                          </div>
+                          )}
 
                           <div className="flex items-center justify-between mb-4">
                             <span className="text-xs text-copper-bronze flex items-center font-arabic-sans">
