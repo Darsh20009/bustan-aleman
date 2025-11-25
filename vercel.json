@@ -3,9 +3,6 @@
   "outputDirectory": "dist/public",
   "devCommand": "npm run dev",
   "installCommand": "npm ci --prefer-offline",
-  "serverless": {
-    "regions": ["iad1"]
-  },
   "env": {
     "NODE_ENV": "production"
   },
