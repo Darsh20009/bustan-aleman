@@ -435,9 +435,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/enrollments', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
+      const { courseId } = req.body;
+      
+      // Get course to check if it's free or paid
+      const course = await storage.getCourse(courseId);
+      
       const enrollmentData = insertEnrollmentSchema.parse({
-        ...req.body,
         userId,
+        courseId,
+        status: course?.isPaid ? 'pending' : 'approved',
       });
       
       const enrollment = await storage.enrollUserInCourse(enrollmentData);
@@ -2524,6 +2530,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         message: error.message || 'فشل إرسال الرسالة' 
       });
+    }
+  });
+
+  // Get course students endpoint
+  app.get('/api/courses/:courseId/students', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { courseId } = req.params;
+      const enrollments = await storage.getCourseEnrollments(courseId);
+      res.json(enrollments || []);
+    } catch (error) {
+      console.error('Error fetching course students:', error);
+      res.status(500).json({ message: 'فشل جلب الطلاب' });
     }
   });
 
