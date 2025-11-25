@@ -38,7 +38,7 @@ export default defineConfig({
     hmr: {
       protocol: process.env.REPLIT_DEV_DOMAIN ? 'wss' : 'ws',
       host: process.env.REPLIT_DEV_DOMAIN || 'localhost',
-      port: process.env.REPLIT_DEV_DOMAIN ? 443 : 5000,
+      port: 5000,
     },
   },
 });
