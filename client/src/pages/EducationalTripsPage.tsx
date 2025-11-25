@@ -2,19 +2,21 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { BookOpen, MapPin, Users, Clock, Award, ArrowRight, Library, ScrollText, Lightbulb } from 'lucide-react';
+import { BookOpen, Download, ArrowRight, FileText, Heart, Star, Filter, Search } from 'lucide-react';
+import { Input } from '../components/ui/input';
 
-interface Trip {
+interface Resource {
   id: string;
   title: string;
   description: string;
   category: string;
   content: string;
-  duration: string;
-  difficulty: string;
-  participants: number;
-  icon: React.ComponentType<any>;
-  gradient: string;
+  author: string;
+  pages: number;
+  rating?: number;
+  authenticity?: string;
+  downloads: number;
+  free: boolean;
 }
 
 interface EducationalTripsPageProps {
@@ -22,357 +24,462 @@ interface EducationalTripsPageProps {
   onRegisterClick?: () => void;
 }
 
+const resources: Resource[] = [
+  // الحديث - Hadith
+  {
+    id: 'hadith-sahih-bukhari',
+    title: 'صحيح البخاري',
+    description: 'أصح كتاب بعد القرآن - مجموعة شاملة من 7275 حديث موثق',
+    category: 'hadith',
+    content: 'مجموعة كاملة من أحاديث صحيح البخاري مع التقييمات والشروحات. كل حديث مصنف حسب الدرجة (صحيح، حسن، ضعيف)',
+    author: 'الإمام محمد بن إسماعيل البخاري',
+    pages: 1320,
+    authenticity: 'صحيح',
+    downloads: 24500,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'hadith-sahih-muslim',
+    title: 'صحيح مسلم',
+    description: 'ثاني أصح كتب الحديث - 5033 حديث صحيح مع التوثيق',
+    category: 'hadith',
+    content: 'مجموعة كاملة من أحاديث صحيح مسلم مع الشروح والفوائد. كل حديث معه تقييم الدرجة والمصادر',
+    author: 'الإمام مسلم بن الحجاج',
+    pages: 1120,
+    authenticity: 'صحيح',
+    downloads: 22100,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'hadith-sunan-tirmidhi',
+    title: 'سنن الترمذي',
+    description: '3956 حديث مع تقييم درجات الأحاديث والتعليقات',
+    category: 'hadith',
+    content: 'مجموعة أحاديث سنن الترمذي مع تقييم الدرجة (صحيح، حسن، ضعيف) وشروح مختصرة',
+    author: 'الإمام محمد بن عيسى الترمذي',
+    pages: 920,
+    authenticity: 'متنوع',
+    downloads: 16800,
+    free: true,
+    rating: 4.8
+  },
+  {
+    id: 'hadith-sunan-nasai',
+    title: 'سنن النسائي',
+    description: '5761 حديث من كتاب السنن - مع درجات التوثيق',
+    category: 'hadith',
+    content: 'أحاديث السنن الصغرى للنسائي مع تقييم الدرجة وملاحظات الحفاظ',
+    author: 'الإمام أحمد بن شعيب النسائي',
+    pages: 1080,
+    authenticity: 'متنوع',
+    downloads: 15900,
+    free: true,
+    rating: 4.7
+  },
+  {
+    id: 'hadith-sunan-abi-dawood',
+    title: 'سنن أبي داود',
+    description: '4800 حديث مع درجات الصحة والضعف والتوثيق',
+    category: 'hadith',
+    content: 'مجموعة أحاديث سنن أبي داود مع تقييم شامل لدرجة الأحاديث',
+    author: 'الإمام أبو داود سليمان بن الأشعث',
+    pages: 980,
+    authenticity: 'متنوع',
+    downloads: 14200,
+    free: true,
+    rating: 4.6
+  },
+  {
+    id: 'hadith-sunan-ibn-majah',
+    title: 'سنن ابن ماجه',
+    description: '4341 حديث مع التقييمات والشروح المختصرة',
+    category: 'hadith',
+    content: 'سنن ابن ماجه كاملة مع تقييم درجات الأحاديث والمصادر',
+    author: 'الإمام محمد بن يزيد ابن ماجه',
+    pages: 890,
+    authenticity: 'متنوع',
+    downloads: 12800,
+    free: true,
+    rating: 4.5
+  },
+  {
+    id: 'hadith-arbain-nawawi',
+    title: 'الأربعين النووية',
+    description: '40 حديث مختار يجمع أصول الدين والشريعة',
+    category: 'hadith',
+    content: 'أربعين حديث مختاره للإمام النووي مع شروح مفصلة وفوائد',
+    author: 'الإمام يحيى بن شرف النووي',
+    pages: 180,
+    authenticity: 'صحيح',
+    downloads: 45000,
+    free: true,
+    rating: 5
+  },
+
+  // الفقه - Fiqh
+  {
+    id: 'fiqh-bidayah-mutafarqin',
+    title: 'بداية المتفقه في أصول الفقه',
+    description: 'كتاب أساسي في فهم الفقه والأحكام الشرعية',
+    category: 'fiqh',
+    content: 'شرح تفصيلي لأساسيات الفقه والعبادات والمعاملات والحدود والسياسة',
+    author: 'الإمام عبد الله بن أحمد النجاري',
+    pages: 350,
+    downloads: 18900,
+    free: true,
+    rating: 4.8
+  },
+  {
+    id: 'fiqh-muwatta',
+    title: 'موطأ مالك',
+    description: 'أول كتاب حديث وفقهي جمع الحديث والآراء الفقهية',
+    category: 'fiqh',
+    content: 'موطأ الإمام مالك مع أحكام فقهية شاملة وآراء المذاهب',
+    author: 'الإمام مالك بن أنس',
+    pages: 680,
+    downloads: 14500,
+    free: true,
+    rating: 4.9
+  },
+  {
+    id: 'fiqh-bidayat-mujtahid',
+    title: 'بداية المجتهد ونهاية المقتصد',
+    description: 'موسوعة فقهية شاملة في الأحكام والخلافات',
+    category: 'fiqh',
+    content: 'دراسة مقارنة للمذاهب الفقهية الأربع مع الأدلة والآراء',
+    author: 'الإمام محمد بن أحمد ابن رشد',
+    pages: 1240,
+    downloads: 16700,
+    free: true,
+    rating: 4.9
+  },
+  {
+    id: 'fiqh-kitab-tawhid',
+    title: 'كتاب التوحيد',
+    description: 'أساسيات التوحيد والعقيدة الإسلامية الصحيحة',
+    category: 'fiqh',
+    content: 'شرح شامل للتوحيد وأنواعه والشرك وأنواعه مع الأدلة من القرآن والسنة',
+    author: 'الشيخ محمد بن عبد الوهاب',
+    pages: 420,
+    downloads: 28900,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'fiqh-zaad-mustaqni',
+    title: 'زاد المستقنع',
+    description: 'مختصر فقهي شامل في العبادات والمعاملات',
+    category: 'fiqh',
+    content: 'مختصر الفقه الحنبلي مع شروح سهلة وممتعة',
+    author: 'الشيخ موسى بن أحمد الحجاوي',
+    pages: 560,
+    downloads: 19800,
+    free: true,
+    rating: 4.7
+  },
+
+  // السيرة النبوية - Seerah
+  {
+    id: 'seerah-sirah-nabawiyyah',
+    title: 'السيرة النبوية لابن هشام',
+    description: 'أشهر كتاب في السيرة النبوية - من المولد إلى الوفاة',
+    category: 'seerah',
+    content: 'السيرة الكاملة للنبي محمد ﷺ من المولد الشريف إلى وفاته مع التفاصيل والأحداث المهمة',
+    author: 'الإمام عبد الملك بن هشام',
+    pages: 1850,
+    downloads: 35600,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'seerah-wafa-al-wafa',
+    title: 'الوفا بأحوال المصطفى',
+    description: 'سيرة النبي ﷺ الكاملة مع الأحاديث والتفاصيل',
+    category: 'seerah',
+    content: 'دراسة تفصيلية لحياة النبي محمد ﷺ مع كل الأحداث المهمة والدروس',
+    author: 'الإمام نور الدين الهيثمي',
+    pages: 1560,
+    downloads: 28900,
+    free: true,
+    rating: 4.9
+  },
+  {
+    id: 'seerah-ar-raheeq',
+    title: 'الرحيق المختوم',
+    description: 'سيرة النبي ﷺ باختصار وتركيز على الأحداث المهمة',
+    category: 'seerah',
+    content: 'السيرة النبوية الكاملة مع التركيز على الأحداث الحاسمة والدروس المستفادة',
+    author: 'الشيخ صفي الرحمن المباركفوري',
+    pages: 520,
+    downloads: 42100,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'seerah-gazwat',
+    title: 'غزوات النبي ﷺ',
+    description: 'دراسة مفصلة لكل غزوات النبي محمد ﷺ',
+    category: 'seerah',
+    content: 'شرح تفصيلي لكل غزوات النبي ﷺ مع الدروس والفوائد من كل غزوة',
+    author: 'الإمام ابن سيد الناس',
+    pages: 680,
+    downloads: 21400,
+    free: true,
+    rating: 4.8
+  },
+
+  // العلوم الإسلامية - Islamic Sciences
+  {
+    id: 'science-quran-sciences',
+    title: 'علوم القرآن',
+    description: 'شامل في علوم القرآن والتفسير والقراءات',
+    category: 'sciences',
+    content: 'دراسة شاملة لعلوم القرآن من الوحي إلى الحفظ مع النسخ والإعجاز والقراءات',
+    author: 'الإمام الزركشي',
+    pages: 890,
+    downloads: 17600,
+    free: true,
+    rating: 4.8
+  },
+  {
+    id: 'science-hadith-terminology',
+    title: 'مصطلح الحديث',
+    description: 'دليل شامل لفهم درجات الأحاديث والتقييمات',
+    category: 'sciences',
+    content: 'شرح مفصل لمصطلحات الحديث والرجال والعلل مع أمثلة عملية',
+    author: 'الإمام الخطيب البغدادي',
+    pages: 520,
+    downloads: 19800,
+    free: true,
+    rating: 4.9
+  },
+  {
+    id: 'science-aqeedah-tahawiyyah',
+    title: 'العقيدة الطحاوية',
+    description: 'عقيدة إسلامية كاملة مع الشرح المفصل',
+    category: 'sciences',
+    content: 'شرح شامل للعقيدة الإسلامية الصحيحة من كتاب العقيدة الطحاوية',
+    author: 'الإمام أبو جعفر الطحاوي',
+    pages: 420,
+    downloads: 25900,
+    free: true,
+    rating: 5
+  },
+  {
+    id: 'science-tafsir-jalalain',
+    title: 'تفسير الجلالين',
+    description: 'تفسير موجز وشامل للقرآن الكريم',
+    category: 'sciences',
+    content: 'تفسير القرآن الكريم كاملاً مع شرح المعاني والأحكام',
+    author: 'الإمام جلال الدين المحلي وجلال الدين السيوطي',
+    pages: 1240,
+    downloads: 38900,
+    free: true,
+    rating: 4.9
+  }
+];
+
 export function EducationalTripsPage({ onBack, onRegisterClick }: EducationalTripsPageProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [expandedTrip, setExpandedTrip] = useState<string | null>(null);
-
-  const trips: Trip[] = [
-    // الفقه - Fiqh
-    {
-      id: 'fiqh-basics',
-      title: 'أساسيات الفقه الإسلامي',
-      description: 'رحلة شاملة في أساسيات الفقه وقواعده',
-      category: 'fiqh',
-      content: 'تعلم أساسيات الفقه الإسلامي من خلال دراسة النصوص الشرعية والقواعس الفقهية الأساسية. يشمل الدرس مقدمة عن الفقه وأصوله ومدارسه الفقهية الأربع.',
-      duration: '8 أسابيع',
-      difficulty: 'مبتدئ',
-      participants: 450,
-      icon: ScrollText,
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    {
-      id: 'fiqh-worship',
-      title: 'فقه العبادات',
-      description: 'دراسة تفصيلية لأحكام الصلاة والزكاة والحج والصوم',
-      category: 'fiqh',
-      content: 'رحلة معمقة في أحكام العبادات الخمس. تشمل الدراسة شروط الصلاة وأركانها وواجباتها وسننها، وأحكام الزكاة وأنواعها ومقاديرها، وأحكام الصوم والحج والعمرة.',
-      duration: '12 أسبوع',
-      difficulty: 'متوسط',
-      participants: 380,
-      icon: Library,
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    {
-      id: 'fiqh-transactions',
-      title: 'فقه المعاملات',
-      description: 'أحكام البيع والشراء والعقود والمعاملات المالية',
-      category: 'fiqh',
-      content: 'دراسة الأحكام الشرعية للمعاملات المالية منها البيع والشراء والإجارة والقرض والرهن والضمان والمضاربة والشركة. مع أمثلة عملية معاصرة.',
-      duration: '10 أسابيع',
-      difficulty: 'متوسط',
-      participants: 320,
-      icon: ScrollText,
-      gradient: 'from-green-500 to-emerald-500'
-    },
-    {
-      id: 'fiqh-family',
-      title: 'فقه الأسرة',
-      description: 'أحكام الزواج والطلاق والنفقة والوصية',
-      category: 'fiqh',
-      content: 'رحلة في أحكام الزواج والمهر والعقد والشروط، والطلاق وأنواعه والعدة والحضانة والنفقة. دراسة شرعية معمقة بأدلة من القرآن والسنة.',
-      duration: '9 أسابيع',
-      difficulty: 'متوسط',
-      participants: 410,
-      icon: Award,
-      gradient: 'from-rose-500 to-red-500'
-    },
-    // الحديث - Hadith
-    {
-      id: 'hadith-sahih-bukhari',
-      title: 'شرح صحيح البخاري',
-      description: 'دراسة الأحاديث الصحيحة من أصح كتاب بعد القرآن',
-      category: 'hadith',
-      content: 'رحلة معمقة في أحاديث صحيح البخاري. يتم شرح الأحاديث بطريقة سهلة وممتعة مع إيضاح الفوائد والدروس المستفادة من كل حديث.',
-      duration: '16 أسبوع',
-      difficulty: 'متوسط',
-      participants: 520,
-      icon: BookOpen,
-      gradient: 'from-amber-500 to-orange-500'
-    },
-    {
-      id: 'hadith-muslim',
-      title: 'شرح صحيح مسلم',
-      description: 'دراسة أحاديث صحيح مسلم الموثوقة والصحيحة',
-      category: 'hadith',
-      content: 'دراسة شاملة لأحاديث صحيح مسلم مع شرح لكل حديث وتوضيح معانيه والفوائد المستخلصة منه. يركز على الأحاديث ذات الصلة بالعقيدة والأحكام.',
-      duration: '16 أسبوع',
-      difficulty: 'متوسط',
-      participants: 480,
-      icon: ScrollText,
-      gradient: 'from-indigo-500 to-purple-500'
-    },
-    {
-      id: 'hadith-sunan',
-      title: 'دراسة السنن الأربع',
-      description: 'سنن الترمذي والنسائي وأبو داود وابن ماجه',
-      category: 'hadith',
-      content: 'رحلة شاملة في السنن الأربع مع دراسة الأحاديث المهمة والعمل بها. يتناول الدرس أحاديث الحج والعمرة والسفر والجهاد والعلم والأخلاق والآداب.',
-      duration: '14 أسبوع',
-      difficulty: 'متقدم',
-      participants: 290,
-      icon: Library,
-      gradient: 'from-teal-500 to-cyan-500'
-    },
-    {
-      id: 'hadith-methodology',
-      title: 'علم مصطلح الحديث',
-      description: 'فهم قواعد تصحيح وتضعيف الأحاديث',
-      category: 'hadith',
-      content: 'دراسة علم الحديث ومصطلحاته مثل الإسناد والمتن والضعيف والصحيح والحسن والموضوع. كيفية التمييز بين الحديث الصحيح والضعيف والموضوع.',
-      duration: '8 أسابيع',
-      difficulty: 'متقدم',
-      participants: 210,
-      icon: Lightbulb,
-      gradient: 'from-yellow-500 to-amber-500'
-    },
-    // الكتب الإسلامية
-    {
-      id: 'books-ihya',
-      title: 'شرح إحياء علوم الدين',
-      description: 'دراسة أعظم كتب التراث الإسلامي للإمام الغزالي',
-      category: 'books',
-      content: 'رحلة في أعظم كتب التراث الإسلامي. يتناول الكتاب العبادات والمعاملات والعادات والمنهيات مع التركيز على الناحية الروحية والأخلاقية.',
-      duration: '20 أسبوع',
-      difficulty: 'متقدم',
-      participants: 150,
-      icon: BookOpen,
-      gradient: 'from-rose-500 to-pink-500'
-    },
-    {
-      id: 'books-mukaddimah',
-      title: 'شرح مقدمة ابن خلدون',
-      description: 'دراسة المقدمة العظيمة في التاريخ والعمران',
-      category: 'books',
-      content: 'دراسة مقدمة ابن خلدون الشهيرة في التاريخ والعمران والحضارة. فهم مراحل تطور الحضارات وقوانين العمران والسياسة والاقتصاد.',
-      duration: '12 أسبوع',
-      difficulty: 'متقدم',
-      participants: 120,
-      icon: Library,
-      gradient: 'from-blue-500 to-indigo-500'
-    },
-    {
-      id: 'books-risalah',
-      title: 'رسائل ذات معنى',
-      description: 'مختارات من الرسائل الإسلامية المهمة',
-      category: 'books',
-      content: 'دراسة رسائل إسلامية مختارة تتناول موضوعات متنوعة من العقيدة والفقه والأخلاق والتربية. كل رسالة تقدم معنى عميق وفائدة تطبيقية.',
-      duration: '10 أسابيع',
-      difficulty: 'متوسط',
-      participants: 180,
-      icon: ScrollText,
-      gradient: 'from-green-500 to-teal-500'
-    },
-    // العلوم الإسلامية
-    {
-      id: 'aqeedah-basics',
-      title: 'أساسيات العقيدة الإسلامية',
-      description: 'دراسة أركان الإيمان والعقائد الأساسية',
-      category: 'studies',
-      content: 'رحلة تأسيسية في العقيدة الإسلامية. تشمل التوحيد وأقسامه والشرك وأنواعه والإيمان والإسلام والدين. دراسة العقائد من خلال نصوص القرآن والسنة.',
-      duration: '8 أسابيع',
-      difficulty: 'مبتدئ',
-      participants: 650,
-      icon: Award,
-      gradient: 'from-emerald-500 to-green-500'
-    },
-    {
-      id: 'tawheed-advanced',
-      title: 'التوحيد المتقدم',
-      description: 'دراسة معمقة لأنواع التوحيد الثلاثة',
-      category: 'studies',
-      content: 'دراسة متقدمة لتوحيد الربوبية وتوحيد الألوهية وتوحيد الأسماء والصفات. شرح الفروق بينها والأدلة من القرآن والسنة والإجماع.',
-      duration: '10 أسابيع',
-      difficulty: 'متقدم',
-      participants: 280,
-      icon: Lightbulb,
-      gradient: 'from-purple-500 to-violet-500'
-    },
-    {
-      id: 'quran-sciences',
-      title: 'علوم القرآن الكريم',
-      description: 'دراسة علوم القرآن والتفسير والقراءات',
-      category: 'studies',
-      content: 'رحلة شاملة في علوم القرآن تشمل الوحي والنسخ والإعجاز والمكي والمدني والناسخ والمنسوخ والقراءات القرآنية والتفسير.',
-      duration: '12 أسبوع',
-      difficulty: 'متقدم',
-      participants: 340,
-      icon: BookOpen,
-      gradient: 'from-cyan-500 to-blue-500'
-    },
-    {
-      id: 'tafseer-juz',
-      title: 'تفسير أجزاء من القرآن',
-      description: 'شرح تفصيلي لأجزاء مختلفة من القرآن الكريم',
-      category: 'studies',
-      content: 'دراسة تفسيرية معمقة لأجزاء محددة من القرآن الكريم. يتم التركيز على المعاني والدروس والأحكام المستفادة من كل آية.',
-      duration: '14 أسبوع',
-      difficulty: 'متوسط',
-      participants: 400,
-      icon: ScrollText,
-      gradient: 'from-orange-500 to-amber-500'
-    },
-  ];
+  const [searchQuery, setSearchQuery] = useState('');
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   const categories = [
-    { id: 'all', label: 'جميع الرحلات', icon: MapPin },
-    { id: 'fiqh', label: 'الفقه الإسلامي', icon: Library },
-    { id: 'hadith', label: 'علم الحديث', icon: BookOpen },
-    { id: 'books', label: 'الكتب الإسلامية', icon: ScrollText },
-    { id: 'studies', label: 'العلوم الإسلامية', icon: Lightbulb },
+    { id: 'all', label: 'جميع المصادر', color: 'from-emerald-500 to-teal-500' },
+    { id: 'hadith', label: 'الحديث الشريف', color: 'from-blue-500 to-cyan-500' },
+    { id: 'fiqh', label: 'الفقه الإسلامي', color: 'from-green-500 to-emerald-500' },
+    { id: 'seerah', label: 'السيرة النبوية', color: 'from-purple-500 to-pink-500' },
+    { id: 'sciences', label: 'العلوم الإسلامية', color: 'from-orange-500 to-amber-500' },
   ];
 
-  const filteredTrips = selectedCategory === 'all' 
-    ? trips 
-    : trips.filter(trip => trip.category === selectedCategory);
+  const filteredResources = resources.filter(resource => {
+    const matchesCategory = selectedCategory === 'all' || resource.category === selectedCategory;
+    const matchesSearch = resource.title.includes(searchQuery) || 
+                         resource.description.includes(searchQuery);
+    return matchesCategory && matchesSearch;
+  });
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" dir="rtl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white py-8 px-4">
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-8 px-4 shadow-lg">
         <div className="max-w-7xl mx-auto">
           <button
             onClick={onBack}
-            className="mb-6 flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+            className="mb-6 flex items-center gap-2 text-white/80 hover:text-white transition-colors font-arabic-sans"
             data-testid="button-back-trips"
           >
             <ArrowRight className="w-5 h-5" />
             العودة للخلف
           </button>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 font-arabic-serif">الرحلات التعليمية</h1>
-          <p className="text-lg text-white/90 max-w-2xl">استكشف رحلات تعليمية شاملة في الفقه والحديث والعلوم الإسلامية</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 font-arabic-serif">مكتبة العلم الإسلامي</h1>
+          <p className="text-lg text-emerald-100 max-w-2xl font-arabic-sans">مجموعة شاملة من الكتب والمصادر الإسلامية المجانية - الحديث والفقه والسيرة والعلوم الإسلامية</p>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="relative">
+            <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-emerald-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="ابحث عن كتاب أو موضوع..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pr-12 py-6 text-lg bg-white border-2 border-emerald-200 rounded-lg font-arabic-sans focus:border-emerald-500"
+              data-testid="input-search-resources"
+            />
+          </div>
+        </motion.div>
+
         {/* Category Filter */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 font-arabic-serif">اختر المجال الذي تهتم به</h2>
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-emerald-600" />
+            <h2 className="text-xl font-bold text-emerald-800 font-arabic-serif">تصنيفات المصادر</h2>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {categories.map((cat) => {
-              const Icon = cat.icon;
-              return (
-                <motion.button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`flex items-center justify-center gap-2 p-4 rounded-lg font-arabic-sans font-bold transition-all duration-300 ${
-                    selectedCategory === cat.id
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-amber-300'
-                  }`}
-                  data-testid={`filter-category-${cat.id}`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{cat.label}</span>
-                </motion.button>
-              );
-            })}
+            {categories.map((cat) => (
+              <motion.button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`p-3 rounded-lg font-arabic-sans font-bold transition-all duration-300 ${
+                  selectedCategory === cat.id
+                    ? `bg-gradient-to-r ${cat.color} text-white shadow-lg`
+                    : 'bg-white text-emerald-700 border-2 border-emerald-200 hover:border-emerald-400'
+                }`}
+                data-testid={`filter-category-${cat.id}`}
+              >
+                {cat.label}
+              </motion.button>
+            ))}
           </div>
         </div>
 
-        {/* Trips Grid */}
+        {/* Resources Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTrips.map((trip, index) => {
-            const Icon = trip.icon;
-            const isExpanded = expandedTrip === trip.id;
-            
-            return (
-              <motion.div
-                key={trip.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                data-testid={`trip-card-${trip.id}`}
-              >
-                <Card className={`h-full hover:shadow-xl transition-all duration-300 cursor-pointer border-2 ${
-                  isExpanded ? 'border-amber-400' : 'border-gray-200'
-                }`}>
-                  <CardHeader>
-                    <div className={`inline-flex w-12 h-12 bg-gradient-to-br ${trip.gradient} rounded-lg items-center justify-center mb-3`}>
-                      <Icon className="w-6 h-6 text-white" />
+          {filteredResources.map((resource, index) => (
+            <motion.div
+              key={resource.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              data-testid={`resource-card-${resource.id}`}
+            >
+              <Card className="h-full hover:shadow-xl transition-all duration-300 border-2 border-emerald-100 bg-white/90 backdrop-blur-sm">
+                <CardHeader>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-white" />
                     </div>
-                    <CardTitle className="text-xl font-arabic-sans">{trip.title}</CardTitle>
-                    <CardDescription className="text-gray-600 font-arabic-sans">{trip.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3 mb-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Clock className="w-4 h-4 text-amber-600" />
-                        <span>{trip.duration}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <Users className="w-4 h-4 text-amber-600" />
-                        <span>{trip.participants} طالب</span>
-                      </div>
+                    <button
+                      onClick={() => toggleFavorite(resource.id)}
+                      className="text-emerald-300 hover:text-red-500 transition-colors"
+                      data-testid={`button-favorite-${resource.id}`}
+                    >
+                      <Heart className={`w-5 h-5 ${favorites.includes(resource.id) ? 'fill-current text-red-500' : ''}`} />
+                    </button>
+                  </div>
+                  <CardTitle className="text-xl font-arabic-sans text-emerald-900">{resource.title}</CardTitle>
+                  <CardDescription className="text-emerald-700 font-arabic-sans">{resource.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald-600 font-arabic-sans">
+                        <span className="font-bold">{resource.pages}</span> صفحة
+                      </span>
+                      {resource.rating && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="text-emerald-700 font-arabic-sans font-bold">{resource.rating}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm text-emerald-600 font-arabic-sans">
+                      <span className="font-bold">{resource.author}</span>
+                    </div>
+                    {resource.authenticity && (
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                          trip.difficulty === 'مبتدئ' ? 'bg-green-100 text-green-800' :
-                          trip.difficulty === 'متوسط' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-800'
+                        <span className={`text-xs px-3 py-1 rounded-full font-bold font-arabic-sans ${
+                          resource.authenticity === 'صحيح' ? 'bg-green-100 text-green-800' :
+                          resource.authenticity === 'متنوع' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-blue-100 text-blue-800'
                         }`}>
-                          {trip.difficulty}
+                          {resource.authenticity}
                         </span>
                       </div>
-                    </div>
-
-                    {isExpanded && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="bg-amber-50 p-4 rounded-lg mb-4 text-sm text-gray-700 border border-amber-200"
-                      >
-                        {trip.content}
-                      </motion.div>
                     )}
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => setExpandedTrip(isExpanded ? null : trip.id)}
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 font-arabic-sans"
-                        data-testid={`button-expand-${trip.id}`}
-                      >
-                        {isExpanded ? 'إخفاء التفاصيل' : 'عرض التفاصيل'}
-                      </Button>
-                      <Button
-                        onClick={onRegisterClick}
-                        size="sm"
-                        className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-arabic-sans hover:shadow-lg"
-                        data-testid={`button-enroll-${trip.id}`}
-                      >
-                        الالتحاق الآن
-                      </Button>
+                    <div className="text-xs text-emerald-500 font-arabic-sans">
+                      <span>{resource.downloads.toLocaleString()} تحميل</span>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
+                  </div>
+
+                  <div className="bg-emerald-50 p-3 rounded-lg mb-4 text-sm text-emerald-800 border border-emerald-200 max-h-20 overflow-y-auto font-arabic-sans">
+                    {resource.content}
+                  </div>
+
+                  <Button
+                    onClick={() => onRegisterClick?.()}
+                    size="sm"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-arabic-sans hover:shadow-lg"
+                    data-testid={`button-download-${resource.id}`}
+                  >
+                    <Download className="w-4 h-4 ml-2" />
+                    تحميل مجاني
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
         </div>
+
+        {filteredResources.length === 0 && (
+          <div className="text-center py-12">
+            <FileText className="w-16 h-16 text-emerald-300 mx-auto mb-4" />
+            <h3 className="text-2xl font-bold text-emerald-800 mb-2 font-arabic-serif">لا توجد نتائج</h3>
+            <p className="text-emerald-600 font-arabic-sans">جرب البحث بكلمات مختلفة</p>
+          </div>
+        )}
 
         {/* Stats Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="mt-16 bg-gradient-to-r from-amber-100 to-orange-100 rounded-2xl p-8 border-2 border-amber-200"
+          className="mt-16 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-2xl p-8 border-2 border-emerald-200"
         >
-          <h2 className="text-3xl font-bold text-amber-900 mb-8 text-center font-arabic-serif">إحصائيات منصتنا التعليمية</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <h2 className="text-3xl font-bold text-emerald-900 mb-8 text-center font-arabic-serif">إحصائيات المكتبة</h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
             <div>
-              <p className="text-4xl font-bold text-amber-600 mb-2">{trips.length}+</p>
-              <p className="text-lg text-amber-900 font-arabic-sans">رحلة تعليمية</p>
+              <p className="text-4xl font-bold text-emerald-600 mb-2">{resources.length}+</p>
+              <p className="text-lg text-emerald-900 font-arabic-sans">كتاب ومصدر</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-amber-600 mb-2">{trips.reduce((sum, t) => sum + t.participants, 0).toLocaleString()}</p>
-              <p className="text-lg text-amber-900 font-arabic-sans">طالب مسجل</p>
+              <p className="text-4xl font-bold text-emerald-600 mb-2">100%</p>
+              <p className="text-lg text-emerald-900 font-arabic-sans">مجاني</p>
             </div>
             <div>
-              <p className="text-4xl font-bold text-amber-600 mb-2">100%</p>
-              <p className="text-lg text-amber-900 font-arabic-sans">معتمدة شرعياً</p>
+              <p className="text-4xl font-bold text-emerald-600 mb-2">{resources.reduce((sum, r) => sum + r.downloads, 0).toLocaleString()}</p>
+              <p className="text-lg text-emerald-900 font-arabic-sans">تحميل</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold text-emerald-600 mb-2">✓</p>
+              <p className="text-lg text-emerald-900 font-arabic-sans">موثق شرعياً</p>
             </div>
           </div>
         </motion.div>
