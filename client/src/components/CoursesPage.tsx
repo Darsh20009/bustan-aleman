@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { BookOpen, ArrowRight, Calendar, Users, Clock, Award, Zap, Target, Star, CheckCircle2, Lock, Globe, ShoppingCart } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
@@ -22,6 +23,7 @@ interface Course {
   isPaid?: boolean;
   isActive: boolean;
   requirements: string[];
+  progress?: number;
   schedule: {
     days: string[];
     time: string;
@@ -39,10 +41,12 @@ interface CoursesPageProps {
 
 export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, currentStudent, onCartClick }: CoursesPageProps) {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(0);
   const [cartTotal, setCartTotal] = useState(0);
+  const [activeTab, setActiveTab] = useState<'available' | 'enrolled'>('available');
   const { toast } = useToast();
 
   // Fetch cart when logged in
@@ -83,12 +87,25 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
         // Fetch cart after courses are loaded
         if (isLoggedIn) {
           fetchCart();
+          fetchEnrolledCourses();
         }
       }
     } catch (error) {
       console.error('Error fetching courses:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchEnrolledCourses = async () => {
+    try {
+      const response = await fetch('/api/my-courses');
+      if (response.ok) {
+        const data = await response.json();
+        setEnrolledCourses(data);
+      }
+    } catch (error) {
+      console.error('Error fetching enrolled courses:', error);
     }
   };
 
@@ -147,6 +164,7 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             description: "تم إضافتك للدورة مباشرة",
           });
           fetchCourses(); // Refresh to update student count
+          fetchEnrolledCourses(); // Refresh enrolled courses
         }
       } else {
         toast({
@@ -166,92 +184,79 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
     }
   };
 
+  const getLevelText = (level: string) => {
+    const levels: { [key: string]: string } = {
+      'beginner': 'مبتدئ',
+      'intermediate': 'متوسط',
+      'advanced': 'متقدم',
+    };
+    return levels[level] || level;
+  };
+
   const getCategoryColors = (category: string) => {
     switch (category) {
       case 'quran': return {
-        border: 'border-emerald-300 hover:border-emerald-500',
-        bg: 'bg-emerald-100',
-        icon: 'text-emerald-600',
+        bg: 'bg-gradient-to-br from-emerald-100 to-green-200',
+        border: 'border-emerald-300',
         title: 'text-emerald-700',
-        text: 'text-gray-700',
-        badge: 'bg-emerald-200 text-emerald-800',
-        button: 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white',
+        text: 'text-emerald-600',
+        badge: 'bg-emerald-100 text-emerald-700',
+        icon: 'text-emerald-600',
+        button: 'bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white',
         emoji: '📖',
+        hours: 120,
         benefits: ['حفظ القرآن', 'تلاوة صحيحة', 'فهم معاني الآيات'],
-        hours: '120'
       };
       case 'fiqh': return {
-        border: 'border-blue-300 hover:border-blue-500',
-        bg: 'bg-blue-100',
-        icon: 'text-blue-600',
+        bg: 'bg-gradient-to-br from-blue-100 to-cyan-200',
+        border: 'border-blue-300',
         title: 'text-blue-700',
-        text: 'text-gray-700',
-        badge: 'bg-blue-200 text-blue-800',
+        text: 'text-blue-600',
+        badge: 'bg-blue-100 text-blue-700',
+        icon: 'text-blue-600',
         button: 'bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white',
         emoji: '⚖️',
-        benefits: ['أحكام شرعية', 'حل المشاكل الفقهية', 'معرفة الحلال والحرام'],
-        hours: '80'
+        hours: 80,
+        benefits: ['فهم الأحكام الشرعية', 'استنباط الفتاوى', 'تطبيق الفقه'],
       };
       case 'hadith': return {
-        border: 'border-amber-300 hover:border-amber-500',
-        bg: 'bg-amber-100',
-        icon: 'text-amber-600',
+        bg: 'bg-gradient-to-br from-amber-100 to-yellow-200',
+        border: 'border-amber-300',
         title: 'text-amber-700',
-        text: 'text-gray-700',
-        badge: 'bg-amber-200 text-amber-800',
-        button: 'bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white',
+        text: 'text-amber-600',
+        badge: 'bg-amber-100 text-amber-700',
+        icon: 'text-amber-600',
+        button: 'bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-white',
         emoji: '📜',
-        benefits: ['دراسة الحديث', 'تقييم الأحاديث', 'الراوي والمتن'],
-        hours: '100'
+        hours: 100,
+        benefits: ['دراسة الأحاديث', 'شرح المتون', 'تخريج الأحاديث'],
       };
       case 'seerah': return {
-        border: 'border-purple-300 hover:border-purple-500',
-        bg: 'bg-purple-100',
-        icon: 'text-purple-600',
+        bg: 'bg-gradient-to-br from-purple-100 to-pink-200',
+        border: 'border-purple-300',
         title: 'text-purple-700',
-        text: 'text-gray-700',
-        badge: 'bg-purple-200 text-purple-800',
+        text: 'text-purple-600',
+        badge: 'bg-purple-100 text-purple-700',
+        icon: 'text-purple-600',
         button: 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white',
         emoji: '🌙',
-        benefits: ['سيرة النبي', 'صحابة الرسول', 'دروس من السيرة'],
-        hours: '90'
+        hours: 90,
+        benefits: ['سيرة النبي', 'دروس من السيرة', 'شمائل الرسول'],
       };
       default: return {
-        border: 'border-gray-300 hover:border-gray-500',
-        bg: 'bg-gray-100',
+        bg: 'bg-gradient-to-br from-gray-100 to-slate-200',
+        border: 'border-gray-300',
+        title: 'text-gray-700',
+        text: 'text-gray-600',
+        badge: 'bg-gray-100 text-gray-700',
         icon: 'text-gray-600',
-        title: 'text-gray-800',
-        text: 'text-gray-700',
-        badge: 'bg-gray-300 text-gray-900',
-        button: 'bg-gradient-to-r from-gray-500 to-gray-700 hover:from-gray-600 hover:to-gray-800 text-white',
+        button: 'bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700 text-white',
         emoji: '📚',
-        benefits: ['محتوى متنوع', 'شامل ومتدرج', 'تطبيقات عملية'],
-        hours: '60'
+        hours: 100,
+        benefits: ['تعلم جديد', 'مهارات عملية', 'ثقافة إسلامية'],
       };
     }
   };
-
-  const getLevelText = (level: string) => {
-    switch (level) {
-      case 'beginner': return 'مبتدئ';
-      case 'intermediate': return 'متوسط';
-      case 'advanced': return 'متقدم';
-      default: return level;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pearl-cream via-desert-sand to-warm-white" dir="rtl">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="islamic-spinner w-16 h-16 mx-auto mb-4"></div>
-            <p className="text-islamic-emerald font-arabic-sans text-lg">جاري تحميل الدورات...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pearl-cream via-desert-sand to-warm-white" dir="rtl">
@@ -305,6 +310,7 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
           </div>
         </div>
       </div>
+
       {/* Courses Section */}
       <div className="py-8 md:py-16">
         <div className="max-w-7xl mx-auto px-2 md:px-4">
@@ -314,171 +320,431 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             transition={{ delay: 0.2 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
-              الرحلات التعليمية المتاحة
+            <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-6 font-arabic-serif">
+              رحلاتك التعليمية
             </h2>
-            <p className="text-xl text-copper-bronze text-center mb-12 font-arabic-sans">
-              اختر رحلتك التعليمية وابدأ معنا في بستان الإيمان 🌿
-            </p>
 
-            {courses.length === 0 ? (
-              <div className="text-center py-20">
-                <BookOpen className="w-24 h-24 text-islamic-emerald/40 mx-auto mb-6" />
-                <h2 className="text-3xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
-                  لا توجد رحلات متاحة حالياً
-                </h2>
-                <p className="text-xl text-copper-bronze mb-8 font-arabic-sans">
-                  🌱 نعمل على إضافة رحلات جديدة قريباً
-                </p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course, index) => {
-                  const colors = getCategoryColors(course.category);
-                  const availableSpots = course.maxStudents - course.currentStudents;
-                  const progressPercent = Math.round((course.currentStudents / course.maxStudents) * 100);
-                  
-                  return (
-                    <motion.div
-                      key={course.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ y: -8 }}
-                    >
-                      <Card className={`border-2 ${colors.border} transition-all duration-300 h-full hover:shadow-2xl bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm overflow-hidden`}>
-                        {/* Top Banner with Category */}
-                        <div className={`${colors.bg} h-24 flex items-center justify-center relative overflow-hidden`}>
-                          <div className="absolute inset-0 opacity-10" style={{
-                            backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
-                          }}></div>
-                          <div className="text-5xl">{colors.emoji}</div>
-                        </div>
+            {isLoggedIn ? (
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'available' | 'enrolled')} className="w-full">
+                <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+                  <TabsTrigger value="available">الدورات المتاحة</TabsTrigger>
+                  <TabsTrigger value="enrolled">دوراتي ({enrolledCourses.length})</TabsTrigger>
+                </TabsList>
 
-                        <CardHeader className="pb-3">
-                          <CardTitle className={`${colors.title} text-right text-xl font-arabic-serif font-bold mb-2 line-clamp-2`}>
-                            {course.titleAr || course.title}
-                          </CardTitle>
-                          <div className="flex items-center justify-between gap-2 mb-3">
-                            <span className={`${colors.badge} px-3 py-1 rounded-full text-xs font-arabic-sans font-semibold flex items-center gap-1`}>
-                              <Star className="w-3 h-3" />
-                              {getLevelText(course.level)}
-                            </span>
-                            <span className="text-xs text-gray-600 font-arabic-sans bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {colors.hours} ساعة
-                            </span>
-                          </div>
-                        </CardHeader>
-
-                        <CardContent className="space-y-4">
-                          {/* Description */}
-                          <p className={`text-sm ${colors.text} text-right line-clamp-2 font-arabic-sans leading-relaxed`}>
-                            {course.descriptionAr || course.description}
-                          </p>
-
-                          {/* Benefits */}
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold text-gray-700 text-right font-arabic-sans">ستتعلم:</p>
-                            <div className="space-y-1">
-                              {colors.benefits.map((benefit, i) => (
-                                <div key={i} className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
-                                  <span>{benefit}</span>
-                                  <CheckCircle2 className={`w-3 h-3 ${colors.icon}`} />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Schedule */}
-                          {course.schedule && (
-                            <div className="bg-gray-50 p-3 rounded-lg space-y-1.5">
-                              {course.schedule.time && (
-                                <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
-                                  <span className="font-semibold">{course.schedule.time}</span>
-                                  <Clock className={`w-3 h-3 ${colors.icon}`} />
-                                </div>
-                              )}
-                              {course.schedule.days && (
-                                <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
-                                  <span className="font-semibold">{course.schedule.days.join('، ')}</span>
-                                  <Calendar className={`w-3 h-3 ${colors.icon}`} />
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Enrollment Progress */}
-                          <div className="space-y-1.5">
-                            <div className="flex items-center justify-between text-xs">
-                              <span className="text-gray-600 font-arabic-sans">
-                                {course.currentStudents}/{course.maxStudents} طالب
-                              </span>
-                              <span className={`font-semibold ${colors.title}`}>
-                                {progressPercent}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <motion.div 
-                                className={`h-2 rounded-full bg-gradient-to-r ${colors.button.split('from-')[1].split(' ')[0]} to-${colors.button.split('to-')[1].split(' ')[0]}`}
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progressPercent}%` }}
-                                transition={{ delay: 0.3 }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Info Row */}
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                            <span className="text-xs text-gray-700 font-arabic-sans flex items-center gap-1">
-                              {availableSpots > 0 ? (
-                                <>
-                                  <span>{availableSpots} مقاعد متاحة</span>
-                                  <Zap className="w-3 h-3 text-green-600" />
-                                </>
-                              ) : (
-                                <>
-                                  <span>مكتملة</span>
-                                  <Lock className="w-3 h-3 text-red-600" />
-                                </>
-                              )}
-                            </span>
-                            <span className={`text-sm font-bold ${colors.title} font-arabic-sans`}>
-                              {course.price > 0 ? `${course.price} ريال` : '🎁 مجاني'}
-                            </span>
-                          </div>
-
-                          {/* Enroll Button */}
-                          <Button 
-                            onClick={() => handleEnroll(course.id)}
-                            disabled={availableSpots <= 0 || enrolling === course.id}
-                            className={`w-full ${colors.button} font-arabic-sans font-bold py-3 text-base disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-300 disabled:cursor-not-allowed`}
-                            data-testid={`button-enroll-${course.id}`}
+                <TabsContent value="available" className="mt-8">
+                  <p className="text-xl text-copper-bronze text-center mb-12 font-arabic-sans">
+                    اختر رحلتك التعليمية وابدأ معنا في بستان الإيمان 🌿
+                  </p>
+                  {courses.length === 0 ? (
+                    <div className="text-center py-20">
+                      <BookOpen className="w-24 h-24 text-islamic-emerald/40 mx-auto mb-6" />
+                      <h2 className="text-3xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+                        لا توجد رحلات متاحة حالياً
+                      </h2>
+                      <p className="text-xl text-copper-bronze mb-8 font-arabic-sans">
+                        🌱 نعمل على إضافة رحلات جديدة قريباً
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {courses.map((course, index) => {
+                        const colors = getCategoryColors(course.category);
+                        const availableSpots = course.maxStudents - course.currentStudents;
+                        const progressPercent = Math.round((course.currentStudents / course.maxStudents) * 100);
+                        
+                        return (
+                          <motion.div
+                            key={course.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ y: -8 }}
                           >
-                            {enrolling === course.id ? (
-                              <div className="flex items-center justify-center gap-2">
-                                <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                                جاري التسجيل...
+                            <Card className={`border-2 ${colors.border} transition-all duration-300 h-full hover:shadow-2xl bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm overflow-hidden`}>
+                              <div className={`${colors.bg} h-24 flex items-center justify-center relative overflow-hidden`}>
+                                <div className="absolute inset-0 opacity-10" style={{
+                                  backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
+                                }}></div>
+                                <div className="text-5xl">{colors.emoji}</div>
                               </div>
-                            ) : availableSpots <= 0 ? (
-                              <span className="flex items-center justify-center gap-2">
-                                <Lock className="w-4 h-4" />
-                                الرحلة مكتملة
-                              </span>
-                            ) : (
-                              <span className="flex items-center justify-center gap-2">
-                                <Zap className="w-4 h-4" />
-                                <span>ابدأ الآن</span>
-                                <Target className="w-4 h-4" />
-                              </span>
-                            )}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </div>
+
+                              <CardHeader className="pb-3">
+                                <CardTitle className={`${colors.title} text-right text-xl font-arabic-serif font-bold mb-2 line-clamp-2`}>
+                                  {course.titleAr || course.title}
+                                </CardTitle>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className={`${colors.badge} px-3 py-1 rounded-full text-xs font-arabic-sans font-semibold flex items-center gap-1`}>
+                                    <Star className="w-3 h-3" />
+                                    {getLevelText(course.level)}
+                                  </span>
+                                  <span className="text-xs text-gray-600 font-arabic-sans bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {colors.hours} ساعة
+                                  </span>
+                                </div>
+                              </CardHeader>
+
+                              <CardContent className="space-y-4">
+                                <p className={`text-sm ${colors.text} text-right line-clamp-2 font-arabic-sans leading-relaxed`}>
+                                  {course.descriptionAr || course.description}
+                                </p>
+
+                                <div className="space-y-1">
+                                  <p className="text-xs font-semibold text-gray-700 text-right font-arabic-sans">ستتعلم:</p>
+                                  <div className="space-y-1">
+                                    {colors.benefits.map((benefit, i) => (
+                                      <div key={i} className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                        <span>{benefit}</span>
+                                        <CheckCircle2 className={`w-3 h-3 ${colors.icon}`} />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {course.schedule && (
+                                  <div className="bg-gray-50 p-3 rounded-lg space-y-1.5">
+                                    {course.schedule.time && (
+                                      <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                        <span className="font-semibold">{course.schedule.time}</span>
+                                        <Clock className={`w-3 h-3 ${colors.icon}`} />
+                                      </div>
+                                    )}
+                                    {course.schedule.days && (
+                                      <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                        <span className="font-semibold">{course.schedule.days.join('، ')}</span>
+                                        <Calendar className={`w-3 h-3 ${colors.icon}`} />
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-600 font-arabic-sans">
+                                      {course.currentStudents}/{course.maxStudents} طالب
+                                    </span>
+                                    <span className={`font-semibold ${colors.title}`}>
+                                      {progressPercent}%
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <motion.div 
+                                      className={`h-2 rounded-full ${colors.button.split(' ')[0]}`}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${progressPercent}%` }}
+                                      transition={{ delay: 0.3 }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                                  <span className="text-xs text-gray-700 font-arabic-sans flex items-center gap-1">
+                                    {availableSpots > 0 ? (
+                                      <>
+                                        <span>{availableSpots} مقاعد متاحة</span>
+                                        <Zap className="w-3 h-3 text-green-600" />
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span>مكتملة</span>
+                                        <Lock className="w-3 h-3 text-red-600" />
+                                      </>
+                                    )}
+                                  </span>
+                                  <span className={`text-sm font-bold ${colors.title} font-arabic-sans`}>
+                                    {course.price > 0 ? `${course.price} ريال` : 'مجاني'}
+                                  </span>
+                                </div>
+
+                                <Button 
+                                  onClick={() => handleEnroll(course.id)}
+                                  disabled={availableSpots <= 0 || enrolling === course.id}
+                                  className={`w-full ${colors.button} font-arabic-sans font-bold py-3 text-base disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-300 disabled:cursor-not-allowed`}
+                                  data-testid={`button-enroll-${course.id}`}
+                                >
+                                  {enrolling === course.id ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                      جاري التسجيل...
+                                    </div>
+                                  ) : availableSpots <= 0 ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                      <Lock className="w-4 h-4" />
+                                      الرحلة مكتملة
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                      <Zap className="w-4 h-4" />
+                                      <span>ابدأ الآن</span>
+                                      <Target className="w-4 h-4" />
+                                    </span>
+                                  )}
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="enrolled" className="mt-8">
+                  {enrolledCourses.length === 0 ? (
+                    <div className="text-center py-20">
+                      <BookOpen className="w-24 h-24 text-islamic-emerald/40 mx-auto mb-6" />
+                      <h2 className="text-3xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+                        لم تسجل في أي دورات بعد
+                      </h2>
+                      <p className="text-xl text-copper-bronze mb-8 font-arabic-sans">
+                        🌱 ابدأ رحلتك التعليمية الآن
+                      </p>
+                      <Button
+                        onClick={() => setActiveTab('available')}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-arabic-sans font-bold py-3 text-base"
+                      >
+                        استكشف الدورات المتاحة
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {enrolledCourses.map((course, index) => {
+                        const colors = getCategoryColors(course.category);
+                        return (
+                          <motion.div
+                            key={course.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            whileHover={{ y: -8 }}
+                          >
+                            <Card className={`border-2 ${colors.border} transition-all duration-300 h-full hover:shadow-2xl bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm overflow-hidden relative`}>
+                              <div className="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                ✓ مسجل
+                              </div>
+
+                              <div className={`${colors.bg} h-24 flex items-center justify-center relative overflow-hidden`}>
+                                <div className="absolute inset-0 opacity-10" style={{
+                                  backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
+                                }}></div>
+                                <div className="text-5xl">{colors.emoji}</div>
+                              </div>
+
+                              <CardHeader className="pb-3">
+                                <CardTitle className={`${colors.title} text-right text-xl font-arabic-serif font-bold mb-2 line-clamp-2`}>
+                                  {course.titleAr || course.title}
+                                </CardTitle>
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <span className={`${colors.badge} px-3 py-1 rounded-full text-xs font-arabic-sans font-semibold flex items-center gap-1`}>
+                                    <Star className="w-3 h-3" />
+                                    {getLevelText(course.level)}
+                                  </span>
+                                  <span className="text-xs text-gray-600 font-arabic-sans bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {colors.hours} ساعة
+                                  </span>
+                                </div>
+                              </CardHeader>
+
+                              <CardContent className="space-y-4">
+                                <p className={`text-sm ${colors.text} text-right line-clamp-2 font-arabic-sans leading-relaxed`}>
+                                  {course.descriptionAr || course.description}
+                                </p>
+
+                                <div className="bg-emerald-50 p-3 rounded-lg">
+                                  <div className="text-sm font-semibold text-emerald-700 text-right mb-2 font-arabic-sans">مستوى التقدم</div>
+                                  {course.progress !== undefined && (
+                                    <div className="space-y-1">
+                                      <div className="w-full bg-gray-200 rounded-full h-2">
+                                        <motion.div 
+                                          className="h-2 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600"
+                                          initial={{ width: 0 }}
+                                          animate={{ width: `${course.progress || 0}%` }}
+                                          transition={{ delay: 0.3 }}
+                                        />
+                                      </div>
+                                      <div className="text-xs text-emerald-700 font-arabic-sans text-right">
+                                        {course.progress || 0}% مكتملة
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <Button 
+                                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-arabic-sans font-bold py-3 text-base"
+                                >
+                                  <span className="flex items-center justify-center gap-2">
+                                    <BookOpen className="w-4 h-4" />
+                                    <span>استمر في الدراسة</span>
+                                  </span>
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+            ) : (
+              <>
+                <p className="text-xl text-copper-bronze text-center mb-12 font-arabic-sans">
+                  اختر رحلتك التعليمية وابدأ معنا في بستان الإيمان 🌿
+                </p>
+                {courses.length === 0 ? (
+                  <div className="text-center py-20">
+                    <BookOpen className="w-24 h-24 text-islamic-emerald/40 mx-auto mb-6" />
+                    <h2 className="text-3xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+                      لا توجد رحلات متاحة حالياً
+                    </h2>
+                    <p className="text-xl text-copper-bronze mb-8 font-arabic-sans">
+                      🌱 نعمل على إضافة رحلات جديدة قريباً
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.map((course, index) => {
+                      const colors = getCategoryColors(course.category);
+                      const availableSpots = course.maxStudents - course.currentStudents;
+                      const progressPercent = Math.round((course.currentStudents / course.maxStudents) * 100);
+                      
+                      return (
+                        <motion.div
+                          key={course.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ y: -8 }}
+                        >
+                          <Card className={`border-2 ${colors.border} transition-all duration-300 h-full hover:shadow-2xl bg-gradient-to-br from-white to-gray-50 backdrop-blur-sm overflow-hidden`}>
+                            <div className={`${colors.bg} h-24 flex items-center justify-center relative overflow-hidden`}>
+                              <div className="absolute inset-0 opacity-10" style={{
+                                backgroundImage: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.05"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
+                              }}></div>
+                              <div className="text-5xl">{colors.emoji}</div>
+                            </div>
+
+                            <CardHeader className="pb-3">
+                              <CardTitle className={`${colors.title} text-right text-xl font-arabic-serif font-bold mb-2 line-clamp-2`}>
+                                {course.titleAr || course.title}
+                              </CardTitle>
+                              <div className="flex items-center justify-between gap-2 mb-3">
+                                <span className={`${colors.badge} px-3 py-1 rounded-full text-xs font-arabic-sans font-semibold flex items-center gap-1`}>
+                                  <Star className="w-3 h-3" />
+                                  {getLevelText(course.level)}
+                                </span>
+                                <span className="text-xs text-gray-600 font-arabic-sans bg-gray-100 px-2 py-1 rounded-lg flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {colors.hours} ساعة
+                                </span>
+                              </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-4">
+                              <p className={`text-sm ${colors.text} text-right line-clamp-2 font-arabic-sans leading-relaxed`}>
+                                {course.descriptionAr || course.description}
+                              </p>
+
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-gray-700 text-right font-arabic-sans">ستتعلم:</p>
+                                <div className="space-y-1">
+                                  {colors.benefits.map((benefit, i) => (
+                                    <div key={i} className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                      <span>{benefit}</span>
+                                      <CheckCircle2 className={`w-3 h-3 ${colors.icon}`} />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {course.schedule && (
+                                <div className="bg-gray-50 p-3 rounded-lg space-y-1.5">
+                                  {course.schedule.time && (
+                                    <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                      <span className="font-semibold">{course.schedule.time}</span>
+                                      <Clock className={`w-3 h-3 ${colors.icon}`} />
+                                    </div>
+                                  )}
+                                  {course.schedule.days && (
+                                    <div className="flex items-center justify-end gap-2 text-xs text-gray-700 font-arabic-sans">
+                                      <span className="font-semibold">{course.schedule.days.join('، ')}</span>
+                                      <Calendar className={`w-3 h-3 ${colors.icon}`} />
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="text-gray-600 font-arabic-sans">
+                                    {course.currentStudents}/{course.maxStudents} طالب
+                                  </span>
+                                  <span className={`font-semibold ${colors.title}`}>
+                                    {progressPercent}%
+                                  </span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <motion.div 
+                                    className={`h-2 rounded-full ${colors.button.split(' ')[0]}`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${progressPercent}%` }}
+                                    transition={{ delay: 0.3 }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                                <span className="text-xs text-gray-700 font-arabic-sans flex items-center gap-1">
+                                  {availableSpots > 0 ? (
+                                    <>
+                                      <span>{availableSpots} مقاعد متاحة</span>
+                                      <Zap className="w-3 h-3 text-green-600" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span>مكتملة</span>
+                                      <Lock className="w-3 h-3 text-red-600" />
+                                    </>
+                                  )}
+                                </span>
+                                <span className={`text-sm font-bold ${colors.title} font-arabic-sans`}>
+                                  {course.price > 0 ? `${course.price} ريال` : 'مجاني'}
+                                </span>
+                              </div>
+
+                              <Button 
+                                onClick={() => handleEnroll(course.id)}
+                                disabled={availableSpots <= 0 || enrolling === course.id}
+                                className={`w-full ${colors.button} font-arabic-sans font-bold py-3 text-base disabled:opacity-50 shadow-lg hover:shadow-xl transition-all duration-300 disabled:cursor-not-allowed`}
+                                data-testid={`button-enroll-${course.id}`}
+                              >
+                                {enrolling === course.id ? (
+                                  <div className="flex items-center justify-center gap-2">
+                                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                    جاري التسجيل...
+                                  </div>
+                                ) : availableSpots <= 0 ? (
+                                  <span className="flex items-center justify-center gap-2">
+                                    <Lock className="w-4 h-4" />
+                                    الرحلة مكتملة
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center justify-center gap-2">
+                                    <Zap className="w-4 h-4" />
+                                    <span>ابدأ الآن</span>
+                                    <Target className="w-4 h-4" />
+                                  </span>
+                                )}
+                              </Button>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </motion.div>
 
@@ -488,13 +754,13 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
-              className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-royal-gold/20"
+              className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-royal-gold/20 mt-16"
             >
               <div className="islamic-divider mb-6">
                 <span className="text-royal-gold text-2xl">❋</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
-                🌿 ابدأ رحلتك التعليمية في بستان الإيمان
+                ابدأ رحلتك التعليمية في بستان الإيمان
               </h2>
               <p className="text-lg text-copper-bronze mb-8 max-w-2xl mx-auto font-arabic-sans leading-relaxed">
                 انضم إلى آلاف الطلاب الذين يتعلمون القرآن والعلوم الشرعية معنا. رحلة مليئة بالعلم والإيمان والبركة تنتظرك.
@@ -508,7 +774,6 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
                 <span className="flex items-center gap-3">
                   <span>🎓</span>
                   <span>سجل في رحلة الآن</span>
-                  <span>✨</span>
                 </span>
               </Button>
             </motion.div>
