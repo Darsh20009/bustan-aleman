@@ -102,7 +102,31 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
       const response = await fetch('/api/my-courses');
       if (response.ok) {
         const data = await response.json();
-        setEnrolledCourses(data);
+        // Extract course details from response - handle both enrollment+course structure
+        const enrolledWithCourses = data.map((item: any) => {
+          const courseData = item.course || item;
+          return {
+            id: courseData.id,
+            title: courseData.title,
+            titleAr: courseData.titleAr,
+            description: courseData.description,
+            descriptionAr: courseData.descriptionAr,
+            instructor: courseData.instructor,
+            startDate: courseData.startDate,
+            endDate: courseData.endDate,
+            level: courseData.level,
+            category: courseData.category,
+            maxStudents: courseData.maxStudents,
+            currentStudents: courseData.currentStudents,
+            price: courseData.price,
+            isPaid: courseData.isPaid,
+            isActive: courseData.isActive,
+            requirements: courseData.requirements || [],
+            progress: item.progress,
+            schedule: courseData.schedule || { days: [], time: '', duration: '' },
+          };
+        });
+        setEnrolledCourses(enrolledWithCourses);
       }
     } catch (error) {
       console.error('Error fetching enrolled courses:', error);
@@ -571,7 +595,16 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
                                 </div>
 
                                 <Button 
+                                  onClick={() => {
+                                    // Navigate to course view/player
+                                    // For now, just show a toast
+                                    toast({
+                                      title: "الدورة جاهزة",
+                                      description: `${course.titleAr || course.title} - سيتم فتح محتوى الدورة قريباً`,
+                                    });
+                                  }}
                                   className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-arabic-sans font-bold py-3 text-base"
+                                  data-testid={`button-continue-course-${course.id}`}
                                 >
                                   <span className="flex items-center justify-center gap-2">
                                     <BookOpen className="w-4 h-4" />

@@ -33,6 +33,7 @@ export async function setupVite(app: Express, server: Server) {
     server: {
       middlewareMode: true,
       allowedHosts: true as const,
+      ...(viteConfig.server || {}),
     },
     appType: "custom",
   });
