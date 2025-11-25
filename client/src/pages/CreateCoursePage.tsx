@@ -609,10 +609,72 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                             value={certificateName}
                             onChange={(e) => setCertificateName(e.target.value)}
                           />
-                          <div className="p-4 border-2 border-dashed border-emerald-300 rounded-lg text-center">
-                            <Award className="h-12 w-12 mx-auto text-emerald-400 mb-2" />
-                            <p className="text-sm text-gray-600">معاينة الشهادة</p>
-                            <p className="font-semibold text-emerald-700 mt-2">{certificateName || 'شهادة الإنجاز'}</p>
+                          <div className="relative overflow-hidden rounded-xl border-4 border-emerald-500/30 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-8 shadow-2xl">
+                            {/* Islamic Corner Decorations */}
+                            <div className="absolute top-0 left-0 w-24 h-24 border-t-4 border-l-4 border-emerald-400/40 rounded-tl-lg"></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 border-t-4 border-r-4 border-emerald-400/40 rounded-tr-lg"></div>
+                            <div className="absolute bottom-0 left-0 w-24 h-24 border-b-4 border-l-4 border-emerald-400/40 rounded-bl-lg"></div>
+                            <div className="absolute bottom-0 right-0 w-24 h-24 border-b-4 border-r-4 border-emerald-400/40 rounded-br-lg"></div>
+                            
+                            {/* Decorative Stars */}
+                            <div className="absolute top-4 left-1/2 -translate-x-1/2 text-amber-400 text-2xl">✦</div>
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-amber-400 text-2xl">✦</div>
+                            
+                            {/* Content */}
+                            <div className="relative z-10 text-center space-y-4">
+                              {/* Header */}
+                              <div className="space-y-2">
+                                <Award className="h-16 w-16 mx-auto text-emerald-600 drop-shadow-lg" />
+                                <div className="h-1 w-32 mx-auto bg-gradient-to-r from-transparent via-emerald-500 to-transparent"></div>
+                              </div>
+                              
+                              {/* Title */}
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-bold text-emerald-900 tracking-wide">
+                                  {certificateName || 'شهادة الإنجاز'}
+                                </h3>
+                                <p className="text-sm text-emerald-600 font-arabic">Certificate of Achievement</p>
+                              </div>
+                              
+                              {/* Divider */}
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="h-px w-16 bg-gradient-to-r from-transparent to-emerald-300"></div>
+                                <div className="text-emerald-400 text-lg">❈</div>
+                                <div className="h-px w-16 bg-gradient-to-l from-transparent to-emerald-300"></div>
+                              </div>
+                              
+                              {/* Body Text */}
+                              <div className="space-y-3 text-sm text-gray-700">
+                                <p className="leading-relaxed">
+                                  تُمنح هذه الشهادة للطالب المتميز
+                                </p>
+                                <div className="text-2xl font-bold text-emerald-800 py-2 border-b-2 border-t-2 border-emerald-200">
+                                  [اسم الطالب]
+                                </div>
+                                <p className="leading-relaxed">
+                                  وذلك لإتمامه بنجاح دورة
+                                  <br />
+                                  <span className="font-bold text-emerald-700">{form.getValues('titleAr') || 'اسم الدورة'}</span>
+                                </p>
+                              </div>
+                              
+                              {/* Signature Area */}
+                              <div className="grid grid-cols-2 gap-8 pt-6 text-xs">
+                                <div className="space-y-1">
+                                  <div className="h-px bg-emerald-300 w-24 mx-auto"></div>
+                                  <p className="text-gray-600">التوقيع</p>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="h-px bg-emerald-300 w-24 mx-auto"></div>
+                                  <p className="text-gray-600">التاريخ</p>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Background Pattern */}
+                            <div className="absolute inset-0 opacity-5 pointer-events-none">
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-9xl text-emerald-600">✦</div>
+                            </div>
                           </div>
                         </div>
                       )}
