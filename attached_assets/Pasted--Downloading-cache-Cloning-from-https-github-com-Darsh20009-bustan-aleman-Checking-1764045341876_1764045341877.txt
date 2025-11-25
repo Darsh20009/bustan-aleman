@@ -1,0 +1,103 @@
+==> Downloading cache...
+==> Cloning from https://github.com/Darsh20009/bustan-aleman
+==> Checking out commit e086b1603c9458aadd117bd4ba9e1cc90efc2b5d in branch main
+==> Downloaded 200MB in 3s. Extraction took 6s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+added 108 packages, and audited 699 packages in 3s
+132 packages are looking for funding
+  run `npm fund` for details
+13 vulnerabilities (1 low, 9 moderate, 1 high, 2 critical)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+vite v5.4.21 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+node_modules/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js (2:127334): Use of eval in "node_modules/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+✓ 3752 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                                                4.07 kB │ gzip:     1.49 kB
+../dist/public/assets/bustan aleman logo_1763041603537--oKRUZ4K.png  1,500.01 kB
+../dist/public/assets/index-BZSzaVyv.css                               146.00 kB │ gzip:    21.84 kB
+../dist/public/assets/index-BOTAh3Hi.js                              6,909.96 kB │ gzip: 2,209.89 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 20.73s
+  dist/index.js  387.8kb
+⚡ Done in 14ms
+==> Uploading build...
+==> Uploaded in 10.7s. Compression took 5.1s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+⚠️  AWS RDS CA certificate not found, SSL verification will be disabled
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+⚠️  AWS RDS credentials incomplete, skipping...
+⚠️  No database URL found. Using JSON storage fallback.
+✅ Database connection initialized
+🔒 Starting password migration...
+✅ Password migration completed. Migrated 0 passwords.
+✅ Password migration completed
+4:25:49 PM [telegram] ⚠️ رمز بوت التليجرام غير موجود - تم تخطي تشغيل البوت
+✅ Telegram bot initialized
+✅ Auth routes setup
+✅ Additional routes setup
+✅ JSON routes setup
+✅ Sheikh routes setup
+✅ Student session routes setup
+✅ Surah routes setup
+✅ Course routes setup
+🔄 Starting registerRoutes...
+🔄 registerRoutes: Setting up phone auth...
+Warning: connect.session() MemoryStore is not
+designed for a production environment, as it will leak
+memory, and will not scale past a single process.
+🔄 registerRoutes: Initializing pre-registered users...
+🔄 Initializing 4 pre-registered users...
+🔄 Checking user: يوسف (0532441566)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: يوسف (0532441566)
+🔄 Checking user: أحمد أبو مازن (0549947386)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: أحمد أبو مازن (0549947386)
+🔄 Checking user: أحمد (0532449303)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: أحمد (0532449303)
+🔄 Checking user: محمود (0598765966)
+  ✗ User not found, creating...
+⚠️  Skipping user creation in JSON mode: محمود (0598765966)
+✅ All pre-registered users initialized
+✅ registerRoutes: Pre-registered users initialized
+✅ Routes registered
+✅ WebSocket server initialized on /ws
+✅ WebSocket initialized
+✅ Static files serving
+4:25:50 PM [express] serving on port 10000
+==> Your service is live 🎉
+==> 
+==> ///////////////////////////////////////////////////////////
+==> 
+==> Available at your primary URL https://bustan.ma3k.online + 1 more domain
+==> 
+==> ///////////////////////////////////////////////////////////
+✅ تم تنظيف الحصص المنتهية
+4:26:16 PM [express] POST /api/init-data 200 in 2ms :: {"message":"Default students initialization is handled by phoneAuth system"}
+4:26:16 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"غير مسجل الدخول"}
+4:26:21 PM [express] GET /api/auth/user 401 in 1ms :: {"message":"غير مسجل الدخول"}
+4:26:25 PM [express] POST /api/auth/login 401 in 2ms :: {"message":"بيانات الدخول غير صحيحة"}
+4:26:37 PM [express] POST /api/auth/login 401 in 1ms :: {"message":"بيانات الدخول غير صحيحة"}

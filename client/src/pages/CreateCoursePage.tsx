@@ -133,15 +133,6 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
   });
 
   const onSubmit = (data: CourseFormData) => {
-    if (uploads.length === 0) {
-      toast({
-        title: 'خطأ',
-        description: 'يجب إضافة ملف واحد على الأقل',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     if (addQuiz && quizQuestions.length === 0) {
       toast({
         title: 'خطأ',
