@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '../components/ui/select';
 import { useToast } from '../hooks/use-toast';
+import { useAuth } from '../hooks/useAuth';
 import { 
   ArrowRight, 
   Plus, 
@@ -78,6 +79,8 @@ interface QuizQuestion {
 
 export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isSupervisor = user?.role === 'supervisor';
   const [currentStep, setCurrentStep] = useState(1);
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
@@ -136,11 +139,10 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
     console.log('📋 Form submitted with data:', data);
     console.log('📋 Form errors:', form.formState.errors);
     
-    // Force free courses for supervisors
+    // Force free courses for supervisors only
     const courseData = { 
       ...data,
-      isPaid: false,
-      price: 0,
+      ...(isSupervisor ? { isPaid: false, price: 0 } : {}),
       uploads,
       quizQuestions,
       addQuiz,
@@ -408,9 +410,11 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
 
                       {form.watch('isPaid') && (
                         <>
-                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 font-arabic-sans">
-                            ⚠️ ملاحظة: فقط المديرين يمكنهم إنشاء دورات مدفوعة. سيتم رفع هذه الدورة كدورة مجانية.
-                          </div>
+                          {isSupervisor && (
+                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 font-arabic-sans">
+                              ⚠️ ملاحظة: كمشرف، يمكنك فقط إنشاء دورات مجانية. سيتم رفع هذه الدورة كدورة مجانية.
+                            </div>
+                          )}
                           <FormField
                             control={form.control}
                             name="price"
@@ -418,7 +422,12 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                               <FormItem>
                                 <FormLabel>السعر (ريال)</FormLabel>
                                 <FormControl>
-                                  <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} disabled />
+                                  <Input 
+                                    type="number" 
+                                    {...field} 
+                                    onChange={(e) => field.onChange(parseInt(e.target.value))} 
+                                    disabled={isSupervisor}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
