@@ -5,7 +5,5 @@
   "installCommand": "npm ci --prefer-offline",
   "env": {
     "NODE_ENV": "production"
-  },
-  "ignore": ["node_modules", ".git", "client", "server", "shared", "*.md"],
-  "cleanUrls": false
+  }
 }
