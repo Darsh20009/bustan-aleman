@@ -755,6 +755,13 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                       type="submit"
                       disabled={createCourseMutation.isPending}
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600"
+                      data-testid="button-create-course"
+                      onClick={() => {
+                        console.log('🔘 Create button clicked!');
+                        console.log('Form valid?', form.formState.isValid);
+                        console.log('Form errors:', form.formState.errors);
+                        console.log('Form values:', form.getValues());
+                      }}
                     >
                       {createCourseMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء الدورة'}
                     </Button>
