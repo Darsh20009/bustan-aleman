@@ -139,10 +139,9 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
     console.log('📋 Form submitted with data:', data);
     console.log('📋 Form errors:', form.formState.errors);
     
-    // Force free courses for supervisors only
+    // Send course data as is
     const courseData = { 
       ...data,
-      ...(isSupervisor ? { isPaid: false, price: 0 } : {}),
       uploads,
       quizQuestions,
       addQuiz,
@@ -409,31 +408,23 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                       </div>
 
                       {form.watch('isPaid') && (
-                        <>
-                          {isSupervisor && (
-                            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 font-arabic-sans">
-                              ⚠️ ملاحظة: كمشرف، يمكنك فقط إنشاء دورات مجانية. سيتم رفع هذه الدورة كدورة مجانية.
-                            </div>
+                        <FormField
+                          control={form.control}
+                          name="price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>السعر (ريال)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  {...field} 
+                                  onChange={(e) => field.onChange(parseInt(e.target.value))} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <FormField
-                            control={form.control}
-                            name="price"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>السعر (ريال)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    {...field} 
-                                    onChange={(e) => field.onChange(parseInt(e.target.value))} 
-                                    disabled={isSupervisor}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </>
+                        />
                       )}
                     </CardContent>
                   </Card>

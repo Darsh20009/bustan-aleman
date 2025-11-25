@@ -177,11 +177,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const courseData = insertCourseSchema.parse(courseDataWithDefaults);
       
-      // Only admins can create paid courses
-      if (courseData.isPaid && req.user?.role !== 'admin') {
+      // Supervisors and admins can create paid courses
+      if (courseData.isPaid && req.user?.role !== 'admin' && req.user?.role !== 'supervisor') {
         return res.status(403).json({ 
-          message: "فقط المدراء يمكنهم إنشاء دورات مدفوعة",
-          messageEn: "Only admins can create paid courses"
+          message: "ليس لديك الصلاحية لإنشاء دورات مدفوعة",
+          messageEn: "You don't have permission to create paid courses"
         });
       }
       
