@@ -73,32 +73,58 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
 
     setEnrolling(courseId);
     try {
-      const response = await fetch(`/api/courses/${courseId}/enroll`, {
-        method: 'POST',
+      // Find the course to check if it's paid
+      const course = courses.find(c => c.id === courseId);
+      if (!course) {
+        throw new Error("الدورة غير موجودة");
+      }
+
+      let endpoint = '';
+      let method = 'POST';
+      let body = { courseId };
+
+      if (course.price > 0 || course.isPaid) {
+        // For paid courses, add to cart
+        endpoint = '/api/cart';
+      } else {
+        // For free courses, directly enroll
+        endpoint = '/api/enrollments';
+      }
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(body),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        toast({
-          title: "تم التسجيل بنجاح! 🎉",
-          description: result.message,
-        });
-        fetchCourses(); // Refresh to update student count
+        if (course.price > 0 || course.isPaid) {
+          toast({
+            title: "تم إضافة الدورة للعربة! 🛒",
+            description: "انتقل للعربة لإكمال الدفع",
+          });
+        } else {
+          toast({
+            title: "تم التسجيل بنجاح! 🎉",
+            description: "تم إضافتك للدورة مباشرة",
+          });
+          fetchCourses(); // Refresh to update student count
+        }
       } else {
         toast({
-          title: "خطأ في التسجيل",
-          description: result.message,
+          title: "خطأ",
+          description: result.message || "فشل في إضافة الدورة",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "خطأ في التسجيل",
-        description: "حدث خطأ أثناء التسجيل، يرجى المحاولة مرة أخرى",
+        title: "خطأ",
+        description: error instanceof Error ? error.message : "حدث خطأ أثناء العملية",
         variant: "destructive",
       });
     } finally {
