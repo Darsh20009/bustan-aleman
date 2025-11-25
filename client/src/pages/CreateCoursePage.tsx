@@ -133,6 +133,9 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
   });
 
   const onSubmit = (data: CourseFormData) => {
+    console.log('📋 Form submitted with data:', data);
+    console.log('📋 Form errors:', form.formState.errors);
+    
     if (addQuiz && quizQuestions.length === 0) {
       toast({
         title: 'خطأ',
@@ -142,6 +145,7 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
       return;
     }
 
+    console.log('📤 Sending course creation request...');
     createCourseMutation.mutate({ 
       ...data, 
       uploads,
