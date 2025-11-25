@@ -332,9 +332,11 @@ export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
                         <FormControl>
                           <input
                             type="checkbox"
-                            {...field}
                             checked={field.value}
                             onChange={(e) => field.onChange(e.target.checked)}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
                             className="w-4 h-4 cursor-pointer"
                             data-testid="checkbox-remember-me"
                           />

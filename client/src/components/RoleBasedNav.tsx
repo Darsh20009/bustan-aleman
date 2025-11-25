@@ -535,29 +535,31 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
                   
                   {/* Navigation Items */}
                   <DropdownMenuGroup>
-                    {navigation.map((item, index) => {
-                      const Icon = item.icon;
-                      return (
-                        <DropdownMenuItem
-                          key={index}
-                          onClick={() => {
-                            handleNavigation(item.path);
-                          }}
-                          className="cursor-pointer hover:bg-emerald-50 focus:bg-emerald-50"
-                          data-testid={`dropdown-nav-${index}`}
-                        >
-                          <div className="flex items-center gap-3 w-full text-right">
-                            <div className={`flex-shrink-0 w-8 h-8 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center`}>
-                              <Icon className="w-4 h-4 text-white" />
+                    {navigation
+                      .filter((item) => item.path !== '/cart') // Exclude cart from dropdown menu
+                      .map((item, index) => {
+                        const Icon = item.icon;
+                        return (
+                          <DropdownMenuItem
+                            key={index}
+                            onClick={() => {
+                              handleNavigation(item.path);
+                            }}
+                            className="cursor-pointer hover:bg-emerald-50 focus:bg-emerald-50"
+                            data-testid={`dropdown-nav-${index}`}
+                          >
+                            <div className="flex items-center gap-3 w-full text-right">
+                              <div className={`flex-shrink-0 w-8 h-8 bg-gradient-to-br ${item.gradient} rounded-lg flex items-center justify-center`}>
+                                <Icon className="w-4 h-4 text-white" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-800">{item.title}</div>
+                                <div className="text-xs text-gray-500">{item.description}</div>
+                              </div>
                             </div>
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-800">{item.title}</div>
-                              <div className="text-xs text-gray-500">{item.description}</div>
-                            </div>
-                          </div>
-                        </DropdownMenuItem>
-                      );
-                    })}
+                          </DropdownMenuItem>
+                        );
+                      })}
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>

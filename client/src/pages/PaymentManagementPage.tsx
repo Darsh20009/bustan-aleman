@@ -38,7 +38,7 @@ export default function PaymentManagementPage() {
 
   // Get payments for selected student
   const { data: selectedPayments = [] } = useQuery<StudentPayment[]>({
-    queryKey: ['/api/sheikh/payments', selectedStudent || ''],
+    queryKey: ['/api/sheikh/payments', selectedStudent ?? ''],
     enabled: !!selectedStudent,
   });
 
