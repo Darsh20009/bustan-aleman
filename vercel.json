@@ -1,11 +1,14 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm install && npm run build",
   "outputDirectory": "dist/public",
-  "installCommand": "npm install",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci --prefer-offline",
+  "serverless": {
+    "regions": ["iad1"]
+  },
   "env": {
     "NODE_ENV": "production"
   },
-  "serverless": {
-    "regions": ["iad1"]
-  }
+  "ignore": ["node_modules", ".git", "client", "server", "shared", "*.md"],
+  "cleanUrls": false
 }

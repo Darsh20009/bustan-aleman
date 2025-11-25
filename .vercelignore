@@ -1,0 +1,16 @@
+.git
+.gitignore
+node_modules
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+client
+shared
+server
+*.md
+.replit
+.replit.nix
+replit.md
