@@ -73,9 +73,16 @@ export default function SheikhScheduleManager() {
     queryFn: async () => {
       const allSchedules: Schedule[] = [];
       for (const student of students) {
-        const response = await fetch(`/api/students/${student.id}/schedules`);
-        const studentSchedules = await response.json();
-        allSchedules.push(...studentSchedules);
+        try {
+          const response = await fetch(`/api/students/${student.id}/schedules`);
+          if (!response.ok) continue;
+          const studentSchedules = await response.json();
+          if (Array.isArray(studentSchedules)) {
+            allSchedules.push(...studentSchedules);
+          }
+        } catch (error) {
+          console.error(`Error fetching schedules for student ${student.id}:`, error);
+        }
       }
       return allSchedules;
     },
@@ -85,13 +92,23 @@ export default function SheikhScheduleManager() {
   // Create schedule mutation
   const createSchedule = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest(`/api/students/${data.studentId}/schedules`, 'POST', data);
+      const scheduleData = {
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+      };
+      const response = await apiRequest(`/api/students/${data.studentId}/schedules`, 'POST', scheduleData);
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      toast({
+        title: '✅ تم الإنشاء',
+        description: 'تم إنشاء الجدول بنجاح',
+      });
     },
     onError: (error: any) => {
+      console.error('Schedule creation error:', error);
       toast({
         variant: 'destructive',
         title: '❌ خطأ',
