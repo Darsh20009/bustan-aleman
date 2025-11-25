@@ -322,35 +322,37 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             )}
           </motion.div>
 
-          {/* CTA Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-royal-gold/20"
-          >
-            <div className="islamic-divider mb-6">
-              <span className="text-royal-gold text-2xl">❋</span>
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
-              🌿 ابدأ رحلتك التعليمية في بستان الإيمان
-            </h2>
-            <p className="text-lg text-copper-bronze mb-8 max-w-2xl mx-auto font-arabic-sans leading-relaxed">
-              انضم إلى آلاف الطلاب الذين يتعلمون القرآن والعلوم الشرعية معنا. رحلة مليئة بالعلم والإيمان والبركة تنتظرك.
-            </p>
-            <Button
-              onClick={onRegisterClick}
-              size="lg"
-              className="btn-islamic-gradient text-white px-12 py-4 text-xl font-arabic-sans font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
-              data-testid="button-register-from-courses"
+          {/* CTA Section - Only show for non-logged-in users */}
+          {!isLoggedIn && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+              className="text-center bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-royal-gold/20"
             >
-              <span className="flex items-center gap-3">
-                <span>🎓</span>
-                <span>سجل في رحلة الآن</span>
-                <span>✨</span>
-              </span>
-            </Button>
-          </motion.div>
+              <div className="islamic-divider mb-6">
+                <span className="text-royal-gold text-2xl">❋</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-islamic-emerald mb-4 font-arabic-serif">
+                🌿 ابدأ رحلتك التعليمية في بستان الإيمان
+              </h2>
+              <p className="text-lg text-copper-bronze mb-8 max-w-2xl mx-auto font-arabic-sans leading-relaxed">
+                انضم إلى آلاف الطلاب الذين يتعلمون القرآن والعلوم الشرعية معنا. رحلة مليئة بالعلم والإيمان والبركة تنتظرك.
+              </p>
+              <Button
+                onClick={onRegisterClick}
+                size="lg"
+                className="btn-islamic-gradient text-white px-12 py-4 text-xl font-arabic-sans font-bold shadow-xl hover:shadow-2xl transition-all duration-300"
+                data-testid="button-register-from-courses"
+              >
+                <span className="flex items-center gap-3">
+                  <span>🎓</span>
+                  <span>سجل في رحلة الآن</span>
+                  <span>✨</span>
+                </span>
+              </Button>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>
