@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { BookOpen, Menu, User, LogOut, ShoppingCart } from "lucide-react";
+import { BookOpen, Menu, User, LogOut, ShoppingCart, Bell } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useQuery } from "@tanstack/react-query";
+import { NotificationBell } from "./NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -102,6 +103,10 @@ export default function Navigation() {
                   )}
                 </Button>
               </Link>
+            )}
+            
+            {isAuthenticated && (
+              <NotificationBell onClick={() => {}} />
             )}
             
             {isAuthenticated ? (

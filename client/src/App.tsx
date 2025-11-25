@@ -38,12 +38,13 @@ import StudentSessions from "./pages/StudentSessions";
 import ForgotPassword from "./pages/ForgotPassword";
 import PaymentManagementPage from "./pages/PaymentManagementPage";
 import CourseStudentManagementPage from "./pages/CourseStudentManagementPage";
+import NotificationsPage from "./pages/NotificationsPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications'];
   return validStates.includes(path as AppState);
 };
 
@@ -298,6 +299,13 @@ function AppContent() {
       case 'course-students':
         if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
           return <CourseStudentManagementPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'notifications':
+        if (isAuthenticated && user) {
+          return <NotificationsPage />;
         } else {
           return <AuthPage />;
         }
