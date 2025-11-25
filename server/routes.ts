@@ -583,10 +583,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           continue;
         }
         
+        // Get course to check if it's free or paid
+        const course = await storage.getCourse(item.courseId);
+        
         const enrollmentData = insertEnrollmentSchema.parse({
           userId,
           courseId: item.courseId,
-          status: 'enrolled',
+          status: course?.isPaid ? 'pending' : 'approved',
           progress: 0,
         });
         

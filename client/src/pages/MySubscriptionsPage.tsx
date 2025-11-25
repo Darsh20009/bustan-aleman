@@ -78,6 +78,9 @@ export default function MySubscriptionsPage() {
                   <p className="text-xs text-gray-500 mt-2">
                     تاريخ التسجيل: {new Date(subscription.enrolledAt).toLocaleDateString('ar')}
                   </p>
+                  {subscription.status === 'approved' && (
+                    <p className="text-xs text-emerald-600 font-medium mt-2">✓ يمكنك الوصول للدورة الآن</p>
+                  )}
                 </div>
               </div>
             </div>
