@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { BookOpen, ArrowRight, Calendar, Users, Clock, Award, Zap, Target, Star, CheckCircle2, Lock, Globe } from 'lucide-react';
+import { BookOpen, ArrowRight, Calendar, Users, Clock, Award, Zap, Target, Star, CheckCircle2, Lock, Globe, ShoppingCart } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
 
 interface Course {
@@ -34,13 +34,41 @@ interface CoursesPageProps {
   onRegisterClick: () => void;
   isLoggedIn?: boolean;
   currentStudent?: any;
+  onCartClick?: () => void;
 }
 
-export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, currentStudent }: CoursesPageProps) {
+export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, currentStudent, onCartClick }: CoursesPageProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState<string | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [cartTotal, setCartTotal] = useState(0);
   const { toast } = useToast();
+
+  // Fetch cart when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchCart();
+    }
+  }, [isLoggedIn]);
+
+  const fetchCart = async () => {
+    try {
+      const response = await fetch('/api/cart');
+      if (response.ok) {
+        const cartItems = await response.json();
+        setCartCount(cartItems.length);
+        // Calculate total price
+        const total = cartItems.reduce((sum: number, item: any) => {
+          const course = courses.find(c => c.id === item.courseId);
+          return sum + (course?.price || 0);
+        }, 0);
+        setCartTotal(total);
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
 
   useEffect(() => {
     fetchCourses();
@@ -52,6 +80,10 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
       if (response.ok) {
         const data = await response.json();
         setCourses(data);
+        // Fetch cart after courses are loaded
+        if (isLoggedIn) {
+          fetchCart();
+        }
       }
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -107,6 +139,8 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
             title: "تم إضافة الدورة للعربة! 🛒",
             description: "انتقل للعربة لإكمال الدفع",
           });
+          // Update cart count and total
+          fetchCart();
         } else {
           toast({
             title: "تم التسجيل بنجاح! 🎉",
@@ -243,14 +277,31 @@ export function CoursesPage({ onBack, onRegisterClick, isLoggedIn = false, curre
               </div>
             </motion.div>
 
-            <Button
-              onClick={onBack}
-              className="btn-islamic-secondary border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans backdrop-blur-sm text-[#062909] bg-[#d4191900]"
-              data-testid="button-back-to-home"
-            >
-              <ArrowRight className="ml-2 h-4 w-4" />
-              العودة للرئيسية
-            </Button>
+            <div className="flex items-center gap-2 md:gap-4">
+              {isLoggedIn && cartCount > 0 && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-2 rounded-lg"
+                >
+                  <ShoppingCart className="w-5 h-5 text-white" />
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-white">{cartCount} دورة</div>
+                    {cartTotal > 0 && (
+                      <div className="text-xs text-emerald-100">{cartTotal} ريال</div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+              <Button
+                onClick={onBack}
+                className="btn-islamic-secondary border-0 px-4 py-2 text-sm md:px-6 md:text-base font-arabic-sans backdrop-blur-sm text-[#062909] bg-[#d4191900]"
+                data-testid="button-back-to-home"
+              >
+                <ArrowRight className="ml-2 h-4 w-4" />
+                العودة للرئيسية
+              </Button>
+            </div>
           </div>
         </div>
       </div>
