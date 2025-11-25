@@ -757,10 +757,17 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600"
                       data-testid="button-create-course"
                       onClick={() => {
-                        console.log('🔘 Create button clicked!');
-                        console.log('Form valid?', form.formState.isValid);
-                        console.log('Form errors:', form.formState.errors);
-                        console.log('Form values:', form.getValues());
+                        if (!form.formState.isValid) {
+                          const errors = form.formState.errors;
+                          const firstError = Object.values(errors)[0];
+                          if (firstError && 'message' in firstError) {
+                            toast({
+                              title: 'خطأ في التحقق من البيانات',
+                              description: firstError.message as string,
+                              variant: 'destructive',
+                            });
+                          }
+                        }
                       }}
                     >
                       {createCourseMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء الدورة'}
