@@ -4,7 +4,8 @@ import { defineConfig } from "drizzle-kit";
 let databaseUrl = '';
 
 // Only use AWS RDS if explicitly enabled (same as server/db.ts)
-const ENABLE_AWS_RDS = process.env.ENABLE_AWS_RDS === 'true';
+// Accept various truthy values: 'true', 'True', 'TRUE', '1', 1, true
+const ENABLE_AWS_RDS = ['true', 'True', 'TRUE', '1', 1, true].includes(process.env.ENABLE_AWS_RDS as any);
 
 if (ENABLE_AWS_RDS && process.env.AWS_DATABASE_HOST && process.env.AWS_DATABASE_PORT && 
     process.env.AWS_DATABASE_NAME && process.env.AWS_DATABASE_USER && 
