@@ -40,12 +40,14 @@ import PaymentManagementPage from "./pages/PaymentManagementPage";
 import CourseStudentManagementPage from "./pages/CourseStudentManagementPage";
 import NotificationsPage from "./pages/NotificationsPage";
 import { EducationalTripsPage } from "./pages/EducationalTripsPage";
+import EnrollmentManagementPage from "./pages/EnrollmentManagementPage";
+import MySubscriptionsPage from "./pages/MySubscriptionsPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications', 'enrollments', 'my-subscriptions'];
   return validStates.includes(path as AppState);
 };
 
@@ -299,6 +301,20 @@ function AppContent() {
       case 'notifications':
         if (isAuthenticated && user) {
           return <NotificationsPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'enrollments':
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
+          return <EnrollmentManagementPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'my-subscriptions':
+        if (isAuthenticated && user?.role === 'student') {
+          return <MySubscriptionsPage />;
         } else {
           return <AuthPage />;
         }

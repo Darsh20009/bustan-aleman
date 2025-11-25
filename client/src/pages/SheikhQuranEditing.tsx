@@ -155,8 +155,8 @@ export default function SheikhQuranEditing() {
     });
   };
 
-  const selectedSurahData = surahs.find(s => s.number.toString() === selectedSurah);
-  const selectedStudentData = students.find(s => s.id === selectedStudent);
+  const selectedSurahData = Array.isArray(surahs) ? surahs.find(s => s.number.toString() === selectedSurah) : undefined;
+  const selectedStudentData = Array.isArray(students) ? students.find(s => s.id === selectedStudent) : undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-6" dir="rtl">

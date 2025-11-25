@@ -2527,6 +2527,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enrollment Management Endpoints
+  app.get('/api/enrollments', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const enrollments = await storage.getAllEnrollments?.() || [];
+      res.json(enrollments);
+    } catch (error) {
+      console.error('Error fetching enrollments:', error);
+      res.status(500).json({ message: 'فشل جلب الطلبات' });
+    }
+  });
+
+  app.get('/api/my-enrollments', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const enrollments = await storage.getEnrollmentsByUser?.(userId) || [];
+      res.json(enrollments);
+    } catch (error) {
+      console.error('Error fetching my enrollments:', error);
+      res.status(500).json({ message: 'فشل جلب الاشتراكات' });
+    }
+  });
+
+  app.post('/api/enrollments/:enrollmentId/approve', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      const { enrollmentId } = req.params;
+      const updated = await storage.updateEnrollmentStatus?.(enrollmentId, 'approved') || { id: enrollmentId };
+      res.json(updated);
+    } catch (error) {
+      console.error('Error approving enrollment:', error);
+      res.status(500).json({ message: 'فشل قبول الطلب' });
+    }
+  });
+
+  app.post('/api/enrollments/:enrollmentId/reject', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      const { enrollmentId } = req.params;
+      const updated = await storage.updateEnrollmentStatus?.(enrollmentId, 'rejected') || { id: enrollmentId };
+      res.json(updated);
+    } catch (error) {
+      console.error('Error rejecting enrollment:', error);
+      res.status(500).json({ message: 'فشل رفض الطلب' });
+    }
+  });
+
   // ZegoCloud Configuration Endpoint (for token generation on frontend)
   app.get('/api/zego-config', isPhoneAuthenticated, async (req: any, res) => {
     try {
