@@ -16,6 +16,7 @@ import { TelegramLoginForm } from './TelegramLoginForm';
 const loginSchema = z.object({
   emailOrPhone: z.string().min(5, "البريد الإلكتروني أو رقم الجوال مطلوب"),
   password: z.string().min(1, "كلمة المرور مطلوبة"),
+  rememberMe: z.boolean().default(false),
 }).refine((data) => {
   // Check if it's a valid email OR a valid phone (10 digits max)
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -75,6 +76,7 @@ export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
     defaultValues: {
       emailOrPhone: "",
       password: "",
+      rememberMe: false,
     },
   });
 
@@ -120,7 +122,16 @@ export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
 
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
+      // حفظ معلومات الجلسة إذا اختار المستخدم تذكره
+      if (variables.rememberMe) {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 30); // 30 يوم
+        localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('rememberMeExpiry', expiryDate.toISOString());
+        localStorage.setItem('rememberMePhone', variables.emailOrPhone);
+      }
+      
       toast({
         title: "نجح تسجيل الدخول",
         description: data.message || "مرحباً بك في بستان الإيمان",
@@ -309,6 +320,28 @@ export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
                           </div>
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={loginForm.control}
+                    name="rememberMe"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-reverse space-x-2 pt-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            {...field}
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            className="w-4 h-4 cursor-pointer"
+                            data-testid="checkbox-remember-me"
+                          />
+                        </FormControl>
+                        <FormLabel className="font-arabic-sans mb-0 cursor-pointer">
+                          تذكرني لمدة 30 يوم (لا تطلب كلمة مرور في نفس المتصفح)
+                        </FormLabel>
                       </FormItem>
                     )}
                   />

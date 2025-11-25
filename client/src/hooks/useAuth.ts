@@ -40,6 +40,11 @@ export function useAuth() {
 
   const logout = async () => {
     try {
+      // Clear remember me data
+      localStorage.removeItem('rememberMe');
+      localStorage.removeItem('rememberMeExpiry');
+      localStorage.removeItem('rememberMePhone');
+
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
