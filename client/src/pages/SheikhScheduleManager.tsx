@@ -69,19 +69,33 @@ export default function SheikhScheduleManager() {
 
   // Fetch all schedules
   const { data: schedules = [] } = useQuery<Schedule[]>({
-    queryKey: ['/api/sheikh/schedules'],
+    queryKey: ['schedules'],
+    queryFn: async () => {
+      const allSchedules: Schedule[] = [];
+      for (const student of students) {
+        const response = await fetch(`/api/students/${student.id}/schedules`);
+        const studentSchedules = await response.json();
+        allSchedules.push(...studentSchedules);
+      }
+      return allSchedules;
+    },
+    enabled: students.length > 0,
   });
 
   // Create schedule mutation
   const createSchedule = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/sheikh/schedules', 'POST', data);
+      const response = await apiRequest(`/api/students/${data.studentId}/schedules`, 'POST', data);
+      return response;
     },
-    onError: () => {
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    },
+    onError: (error: any) => {
       toast({
         variant: 'destructive',
         title: '❌ خطأ',
-        description: 'فشل إنشاء الجدول',
+        description: error.message || 'فشل إنشاء الجدول',
       });
     },
   });
@@ -89,13 +103,20 @@ export default function SheikhScheduleManager() {
   // Delete schedule mutation
   const deleteSchedule = useMutation({
     mutationFn: async (scheduleId: string) => {
-      return apiRequest(`/api/sheikh/schedules/${scheduleId}`, 'DELETE');
+      return apiRequest(`/api/schedules/${scheduleId}/delete`, 'POST');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
       toast({
         title: '✅ تم الحذف',
         description: 'تم حذف الحصة من الجدول',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: '❌ خطأ',
+        description: error.message || 'فشل حذف الجدول',
       });
     },
   });
@@ -150,7 +171,7 @@ export default function SheikhScheduleManager() {
       
       await Promise.all(promises);
       
-      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
       
       toast({
         title: '✅ تم إنشاء الجدول',

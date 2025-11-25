@@ -136,6 +136,18 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
     console.log('📋 Form submitted with data:', data);
     console.log('📋 Form errors:', form.formState.errors);
     
+    // Force free courses for supervisors
+    const courseData = { 
+      ...data,
+      isPaid: false,
+      price: 0,
+      uploads,
+      quizQuestions,
+      addQuiz,
+      addCertificate,
+      certificateName,
+    };
+    
     if (addQuiz && quizQuestions.length === 0) {
       toast({
         title: 'خطأ',
@@ -146,14 +158,7 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
     }
 
     console.log('📤 Sending course creation request...');
-    createCourseMutation.mutate({ 
-      ...data, 
-      uploads,
-      quizQuestions,
-      addQuiz,
-      addCertificate,
-      certificateName,
-    });
+    createCourseMutation.mutate(courseData);
   };
 
   // Upload handlers
@@ -402,19 +407,24 @@ export function CreateCoursePage({ onBack }: CreateCoursePageProps) {
                       </div>
 
                       {form.watch('isPaid') && (
-                        <FormField
-                          control={form.control}
-                          name="price"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>السعر (ريال)</FormLabel>
-                              <FormControl>
-                                <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <>
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800 font-arabic-sans">
+                            ⚠️ ملاحظة: فقط المديرين يمكنهم إنشاء دورات مدفوعة. سيتم رفع هذه الدورة كدورة مجانية.
+                          </div>
+                          <FormField
+                            control={form.control}
+                            name="price"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>السعر (ريال)</FormLabel>
+                                <FormControl>
+                                  <Input type="number" {...field} onChange={(e) => field.onChange(parseInt(e.target.value))} disabled />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
                       )}
                     </CardContent>
                   </Card>
