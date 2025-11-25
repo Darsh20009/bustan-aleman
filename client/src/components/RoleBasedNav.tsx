@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical } from 'lucide-react';
+import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical, ShoppingCart } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { SheikhDashboard } from './SheikhDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
@@ -501,6 +501,19 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
                   {user.firstName} {user.lastName} ({roleTitle})
                 </p>
               </div>
+              
+              {/* Shopping Cart for Students */}
+              {user.role === 'student' && (
+                <Button
+                  onClick={() => handleNavigation('cart')}
+                  variant="ghost"
+                  size="icon"
+                  className="relative text-emerald-600 hover:bg-emerald-50"
+                  data-testid="button-shopping-cart"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </Button>
+              )}
               
               {/* Dropdown Menu for Navigation */}
               <DropdownMenu>
