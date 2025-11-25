@@ -280,13 +280,6 @@ const roleNavigation = {
       gradient: 'from-purple-500 to-pink-500'
     },
     { 
-      title: 'عربة التسوق', 
-      path: '/cart', 
-      description: 'الدورات المختارة للتسجيل', 
-      icon: GraduationCap,
-      gradient: 'from-pink-500 to-rose-500'
-    },
-    { 
       title: 'الرحلات التعليمية', 
       path: '/trips', 
       description: 'رحلات دينية وتعليمية ملهمة', 
@@ -536,7 +529,6 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
                   {/* Navigation Items */}
                   <DropdownMenuGroup>
                     {navigation
-                      .filter((item) => item.path !== '/cart') // Exclude cart from dropdown menu
                       .map((item, index) => {
                         const Icon = item.icon;
                         return (
