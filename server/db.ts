@@ -59,8 +59,9 @@ if (isValidDatabaseUrl(process.env.EXTERNAL_DATABASE_URL)) {
 }
 
 // Check if AWS RDS should be used (via environment variable for safer deployment)
-// Accept various truthy values: 'true', 'True', 'TRUE', '1', 1, true
-const ENABLE_AWS_RDS = ['true', 'True', 'TRUE', '1', 1, true].includes(process.env.ENABLE_AWS_RDS as any);
+// Accept various truthy string values: 'true', 'True', 'TRUE', '1'
+// Note: process.env variables are always strings, so we only compare with string values
+const ENABLE_AWS_RDS = ['true', '1'].includes(String(process.env.ENABLE_AWS_RDS || '').toLowerCase());
 
 // Try AWS RDS connection if enabled and all credentials are available
 async function tryAwsRdsConnection(): Promise<boolean> {
