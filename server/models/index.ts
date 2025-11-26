@@ -16,7 +16,7 @@ const userSchema = new Schema({
   profileImageUrl: String,
   role: { type: String, default: 'student' },
   passwordHash: String,
-  phoneNumber: { type: String, sparse: true },
+  phoneNumber: { type: String, sparse: true, index: true },
   age: Number,
   educationLevel: String,
   quranExperience: String,
@@ -30,8 +30,6 @@ const userSchema = new Schema({
   isActive: { type: Boolean, default: true },
   registrationCompleted: { type: Boolean, default: false },
 }, { timestamps: true });
-userSchema.index({ phoneNumber: 1 });
-userSchema.index({ email: 1 });
 export const User = mongoose.model('User', userSchema);
 
 // Instructor Schema
@@ -271,7 +269,6 @@ const certificateSchema = new Schema({
   certificateUrl: String,
   isValid: { type: Boolean, default: true },
 }, { timestamps: true });
-certificateSchema.index({ verificationToken: 1 });
 export const Certificate = mongoose.model('Certificate', certificateSchema);
 
 // Quran Progress Schema
