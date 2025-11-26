@@ -906,6 +906,7 @@ export class DatabaseStorage implements IStorage {
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
         whatsappContact: '+966532441566',
+        sheikhId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -935,6 +936,7 @@ export class DatabaseStorage implements IStorage {
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
         whatsappContact: '+966532441566',
+        sheikhId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }));
@@ -962,7 +964,7 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-
+        sheikhId: null,
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -992,7 +994,7 @@ export class DatabaseStorage implements IStorage {
         memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs),
         currentLevel: jsonStudent.currentLevel || 'beginner',
         notes: jsonStudent.notes || null,
-
+        sheikhId: null,
         whatsappContact: '+966532441566',
         createdAt: new Date(),
         updatedAt: new Date(),

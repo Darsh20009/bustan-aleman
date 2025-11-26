@@ -200,7 +200,7 @@ export default function SheikhQuranEditing() {
                     <SelectValue placeholder="اختر سورة" />
                   </SelectTrigger>
                   <SelectContent>
-                    {surahs.map((surah) => (
+                    {Array.isArray(surahs) && surahs.map((surah) => (
                       <SelectItem key={surah.number} value={surah.number.toString()}>
                         {surah.number}. {surah.name}
                       </SelectItem>
