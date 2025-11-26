@@ -2607,8 +2607,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const serverSecret = (process.env.VITE_ZEGO_SERVER_SECRET || '').trim();
       
       if (!appID || !serverSecret) {
-        console.error('❌ Missing ZegoCloud credentials');
-        return res.status(500).json({ message: 'بيانات الخادم غير كاملة' });
+        console.warn('⚠️  ZegoCloud credentials not configured - using BigBlueButton instead');
+        // Return BigBlueButton config instead - using demo server for testing
+        return res.json({
+          provider: 'bigbluebutton',
+          serverUrl: process.env.VITE_BBB_SERVER || 'https://demo.bigbluebutton.org',
+          message: 'BigBlueButton session ready'
+        });
       }
 
       console.log('🎥 ZegoCloud Configuration Retrieved');
