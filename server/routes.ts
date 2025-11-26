@@ -654,6 +654,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/students-reset', async (req, res) => {
+    try {
+      const deletedCount = await storage.deleteAllStudents();
+      res.json({ message: `تم حذف ${deletedCount} طالب`, deletedCount });
+    } catch (error) {
+      console.error("Error deleting students:", error);
+      res.status(500).json({ message: "Failed to delete students" });
+    }
+  });
+
   app.get('/api/students/:id', async (req, res) => {
     try {
       const student = await storage.getStudent(req.params.id);

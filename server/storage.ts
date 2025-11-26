@@ -175,6 +175,7 @@ export interface IStorage {
   // Student operations
   createStudent(student: InsertStudent): Promise<Student>;
   getAllStudents(): Promise<Student[]>;
+  deleteAllStudents(): Promise<number>;
   getStudent(id: string): Promise<Student | undefined>;
   authenticateStudent(studentName: string, password: string): Promise<Student | undefined>;
   

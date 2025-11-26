@@ -526,6 +526,14 @@ export class MongoDBStorage implements IStorage {
     return toPlainArray<StudentType>(students);
   }
 
+  async deleteAllStudents(): Promise<number> {
+    if (!this.isDbAvailable()) {
+      throw new Error("MongoDB not available");
+    }
+    const result = await Student.deleteMany({});
+    return result.deletedCount || 0;
+  }
+
   async getStudent(id: string): Promise<StudentType | undefined> {
     if (!this.isDbAvailable()) return undefined;
     const student = await Student.findById(id);
