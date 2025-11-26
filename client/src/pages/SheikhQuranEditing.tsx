@@ -184,7 +184,7 @@ export default function SheikhQuranEditing() {
                     <SelectValue placeholder="اختر طالباً" />
                   </SelectTrigger>
                   <SelectContent>
-                    {students.map((student) => (
+                    {Array.isArray(students) && students.map((student) => (
                       <SelectItem key={student.id} value={student.id}>
                         {student.studentName} - {student.phoneNumber}
                       </SelectItem>
@@ -230,7 +230,7 @@ export default function SheikhQuranEditing() {
                 </CardHeader>
                 <CardContent className="max-h-[600px] overflow-y-auto">
                   <div className="space-y-4">
-                    {surahText.map((ayah, index) => (
+                    {Array.isArray(surahText) && surahText.map((ayah, index) => (
                       <div
                         key={ayah.number}
                         className="bg-gradient-to-r from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200 hover:shadow-md transition-shadow cursor-pointer"
