@@ -424,185 +424,125 @@ export function SheikhDashboard() {
   const totalErrors = students.reduce((sum, s) => sum + (s.errors?.filter(e => !e.isResolved).length || 0), 0);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900" dir="rtl">
-      {/* Hero Section - Premium Design */}
-      <div className="relative overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-600/30 to-pink-600/30 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-600/30 to-cyan-600/30 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-        </div>
-
-        {/* Header Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50" dir="rtl">
+      {/* Header Section with Gradient */}
+      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <motion.div
-            initial={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col md:flex-row items-center justify-between gap-8"
+            className="flex items-center justify-between"
           >
-            {/* Title Section */}
-            <div className="flex-1">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-4 mb-6"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-lg opacity-75 group-hover:opacity-100 transition duration-500"></div>
-                  <div className="relative w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-xl">
-                    <BookOpen className="w-10 h-10 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 mb-2">
-                    لوحة التحكم
-                  </h1>
-                  <p className="text-lg text-purple-200 font-semibold">إدارة تعليمية متقدمة</p>
-                </div>
-              </motion.div>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                <BookOpen className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold mb-2">لوحة تحكم الشيخ</h1>
+                <p className="text-emerald-100 text-lg">إدارة شاملة للطلاب والحلقات</p>
+              </div>
             </div>
-
-            {/* Quick Stats */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.4 }}
-              className="flex gap-4 flex-wrap"
-            >
-              <div className="px-6 py-4 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 backdrop-blur-md rounded-xl border border-blue-400/30 hover:border-blue-400/60 transition hover:shadow-lg hover:shadow-blue-500/20">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/30 flex items-center justify-center">
-                    <Bell className="w-5 h-5 text-blue-300" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-blue-200">تنبيهات</p>
-                    <p className="text-2xl font-bold text-blue-100">{totalErrors}</p>
-                  </div>
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                <span className="font-medium">{totalErrors} إشعار</span>
               </div>
-              <div className="px-6 py-4 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 backdrop-blur-md rounded-xl border border-emerald-400/30 hover:border-emerald-400/60 transition hover:shadow-lg hover:shadow-emerald-500/20">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-500/30 flex items-center justify-center">
-                    <Users className="w-5 h-5 text-emerald-300" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-emerald-200">الطلاب</p>
-                    <p className="text-2xl font-bold text-emerald-100">{students.length}</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Premium Stats Cards */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl blur-xl opacity-0 group-hover:opacity-75 transition duration-500"></div>
-              <Card className="relative border-0 backdrop-blur-md bg-gradient-to-br from-blue-500/20 to-cyan-500/20 text-white overflow-hidden border border-blue-400/30 hover:border-blue-400/60 transition shadow-2xl">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/10 rounded-full -mr-20 -mt-20"></div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-cyan-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-300">
-                      <Users className="w-8 h-8 text-blue-950" />
-                    </div>
-                    <TrendingUp className="w-7 h-7 text-blue-300 group-hover:animate-bounce" />
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Users className="w-7 h-7" />
                   </div>
-                  <h3 className="text-5xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">{students.length}</h3>
-                  <p className="text-blue-200 text-lg font-semibold">إجمالي الطلاب</p>
-                </CardContent>
-              </Card>
-            </div>
+                  <TrendingUp className="w-6 h-6 text-blue-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{students.length}</h3>
+                <p className="text-blue-100">إجمالي الطلاب</p>
+              </CardContent>
+            </Card>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 to-green-400 rounded-2xl blur-xl opacity-0 group-hover:opacity-75 transition duration-500"></div>
-              <Card className="relative border-0 backdrop-blur-md bg-gradient-to-br from-emerald-500/20 to-green-500/20 text-white overflow-hidden border border-emerald-400/30 hover:border-emerald-400/60 transition shadow-2xl">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-600/10 rounded-full -mr-20 -mt-20"></div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-300">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-950" />
-                    </div>
-                    <Star className="w-7 h-7 text-emerald-300 group-hover:animate-spin" style={{animationDuration: '3s'}} />
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-green-500 to-emerald-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <CheckCircle2 className="w-7 h-7" />
                   </div>
-                  <h3 className="text-5xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-green-200">{activeStudents}</h3>
-                  <p className="text-emerald-200 text-lg font-semibold">طلاب نشطون</p>
-                </CardContent>
-              </Card>
-            </div>
+                  <Star className="w-6 h-6 text-green-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{activeStudents}</h3>
+                <p className="text-green-100">طلاب نشطون</p>
+              </CardContent>
+            </Card>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            whileHover={{ y: -5, transition: { duration: 0.2 } }}
           >
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-400 rounded-2xl blur-xl opacity-0 group-hover:opacity-75 transition duration-500"></div>
-              <Card className="relative border-0 backdrop-blur-md bg-gradient-to-br from-red-500/20 to-pink-500/20 text-white overflow-hidden border border-red-400/30 hover:border-red-400/60 transition shadow-2xl">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-red-600/10 rounded-full -mr-20 -mt-20"></div>
-                <CardContent className="p-8 relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-16 h-16 bg-gradient-to-br from-red-400 to-pink-400 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition duration-300">
-                      <AlertTriangle className="w-8 h-8 text-red-950" />
-                    </div>
-                    <XCircle className="w-7 h-7 text-red-300 group-hover:pulse" />
+            <Card className="border-0 shadow-xl bg-gradient-to-br from-red-500 to-rose-700 text-white overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+              <CardContent className="p-6 relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <AlertTriangle className="w-7 h-7" />
                   </div>
-                  <h3 className="text-5xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-red-200 to-pink-200">{totalErrors}</h3>
-                  <p className="text-red-200 text-lg font-semibold">أخطاء تحتاج مراجعة</p>
-                </CardContent>
-              </Card>
-            </div>
+                  <XCircle className="w-6 h-6 text-red-200" />
+                </div>
+                <h3 className="text-4xl font-bold mb-2">{totalErrors}</h3>
+                <p className="text-red-100">أخطاء تحتاج مراجعة</p>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="students" className="space-y-6">
           <div className="overflow-x-auto">
-            <TabsList className="inline-flex md:grid w-full md:grid-cols-5 bg-gradient-to-r from-purple-950 to-slate-950 backdrop-blur-md border border-purple-500/30 shadow-2xl p-1 rounded-2xl min-w-max md:min-w-0">
-              <TabsTrigger value="students" className="rounded-xl text-purple-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 whitespace-nowrap px-5 py-2 font-semibold transition-all hover:text-white">
+            <TabsList className="inline-flex md:grid w-full md:grid-cols-5 bg-white shadow-md p-1 rounded-xl min-w-max md:min-w-0">
+              <TabsTrigger value="students" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
                 الطلاب
               </TabsTrigger>
-              <TabsTrigger value="add-student" className="rounded-xl text-purple-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/50 whitespace-nowrap px-5 py-2 font-semibold transition-all hover:text-white">
+              <TabsTrigger value="add-student" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white whitespace-nowrap px-4">
                 إضافة طالب
               </TabsTrigger>
-              <TabsTrigger value="payments" className="rounded-xl text-purple-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600 data-[state=active]:to-orange-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/50 whitespace-nowrap px-5 py-2 font-semibold transition-all hover:text-white">
+              <TabsTrigger value="payments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-500 data-[state=active]:text-white whitespace-nowrap px-4">
                 المدفوعات
               </TabsTrigger>
-              <TabsTrigger value="assignments" className="rounded-xl text-purple-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600 data-[state=active]:to-teal-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/50 whitespace-nowrap px-5 py-2 font-semibold transition-all hover:text-white">
+              <TabsTrigger value="assignments" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
                 التكليفات
               </TabsTrigger>
-              <TabsTrigger value="sessions" className="rounded-xl text-purple-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-600 data-[state=active]:to-pink-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-red-500/50 whitespace-nowrap px-5 py-2 font-semibold transition-all hover:text-white">
+              <TabsTrigger value="sessions" className="rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-teal-500 data-[state=active]:text-white whitespace-nowrap px-4">
                 الحصص
               </TabsTrigger>
             </TabsList>
           </div>
 
           <TabsContent value="students">
-            <Card className="border-0 backdrop-blur-md bg-gradient-to-br from-slate-900/80 to-purple-900/80 border border-purple-500/30 shadow-2xl">
-              <CardHeader className="border-b border-purple-500/20 bg-gradient-to-r from-purple-950 to-slate-950">
-                <CardTitle className="flex items-center gap-3 text-3xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 font-black">
-                  <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
+            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+              <CardHeader className="border-b border-gray-100">
+                <CardTitle className="flex items-center gap-2 text-2xl text-gray-800">
+                  <Users className="w-6 h-6 text-emerald-600" />
                   قائمة الطلاب
                 </CardTitle>
               </CardHeader>
