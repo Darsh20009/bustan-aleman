@@ -1,7 +1,7 @@
 # بستان الإيمان (Bustan Al-Iman) - Islamic Education Platform
 
 ## Overview
-بستان الإيمان (Bustan Al-Iman) is a comprehensive Islamic education platform designed to provide Quran memorization courses, facilitate teacher-student interaction, and manage educational content. Built with Express.js, React, TypeScript, and PostgreSQL, the platform aims to offer a rich, secure, and user-friendly learning experience. It features full Quran integration with translations, tafsir, and audio recitations, along with advanced tracking for memorization and reading statistics. The platform prioritizes a unified Islamic-themed design and robust security measures.
+بستان الإيمان (Bustan Al-Iman) is a comprehensive Islamic education platform designed to provide Quran memorization courses, facilitate teacher-student interaction, and manage educational content. Built with Express.js, React, TypeScript, and MongoDB (Mongoose), the platform aims to offer a rich, secure, and user-friendly learning experience. It features full Quran integration with translations, tafsir, and audio recitations, along with advanced tracking for memorization and reading statistics. The platform prioritizes a unified Islamic-themed design and robust security measures.
 
 ## User Preferences
 - Communication: Simple, everyday language in Arabic
@@ -25,11 +25,11 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 
 ### Technical Implementations
 -   **Frontend**: React 18 with TypeScript, Vite for fast development, shadcn/ui and Radix UI for accessible components, TanStack Query for server state, Wouter for routing, and Tailwind CSS for styling.
--   **Backend**: Express.js for RESTful APIs, PostgreSQL with Drizzle ORM for type-safe database operations, and a custom phone-based authentication system with bcrypt for secure password hashing.
--   **Real-time Communication**: WebSocket server (`ws`) is implemented on `/ws` for teacher-student chat, with messages stored in a dedicated database table.
--   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using PostgreSQL-backed Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin). Features include password recovery with email and phone verification.
+-   **Backend**: Express.js for RESTful APIs, MongoDB with Mongoose ODM for document-based database operations, and a custom phone-based authentication system with bcrypt for secure password hashing.
+-   **Real-time Communication**: WebSocket server (`ws`) is implemented on `/ws` for teacher-student chat, with messages stored in a dedicated database collection.
+-   **Authentication**: Custom phone-based authentication system with pre-registered users and secure bcrypt hashing. Sessions are managed using in-memory Express sessions with a 7-day TTL and role-based authorization (teacher/student/admin). Features include password recovery with email and phone verification.
 -   **Quran Integration**: Comprehensive integration with AlQuran.Cloud API for 114 surahs, Arabic text (Uthmani), English translations (Sahih International), Arabic Tafsir, and audio recitations from 8 renowned reciters. Features dynamic audio loading, auto-play, repeat, and continuous playback.
--   **Database**: PostgreSQL with Drizzle ORM. **Production uses AWS RDS (eu-north-1)** with secure SSL connections using official AWS CA certificates (`rejectUnauthorized: true`). Local development can use Neon Serverless or local PostgreSQL. Supports automatic bcrypt password upgrades for legacy accounts.
+-   **Database**: MongoDB Atlas with Mongoose ODM. Uses the `MONGODB_URI` environment variable for connection. Collections include users, students, courses, sessions, quran progress, payments, live rooms, and notifications. Supports automatic bcrypt password hashing for security.
 -   **SEO & Performance**: Enhanced meta tags for search engines and social media (Open Graph, Twitter cards), dns-prefetch for fonts, optimized font loading with media="print" technique, and PWA-ready meta tags for mobile app experience.
 
 ### Feature Specifications
@@ -53,16 +53,15 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 ## External Dependencies
 
 ### Core Framework
--   `@neondatabase/serverless`: PostgreSQL driver
--   `drizzle-orm`: Type-safe ORM
+-   `mongoose`: MongoDB ODM for document database operations
 -   `express`: Web server
 -   `express-session`: Session management for Express
+-   `memorystore`: In-memory session storage with TTL support
 -   `react`: Frontend framework
 -   `@tanstack/react-query`: Server state management for React
 
 ### Authentication & Security
 -   `bcrypt`: Password hashing library
--   `connect-pg-simple`: PostgreSQL store for Express sessions
 -   `ws`: WebSocket server implementation
 
 ### UI & Styling
@@ -75,10 +74,21 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   `react-hook-form`: Form management library
 -   `@hookform/resolvers`: Validation resolvers for React Hook Form
 -   `zod`: Schema declaration and validation library
--   `drizzle-zod`: Zod integration for Drizzle ORM schemas
 
 ### Development Tools
 -   `vite`: Next-generation frontend tooling
 -   `typescript`: Superset of JavaScript for type safety
--   `drizzle-kit`: Database migration and schema management for Drizzle ORM
 -   `tsx`: TypeScript execution environment
+
+## Recent Changes (November 2025)
+
+### Database Migration: PostgreSQL to MongoDB
+- **Migration Date**: November 26, 2025
+- **Previous Database**: PostgreSQL with Drizzle ORM (AWS RDS)
+- **Current Database**: MongoDB Atlas with Mongoose ODM
+- **Key Changes**:
+  - Replaced Drizzle ORM with Mongoose for MongoDB support
+  - Created 35+ Mongoose models for all entities (users, students, courses, sessions, Quran progress, payments, etc.)
+  - Implemented MongoDBStorage class following the existing IStorage interface
+  - Updated session management to use in-memory storage (memorystore) instead of PostgreSQL-backed sessions
+  - Maintained full API compatibility - no frontend changes required

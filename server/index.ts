@@ -9,7 +9,7 @@ import { setupVite, serveStatic, log } from "./vite";
 import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { wsService } from "./websocket";
-import { initializeDatabase } from "./db";
+import { connectMongoDB } from "./mongodb";
 
 const app = express();
 app.use(express.json());
@@ -70,9 +70,9 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Initialize database connection first (AWS RDS or local)
-    await initializeDatabase();
-    console.log("✅ Database connection initialized");
+    // Initialize MongoDB connection
+    await connectMongoDB();
+    console.log("✅ MongoDB connection initialized");
     
     // Run password migration on startup
     await migratePasswords();
