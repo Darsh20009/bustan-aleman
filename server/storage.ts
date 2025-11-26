@@ -179,6 +179,12 @@ export interface IStorage {
   getStudent(id: string): Promise<Student | undefined>;
   authenticateStudent(studentName: string, password: string): Promise<Student | undefined>;
   
+  // Enrollment payment operations
+  createEnrollment(enrollment: any): Promise<any>;
+  createPayment(payment: any): Promise<any>;
+  getEnrollmentsByUser(userId: string): Promise<any[]>;
+  updateEnrollmentStatus(enrollmentId: string, status: string): Promise<any>;
+  
   // Student session operations
   createStudentSession(session: InsertStudentSession): Promise<StudentSession>;
   getStudentSessions(studentId: string): Promise<StudentSession[]>;
