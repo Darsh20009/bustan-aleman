@@ -82,6 +82,15 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 
 ## Recent Changes (November 2025)
 
+### Storage System Fix (November 30, 2025)
+- **Issue**: Authentication system was using DatabaseStorage (Drizzle ORM) instead of MongoDBStorage
+- **Root Cause**: storage.ts was exporting DatabaseStorage instance, not mongoStorage
+- **Solution**:
+  - Updated storage.ts to use MongoDBStorage as primary implementation
+  - Added JSON fallback system when MongoDB is unavailable
+  - All 4 pre-registered users now load successfully on server startup
+  - System works seamlessly with or without MongoDB connection
+
 ### Authentication Redirect Fix (November 30, 2025)
 - **Issue**: Login succeeded but users weren't redirected to student/sheikh dashboard
 - **Root Cause**: Missing callback handler when `onLoginSuccess` wasn't defined in AuthPage

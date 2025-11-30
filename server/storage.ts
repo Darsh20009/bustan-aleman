@@ -2557,9 +2557,18 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-import { mongoStorage } from "./mongoStorage";
+import { MongoDBStorage } from "./mongoStorage";
+import { isMongoConnected } from "./mongodb";
 
-// Create storage instance with JSON fallback
-const storageInstance = new DatabaseStorage();
-
-export const storage = storageInstance;
+// Use MongoDB if available, otherwise use DatabaseStorage with JSON fallback
+export const storage = (() => {
+  // Try to use MongoDB if connected
+  if (isMongoConnected()) {
+    console.log("✅ Using MongoDB storage");
+    return new MongoDBStorage();
+  }
+  
+  // Fallback to DatabaseStorage (which uses jsonStorage as last resort)
+  console.log("⚠️ MongoDB not available, using JSON storage fallback");
+  return new DatabaseStorage();
+})();
