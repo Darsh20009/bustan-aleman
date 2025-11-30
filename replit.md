@@ -85,7 +85,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 ### Quran Self-Testing Page (November 30, 2025)
 - **Added**: New "اختبر نفسك في القرآن" (Quran Self-Test) page for students
 - **Features**:
-  - **Fixed**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
+  - ✅ **All 114 Surahs**: Complete Quran coverage - الفاتحة through الناس
   - **Smart Grading**: Ignores diacritical marks (تشكيل) and extra spaces - compares only letters/words
     - `الحمد لله` = `الْحَمْدُ لِلَّهِ` ✅ Both marked correct
     - Extra spaces automatically normalized
@@ -96,7 +96,6 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
   - Real-time score tracking (correct/wrong answers)
   - Progress bar for test completion
   - Beautiful Islamic-themed UI with emerald/teal gradient
-  - Includes 50+ major surahs: الفاتحة, البقرة, آل عمران, يوسف, الكهف, يس, الرحمن, etc.
 - **API Endpoints**:
   - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
 - **Normalization Algorithm**:
