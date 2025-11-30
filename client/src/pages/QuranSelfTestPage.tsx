@@ -266,7 +266,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
                 </Select>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-200">
+              <div className="from-emerald-50 to-teal-50 rounded-lg p-6 border border-emerald-200 bg-[#059669]">
                 <h3 className="font-semibold text-emerald-900 mb-3">كيفية الاستخدام:</h3>
                 <ul className="space-y-2 text-sm text-gray-700">
                   <li className="flex items-center gap-2">
