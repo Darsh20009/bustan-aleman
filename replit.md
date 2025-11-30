@@ -82,14 +82,20 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 
 ## Recent Changes (November 2025)
 
-### Storage System Fix (November 30, 2025)
-- **Issue**: Authentication system was using DatabaseStorage (Drizzle ORM) instead of MongoDBStorage
-- **Root Cause**: storage.ts was exporting DatabaseStorage instance, not mongoStorage
-- **Solution**:
-  - Updated storage.ts to use MongoDBStorage as primary implementation
-  - Added JSON fallback system when MongoDB is unavailable
+### Storage System & Login Redirect Fix (November 30, 2025)
+- **Issue 1**: Authentication system was using DatabaseStorage (Drizzle ORM) instead of MongoDBStorage
+  - **Root Cause**: storage.ts was exporting DatabaseStorage instance, not mongoStorage
+  - **Solution**: Updated storage.ts to use MongoDBStorage as primary, DatabaseStorage with JSON fallback as secondary
+  
+- **Issue 2**: User lookup failing after login - `getUser()` didn't have JSON fallback
+  - **Root Cause**: `DatabaseStorage.getUser()` returned `undefined` when DB unavailable instead of searching JSON storage
+  - **Solution**: Added JSON storage fallback to `getUser()` method to search users.json when DB unavailable
+  
+- **Results**:
   - All 4 pre-registered users now load successfully on server startup
   - System works seamlessly with or without MongoDB connection
+  - Users can now login and access their dashboards correctly
+  - Session persistence working properly with JSON storage fallback
 
 ### Authentication Redirect Fix (November 30, 2025)
 - **Issue**: Login succeeded but users weren't redirected to student/sheikh dashboard
