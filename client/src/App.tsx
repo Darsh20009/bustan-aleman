@@ -151,7 +151,12 @@ function AppContent() {
             }
           }} />;
         }
-        return <AuthPage onForgotPasswordClick={() => setAppState('forgot-password')} />;
+        return (
+          <AuthPage 
+            onForgotPasswordClick={() => setAppState('forgot-password')}
+            onLoginSuccess={() => setAppState('dashboard')}
+          />
+        );
       
       case 'dashboard':
         // Use the new role-based navigation instead of old dashboard

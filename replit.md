@@ -82,6 +82,24 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 
 ## Recent Changes (November 2025)
 
+### Authentication Redirect Fix (November 30, 2025)
+- **Issue**: Login succeeded but users weren't redirected to student/sheikh dashboard
+- **Root Cause**: Missing callback handler when `onLoginSuccess` wasn't defined in AuthPage
+- **Solution**: 
+  - Added `onLoginSuccess` callback prop to AuthPage component
+  - Updated App.tsx to pass callback that sets `appState` to 'dashboard'
+  - Login now properly triggers state change for dashboard redirect
+
+### UI Redesign with Islamic Theme (November 30, 2025)
+- Integrated assignment display in Mushaf with visual highlighting
+  - Emerald green for memorization verses
+  - Blue for review verses
+- Updated color scheme across entire platform
+  - Primary: Deep Emerald (#10B981) for Islamic aesthetic
+  - Secondary: Golden Orange (#F97316) for warmth
+- Applied theme to MainHomepage and StudentDashboard
+- Full dark mode support maintained
+
 ### Database Migration: PostgreSQL to MongoDB
 - **Migration Date**: November 26, 2025
 - **Previous Database**: PostgreSQL with Drizzle ORM (AWS RDS)

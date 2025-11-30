@@ -54,9 +54,10 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 interface AuthPageProps {
   onForgotPasswordClick?: () => void;
+  onLoginSuccess?: () => void;
 }
 
-export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
+export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProps) {
   const [mode, setMode] = useState<'login' | 'register' | 'replit' | 'telegram'>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -137,7 +138,13 @@ export function AuthPage({ onForgotPasswordClick }: AuthPageProps) {
         description: data.message || "مرحباً بك في بستان الإيمان",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/");
+      
+      // Call the onLoginSuccess callback if provided
+      if (onLoginSuccess) {
+        onLoginSuccess();
+      } else {
+        setLocation("/");
+      }
     },
     onError: (error: any) => {
       toast({
