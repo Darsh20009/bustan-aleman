@@ -22,8 +22,14 @@ import { useToast } from '@/hooks/use-toast';
 interface Ayah {
   number: number;
   text: string;
-  surah: number;
-  surahName: string;
+  numberInSurah: number;
+  surahNumber: number;
+  juz: number;
+  manzil: number;
+  page: number;
+  ruku: number;
+  hizbQuarter: number;
+  sajda: boolean;
 }
 
 interface TestSession {
@@ -96,7 +102,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
   const [userInput, setUserInput] = useState('');
   const [testStarted, setTestStarted] = useState(false);
 
-  const { data: ayahs = [] } = useQuery({
+  const { data: ayahs = [] } = useQuery<Ayah[]>({
     queryKey: [`/api/quran/ayahs/${selectedSurah}`],
   });
 
@@ -189,6 +195,8 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     setSession({ ...session, revealed: !session.revealed });
   };
 
+  const currentSurahName = SURAH_LIST.find(s => s.number === parseInt(selectedSurah))?.name || 'السورة';
+
   if (!testStarted || !session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-6">
@@ -279,7 +287,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-emerald-900">اختبر نفسك</h1>
-                <p className="text-sm text-gray-600">{currentAyah.surahName}</p>
+                <p className="text-sm text-gray-600">{currentSurahName}</p>
               </div>
             </div>
             <Badge className="bg-emerald-100 text-emerald-700 text-lg px-4 py-2">
@@ -315,7 +323,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
             {/* Ayah Display */}
             <div className="mb-8 p-6 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border-2 border-emerald-200 text-center">
               <p className="text-2xl font-bold text-emerald-900 mb-2">
-                {`سورة ${currentAyah.surahName}: الآية ${currentAyah.number}`}
+                {`سورة ${currentSurahName}: الآية ${currentAyah.numberInSurah}`}
               </p>
               {!session.revealed && (
                 <div className="flex justify-center gap-2 mb-4">
