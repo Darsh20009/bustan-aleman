@@ -90,7 +90,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
     - `الحمد لله` = `الْحَمْدُ لِلَّهِ` ✅ Both marked correct
     - Extra spaces automatically normalized
   - **Error Feedback**: Shows side-by-side comparison with normalized text display
-  - **Hint Feature**: "أول كلمة" (First Word) button shows first word of ayah
+  - **Hint Feature**: "تلميح" (Hint) button shows previous or next ayah from the surah for context
   - **Debugging View**: Shows normalized (non-diacritical) comparison for transparency
   - Interactive testing with 5 random ayahs per test session
   - Real-time score tracking (correct/wrong answers)

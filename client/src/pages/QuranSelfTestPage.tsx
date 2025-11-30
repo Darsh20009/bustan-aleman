@@ -115,10 +115,16 @@ const normalize = (text: string): string => {
     .trim();
 };
 
-// Get first word from Ayah
-const getFirstWord = (text: string): string => {
-  const words = normalize(text).split(' ');
-  return words[0] || '';
+// Get hint ayah (previous or next ayah)
+const getHintAyah = (allAyahs: Ayah[], currentAyah: Ayah): Ayah | null => {
+  const currentIndex = allAyahs.findIndex(a => a.numberInSurah === currentAyah.numberInSurah);
+  if (currentIndex === -1) return null;
+  
+  // Return either previous or next ayah (randomly)
+  const usePrevious = Math.random() > 0.5;
+  const hintIndex = usePrevious ? currentIndex - 1 : currentIndex + 1;
+  
+  return hintIndex >= 0 && hintIndex < allAyahs.length ? allAyahs[hintIndex] : null;
 };
 
 export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
@@ -472,7 +478,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
                     className="flex-1 text-amber-600 hover:bg-amber-50"
                     data-testid="button-show-hint"
                   >
-                    💡 أول كلمة
+                    💡 تلميح
                   </Button>
                 )}
                 <Button
@@ -488,14 +494,28 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
             )}
 
             {/* Hint Display */}
-            {!session.revealed && session.hintShown && (
-              <div className="mt-4 p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
-                <p className="text-sm text-gray-600 mb-2">أول كلمة في الآية:</p>
-                <p className="text-2xl font-bold text-amber-700 font-arabic">
-                  {getFirstWord(currentAyah.text)}
-                </p>
-              </div>
-            )}
+            {!session.revealed && session.hintShown && (() => {
+              const hintAyah = getHintAyah(ayahs || [], currentAyah);
+              const hintLabel = hintAyah && hintAyah.numberInSurah < currentAyah.numberInSurah 
+                ? 'الآية السابقة:' 
+                : 'الآية التالية:';
+              
+              return (
+                <div className="mt-4 p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
+                  <p className="text-sm text-gray-600 mb-2">{hintLabel}</p>
+                  {hintAyah ? (
+                    <div>
+                      <p className="text-sm text-amber-700 mb-2">آية {hintAyah.numberInSurah}</p>
+                      <p className="text-lg font-arabic text-amber-900 leading-relaxed">
+                        {hintAyah.text}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-amber-700">لا توجد آية أخرى للعرض</p>
+                  )}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
