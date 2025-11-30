@@ -10,10 +10,13 @@ import {
   BookMarked,
   Volume2,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  BookOpen,
+  CheckCircle2
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTodayAssignment } from '@/hooks/useTodayAssignment';
 
 interface MushafQuranReaderProps {
   initialPage?: number;
@@ -24,6 +27,7 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [fontSize, setFontSize] = useState(20);
   const [showSearch, setShowSearch] = useState(false);
+  const { assignment, memorizationRanges, reviewRanges, isMemorization, isReview } = useTodayAssignment();
 
   const { data: pageData, isLoading } = useQuery<{ verses?: Array<{ text: string; number: number; numberInSurah: number }> }>({
     queryKey: ['/api/quran/page', currentPage],
@@ -51,6 +55,36 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-amber-50 to-orange-50 dark:from-gray-900 dark:to-gray-800">
+      {/* Assignment Summary */}
+      {assignment && (memorizationRanges.length > 0 || reviewRanges.length > 0) && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 border-b border-emerald-200 dark:border-emerald-800"
+        >
+          <div className="max-w-7xl mx-auto px-4 py-3">
+            <div className="flex items-center gap-4 flex-wrap">
+              {memorizationRanges.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    الحفظ: {memorizationRanges.map(r => `${r.surah}:${r.startVerse}-${r.endVerse}`).join(', ')}
+                  </span>
+                </div>
+              )}
+              {reviewRanges.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    المراجعة: {reviewRanges.map(r => `${r.surah}:${r.startVerse}-${r.endVerse}`).join(', ')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Top Controls */}
       <div className="bg-white dark:bg-gray-900 border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -213,18 +247,31 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
                       color: 'var(--foreground)'
                     }}
                   >
-                    {pageData?.verses?.map((verse: any, index: number) => (
-                      <span
-                        key={index}
-                        className="inline hover:bg-yellow-100 dark:hover:bg-yellow-900/30 px-1 rounded cursor-pointer transition-colors"
-                        data-testid={`verse-${verse.number}`}
-                      >
-                        {verse.text}
-                        <span className="text-islamic-green dark:text-green-400 mx-1">
-                          ﴿{verse.numberInSurah}﴾
+                    {pageData?.verses?.map((verse: any, index: number) => {
+                      const surahNum = Math.floor(verse.number / 1000);
+                      const ayahNum = verse.number % 1000;
+                      const isMemorizationVerse = isMemorization(surahNum, ayahNum);
+                      const isReviewVerse = isReview(surahNum, ayahNum);
+                      
+                      return (
+                        <span
+                          key={index}
+                          className={`inline px-1 rounded cursor-pointer transition-all ${
+                            isMemorizationVerse 
+                              ? 'bg-emerald-200 dark:bg-emerald-900/50 hover:bg-emerald-300 dark:hover:bg-emerald-800/70' 
+                              : isReviewVerse
+                              ? 'bg-blue-200 dark:bg-blue-900/50 hover:bg-blue-300 dark:hover:bg-blue-800/70'
+                              : 'hover:bg-yellow-100 dark:hover:bg-yellow-900/30'
+                          }`}
+                          data-testid={`verse-${verse.number}`}
+                        >
+                          {verse.text}
+                          <span className="text-islamic-green dark:text-green-400 mx-1">
+                            ﴿{verse.numberInSurah}﴾
+                          </span>
                         </span>
-                      </span>
-                    ))}
+                      );
+                    })}
                     
                     {/* Placeholder if no data */}
                     {!pageData?.verses && (

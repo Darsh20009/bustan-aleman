@@ -190,9 +190,9 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-emerald-50 to-emerald-100 dark:from-slate-900 dark:via-emerald-950 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-800 to-orange-700 text-white p-4 md:p-6">
+      <div className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 dark:from-emerald-900 dark:via-emerald-800 dark:to-emerald-900 text-white p-4 md:p-6">
         <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -206,7 +206,7 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
               <h1 className="text-lg md:text-2xl font-bold" style={{ fontFamily: 'Amiri, serif' }}>
                 مرحباً، {student.studentName}
               </h1>
-              <p className="text-amber-200 text-sm md:text-base">
+              <p className="text-emerald-100 text-sm md:text-base">
                 المستوى: {student.currentLevel === 'advanced' ? 'متقدم' : 'مبتدئ'}
               </p>
             </div>

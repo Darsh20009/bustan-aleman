@@ -35,13 +35,13 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50/30 to-orange-50/30" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-emerald-50 to-emerald-100 dark:from-slate-900 dark:via-emerald-950 dark:to-slate-900" dir="rtl">
       {/* Animated Floating Particles */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         {[...Array(20)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-emerald-400/20 rounded-full"
+            className="absolute w-2 h-2 bg-emerald-500/20 dark:bg-emerald-400/20 rounded-full"
             initial={{ 
               x: Math.random() * window.innerWidth,
               y: Math.random() * window.innerHeight
@@ -59,14 +59,14 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
         ))}
       </div>
 
-      {/* Enhanced Header with Advanced Animations */}
+      {/* Enhanced Header with Islamic Theme */}
       <motion.div 
-        className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-800 text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm"
+        className="bg-gradient-to-r from-emerald-700 via-emerald-600 to-emerald-700 dark:from-emerald-900 dark:via-emerald-800 dark:to-emerald-900 text-white shadow-2xl sticky top-0 z-50 backdrop-blur-sm"
         style={{ opacity: headerOpacity, scale: headerScale }}
       >
         {/* Animated Gradient Overlay */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0"
+          className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0"
           animate={{
             x: ['-100%', '100%'],
           }}

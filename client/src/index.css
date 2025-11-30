@@ -4,72 +4,72 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 0 0% 0%;
+  --background: 50 23% 98%;
+  --foreground: 0 0% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 0%;
+  --card-foreground: 0 0% 15%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 0%;
-  --primary: 160 85% 39%;
+  --popover-foreground: 0 0% 15%;
+  --primary: 140 71% 35%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 25 95% 53%;
-  --secondary-foreground: 0 0% 0%;
+  --secondary: 32 100% 60%;
+  --secondary-foreground: 0 0% 15%;
   --muted: 0 0% 80%;
-  --muted-foreground: 0 0% 40%;
-  --accent: 160 85% 39%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 140 71% 35%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 90%;
+  --border: 50 20% 85%;
   --input: 0 0% 100%;
-  --ring: 160 85% 39%;
-  --chart-1: 160 85% 39%;
-  --chart-2: 25 95% 53%;
-  --chart-3: 25 65% 58%;
-  --chart-4: 160 45% 38%;
-  --chart-5: 45 55% 48%;
-  --sidebar: 160 85% 39%;
+  --ring: 140 71% 35%;
+  --chart-1: 140 71% 35%;
+  --chart-2: 32 100% 60%;
+  --chart-3: 32 100% 50%;
+  --chart-4: 30 80% 45%;
+  --chart-5: 45 95% 50%;
+  --sidebar: 140 71% 35%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 160 85% 39%;
+  --sidebar-primary: 140 71% 35%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 25 95% 53%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 160 85% 39%;
-  --sidebar-ring: 160 85% 39%;
+  --sidebar-accent: 32 100% 60%;
+  --sidebar-accent-foreground: 0 0% 15%;
+  --sidebar-border: 140 71% 35%;
+  --sidebar-ring: 140 71% 35%;
   --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
   --font-serif: 'Amiri', serif;
   --font-mono: 'Courier New', monospace;
   --radius: 0.75rem;
   
   /* Islamic theme colors */
-  --islamic-green: 160 85% 39%;
-  --warm-gold: 25 95% 53%;
-  --earth-brown: 25 95% 53%;
-  --warm-white: 0 0% 100%;
-  --light-beige: 0 0% 95%;
-  --dark-charcoal: 0 0% 20%;
+  --islamic-green: 140 71% 35%;
+  --warm-gold: 32 100% 60%;
+  --earth-brown: 25 70% 40%;
+  --warm-white: 50 23% 98%;
+  --light-beige: 50 20% 95%;
+  --dark-charcoal: 0 0% 15%;
 }
 
 .dark {
-  --background: 0 0% 10%;
-  --foreground: 0 0% 95%;
-  --card: 0 0% 15%;
-  --card-foreground: 0 0% 95%;
-  --popover: 0 0% 10%;
-  --popover-foreground: 0 0% 95%;
-  --primary: 160 85% 39%;
+  --background: 200 40% 8%;
+  --foreground: 50 20% 92%;
+  --card: 200 40% 12%;
+  --card-foreground: 50 20% 92%;
+  --popover: 200 40% 8%;
+  --popover-foreground: 50 20% 92%;
+  --primary: 140 71% 45%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 25 95% 53%;
-  --secondary-foreground: 0 0% 0%;
+  --secondary: 32 100% 65%;
+  --secondary-foreground: 0 0% 15%;
   --muted: 0 0% 30%;
   --muted-foreground: 0 0% 70%;
-  --accent: 160 85% 39%;
+  --accent: 140 71% 45%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 25%;
-  --input: 0 0% 15%;
-  --ring: 160 85% 39%;
+  --border: 200 30% 20%;
+  --input: 200 40% 15%;
+  --ring: 140 71% 45%;
 }
 
 @layer base {
