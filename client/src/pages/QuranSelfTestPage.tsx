@@ -38,6 +38,7 @@ interface TestSession {
   correct: number;
   wrong: number;
   revealed: boolean;
+  hintShown: boolean;
   userAnswers: string[];
 }
 
@@ -95,10 +96,19 @@ const SURAH_LIST = [
   { number: 114, name: 'الناس', ayahs: 6 },
 ];
 
-// Remove diacritical marks from Arabic text
-const removeDiacritics = (text: string): string => {
+// Remove diacritical marks and normalize Arabic text
+const normalize = (text: string): string => {
   const diacritics = /[\u064B-\u065F]/g; // Arabic diacritical marks
-  return text.replace(diacritics, '');
+  return text
+    .replace(diacritics, '') // Remove diacritics
+    .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
+    .trim(); // Remove leading/trailing spaces
+};
+
+// Get first word from Ayah
+const getFirstWord = (text: string): string => {
+  const words = normalize(text).split(' ');
+  return words[0] || '';
 };
 
 export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
@@ -128,6 +138,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
       correct: 0,
       wrong: 0,
       revealed: false,
+      hintShown: false,
       userAnswers: [],
     });
     setTestStarted(true);
@@ -141,9 +152,9 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     }
 
     const currentAyah = session.ayahs[session.currentIndex];
-    // Remove diacritics before comparing
-    const cleanUserInput = removeDiacritics(userInput.trim());
-    const cleanCorrectText = removeDiacritics(currentAyah.text.trim());
+    // Normalize and compare without diacritics or extra spaces
+    const cleanUserInput = normalize(userInput);
+    const cleanCorrectText = normalize(currentAyah.text);
     const isCorrect = cleanUserInput === cleanCorrectText;
 
     const newSession = {
@@ -172,6 +183,7 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
         ...session,
         currentIndex: session.currentIndex + 1,
         revealed: false,
+        hintShown: false,
       });
       setUserInput('');
     } else {
@@ -383,8 +395,8 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
             ) : (
               <div className="space-y-4">
                 {(() => {
-                  const cleanUserInput = removeDiacritics(userInput.trim());
-                  const cleanCorrectText = removeDiacritics(currentAyah.text.trim());
+                  const cleanUserInput = normalize(userInput);
+                  const cleanCorrectText = normalize(currentAyah.text);
                   const isCorrect = cleanUserInput === cleanCorrectText;
 
                   return (
@@ -434,17 +446,39 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
               </div>
             )}
 
-            {/* Reveal Button */}
+            {/* Hint and Reveal Buttons */}
             {!session.revealed && (
-              <Button
-                onClick={toggleReveal}
-                variant="ghost"
-                className="w-full mt-4 text-emerald-600 hover:bg-emerald-50"
-                data-testid="button-reveal-answer"
-              >
-                <Eye className="w-4 h-4 ml-2" />
-                عرض الإجابة
-              </Button>
+              <div className="flex gap-2 mt-4">
+                {!session.hintShown && (
+                  <Button
+                    onClick={() => setSession({ ...session, hintShown: true })}
+                    variant="outline"
+                    className="flex-1 text-amber-600 hover:bg-amber-50"
+                    data-testid="button-show-hint"
+                  >
+                    💡 أول كلمة
+                  </Button>
+                )}
+                <Button
+                  onClick={toggleReveal}
+                  variant="ghost"
+                  className="flex-1 text-emerald-600 hover:bg-emerald-50"
+                  data-testid="button-reveal-answer"
+                >
+                  <Eye className="w-4 h-4 ml-2" />
+                  عرض الإجابة
+                </Button>
+              </div>
+            )}
+
+            {/* Hint Display */}
+            {!session.revealed && session.hintShown && (
+              <div className="mt-4 p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
+                <p className="text-sm text-gray-600 mb-2">أول كلمة في الآية:</p>
+                <p className="text-2xl font-bold text-amber-700 font-arabic">
+                  {getFirstWord(currentAyah.text)}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

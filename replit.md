@@ -87,8 +87,9 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 - **Features**:
   - **Fixed Issues**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
   - Created new API endpoint `/api/quran/ayahs/:surahNumber` for fetching ayahs
-  - **Smart Grading**: Ignores diacritical marks (تشكيل) - compares only letters/words
+  - **Smart Grading**: Ignores diacritical marks (تشكيل) AND extra spaces - compares only letters/words
   - **Error Feedback**: Shows side-by-side comparison of student answer vs correct answer
+  - **Hint Feature**: "أول كلمة" (First Word) button to show first word of ayah as learning aid
   - Interactive testing with 5 random ayahs per test session
   - Text input for user answers
   - Show/hide answer functionality for learning
@@ -101,15 +102,19 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 - **API Endpoints Created**: 
   - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
 - **Scoring Logic**:
-  - Removes diacritical marks before comparison
+  - Removes diacritical marks (تشكيل) before comparison
+  - Normalizes spaces (removes extra spaces)
   - Displays "الصواب" (correct answer) and "ما كتبت" (your answer) for incorrect responses
-  - Marks answer as correct when letters match (regardless of diacritics)
+  - Marks answer as correct when letters match (regardless of diacritics or spaces)
+- **Helper Functions**:
+  - `normalize()` - Removes diacritics and normalizes spaces for comparison
+  - `getFirstWord()` - Extracts first word of ayah for hint feature
 - **Files Created**: `client/src/pages/QuranSelfTestPage.tsx`
 - **Files Modified**: 
   - `client/src/App.tsx` (added routing)
   - `client/src/components/RoleBasedNav.tsx` (added menu item with Brain icon)
   - `server/routes.ts` (added new API endpoint)
-- **Status**: ✅ Fully functional with 50+ surahs, smart grading, and visual feedback
+- **Status**: ✅ Fully functional with 50+ surahs, smart grading, hint feature, and visual feedback
 
 ## Earlier Changes (November 2025)
 
