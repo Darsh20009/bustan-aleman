@@ -86,6 +86,7 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 - **Added**: New "اختبر نفسك في القرآن" (Quran Self-Test) page for students
 - **Features**:
   - ✅ **All 114 Surahs**: Complete Quran coverage - الفاتحة through الناس
+  - ✅ **Voice Input**: Students can record answers by voice (Web Speech API)
   - **Smart Grading**: Ignores diacritical marks (تشكيل) and extra spaces - compares only letters/words
     - `الحمد لله` = `الْحَمْدُ لِلَّهِ` ✅ Both marked correct
     - Extra spaces automatically normalized
