@@ -30,8 +30,8 @@ export function useAuth() {
       return userData;
     },
     retry: false,
-    staleTime: Infinity, // لا تعتبر البيانات قديمة أبداً
-    gcTime: Infinity, // احتفظ بالبيانات في الذاكرة
+    staleTime: 0, // تحديث فوري عند invalidate
+    gcTime: 5 * 60 * 1000, // احتفظ لمدة 5 دقائق
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,

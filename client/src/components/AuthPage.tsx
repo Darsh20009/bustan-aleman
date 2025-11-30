@@ -123,7 +123,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
 
       return response.json();
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       // حفظ معلومات الجلسة إذا اختار المستخدم تذكره
       if (variables.rememberMe) {
         const expiryDate = new Date();
@@ -137,14 +137,20 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
         title: "نجح تسجيل الدخول",
         description: data.message || "مرحباً بك في بستان الإيمان",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       
-      // Call the onLoginSuccess callback if provided
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        setLocation("/");
-      }
+      // Invalidate and immediately refetch to get fresh user data
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      
+      // Delay slightly to ensure state updates
+      setTimeout(() => {
+        // Call the onLoginSuccess callback if provided
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        } else {
+          setLocation("/");
+        }
+      }, 100);
     },
     onError: (error: any) => {
       toast({
