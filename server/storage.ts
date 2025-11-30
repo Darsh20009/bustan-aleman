@@ -214,6 +214,7 @@ export interface IStorage {
   // Student error operations
   createStudentError(error: InsertStudentError): Promise<StudentError>;
   getStudentErrors(studentId: string): Promise<StudentError[]>;
+  updateStudentError(errorId: string, updates: Partial<InsertStudentError>): Promise<StudentError>;
   deleteStudentError(errorId: string): Promise<void>;
   
   // Student payment operations
@@ -1101,6 +1102,20 @@ export class DatabaseStorage implements IStorage {
       .from(studentErrors)
       .where(eq(studentErrors.studentId, studentId))
       .orderBy(desc(studentErrors.createdAt));
+  }
+
+  async updateStudentError(errorId: string, updates: Partial<InsertStudentError>): Promise<StudentError> {
+    if (!this.isDbAvailable()) {
+      throw new Error('Database not available');
+    }
+
+    const [updated] = await db!
+      .update(studentErrors)
+      .set(updates as any)
+      .where(eq(studentErrors.id, errorId))
+      .returning();
+    
+    return updated;
   }
 
   async deleteStudentError(errorId: string): Promise<void> {

@@ -2285,6 +2285,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // General student errors API endpoints (for SheikhStudentErrorsPage)
+  app.get('/api/student-errors/:studentId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole || (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { studentId } = req.params;
+      const errors = await storage.getStudentErrors(studentId);
+      res.json(errors);
+    } catch (error) {
+      console.error('Error fetching student errors:', error);
+      res.status(500).json({ message: 'فشل جلب الأخطاء' });
+    }
+  });
+
+  app.post('/api/student-errors', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole || (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { studentId, surahNumber, surahName, ayahNumber, wordIndex, errorType, errorDescription, sheikhNote, severity } = req.body;
+      
+      const errorData = {
+        studentId,
+        surahNumber,
+        surahName: surahName || '',
+        ayahNumber,
+        wordIndex: wordIndex || 0,
+        errorType: errorType || 'recitation',
+        errorDescription: errorDescription || '',
+        sheikhNote: sheikhNote || '',
+        severity: severity || 'medium',
+        sheikhId: (req.session as any).userId,
+        isResolved: false,
+      };
+      
+      const error = await storage.createStudentError(errorData);
+      res.status(201).json(error);
+    } catch (error) {
+      console.error('Error creating student error:', error);
+      res.status(500).json({ message: 'فشل إضافة الخطأ' });
+    }
+  });
+
+  app.patch('/api/student-errors/:errorId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole || (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { errorId } = req.params;
+      const updates = req.body;
+      
+      const updatedError = await storage.updateStudentError(errorId, updates);
+      
+      res.json(updatedError);
+    } catch (error) {
+      console.error('Error updating student error:', error);
+      res.status(500).json({ message: 'فشل تحديث الخطأ' });
+    }
+  });
+
+  app.delete('/api/student-errors/:errorId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole || (req.session as any).role;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+      
+      const { errorId } = req.params;
+      await storage.deleteStudentError(errorId);
+      res.json({ success: true, message: 'تم حذف الخطأ بنجاح' });
+    } catch (error) {
+      console.error('Error deleting student error:', error);
+      res.status(500).json({ message: 'فشل حذف الخطأ' });
+    }
+  });
+
   // Live Session Management Endpoints
   app.get('/api/student/live-sessions', isPhoneAuthenticated, async (req: any, res) => {
     try {

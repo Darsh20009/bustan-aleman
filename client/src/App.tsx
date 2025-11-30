@@ -43,12 +43,16 @@ import { EducationalTripsPage } from "./pages/EducationalTripsPage";
 import EnrollmentManagementPage from "./pages/EnrollmentManagementPage";
 import MySubscriptionsPage from "./pages/MySubscriptionsPage";
 import CourseManagementPage from "./pages/CourseManagementPage";
+import CourseContentPage from "./pages/CourseContentPage";
+import QuranTestPage from "./pages/QuranTestPage";
+import HadithPage from "./pages/HadithPage";
+import SheikhStudentErrorsPage from "./pages/SheikhStudentErrorsPage";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management' | 'quran-test' | 'hadith' | 'sheikh-errors';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications', 'enrollments', 'my-subscriptions', 'course-management'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications', 'enrollments', 'my-subscriptions', 'course-management', 'quran-test', 'hadith', 'sheikh-errors'];
   return validStates.includes(path as AppState);
 };
 
@@ -357,6 +361,23 @@ function AppContent() {
             onBack={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')}
           />
         );
+      
+      case 'quran-test':
+        if (isAuthenticated && user) {
+          return <QuranTestPage onBack={() => setAppState('dashboard')} />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'hadith':
+        return <HadithPage onBack={() => isAuthenticated && user ? setAppState('dashboard') : setAppState('home')} />;
+      
+      case 'sheikh-errors':
+        if (isAuthenticated && (user?.role === 'supervisor' || user?.role === 'admin')) {
+          return <SheikhStudentErrorsPage onBack={() => setAppState('dashboard')} />;
+        } else {
+          return <AuthPage />;
+        }
       
       default:
         return null;
