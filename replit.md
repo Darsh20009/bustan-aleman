@@ -101,8 +101,9 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
   - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
 - **Normalization Algorithm**:
   - Removes all Arabic diacritical marks (فتحة، ضمة، كسرة، سكون، شدة، etc.)
-  - Removes Quranic symbols and special marks
-  - Normalizes Alef variations (أ/إ/آ → ا)
+  - Removes Quranic symbols (hamza marks, special Unicode marks)
+  - Removes Alef Superscript (ٰ - U+0670)
+  - Normalizes Alef variations (أ/إ/آ/ٱ → ا)
   - Normalizes whitespace (multiple spaces → single space)
 - **Helper Functions**:
   - `normalize()` - Comprehensive text normalization for fair comparison

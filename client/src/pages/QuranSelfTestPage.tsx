@@ -101,13 +101,15 @@ const normalize = (text: string): string => {
   return text
     // Remove all Arabic diacritics (Fatha, Damma, Kasra, Sukun, Shadda, etc.)
     .replace(/[\u064B-\u065F]/g, '') // فتحة، ضمة، كسرة، سكون، شدة، إلخ
-    // Remove Quranic symbols
-    .replace(/[\u0610-\u061A]/g, '')
-    .replace(/[\u061E-\u061F]/g, '')
+    // Remove Quranic symbols and special marks
+    .replace(/[\u0610-\u061A]/g, '') // Quranic hamza above/below
+    .replace(/[\u061E-\u061F]/g, '') // Quranic marks
+    .replace(/[\u0670]/g, '') // Alef Superscript (ٰ)
     // Normalize Alef variations to plain Alef
     .replace(/أ/g, 'ا') // أ -> ا
     .replace(/إ/g, 'ا') // إ -> ا
     .replace(/آ/g, 'ا') // آ -> ا
+    .replace(/ٱ/g, 'ا') // ٱ (Alef Wasla) -> ا
     // Normalize spaces
     .replace(/\s+/g, ' ')
     .trim();
