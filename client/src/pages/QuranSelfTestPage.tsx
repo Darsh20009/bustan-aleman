@@ -219,38 +219,52 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!SpeechRecognition) return;
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ar-SA';
-    recognition.interimResults = true;
-    recognition.continuous = false;
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ar-SA'; // العربية (السعودية)
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 1;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
+      recognition.onstart = () => {
+        setIsListening(true);
+        toast({ title: 'جاري الاستماع...', description: 'تحدث الآن' });
+      };
 
-    recognition.onresult = (event: any) => {
-      let interimTranscript = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          setUserInput(prev => (prev + ' ' + transcript).trim());
-        } else {
-          interimTranscript += transcript;
+      recognition.onresult = (event: any) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          }
         }
-      }
-    };
+        if (finalTranscript) {
+          setUserInput(prev => (prev + ' ' + finalTranscript).trim());
+        }
+      };
 
-    recognition.onerror = (event: any) => {
-      console.error('Speech recognition error:', event.error);
-      toast({ title: 'خطأ', description: `خطأ في التعرف على الصوت: ${event.error}` });
-      setIsListening(false);
-    };
+      recognition.onerror = (event: any) => {
+        setIsListening(false);
+        const errorMessages: Record<string, string> = {
+          'no-speech': 'لم يتم تسجيل صوت - حاول مرة أخرى',
+          'audio-capture': 'لا يوجد ميكروفون - تحقق من الأذونات',
+          'network': 'خطأ في الاتصال - تأكد من الإنترنت',
+          'aborted': 'تم إيقاف التسجيل',
+        };
+        const message = errorMessages[event.error] || `خطأ: ${event.error}`;
+        toast({ title: 'خطأ', description: message });
+      };
 
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+      recognition.onend = () => {
+        setIsListening(false);
+      };
 
-    recognition.start();
+      recognition.start();
+    } catch (error) {
+      console.error('Error starting recognition:', error);
+      toast({ title: 'خطأ', description: 'لا يمكن بدء التعرف على الصوت' });
+    }
   };
 
   const startTest = () => {
