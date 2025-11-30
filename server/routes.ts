@@ -846,6 +846,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/quran/ayahs/:surahNumber', async (req, res) => {
+    try {
+      const surahNumber = parseInt(req.params.surahNumber);
+      if (isNaN(surahNumber) || surahNumber < 1 || surahNumber > 114) {
+        return res.status(400).json({ message: "Invalid surah number" });
+      }
+      
+      const surah = await quranService.getSurah(surahNumber);
+      if (!surah) {
+        return res.status(404).json({ message: "Surah not found" });
+      }
+      
+      res.json(surah.ayahs || []);
+    } catch (error) {
+      console.error("Error fetching ayahs:", error);
+      res.status(500).json({ message: "Failed to fetch ayahs" });
+    }
+  });
+
   app.get('/api/quran/page/:number', async (req, res) => {
     try {
       const pageNumber = parseInt(req.params.number);

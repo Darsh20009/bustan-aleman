@@ -85,17 +85,25 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 ### Quran Self-Testing Page (November 30, 2025)
 - **Added**: New "اختبر نفسك في القرآن" (Quran Self-Test) page for students
 - **Features**:
-  - Select from 4 surahs (الفاتحة, الإخلاص, الفلق, الناس)
+  - **Fixed Issues**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
+  - Created new API endpoint `/api/quran/ayahs/:surahNumber` for fetching ayahs
   - Interactive testing with 5 random ayahs per test session
   - Text input for user answers
   - Show/hide answer functionality for learning
   - Real-time score tracking (correct/wrong answers)
   - Progress bar for test completion
   - Beautiful Islamic-themed UI with emerald/teal gradient
+  - Includes surahs: الفاتحة, البقرة, آل عمران, يوسف, الكهف, يس, الرحمن, and more (all major surahs)
 - **Location**: Navigation menu under "اختبر نفسك في القرآن" with cyan/blue gradient icon
 - **Access**: Students only (restricted to student role)
+- **API Endpoints Created**: 
+  - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
 - **Files Created**: `client/src/pages/QuranSelfTestPage.tsx`
-- **Files Modified**: `client/src/App.tsx`, `client/src/components/RoleBasedNav.tsx`
+- **Files Modified**: 
+  - `client/src/App.tsx` (added routing)
+  - `client/src/components/RoleBasedNav.tsx` (added menu item with Brain icon)
+  - `server/routes.ts` (added new API endpoint)
+- **Status**: ✅ Fully functional with 50+ surahs and working API
 
 ## Earlier Changes (November 2025)
 
