@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical, ShoppingCart } from 'lucide-react';
+import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical, ShoppingCart, Brain } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { SheikhDashboard } from './SheikhDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
@@ -299,6 +299,13 @@ const roleNavigation = {
       description: 'آخر الأخبار والإعلانات من المشرف', 
       icon: Bell,
       gradient: 'from-indigo-500 to-violet-500'
+    },
+    { 
+      title: 'اختبر نفسك في القرآن', 
+      path: '/quran-self-test', 
+      description: 'اختبر حفظك من خلال الآيات مع الصور', 
+      icon: Brain,
+      gradient: 'from-cyan-500 to-blue-500'
     },
   ],
   supervisor: [

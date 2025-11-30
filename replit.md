@@ -82,6 +82,23 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 
 ## Recent Changes (November 2025)
 
+### Quran Self-Testing Page (November 30, 2025)
+- **Added**: New "اختبر نفسك في القرآن" (Quran Self-Test) page for students
+- **Features**:
+  - Select from 4 surahs (الفاتحة, الإخلاص, الفلق, الناس)
+  - Interactive testing with 5 random ayahs per test session
+  - Text input for user answers
+  - Show/hide answer functionality for learning
+  - Real-time score tracking (correct/wrong answers)
+  - Progress bar for test completion
+  - Beautiful Islamic-themed UI with emerald/teal gradient
+- **Location**: Navigation menu under "اختبر نفسك في القرآن" with cyan/blue gradient icon
+- **Access**: Students only (restricted to student role)
+- **Files Created**: `client/src/pages/QuranSelfTestPage.tsx`
+- **Files Modified**: `client/src/App.tsx`, `client/src/components/RoleBasedNav.tsx`
+
+## Earlier Changes (November 2025)
+
 ### Storage System & Login Redirect Fix (November 30, 2025)
 - **Issue 1**: Authentication system was using DatabaseStorage (Drizzle ORM) instead of MongoDBStorage
   - **Root Cause**: storage.ts was exporting DatabaseStorage instance, not mongoStorage
