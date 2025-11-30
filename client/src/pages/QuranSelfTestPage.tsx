@@ -15,10 +15,7 @@ import {
   EyeOff,
   SkipForward,
   Trophy,
-  Target,
-  Mic,
-  MicOff,
-  Volume2
+  Target
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -199,73 +196,10 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
   const [session, setSession] = useState<TestSession | null>(null);
   const [userInput, setUserInput] = useState('');
   const [testStarted, setTestStarted] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [recognitionSupported, setRecognitionSupported] = useState(true);
 
   const { data: ayahs = [] } = useQuery<Ayah[]>({
     queryKey: [`/api/quran/ayahs/${selectedSurah}`],
   });
-
-  // Initialize Speech Recognition
-  useEffect(() => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (!SpeechRecognition) {
-      setRecognitionSupported(false);
-      toast({ title: 'تنبيه', description: 'التعرف على الصوت غير مدعوم في متصفحك' });
-    }
-  }, [toast]);
-
-  const startListening = () => {
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'ar-SA'; // العربية (السعودية)
-      recognition.interimResults = true;
-      recognition.continuous = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        toast({ title: 'جاري الاستماع...', description: 'تحدث الآن' });
-      };
-
-      recognition.onresult = (event: any) => {
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript + ' ';
-          }
-        }
-        if (finalTranscript) {
-          setUserInput(prev => (prev + ' ' + finalTranscript).trim());
-        }
-      };
-
-      recognition.onerror = (event: any) => {
-        setIsListening(false);
-        const errorMessages: Record<string, string> = {
-          'no-speech': 'لم يتم تسجيل صوت - حاول مرة أخرى',
-          'audio-capture': 'لا يوجد ميكروفون - تحقق من الأذونات',
-          'network': 'خطأ في الاتصال - تأكد من الإنترنت',
-          'aborted': 'تم إيقاف التسجيل',
-        };
-        const message = errorMessages[event.error] || `خطأ: ${event.error}`;
-        toast({ title: 'خطأ', description: message });
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (error) {
-      console.error('Error starting recognition:', error);
-      toast({ title: 'خطأ', description: 'لا يمكن بدء التعرف على الصوت' });
-    }
-  };
 
   const startTest = () => {
     if (!ayahs || ayahs.length === 0) {
@@ -517,29 +451,13 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
                   data-testid="input-ayah-answer"
                 />
 
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    💡 <strong>نصيحة:</strong> يمكنك استخدام ميكروفون هاتفك أو الكمبيوتر للكتابة بالصوت
+                  </p>
+                </div>
+
                 <div className="space-y-3">
-                  {recognitionSupported && (
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={startListening}
-                        disabled={isListening}
-                        className={`flex-1 ${isListening ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-                        data-testid="button-voice-record"
-                      >
-                        {isListening ? (
-                          <>
-                            <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-2" />
-                            جاري التسجيل...
-                          </>
-                        ) : (
-                          <>
-                            <Mic className="w-4 h-4 ml-2" />
-                            سجل بالصوت
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  )}
                   <div className="flex gap-3">
                     <Button
                       onClick={handleCheck}
