@@ -98,11 +98,19 @@ const SURAH_LIST = [
 
 // Remove diacritical marks and normalize Arabic text
 const normalize = (text: string): string => {
-  const diacritics = /[\u064B-\u065F]/g; // Arabic diacritical marks
   return text
-    .replace(diacritics, '') // Remove diacritics
-    .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
-    .trim(); // Remove leading/trailing spaces
+    // Remove all Arabic diacritics (Fatha, Damma, Kasra, Sukun, Shadda, etc.)
+    .replace(/[\u064B-\u065F]/g, '') // فتحة، ضمة، كسرة، سكون، شدة، إلخ
+    // Remove Quranic symbols
+    .replace(/[\u0610-\u061A]/g, '')
+    .replace(/[\u061E-\u061F]/g, '')
+    // Normalize Alef variations to plain Alef
+    .replace(/أ/g, 'ا') // أ -> ا
+    .replace(/إ/g, 'ا') // إ -> ا
+    .replace(/آ/g, 'ا') // آ -> ا
+    // Normalize spaces
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 // Get first word from Ayah
@@ -421,11 +429,17 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
                               <p className="text-lg font-arabic text-red-700 leading-relaxed line-through opacity-70">
                                 {userInput}
                               </p>
+                              <p className="text-xs text-gray-500 mt-2 font-mono">
+                                (بدون تشكيل: {cleanUserInput})
+                              </p>
                             </div>
                             <div className="bg-white rounded p-3 border border-green-200">
                               <p className="text-sm text-gray-600 mb-2">الصواب:</p>
                               <p className="text-lg font-arabic text-green-700 leading-relaxed">
                                 {currentAyah.text}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-2 font-mono">
+                                (بدون تشكيل: {cleanCorrectText})
                               </p>
                             </div>
                           </div>

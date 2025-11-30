@@ -85,36 +85,34 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 ### Quran Self-Testing Page (November 30, 2025)
 - **Added**: New "اختبر نفسك في القرآن" (Quran Self-Test) page for students
 - **Features**:
-  - **Fixed Issues**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
-  - Created new API endpoint `/api/quran/ayahs/:surahNumber` for fetching ayahs
-  - **Smart Grading**: Ignores diacritical marks (تشكيل) AND extra spaces - compares only letters/words
-  - **Error Feedback**: Shows side-by-side comparison of student answer vs correct answer
-  - **Hint Feature**: "أول كلمة" (First Word) button to show first word of ayah as learning aid
+  - **Fixed**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
+  - **Smart Grading**: Ignores diacritical marks (تشكيل) and extra spaces - compares only letters/words
+    - `الحمد لله` = `الْحَمْدُ لِلَّهِ` ✅ Both marked correct
+    - Extra spaces automatically normalized
+  - **Error Feedback**: Shows side-by-side comparison with normalized text display
+  - **Hint Feature**: "أول كلمة" (First Word) button shows first word of ayah
+  - **Debugging View**: Shows normalized (non-diacritical) comparison for transparency
   - Interactive testing with 5 random ayahs per test session
-  - Text input for user answers
-  - Show/hide answer functionality for learning
   - Real-time score tracking (correct/wrong answers)
   - Progress bar for test completion
   - Beautiful Islamic-themed UI with emerald/teal gradient
-  - Includes surahs: الفاتحة, البقرة, آل عمران, يوسف, الكهف, يس, الرحمن, and more (all major surahs)
-- **Location**: Navigation menu under "اختبر نفسك في القرآن" with cyan/blue gradient icon
-- **Access**: Students only (restricted to student role)
-- **API Endpoints Created**: 
+  - Includes 50+ major surahs: الفاتحة, البقرة, آل عمران, يوسف, الكهف, يس, الرحمن, etc.
+- **API Endpoints**:
   - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
-- **Scoring Logic**:
-  - Removes diacritical marks (تشكيل) before comparison
-  - Normalizes spaces (removes extra spaces)
-  - Displays "الصواب" (correct answer) and "ما كتبت" (your answer) for incorrect responses
-  - Marks answer as correct when letters match (regardless of diacritics or spaces)
+- **Normalization Algorithm**:
+  - Removes all Arabic diacritical marks (فتحة، ضمة، كسرة، سكون، شدة، etc.)
+  - Removes Quranic symbols and special marks
+  - Normalizes Alef variations (أ/إ/آ → ا)
+  - Normalizes whitespace (multiple spaces → single space)
 - **Helper Functions**:
-  - `normalize()` - Removes diacritics and normalizes spaces for comparison
-  - `getFirstWord()` - Extracts first word of ayah for hint feature
+  - `normalize()` - Comprehensive text normalization for fair comparison
+  - `getFirstWord()` - Extracts first word from normalized text
 - **Files Created**: `client/src/pages/QuranSelfTestPage.tsx`
 - **Files Modified**: 
-  - `client/src/App.tsx` (added routing)
-  - `client/src/components/RoleBasedNav.tsx` (added menu item with Brain icon)
-  - `server/routes.ts` (added new API endpoint)
-- **Status**: ✅ Fully functional with 50+ surahs, smart grading, hint feature, and visual feedback
+  - `client/src/App.tsx` (routing)
+  - `client/src/components/RoleBasedNav.tsx` (menu)
+  - `server/routes.ts` (API endpoint)
+- **Status**: ✅ Fully functional - smart grading, hint system, 50+ surahs, visual debugging display
 
 ## Earlier Changes (November 2025)
 
