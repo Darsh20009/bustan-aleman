@@ -95,6 +95,12 @@ const SURAH_LIST = [
   { number: 114, name: 'الناس', ayahs: 6 },
 ];
 
+// Remove diacritical marks from Arabic text
+const removeDiacritics = (text: string): string => {
+  const diacritics = /[\u064B-\u065F]/g; // Arabic diacritical marks
+  return text.replace(diacritics, '');
+};
+
 export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
   const { toast } = useToast();
   const [selectedSurah, setSelectedSurah] = useState('1');
@@ -135,7 +141,10 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     }
 
     const currentAyah = session.ayahs[session.currentIndex];
-    const isCorrect = userInput.trim() === currentAyah.text.trim();
+    // Remove diacritics before comparing
+    const cleanUserInput = removeDiacritics(userInput.trim());
+    const cleanCorrectText = removeDiacritics(currentAyah.text.trim());
+    const isCorrect = cleanUserInput === cleanCorrectText;
 
     const newSession = {
       ...session,
@@ -373,28 +382,55 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
               </>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-300">
-                  {userInput === currentAyah.text.trim() ? (
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="w-5 h-5" />
-                      <span className="font-semibold">إجابة صحيحة!</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-red-600">
-                      <XCircle className="w-5 h-5" />
-                      <span className="font-semibold">الإجابة غير صحيحة</span>
-                    </div>
-                  )}
-                </div>
+                {(() => {
+                  const cleanUserInput = removeDiacritics(userInput.trim());
+                  const cleanCorrectText = removeDiacritics(currentAyah.text.trim());
+                  const isCorrect = cleanUserInput === cleanCorrectText;
 
-                <Button
-                  onClick={session.currentIndex + 1 < session.ayahs.length ? handleNext : handleFinish}
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-                  data-testid="button-next-ayah"
-                >
-                  {session.currentIndex + 1 < session.ayahs.length ? 'السؤال التالي' : 'انتهى الاختبار'}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                  return (
+                    <>
+                      <div className="p-4 rounded-lg border-2" style={{
+                        backgroundColor: isCorrect ? '#ecfdf5' : '#fef2f2',
+                        borderColor: isCorrect ? '#6ee7b7' : '#fca5a5'
+                      }}>
+                        {isCorrect ? (
+                          <div className="flex items-center gap-2 text-green-600">
+                            <CheckCircle className="w-5 h-5" />
+                            <span className="font-semibold">إجابة صحيحة!</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2 text-red-600 mb-2">
+                              <XCircle className="w-5 h-5" />
+                              <span className="font-semibold">الإجابة غير صحيحة - لاحظ الفروقات:</span>
+                            </div>
+                            <div className="bg-white rounded p-3 border border-red-200">
+                              <p className="text-sm text-gray-600 mb-2">ما كتبت:</p>
+                              <p className="text-lg font-arabic text-red-700 leading-relaxed line-through opacity-70">
+                                {userInput}
+                              </p>
+                            </div>
+                            <div className="bg-white rounded p-3 border border-green-200">
+                              <p className="text-sm text-gray-600 mb-2">الصواب:</p>
+                              <p className="text-lg font-arabic text-green-700 leading-relaxed">
+                                {currentAyah.text}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        onClick={session.currentIndex + 1 < session.ayahs.length ? handleNext : handleFinish}
+                        className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                        data-testid="button-next-ayah"
+                      >
+                        {session.currentIndex + 1 < session.ayahs.length ? 'السؤال التالي' : 'انتهى الاختبار'}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </>
+                  );
+                })()}
               </div>
             )}
 

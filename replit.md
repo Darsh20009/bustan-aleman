@@ -87,6 +87,8 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 - **Features**:
   - **Fixed Issues**: Expanded surah list from 4 to 50+ surahs (all major surahs available)
   - Created new API endpoint `/api/quran/ayahs/:surahNumber` for fetching ayahs
+  - **Smart Grading**: Ignores diacritical marks (تشكيل) - compares only letters/words
+  - **Error Feedback**: Shows side-by-side comparison of student answer vs correct answer
   - Interactive testing with 5 random ayahs per test session
   - Text input for user answers
   - Show/hide answer functionality for learning
@@ -98,12 +100,16 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 - **Access**: Students only (restricted to student role)
 - **API Endpoints Created**: 
   - `GET /api/quran/ayahs/:surahNumber` - Returns all ayahs for a specific surah
+- **Scoring Logic**:
+  - Removes diacritical marks before comparison
+  - Displays "الصواب" (correct answer) and "ما كتبت" (your answer) for incorrect responses
+  - Marks answer as correct when letters match (regardless of diacritics)
 - **Files Created**: `client/src/pages/QuranSelfTestPage.tsx`
 - **Files Modified**: 
   - `client/src/App.tsx` (added routing)
   - `client/src/components/RoleBasedNav.tsx` (added menu item with Brain icon)
   - `server/routes.ts` (added new API endpoint)
-- **Status**: ✅ Fully functional with 50+ surahs and working API
+- **Status**: ✅ Fully functional with 50+ surahs, smart grading, and visual feedback
 
 ## Earlier Changes (November 2025)
 
