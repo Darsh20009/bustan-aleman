@@ -1,0 +1,46 @@
+[
+  {
+    "id": "user_1764498937567",
+    "firstName": "يوسف",
+    "phoneNumber": "0532441566",
+    "passwordHash": "$2b$10$9ZesS8FSJbhVgPHw5ISoquDsZ65LVD0RQu2HZYSwadGakF0Ima0ZK",
+    "role": "student",
+    "email": null,
+    "isActive": true,
+    "registrationCompleted": true,
+    "emailVerified": false
+  },
+  {
+    "id": "user_1764498937708",
+    "firstName": "أحمد أبو مازن",
+    "phoneNumber": "0549947386",
+    "passwordHash": "$2b$10$ZjstLj14i3HK.kocAk1Xr.FW7TNAZw70OH6m4Bf013DMJ8YrYRKse",
+    "role": "supervisor",
+    "email": null,
+    "isActive": true,
+    "registrationCompleted": true,
+    "emailVerified": false
+  },
+  {
+    "id": "user_1764498937871",
+    "firstName": "أحمد",
+    "phoneNumber": "0532449303",
+    "passwordHash": "$2b$10$jBev3YcFinSGfABnY7xvre4599gC08TvgFlU.ixmdwzNxSOD4vHHq",
+    "role": "student",
+    "email": null,
+    "isActive": true,
+    "registrationCompleted": true,
+    "emailVerified": false
+  },
+  {
+    "id": "user_1764498938023",
+    "firstName": "محمود",
+    "phoneNumber": "0598765966",
+    "passwordHash": "$2b$10$fkWn19R6elK9nDx.JtAwn.jr7vZNGSfaCDtt1X/kd/hI.0YZQ5ciO",
+    "role": "student",
+    "email": null,
+    "isActive": true,
+    "registrationCompleted": true,
+    "emailVerified": false
+  }
+]

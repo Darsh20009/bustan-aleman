@@ -391,53 +391,87 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllUsers(): Promise<User[]> {
-    if (!this.isDbAvailable()) {
-      // Return empty array for JSON storage fallback
+    if (this.isDbAvailable()) {
+      return await db!.select().from(users).where(eq(users.isActive, true));
+    }
+
+    // JSON fallback - try to read from users.json
+    try {
+      const usersData = await jsonStorage.readJSON('users.json');
+      return Array.isArray(usersData) ? usersData.filter(u => u.isActive !== false) : [];
+    } catch {
       return [];
     }
-    return await db!.select().from(users).where(eq(users.isActive, true));
   }
 
   async updateUserProfile(id: string, data: Partial<User>): Promise<User> {
-    if (!this.isDbAvailable()) {
-      // Return a dummy user for JSON storage fallback
-      throw new Error("User profile updates not available in JSON mode");
+    if (this.isDbAvailable()) {
+      const [user] = await db!
+        .update(users)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+      return user;
     }
-    const [user] = await db!
-      .update(users)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+
+    // JSON fallback
+    const allUsers = await this.getAllUsers();
+    const userIndex = allUsers.findIndex(u => u.id === id);
+    if (userIndex === -1) throw new Error("User not found");
+    
+    const updated = { ...allUsers[userIndex], ...data, updatedAt: new Date() };
+    const updatedUsers = [...allUsers.slice(0, userIndex), updated, ...allUsers.slice(userIndex + 1)];
+    await jsonStorage.writeJSON('users.json', updatedUsers);
+    return updated;
   }
 
   async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
-    if (!this.isDbAvailable()) {
-      return undefined;
+    if (this.isDbAvailable()) {
+      const [user] = await db!
+        .select()
+        .from(users)
+        .where(eq(users.phoneNumber, phoneNumber));
+      return user;
     }
-    const [user] = await db!
-      .select()
-      .from(users)
-      .where(eq(users.phoneNumber, phoneNumber));
-    return user;
+
+    // JSON fallback
+    const allUsers = await this.getAllUsers();
+    return allUsers.find(u => u.phoneNumber === phoneNumber);
   }
 
   async createUserWithPhone(data: { firstName: string; phoneNumber: string; passwordHash: string; role: string }): Promise<User> {
-    if (!this.isDbAvailable()) {
-      throw new Error("User creation not available in JSON mode");
+    if (this.isDbAvailable()) {
+      const [user] = await db!
+        .insert(users)
+        .values({
+          firstName: data.firstName,
+          phoneNumber: data.phoneNumber,
+          passwordHash: data.passwordHash,
+          role: data.role,
+          isActive: true,
+          registrationCompleted: true,
+        })
+        .returning();
+      return user;
     }
-    const [user] = await db!
-      .insert(users)
-      .values({
-        firstName: data.firstName,
-        phoneNumber: data.phoneNumber,
-        passwordHash: data.passwordHash,
-        role: data.role,
-        isActive: true,
-        registrationCompleted: true,
-      })
-      .returning();
-    return user;
+
+    // JSON fallback for development/testing
+    const newUser: User = {
+      id: `user_${Date.now()}`,
+      firstName: data.firstName,
+      phoneNumber: data.phoneNumber,
+      passwordHash: data.passwordHash,
+      role: data.role as any,
+      email: null,
+      isActive: true,
+      registrationCompleted: true,
+      emailVerified: false,
+    };
+    
+    const allUsers = await this.getAllUsers();
+    const updatedUsers = [...allUsers, newUser];
+    await jsonStorage.writeJSON('users.json', updatedUsers);
+    return newUser;
   }
 
   // Course operations
@@ -2525,4 +2559,7 @@ export class DatabaseStorage implements IStorage {
 
 import { mongoStorage } from "./mongoStorage";
 
-export const storage = mongoStorage;
+// Create storage instance with JSON fallback
+const storageInstance = new DatabaseStorage();
+
+export const storage = storageInstance;
