@@ -307,6 +307,13 @@ const roleNavigation = {
       icon: Brain,
       gradient: 'from-cyan-500 to-blue-500'
     },
+    { 
+      title: 'خطط الاشتراك', 
+      path: '/subscriptions', 
+      description: 'اختر خطتك واشترك في المنصة', 
+      icon: ShoppingCart,
+      gradient: 'from-orange-500 to-red-500'
+    },
   ],
   supervisor: [
     { 
