@@ -1120,6 +1120,53 @@ export class DatabaseStorage implements IStorage {
     return isValidPassword ? student : undefined;
   }
 
+  async deleteAllStudents(): Promise<number> {
+    if (!this.isDbAvailable()) {
+      return 0;
+    }
+    const result = await db!.delete(students);
+    return 0; // Return count would require additional query
+  }
+
+  async createEnrollment(enrollment: any): Promise<any> {
+    if (!this.isDbAvailable()) {
+      return { id: `enrollment_${Date.now()}`, ...enrollment };
+    }
+    const [newEnrollment] = await db!.insert(courseEnrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async createPayment(payment: any): Promise<any> {
+    if (!this.isDbAvailable()) {
+      return { id: `payment_${Date.now()}`, ...payment };
+    }
+    const [newPayment] = await db!.insert(studentPayments).values(payment).returning();
+    return newPayment;
+  }
+
+  async getEnrollmentsByUser(userId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) {
+      return [];
+    }
+    return await db!
+      .select()
+      .from(courseEnrollments)
+      .where(eq(courseEnrollments.userId, userId))
+      .orderBy(desc(courseEnrollments.createdAt));
+  }
+
+  async updateEnrollmentStatus(enrollmentId: string, status: string): Promise<any> {
+    if (!this.isDbAvailable()) {
+      return { id: enrollmentId, status };
+    }
+    const [updatedEnrollment] = await db!
+      .update(courseEnrollments)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(courseEnrollments.id, enrollmentId))
+      .returning();
+    return updatedEnrollment;
+  }
+
   // Student session operations
   async createStudentSession(session: InsertStudentSession): Promise<StudentSession> {
     if (!this.isDbAvailable()) {

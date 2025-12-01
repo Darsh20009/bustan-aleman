@@ -6,6 +6,7 @@ import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type Authenti
 import { quranService } from "./quranService";
 import bcrypt from "bcrypt";
 import { telegramBot } from "./telegramBot";
+import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
 import {
   insertCourseSchema,
   insertCourseModuleSchema,
@@ -2738,6 +2739,622 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('❌ Error retrieving ZegoCloud config:', error);
       res.status(500).json({ message: 'فشل في الحصول على بيانات الجلسة' });
+    }
+  });
+
+  // =====================================================
+  // PayPal Payment Integration Routes
+  // =====================================================
+  
+  // PayPal SDK setup - returns client token for frontend initialization
+  app.get("/paypal/setup", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      await loadPaypalDefault(req, res);
+    } catch (error) {
+      console.error("PayPal setup error:", error);
+      res.status(500).json({ error: "فشل في إعداد PayPal" });
+    }
+  });
+
+  // Create PayPal order - requires authentication and validates plan
+  app.post("/paypal/order", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { planId, amount, currency, intent } = req.body;
+      
+      // Validate required fields
+      if (!amount || !currency || !intent) {
+        return res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
+      }
+      
+      // If planId provided, validate the plan exists and amount matches
+      if (planId) {
+        // Check if getSubscriptionPlan method is available
+        if (!storage.getSubscriptionPlan) {
+          return res.status(501).json({ error: "خدمة الاشتراكات غير متوفرة حالياً" });
+        }
+        const plan = await storage.getSubscriptionPlan(planId);
+        if (!plan) {
+          return res.status(400).json({ error: "خطة الاشتراك غير موجودة" });
+        }
+        // Validate amount matches plan price
+        if (parseFloat(amount) !== parseFloat(plan.price)) {
+          return res.status(400).json({ error: "المبلغ لا يتطابق مع سعر الخطة" });
+        }
+      }
+      
+      await createPaypalOrder(req, res);
+    } catch (error) {
+      console.error("PayPal order creation error:", error);
+      res.status(500).json({ error: "فشل في إنشاء الطلب" });
+    }
+  });
+
+  // Capture PayPal order after approval - requires authentication
+  app.post("/paypal/order/:orderID/capture", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      await capturePaypalOrder(req, res);
+    } catch (error) {
+      console.error("PayPal capture error:", error);
+      res.status(500).json({ error: "فشل في تأكيد الدفع" });
+    }
+  });
+
+  // =====================================================
+  // Bank Transfer Payment Routes
+  // =====================================================
+  
+  // Get bank transfer details for payment
+  app.get("/api/payment/bank-transfer", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      // Return bank account details for manual transfer
+      const bankDetails = {
+        bankNameAr: "البنك الأهلي السعودي",
+        bankNameEn: "Saudi National Bank (SNB)",
+        accountName: "بستان الإيمان للتعليم",
+        accountNumber: "SA1234567890123456789012",
+        iban: "SA1234567890123456789012",
+        swiftCode: "NCBKSAJE",
+        currency: "SAR",
+        instructions: {
+          ar: "يرجى تحويل المبلغ إلى الحساب أعلاه وإرفاق إيصال التحويل",
+          en: "Please transfer the amount to the above account and attach the transfer receipt"
+        }
+      };
+      res.json(bankDetails);
+    } catch (error) {
+      console.error("Error fetching bank details:", error);
+      res.status(500).json({ message: "فشل في جلب بيانات الحساب البنكي" });
+    }
+  });
+
+  // Submit bank transfer confirmation
+  app.post("/api/payment/bank-transfer/confirm", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { 
+        subscriptionPlanId, 
+        amount, 
+        transferDate, 
+        referenceNumber,
+        receiptUrl 
+      } = req.body;
+
+      // Validate required fields
+      if (!subscriptionPlanId || !amount || !transferDate) {
+        return res.status(400).json({ message: "البيانات المطلوبة غير مكتملة" });
+      }
+
+      // Validate amount is a valid positive number
+      const numericAmount = parseFloat(amount);
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        return res.status(400).json({ message: "المبلغ غير صالح" });
+      }
+
+      // Validate transfer date format (YYYY-MM-DD or similar)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(transferDate) || isNaN(Date.parse(transferDate))) {
+        return res.status(400).json({ message: "تاريخ التحويل غير صالح" });
+      }
+
+      // Check if required methods are available
+      if (!storage.getSubscriptionPlan) {
+        return res.status(501).json({ message: "خدمة الاشتراكات غير متوفرة حالياً" });
+      }
+
+      // Validate subscription plan exists
+      const plan = await storage.getSubscriptionPlan(subscriptionPlanId);
+      if (!plan) {
+        return res.status(400).json({ message: "خطة الاشتراك غير موجودة" });
+      }
+
+      // Check if createPaymentTransaction is available
+      if (!storage.createPaymentTransaction) {
+        return res.status(501).json({ message: "خدمة الدفع غير متوفرة حالياً" });
+      }
+
+      // Create a pending payment transaction
+      const transaction = await storage.createPaymentTransaction({
+        userId,
+        subscriptionId: null,
+        amount: amount.toString(),
+        currency: "SAR",
+        paymentGateway: "bank_transfer",
+        gatewayTransactionId: referenceNumber || null,
+        status: "pending",
+        paymentMethod: "bank_transfer",
+        description: `Bank transfer for subscription plan ${subscriptionPlanId}`,
+        metadata: JSON.stringify({ 
+          subscriptionPlanId, 
+          transferDate, 
+          referenceNumber,
+          receiptUrl 
+        }),
+      });
+
+      // Notify admins about pending payment verification
+      await storage.createNotification({
+        userId: "admin", // Admin notification
+        titleAr: "تحويل بنكي جديد بانتظار التأكيد",
+        messageAr: `تحويل بنكي جديد بمبلغ ${amount} ريال من المستخدم ${userId}`,
+        type: "payment",
+        isRead: false,
+      });
+
+      res.json({
+        success: true,
+        message: "تم استلام طلب التحويل البنكي. سيتم مراجعته خلال 24 ساعة.",
+        transactionId: transaction.id
+      });
+    } catch (error) {
+      console.error("Error confirming bank transfer:", error);
+      res.status(500).json({ message: "فشل في تأكيد التحويل البنكي" });
+    }
+  });
+
+  // Admin: Approve bank transfer
+  app.post("/api/admin/payment/bank-transfer/:transactionId/approve", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      // Check if all required methods are available
+      if (!storage.updatePaymentTransaction || !storage.getSubscriptionPlan || !storage.createSubscription) {
+        return res.status(501).json({ message: "خدمة الدفع غير متوفرة حالياً" });
+      }
+
+      const { transactionId } = req.params;
+      
+      // Update transaction status
+      const transaction = await storage.updatePaymentTransaction(transactionId, {
+        status: "completed",
+        completedAt: new Date(),
+      });
+
+      if (!transaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+
+      // Parse metadata to get subscription details
+      const metadata = JSON.parse(transaction.metadata || '{}');
+      
+      if (metadata.subscriptionPlanId) {
+        // Get the subscription plan
+        const plan = await storage.getSubscriptionPlan(metadata.subscriptionPlanId);
+        
+        if (plan) {
+          // Create or activate subscription
+          const startDate = new Date();
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + plan.durationDays);
+
+          await storage.createSubscription({
+            userId: transaction.userId,
+            planId: plan.id,
+            status: "active",
+            startDate,
+            endDate,
+            sessionsRemaining: plan.sessionsCount,
+            autoRenew: false,
+            paymentGateway: "bank_transfer",
+          });
+        }
+      }
+
+      // Notify user about approved payment
+      await storage.createNotification({
+        userId: transaction.userId,
+        titleAr: "تم تأكيد الدفع",
+        messageAr: "تم تأكيد التحويل البنكي الخاص بك وتفعيل اشتراكك",
+        type: "payment",
+        isRead: false,
+      });
+
+      res.json({ success: true, message: "تم تأكيد التحويل البنكي" });
+    } catch (error) {
+      console.error("Error approving bank transfer:", error);
+      res.status(500).json({ message: "فشل في تأكيد التحويل" });
+    }
+  });
+
+  // Admin: Reject bank transfer
+  app.post("/api/admin/payment/bank-transfer/:transactionId/reject", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      // Check if required methods are available
+      if (!storage.updatePaymentTransaction) {
+        return res.status(501).json({ message: "خدمة الدفع غير متوفرة حالياً" });
+      }
+
+      const { transactionId } = req.params;
+      const { reason } = req.body;
+      
+      // Update transaction status
+      const transaction = await storage.updatePaymentTransaction(transactionId, {
+        status: "failed",
+        errorMessage: reason || "تم رفض التحويل البنكي",
+      });
+
+      if (!transaction) {
+        return res.status(404).json({ message: "المعاملة غير موجودة" });
+      }
+
+      // Notify user about rejected payment
+      await storage.createNotification({
+        userId: transaction.userId,
+        titleAr: "تم رفض التحويل البنكي",
+        messageAr: reason || "لم يتم قبول التحويل البنكي. يرجى التواصل مع الدعم.",
+        type: "payment",
+        isRead: false,
+      });
+
+      res.json({ success: true, message: "تم رفض التحويل البنكي" });
+    } catch (error) {
+      console.error("Error rejecting bank transfer:", error);
+      res.status(500).json({ message: "فشل في رفض التحويل" });
+    }
+  });
+
+  // =====================================================
+  // Notification and Lesson Reminder Routes
+  // =====================================================
+
+  // Get user notifications
+  app.get("/api/notifications", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const notifications = await storage.getNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "فشل في جلب الإشعارات" });
+    }
+  });
+
+  // Mark notification as read
+  app.post("/api/notifications/:id/read", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { id } = req.params;
+      await storage.markNotificationAsRead(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "فشل في تحديث الإشعار" });
+    }
+  });
+
+  // Mark all notifications as read
+  app.post("/api/notifications/read-all", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "فشل في تحديث الإشعارات" });
+    }
+  });
+
+  // Delete notification
+  app.delete("/api/notifications/:id", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { id } = req.params;
+      await storage.deleteNotification(id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "فشل في حذف الإشعار" });
+    }
+  });
+
+  // Create lesson reminder (admin/teacher only)
+  app.post("/api/lesson-reminders", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'teacher' && role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { studentId, lessonDate, lessonTime, message } = req.body;
+
+      // Create reminder notification for student
+      await storage.createNotification({
+        userId: studentId,
+        titleAr: "تذكير بموعد الحصة",
+        messageAr: message || `لديك حصة قادمة في ${lessonDate} الساعة ${lessonTime}`,
+        type: "lesson_reminder",
+        isRead: false,
+      });
+
+      res.json({ success: true, message: "تم إرسال التذكير" });
+    } catch (error) {
+      console.error("Error creating lesson reminder:", error);
+      res.status(500).json({ message: "فشل في إنشاء التذكير" });
+    }
+  });
+
+  // Bulk send lesson reminders
+  app.post("/api/lesson-reminders/bulk", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { studentIds, lessonDate, lessonTime, message } = req.body;
+
+      for (const studentId of studentIds) {
+        await storage.createNotification({
+          userId: studentId,
+          titleAr: "تذكير بموعد الحصة",
+          messageAr: message || `لديك حصة قادمة في ${lessonDate} الساعة ${lessonTime}`,
+          type: "lesson_reminder",
+          isRead: false,
+        });
+      }
+
+      res.json({ success: true, message: `تم إرسال ${studentIds.length} تذكير` });
+    } catch (error) {
+      console.error("Error sending bulk reminders:", error);
+      res.status(500).json({ message: "فشل في إرسال التذكيرات" });
+    }
+  });
+
+  // =====================================================
+  // Enhanced Admin Dashboard Routes
+  // =====================================================
+
+  // Get comprehensive dashboard statistics
+  app.get("/api/admin/dashboard/stats", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const stats = await storage.getDashboardStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+      res.status(500).json({ message: "فشل في جلب الإحصائيات" });
+    }
+  });
+
+  // Get overdue payments report
+  app.get("/api/admin/reports/overdue-payments", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const overduePayments = await storage.getOverduePayments();
+      res.json(overduePayments);
+    } catch (error) {
+      console.error("Error fetching overdue payments:", error);
+      res.status(500).json({ message: "فشل في جلب المتأخرين عن الدفع" });
+    }
+  });
+
+  // Get revenue report
+  app.get("/api/admin/reports/revenue", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { period, startDate, endDate } = req.query;
+      const report = await storage.getRevenueReport({
+        period: (period as string) || 'monthly',
+        startDate: startDate as string,
+        endDate: endDate as string
+      });
+      res.json(report);
+    } catch (error) {
+      console.error("Error fetching revenue report:", error);
+      res.status(500).json({ message: "فشل في جلب تقرير الإيرادات" });
+    }
+  });
+
+  // Get attendance report
+  app.get("/api/admin/reports/attendance", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { date, startDate, endDate } = req.query;
+      const report = await storage.getAttendanceReport({
+        date: date as string,
+        startDate: startDate as string,
+        endDate: endDate as string
+      });
+      res.json(report);
+    } catch (error) {
+      console.error("Error fetching attendance report:", error);
+      res.status(500).json({ message: "فشل في جلب تقرير الحضور" });
+    }
+  });
+
+  // Get student progress report
+  app.get("/api/admin/reports/student-progress", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { studentId, teacherId } = req.query;
+      const report = await storage.getStudentProgressReport({
+        studentId: studentId as string,
+        teacherId: teacherId as string
+      });
+      res.json(report);
+    } catch (error) {
+      console.error("Error fetching student progress report:", error);
+      res.status(500).json({ message: "فشل في جلب تقرير تقدم الطلاب" });
+    }
+  });
+
+  // Get pending bank transfers for admin review
+  app.get("/api/admin/payment/pending-transfers", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const transactions = await storage.getAllPaymentTransactions({
+        status: 'pending',
+        gateway: 'bank_transfer'
+      });
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching pending transfers:", error);
+      res.status(500).json({ message: "فشل في جلب التحويلات المعلقة" });
+    }
+  });
+
+  // Get all teachers list
+  app.get("/api/admin/teachers", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const teachers = await storage.getTeachers();
+      res.json(teachers);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      res.status(500).json({ message: "فشل في جلب قائمة المعلمين" });
+    }
+  });
+
+  // Update user role (admin only)
+  app.patch("/api/admin/users/:userId/role", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { userId } = req.params;
+      const { role: newRole } = req.body;
+
+      const validRoles = ['student', 'teacher', 'supervisor', 'admin', 'owner'];
+      if (!validRoles.includes(newRole)) {
+        return res.status(400).json({ message: "دور غير صالح" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, newRole);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      res.status(500).json({ message: "فشل في تحديث الدور" });
+    }
+  });
+
+  // Activate/Deactivate user (admin only)
+  app.patch("/api/admin/users/:userId/status", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { userId } = req.params;
+      const { isActive } = req.body;
+
+      const updatedUser = await storage.updateUserStatus(userId, isActive);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ message: "فشل في تحديث حالة المستخدم" });
+    }
+  });
+
+  // Assign student to teacher
+  app.post("/api/admin/assign-student", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { teacherId, studentId } = req.body;
+      const result = await storage.assignStudentToTeacher(teacherId, studentId);
+      res.json(result);
+    } catch (error) {
+      console.error("Error assigning student to teacher:", error);
+      res.status(500).json({ message: "فشل في تعيين الطالب للمعلم" });
+    }
+  });
+
+  // Get contact messages (admin)
+  app.get("/api/admin/messages", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { isRead, page, limit } = req.query;
+      const messages = await storage.getContactMessages({
+        isRead: isRead === 'true' ? true : isRead === 'false' ? false : undefined,
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined
+      });
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "فشل في جلب الرسائل" });
+    }
+  });
+
+  // Mark message as read (admin)
+  app.patch("/api/admin/messages/:id/read", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin' && role !== 'owner') {
+        return res.status(403).json({ message: "ليس لديك الصلاحية" });
+      }
+
+      const { id } = req.params;
+      const message = await storage.markMessageAsRead(id);
+      res.json(message);
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ message: "فشل في تحديث الرسالة" });
     }
   });
 
