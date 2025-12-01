@@ -3358,6 +3358,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====================================================
+  // Subscription Plans API Routes
+  // =====================================================
+
+  // Get all subscription plans
+  app.get("/api/subscription/plans", async (req, res) => {
+    try {
+      // Return sample subscription plans
+      const plans = [
+        {
+          id: "plan_1",
+          nameAr: "خطة أساسية",
+          nameEn: "Basic Plan",
+          descriptionAr: "خطة مثالية للمبتدئين",
+          descriptionEn: "Perfect for beginners",
+          duration: "monthly",
+          durationDays: 30,
+          price: "99.99",
+          currency: "SAR",
+          sessionsCount: 4,
+          features: JSON.stringify(["4 حصص شهرية", "المصحف التفاعلي", "دعم عام"]),
+          isActive: true,
+          isFeatured: false,
+          sortOrder: 1
+        },
+        {
+          id: "plan_2",
+          nameAr: "خطة احترافية",
+          nameEn: "Pro Plan",
+          descriptionAr: "الخطة الأكثر شيوعاً",
+          descriptionEn: "Most popular plan",
+          duration: "monthly",
+          durationDays: 30,
+          price: "199.99",
+          currency: "SAR",
+          sessionsCount: 8,
+          features: JSON.stringify(["8 حصص شهرية", "المصحف التفاعلي", "دعم VIP", "شهادات", "تتبع التقدم"]),
+          isActive: true,
+          isFeatured: true,
+          sortOrder: 2
+        },
+        {
+          id: "plan_3",
+          nameAr: "خطة علمية",
+          nameEn: "Premium Plan",
+          descriptionAr: "الخطة الشاملة الكاملة",
+          descriptionEn: "Complete premium experience",
+          duration: "yearly",
+          durationDays: 365,
+          price: "1999.99",
+          currency: "SAR",
+          sessionsCount: 100,
+          features: JSON.stringify(["حصص غير محدودة", "المصحف التفاعلي", "دعم VIP 24/7", "شهادات معتمدة", "تتبع التقدم", "محتوى حصري"]),
+          isActive: true,
+          isFeatured: false,
+          sortOrder: 3
+        }
+      ];
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "فشل في جلب الخطط" });
+    }
+  });
+
+  // Get user's current subscription
+  app.get("/api/subscription/my-subscription", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      
+      // Return a sample subscription (or null if no subscription)
+      // In real app, this would query the database
+      const userSubscription = {
+        id: "sub_1",
+        userId: userId,
+        planId: "plan_1",
+        status: "active",
+        startDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+        endDate: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(), // 20 days from now
+        sessionsRemaining: 2,
+        autoRenew: true,
+        paymentGateway: "bank_transfer"
+      };
+
+      res.json(userSubscription);
+    } catch (error) {
+      console.error("Error fetching user subscription:", error);
+      res.status(500).json({ message: "فشل في جلب الاشتراك" });
+    }
+  });
+
+  // Subscribe to a plan (create subscription with payment)
+  app.post("/api/subscription/subscribe", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { planId, paymentMethod } = req.body;
+
+      if (!planId || !paymentMethod) {
+        return res.status(400).json({ message: "بيانات غير مكتملة" });
+      }
+
+      if (!["paypal", "bank_transfer"].includes(paymentMethod)) {
+        return res.status(400).json({ message: "طريقة دفع غير صحيحة" });
+      }
+
+      // Return subscription details
+      res.json({
+        success: true,
+        message: "تم إنشاء طلب الاشتراك بنجاح",
+        subscription: {
+          id: `sub_${Date.now()}`,
+          userId,
+          planId,
+          status: "pending",
+          paymentMethod,
+          createdAt: new Date().toISOString()
+        }
+      });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "فشل في إنشاء الاشتراك" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
