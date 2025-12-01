@@ -393,6 +393,13 @@ function AppContent() {
           return <AuthPage />;
         }
       
+      case 'subscriptions':
+        if (isAuthenticated && user?.role === 'student') {
+          return <SubscriptionsPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
       default:
         return null;
     }
