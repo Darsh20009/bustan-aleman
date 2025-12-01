@@ -32,6 +32,10 @@ import {
   messages,
   notifications,
   shoppingCart,
+  subscriptionPlans,
+  subscriptions,
+  paymentTransactions,
+  paymentGatewaySettings,
   type User,
   type UpsertUser,
   type Course,
@@ -98,6 +102,14 @@ import {
   type InsertNotification,
   type ShoppingCartItem,
   type InsertShoppingCartItem,
+  type SubscriptionPlan,
+  type InsertSubscriptionPlan,
+  type Subscription,
+  type InsertSubscription,
+  type PaymentTransaction,
+  type InsertPaymentTransaction,
+  type PaymentGatewaySettings,
+  type InsertPaymentGatewaySettings,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -334,6 +346,58 @@ export interface IStorage {
   markNotificationAsRead(id: string, userId: string): Promise<void>;
   markAllNotificationsAsRead(userId: string): Promise<void>;
   deleteNotification(id: string, userId: string): Promise<void>;
+  
+  // Subscription plan operations
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]>;
+  getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined>;
+  createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
+  updateSubscriptionPlan(id: string, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan>;
+  deleteSubscriptionPlan(id: string): Promise<void>;
+  
+  // Subscription operations
+  getSubscription(id: string): Promise<Subscription | undefined>;
+  getUserActiveSubscription(userId: string): Promise<Subscription | undefined>;
+  getUserSubscriptions(userId: string): Promise<Subscription[]>;
+  getAllSubscriptions(filters: { status?: string; page?: number; limit?: number }): Promise<Subscription[]>;
+  createSubscription(subscription: InsertSubscription): Promise<Subscription>;
+  updateSubscription(id: string, subscription: Partial<InsertSubscription>): Promise<Subscription>;
+  cancelSubscription(id: string, reason?: string): Promise<Subscription>;
+  
+  // Payment transaction operations
+  getUserPaymentTransactions(userId: string): Promise<PaymentTransaction[]>;
+  getAllPaymentTransactions(filters: { status?: string; gateway?: string; page?: number; limit?: number }): Promise<PaymentTransaction[]>;
+  createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction>;
+  updatePaymentTransaction(id: string, transaction: Partial<InsertPaymentTransaction>): Promise<PaymentTransaction>;
+  
+  // Payment gateway settings operations
+  getEnabledPaymentGateways(): Promise<PaymentGatewaySettings[]>;
+  getAllPaymentGatewaySettings(): Promise<PaymentGatewaySettings[]>;
+  updatePaymentGatewaySettings(gateway: string, settings: Partial<InsertPaymentGatewaySettings>): Promise<PaymentGatewaySettings>;
+  
+  // Admin dashboard operations
+  getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalTeachers: number;
+    totalGroups: number;
+    activeSubscriptions: number;
+    monthlyRevenue: number;
+    pendingPayments: number;
+  }>;
+  getStudentsCount(): Promise<number>;
+  getTeachersCount(): Promise<number>;
+  getGroupsCount(): Promise<number>;
+  getSubscriptionStats(): Promise<{ active: number; expired: number; pending: number; cancelled: number }>;
+  getAttendanceReport(filters: { date?: string; startDate?: string; endDate?: string }): Promise<any>;
+  getRevenueReport(filters: { period: string; startDate?: string; endDate?: string }): Promise<any>;
+  getOverduePayments(): Promise<any[]>;
+  getStudentProgressReport(filters: { studentId?: string; teacherId?: string }): Promise<any>;
+  getTeachers(): Promise<User[]>;
+  updateUserRole(id: string, role: string): Promise<User>;
+  updateUserStatus(id: string, isActive: boolean): Promise<User>;
+  getContactMessages(filters: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]>;
+  markMessageAsRead(id: string): Promise<ContactMessage>;
+  assignStudentToTeacher(teacherId: string, studentId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2560,6 +2624,299 @@ export class DatabaseStorage implements IStorage {
     await db!
       .delete(notifications)
       .where(and(eq(notifications.id, id), eq(notifications.userId, userId)));
+  }
+
+  // Subscription plan operations
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    if (!this.isDbAvailable()) return [];
+    const plans = await db!.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
+    return plans;
+  }
+
+  async getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    if (!this.isDbAvailable()) return [];
+    const plans = await db!.select().from(subscriptionPlans)
+      .where(eq(subscriptionPlans.isActive, true))
+      .orderBy(subscriptionPlans.sortOrder);
+    return plans;
+  }
+
+  async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [plan] = await db!.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+    return plan;
+  }
+
+  async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newPlan] = await db!.insert(subscriptionPlans).values(plan).returning();
+    return newPlan;
+  }
+
+  async updateSubscriptionPlan(id: string, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(subscriptionPlans).set({ ...plan, updatedAt: new Date() })
+      .where(eq(subscriptionPlans.id, id)).returning();
+    return updated;
+  }
+
+  async deleteSubscriptionPlan(id: string): Promise<void> {
+    if (!this.isDbAvailable()) return;
+    await db!.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  }
+
+  // Subscription operations
+  async getSubscription(id: string): Promise<Subscription | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [subscription] = await db!.select().from(subscriptions).where(eq(subscriptions.id, id));
+    return subscription;
+  }
+
+  async getUserActiveSubscription(userId: string): Promise<Subscription | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [subscription] = await db!.select().from(subscriptions)
+      .where(and(eq(subscriptions.userId, userId), eq(subscriptions.status, 'active')));
+    return subscription;
+  }
+
+  async getUserSubscriptions(userId: string): Promise<Subscription[]> {
+    if (!this.isDbAvailable()) return [];
+    const subs = await db!.select().from(subscriptions)
+      .where(eq(subscriptions.userId, userId))
+      .orderBy(desc(subscriptions.createdAt));
+    return subs;
+  }
+
+  async getAllSubscriptions(filters: { status?: string; page?: number; limit?: number }): Promise<Subscription[]> {
+    if (!this.isDbAvailable()) return [];
+    let query = db!.select().from(subscriptions);
+    if (filters.status) {
+      query = query.where(eq(subscriptions.status, filters.status)) as any;
+    }
+    const subs = await query.orderBy(desc(subscriptions.createdAt))
+      .limit(filters.limit || 20)
+      .offset(((filters.page || 1) - 1) * (filters.limit || 20));
+    return subs;
+  }
+
+  async createSubscription(subscription: InsertSubscription): Promise<Subscription> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newSub] = await db!.insert(subscriptions).values(subscription).returning();
+    return newSub;
+  }
+
+  async updateSubscription(id: string, subscription: Partial<InsertSubscription>): Promise<Subscription> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(subscriptions).set({ ...subscription, updatedAt: new Date() })
+      .where(eq(subscriptions.id, id)).returning();
+    return updated;
+  }
+
+  async cancelSubscription(id: string, reason?: string): Promise<Subscription> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(subscriptions).set({
+      status: 'cancelled',
+      cancellationReason: reason || null,
+      cancelledAt: new Date(),
+      updatedAt: new Date(),
+    }).where(eq(subscriptions.id, id)).returning();
+    return updated;
+  }
+
+  // Payment transaction operations
+  async getUserPaymentTransactions(userId: string): Promise<PaymentTransaction[]> {
+    if (!this.isDbAvailable()) return [];
+    const transactions = await db!.select().from(paymentTransactions)
+      .where(eq(paymentTransactions.userId, userId))
+      .orderBy(desc(paymentTransactions.createdAt));
+    return transactions;
+  }
+
+  async getAllPaymentTransactions(filters: { status?: string; gateway?: string; page?: number; limit?: number }): Promise<PaymentTransaction[]> {
+    if (!this.isDbAvailable()) return [];
+    let query = db!.select().from(paymentTransactions);
+    const conditions = [];
+    if (filters.status) conditions.push(eq(paymentTransactions.status, filters.status));
+    if (filters.gateway) conditions.push(eq(paymentTransactions.paymentGateway, filters.gateway));
+    if (conditions.length > 0) query = query.where(and(...conditions)) as any;
+    const transactions = await query.orderBy(desc(paymentTransactions.createdAt))
+      .limit(filters.limit || 20)
+      .offset(((filters.page || 1) - 1) * (filters.limit || 20));
+    return transactions;
+  }
+
+  async createPaymentTransaction(transaction: InsertPaymentTransaction): Promise<PaymentTransaction> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newTransaction] = await db!.insert(paymentTransactions).values(transaction).returning();
+    return newTransaction;
+  }
+
+  async updatePaymentTransaction(id: string, transaction: Partial<InsertPaymentTransaction>): Promise<PaymentTransaction> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(paymentTransactions).set({ ...transaction, updatedAt: new Date() })
+      .where(eq(paymentTransactions.id, id)).returning();
+    return updated;
+  }
+
+  // Payment gateway settings operations
+  async getEnabledPaymentGateways(): Promise<PaymentGatewaySettings[]> {
+    if (!this.isDbAvailable()) return [];
+    const gateways = await db!.select().from(paymentGatewaySettings)
+      .where(eq(paymentGatewaySettings.isEnabled, true))
+      .orderBy(paymentGatewaySettings.sortOrder);
+    return gateways;
+  }
+
+  async getAllPaymentGatewaySettings(): Promise<PaymentGatewaySettings[]> {
+    if (!this.isDbAvailable()) return [];
+    const gateways = await db!.select().from(paymentGatewaySettings).orderBy(paymentGatewaySettings.sortOrder);
+    return gateways;
+  }
+
+  async updatePaymentGatewaySettings(gateway: string, settings: Partial<InsertPaymentGatewaySettings>): Promise<PaymentGatewaySettings> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(paymentGatewaySettings).set({ ...settings, updatedAt: new Date() })
+      .where(eq(paymentGatewaySettings.gateway, gateway)).returning();
+    return updated;
+  }
+
+  // Admin dashboard operations
+  async getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalTeachers: number;
+    totalGroups: number;
+    activeSubscriptions: number;
+    monthlyRevenue: number;
+    pendingPayments: number;
+  }> {
+    const totalStudents = await this.getStudentsCount();
+    const totalTeachers = await this.getTeachersCount();
+    const totalGroups = await this.getGroupsCount();
+    const subscriptionStats = await this.getSubscriptionStats();
+    return {
+      totalStudents,
+      totalTeachers,
+      totalGroups,
+      activeSubscriptions: subscriptionStats.active,
+      monthlyRevenue: 0,
+      pendingPayments: subscriptionStats.pending,
+    };
+  }
+
+  async getStudentsCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    const result = await db!.select({ count: sql<number>`count(*)` }).from(students);
+    return Number(result[0]?.count || 0);
+  }
+
+  async getTeachersCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    const result = await db!.select({ count: sql<number>`count(*)` }).from(users)
+      .where(eq(users.role, 'teacher'));
+    return Number(result[0]?.count || 0);
+  }
+
+  async getGroupsCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    const result = await db!.select({ count: sql<number>`count(*)` }).from(courses);
+    return Number(result[0]?.count || 0);
+  }
+
+  async getSubscriptionStats(): Promise<{ active: number; expired: number; pending: number; cancelled: number }> {
+    if (!this.isDbAvailable()) return { active: 0, expired: 0, pending: 0, cancelled: 0 };
+    const allSubs = await db!.select().from(subscriptions);
+    return {
+      active: allSubs.filter(s => s.status === 'active').length,
+      expired: allSubs.filter(s => s.status === 'expired').length,
+      pending: allSubs.filter(s => s.status === 'pending').length,
+      cancelled: allSubs.filter(s => s.status === 'cancelled').length,
+    };
+  }
+
+  async getAttendanceReport(filters: { date?: string; startDate?: string; endDate?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { sessions: [], summary: { total: 0, attended: 0, absent: 0 } };
+    const sessions = await db!.select().from(studentSessions);
+    return {
+      sessions,
+      summary: {
+        total: sessions.length,
+        attended: sessions.filter(s => s.attended).length,
+        absent: sessions.filter(s => !s.attended).length,
+      },
+    };
+  }
+
+  async getRevenueReport(filters: { period: string; startDate?: string; endDate?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { total: 0, transactions: [] };
+    const transactions = await db!.select().from(paymentTransactions)
+      .where(eq(paymentTransactions.status, 'completed'));
+    const total = transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    return { total, transactions };
+  }
+
+  async getOverduePayments(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const overdue = await db!.select().from(subscriptions)
+      .where(eq(subscriptions.status, 'payment_overdue'));
+    return overdue;
+  }
+
+  async getStudentProgressReport(filters: { studentId?: string; teacherId?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { students: [], summary: {} };
+    let studentsData = await db!.select().from(students);
+    if (filters.studentId) {
+      studentsData = studentsData.filter(s => s.id === filters.studentId);
+    }
+    if (filters.teacherId) {
+      studentsData = studentsData.filter(s => s.sheikhId === filters.teacherId);
+    }
+    return { students: studentsData, summary: { totalStudents: studentsData.length } };
+  }
+
+  async getTeachers(): Promise<User[]> {
+    if (!this.isDbAvailable()) return [];
+    const teachers = await db!.select().from(users).where(eq(users.role, 'teacher'));
+    return teachers;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(users).set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async updateUserStatus(id: string, isActive: boolean): Promise<User> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(users).set({ isActive, updatedAt: new Date() })
+      .where(eq(users.id, id)).returning();
+    return updated;
+  }
+
+  async getContactMessages(filters: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]> {
+    if (!this.isDbAvailable()) return [];
+    let query = db!.select().from(contactMessages);
+    if (filters.isRead !== undefined) {
+      query = query.where(eq(contactMessages.isRead, filters.isRead)) as any;
+    }
+    const messages = await query.orderBy(desc(contactMessages.createdAt))
+      .limit(filters.limit || 20)
+      .offset(((filters.page || 1) - 1) * (filters.limit || 20));
+    return messages;
+  }
+
+  async markMessageAsRead(id: string): Promise<ContactMessage> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(contactMessages).set({ isRead: true })
+      .where(eq(contactMessages.id, id)).returning();
+    return updated;
+  }
+
+  async assignStudentToTeacher(teacherId: string, studentId: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(students).set({ sheikhId: teacherId, updatedAt: new Date() })
+      .where(eq(students.id, studentId)).returning();
+    return updated;
   }
 }
 

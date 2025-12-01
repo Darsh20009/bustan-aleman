@@ -37,7 +37,7 @@ export const users = bustanSchema.table("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   // Additional fields for Islamic education platform
-  role: varchar("role").default("student"), // student, supervisor, admin
+  role: varchar("role").default("student"), // student, teacher, supervisor, admin, owner
   passwordHash: varchar("password_hash"), // Secure password storage for all roles
   phoneNumber: varchar("phone_number"),
   age: integer("age"),
@@ -206,6 +206,99 @@ export const studentPayments = bustanSchema.table("student_payments", {
   status: varchar("status").default("active"), // active, expired, pending
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Subscription plans table - خطط الاشتراك
+export const subscriptionPlans = bustanSchema.table("subscription_plans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nameAr: varchar("name_ar").notNull(), // اسم الخطة بالعربية
+  nameEn: varchar("name_en"), // اسم الخطة بالإنجليزية
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  duration: varchar("duration").notNull(), // weekly, monthly, quarterly, yearly
+  durationDays: integer("duration_days").notNull(), // عدد الأيام
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("SAR"),
+  sessionsCount: integer("sessions_count"), // عدد الحصص المتاحة (null = غير محدود)
+  features: text("features"), // JSON array of features
+  isActive: boolean("is_active").default(true),
+  isFeatured: boolean("is_featured").default(false), // للخطط المميزة
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User subscriptions table - اشتراكات المستخدمين
+export const subscriptions = bustanSchema.table("subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  planId: varchar("plan_id").references(() => subscriptionPlans.id).notNull(),
+  status: varchar("status").default("pending"), // pending, active, expired, cancelled, payment_overdue
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  sessionsRemaining: integer("sessions_remaining"),
+  autoRenew: boolean("auto_renew").default(false), // تجديد تلقائي
+  paymentGateway: varchar("payment_gateway"), // stripe, stc_pay, paypal, tap
+  stripeSubscriptionId: varchar("stripe_subscription_id"), // معرف Stripe
+  stripeCustomerId: varchar("stripe_customer_id"),
+  lastPaymentDate: timestamp("last_payment_date"),
+  nextPaymentDate: timestamp("next_payment_date"),
+  cancellationReason: text("cancellation_reason"),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("subscriptions_user_idx").on(table.userId),
+  index("subscriptions_status_idx").on(table.status),
+]);
+
+// Payment transactions table - المعاملات المالية
+export const paymentTransactions = bustanSchema.table("payment_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  subscriptionId: varchar("subscription_id").references(() => subscriptions.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("SAR"),
+  paymentGateway: varchar("payment_gateway").notNull(), // stripe, stc_pay, paypal, tap, bank_transfer, cash
+  gatewayTransactionId: varchar("gateway_transaction_id"), // معرف العملية من البوابة
+  gatewayResponse: text("gateway_response"), // JSON response from gateway
+  status: varchar("status").default("pending"), // pending, completed, failed, refunded, cancelled
+  paymentMethod: varchar("payment_method"), // card, wallet, bank_transfer
+  cardLast4: varchar("card_last4"), // آخر 4 أرقام من البطاقة
+  cardBrand: varchar("card_brand"), // visa, mastercard, mada
+  receiptUrl: varchar("receipt_url"), // رابط الإيصال
+  invoiceNumber: varchar("invoice_number"), // رقم الفاتورة
+  description: text("description"),
+  metadata: text("metadata"), // JSON additional data
+  errorMessage: text("error_message"),
+  refundedAmount: decimal("refunded_amount", { precision: 10, scale: 2 }),
+  refundedAt: timestamp("refunded_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("payment_transactions_user_idx").on(table.userId),
+  index("payment_transactions_status_idx").on(table.status),
+  index("payment_transactions_gateway_idx").on(table.paymentGateway),
+]);
+
+// Payment gateway settings table - إعدادات بوابات الدفع
+export const paymentGatewaySettings = bustanSchema.table("payment_gateway_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  gateway: varchar("gateway").notNull().unique(), // stripe, stc_pay, paypal, tap
+  displayNameAr: varchar("display_name_ar").notNull(),
+  displayNameEn: varchar("display_name_en"),
+  isEnabled: boolean("is_enabled").default(false),
+  isTestMode: boolean("is_test_mode").default(true), // وضع الاختبار
+  supportedCurrencies: text("supported_currencies"), // JSON array
+  minimumAmount: decimal("minimum_amount", { precision: 10, scale: 2 }),
+  maximumAmount: decimal("maximum_amount", { precision: 10, scale: 2 }),
+  feePercentage: decimal("fee_percentage", { precision: 5, scale: 2 }), // نسبة الرسوم
+  fixedFee: decimal("fixed_fee", { precision: 10, scale: 2 }), // رسوم ثابتة
+  iconUrl: varchar("icon_url"),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Class schedules
@@ -805,6 +898,30 @@ export const insertStudentPaymentSchema = createInsertSchema(studentPayments).om
   createdAt: true,
 });
 
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentTransactionSchema = createInsertSchema(paymentTransactions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPaymentGatewaySettingsSchema = createInsertSchema(paymentGatewaySettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertClassScheduleSchema = createInsertSchema(classSchedules).omit({
   id: true,
   createdAt: true,
@@ -999,6 +1116,14 @@ export type StudentError = typeof studentErrors.$inferSelect;
 export type InsertStudentError = z.infer<typeof insertStudentErrorSchema>;
 export type StudentPayment = typeof studentPayments.$inferSelect;
 export type InsertStudentPayment = z.infer<typeof insertStudentPaymentSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type InsertPaymentTransaction = z.infer<typeof insertPaymentTransactionSchema>;
+export type PaymentGatewaySettings = typeof paymentGatewaySettings.$inferSelect;
+export type InsertPaymentGatewaySettings = z.infer<typeof insertPaymentGatewaySettingsSchema>;
 export type ClassSchedule = typeof classSchedules.$inferSelect;
 export type InsertClassSchedule = z.infer<typeof insertClassScheduleSchema>;
 export type SessionAccess = typeof sessionAccess.$inferSelect;

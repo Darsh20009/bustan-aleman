@@ -116,6 +116,16 @@ app.use((req, res, next) => {
     setupCourseRoutes(app);
     console.log("✅ Course routes setup");
     
+    // Setup Subscription routes (plans, subscriptions, payments)
+    const { setupSubscriptionRoutes } = await import("./subscriptionRoutes");
+    setupSubscriptionRoutes(app);
+    console.log("✅ Subscription routes setup");
+    
+    // Setup Admin Dashboard routes (stats, reports, user management)
+    const { setupAdminDashboardRoutes } = await import("./adminDashboardRoutes");
+    setupAdminDashboardRoutes(app);
+    console.log("✅ Admin dashboard routes setup");
+    
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
     console.log("✅ Routes registered");
