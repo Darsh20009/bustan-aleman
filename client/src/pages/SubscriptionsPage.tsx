@@ -235,6 +235,18 @@ export default function SubscriptionsPage() {
                       <Building2 className="w-4 h-4 ml-2" />
                       التحويل البنكي
                     </Button>
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        // Add to cart
+                        alert(`تمت إضافة ${plan.nameAr} إلى السلة`);
+                      }}
+                      variant="default"
+                      data-testid={`button-add-cart-${plan.id}`}
+                    >
+                      <ShoppingCart className="w-4 h-4 ml-2" />
+                      أضف للسلة
+                    </Button>
                   </div>
 
                   {/* Is Active Status */}

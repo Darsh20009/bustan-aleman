@@ -488,6 +488,78 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
         </div>
       </div>
 
+      {/* Subscriptions Section */}
+      <div className="py-20 px-4 bg-gradient-to-br from-white to-emerald-50 dark:from-slate-800 dark:to-slate-900">
+        <div className="max-w-7xl mx-auto">
+          <motion.div className="text-center mb-16">
+            <motion.h2 
+              className="text-3xl md:text-5xl font-bold text-emerald-900 dark:text-white mb-4"
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              اختر خطة الاشتراك المناسبة
+            </motion.h2>
+            <motion.p 
+              className="text-lg text-gray-600 dark:text-gray-300"
+              initial={{ opacity: 0, y: -10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              ابدأ رحلتك في تعلم القرآن الكريم اليوم
+            </motion.p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[
+              { name: 'خطة مجانية', price: '0', features: ['1 حصة شهرية', 'المصحف التفاعلي'] },
+              { name: 'خطة أساسية', price: '99.99', features: ['4 حصص شهرية', 'دعم عام', 'متابعة التقدم'] },
+              { name: 'خطة احترافية', price: '199.99', features: ['8 حصص شهرية', 'دعم VIP', 'شهادات'], featured: true },
+              { name: 'خطة سنوية', price: '1199.99', features: ['120 حصة سنوياً', 'توفير 40%', 'محتوى حصري'] }
+            ].map((plan, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+              >
+                <Card className={`h-full relative overflow-hidden transition-all ${plan.featured ? 'ring-2 ring-orange-400 md:scale-105 shadow-2xl' : ''}`}>
+                  {plan.featured && <div className="absolute top-0 left-0 right-0 bg-orange-400 text-white text-center py-1 text-sm font-bold">خطة مميزة</div>}
+                  <CardContent className={`p-6 flex flex-col h-full ${plan.featured ? 'pt-12' : ''}`}>
+                    <h3 className="text-xl font-bold text-emerald-700 mb-2">{plan.name}</h3>
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
+                      <span className="text-gray-600 mr-2">ريال</span>
+                    </div>
+                    <ul className="space-y-2 mb-6 flex-1">
+                      {plan.features.map((feature, i) => (
+                        <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-600" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                      اختر الخطة
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div className="text-center">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-6"
+            >
+              <TrendingUp className="ml-2 h-5 w-5" />
+              عرض جميع الخطط
+            </Button>
+          </motion.div>
+        </div>
+      </div>
+
       {/* Footer */}
       <div className="bg-gradient-to-r from-emerald-800 to-emerald-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4">
