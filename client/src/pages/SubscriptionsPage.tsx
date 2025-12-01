@@ -211,16 +211,27 @@ export default function SubscriptionsPage() {
                     </div>
                   )}
 
-                  {/* Add to Cart Button - Featured */}
+                  {/* Subscribe Now - Featured Button */}
                   <Button
-                    className="w-full mb-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 text-lg shadow-lg"
+                    className="w-full mb-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 text-lg shadow-lg"
                     onClick={() => {
-                      // Add to cart
+                      setSelectedPlanId(plan.id);
+                      alert(`اختر طريقة الدفع:\n\n1️⃣ PayPal - دفع فوري\n2️⃣ التحويل البنكي - تحويل يدوي`);
+                    }}
+                    data-testid={`button-subscribe-now-${plan.id}`}
+                  >
+                    ✨ اشترك الآن
+                  </Button>
+
+                  {/* Add to Cart Button */}
+                  <Button
+                    className="w-full mb-2 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => {
                       alert(`✓ تمت إضافة ${plan.nameAr} إلى السلة`);
                     }}
                     data-testid={`button-add-cart-${plan.id}`}
                   >
-                    <ShoppingCart className="w-5 h-5 ml-2" />
+                    <ShoppingCart className="w-4 h-4 ml-2" />
                     أضف للسلة
                   </Button>
 
