@@ -211,8 +211,21 @@ export default function SubscriptionsPage() {
                     </div>
                   )}
 
+                  {/* Add to Cart Button - Featured */}
+                  <Button
+                    className="w-full mb-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-3 text-lg shadow-lg"
+                    onClick={() => {
+                      // Add to cart
+                      alert(`✓ تمت إضافة ${plan.nameAr} إلى السلة`);
+                    }}
+                    data-testid={`button-add-cart-${plan.id}`}
+                  >
+                    <ShoppingCart className="w-5 h-5 ml-2" />
+                    أضف للسلة
+                  </Button>
+
                   {/* Payment Methods */}
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-2">
                     <Button
                       className="w-full bg-emerald-600 hover:bg-emerald-700"
                       onClick={() => {
@@ -225,7 +238,7 @@ export default function SubscriptionsPage() {
                       الدفع عبر PayPal
                     </Button>
                     <Button
-                      className="w-full bg-orange-600 hover:bg-orange-700"
+                      className="w-full bg-blue-600 hover:bg-blue-700"
                       onClick={() => {
                         setSelectedPlanId(plan.id);
                         setSelectedPaymentMethod('bank_transfer');
@@ -234,18 +247,6 @@ export default function SubscriptionsPage() {
                     >
                       <Building2 className="w-4 h-4 ml-2" />
                       التحويل البنكي
-                    </Button>
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => {
-                        // Add to cart
-                        alert(`تمت إضافة ${plan.nameAr} إلى السلة`);
-                      }}
-                      variant="default"
-                      data-testid={`button-add-cart-${plan.id}`}
-                    >
-                      <ShoppingCart className="w-4 h-4 ml-2" />
-                      أضف للسلة
                     </Button>
                   </div>
 
