@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Building2, AlertCircle } from 'lucide-react';
+import { Check, CreditCard, Building2, AlertCircle, ShoppingCart } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
