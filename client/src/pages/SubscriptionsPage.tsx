@@ -41,15 +41,15 @@ export default function SubscriptionsPage() {
   // Fetch subscription plans
   const { data: plans = [] } = useQuery({
     queryKey: ['/api/subscription/plans'],
-  });
+  }) as { data: SubscriptionPlan[] };
 
   // Fetch user's current subscription
   const { data: userSubscription } = useQuery({
     queryKey: ['/api/subscription/my-subscription'],
-  });
+  }) as { data: UserSubscription | undefined };
 
   // Sort plans by featured and sort order
-  const sortedPlans = [...plans].sort((a, b) => {
+  const sortedPlans = (Array.isArray(plans) ? [...plans] : []).sort((a: SubscriptionPlan, b: SubscriptionPlan) => {
     if (a.isFeatured !== b.isFeatured) {
       return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);
     }
@@ -101,7 +101,7 @@ export default function SubscriptionsPage() {
         </div>
 
         {/* Current Subscription Status */}
-        {userSubscription && (
+        {userSubscription && (userSubscription as UserSubscription) && (
           <Card className="mb-12 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-emerald-900">
@@ -113,31 +113,31 @@ export default function SubscriptionsPage() {
               <div className="grid md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">الحالة</p>
-                  <Badge className={`${getStatusColor(userSubscription.status)} mt-2`}>
-                    {getStatusLabel(userSubscription.status)}
+                  <Badge className={`${getStatusColor((userSubscription as UserSubscription).status)} mt-2`}>
+                    {getStatusLabel((userSubscription as UserSubscription).status)}
                   </Badge>
                 </div>
-                {userSubscription.startDate && (
+                {(userSubscription as UserSubscription).startDate && (
                   <div>
                     <p className="text-sm text-gray-600">تاريخ البدء</p>
                     <p className="font-semibold text-gray-900 mt-1">
-                      {new Date(userSubscription.startDate).toLocaleDateString('ar-SA')}
+                      {new Date((userSubscription as UserSubscription).startDate!).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                 )}
-                {userSubscription.endDate && (
+                {(userSubscription as UserSubscription).endDate && (
                   <div>
                     <p className="text-sm text-gray-600">تاريخ الانتهاء</p>
                     <p className="font-semibold text-gray-900 mt-1">
-                      {new Date(userSubscription.endDate).toLocaleDateString('ar-SA')}
+                      {new Date((userSubscription as UserSubscription).endDate!).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                 )}
-                {userSubscription.sessionsRemaining !== undefined && (
+                {(userSubscription as UserSubscription).sessionsRemaining !== undefined && (
                   <div>
                     <p className="text-sm text-gray-600">الحصص المتبقية</p>
                     <p className="font-semibold text-gray-900 mt-1">
-                      {userSubscription.sessionsRemaining} حصة
+                      {(userSubscription as UserSubscription).sessionsRemaining} حصة
                     </p>
                   </div>
                 )}
@@ -148,7 +148,7 @@ export default function SubscriptionsPage() {
 
         {/* Subscription Plans Grid */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
-          {sortedPlans.length > 0 ? (
+          {(Array.isArray(sortedPlans) && sortedPlans.length > 0) ? (
             sortedPlans.map((plan: SubscriptionPlan) => (
               <Card
                 key={plan.id}
