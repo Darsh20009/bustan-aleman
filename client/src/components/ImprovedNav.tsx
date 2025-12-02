@@ -23,6 +23,7 @@ const studentMenuItems = [
   { label: 'المصحف التفاعلي', path: 'quran', icon: '📖' },
   { label: 'ملاحظاتي', path: 'my-notes', icon: '📝' },
   { label: 'الدورات', path: 'courses', icon: '🎓' },
+  { label: 'التذكيرات', path: '/reminders', icon: '🔔' },
   { label: 'الرحلات', path: 'trips', icon: '✈️' },
   { label: 'شهاداتي', path: 'certificates', icon: '🏆' },
   { label: 'الإعلانات', path: 'announcements', icon: '📢' },

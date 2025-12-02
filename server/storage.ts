@@ -422,6 +422,7 @@ export interface IStorage {
   updateLessonReminder(id: string, updates: Partial<LessonReminder>): Promise<LessonReminder>;
   markReminderSent(id: string): Promise<LessonReminder>;
   cancelReminder(id: string): Promise<LessonReminder>;
+  getPendingRemindersToSend(): Promise<LessonReminder[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3168,6 +3169,18 @@ export class DatabaseStorage implements IStorage {
       .where(eq(lessonReminders.id, id))
       .returning();
     return updated;
+  }
+
+  async getPendingRemindersToSend(): Promise<LessonReminder[]> {
+    if (!this.isDbAvailable()) return [];
+    const now = new Date();
+    const reminders = await db!.select().from(lessonReminders)
+      .where(and(
+        eq(lessonReminders.status, 'pending'),
+        lte(lessonReminders.scheduledFor, now)
+      ))
+      .orderBy(lessonReminders.scheduledFor);
+    return reminders;
   }
 }
 

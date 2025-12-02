@@ -51,6 +51,7 @@ export default function BankTransferCheckoutPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/bank-transfer/my-requests'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart/full'] });
       toast({
         title: "تم إرسال طلب التحويل",
         description: "سيتم مراجعة طلبك وتفعيل اشتراكك بعد التأكيد من الإدارة",
