@@ -627,10 +627,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.session as any).userId;
       
-      // Get all cart items
+      // Get all cart items (courses)
       const cartItems = await storage.getCartItems(userId);
       
-      if (cartItems.length === 0) {
+      // Get subscription items
+      const subscriptionItems = subscriptionCarts.get(userId) ? Array.from(subscriptionCarts.get(userId)!) : [];
+      
+      if (cartItems.length === 0 && subscriptionItems.length === 0) {
         return res.status(400).json({ message: "العربة فارغة" });
       }
       
@@ -659,12 +662,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
         enrollments.push(enrollment);
       }
       
-      // Clear the cart
+      // Handle subscriptions
+      const subscriptions = [];
+      for (const sub of subscriptionItems) {
+        // Create or update subscription
+        const subscriptionData = {
+          userId,
+          planId: sub.planId,
+          status: 'active' as const,
+          startDate: new Date().toISOString(),
+        };
+        
+        try {
+          const subscription = await storage.createSubscription(subscriptionData);
+          subscriptions.push(subscription);
+        } catch (err) {
+          console.error("Error creating subscription:", err);
+        }
+      }
+      
+      // Clear the carts
       await storage.clearCart(userId);
+      subscriptionCarts.delete(userId);
       
       res.json({
-        message: "تم شراء جميع الدورات بنجاح",
+        message: "تم إتمام عملية الشراء بنجاح",
         enrollments,
+        subscriptions,
       });
     } catch (error) {
       console.error("Error during checkout:", error);
