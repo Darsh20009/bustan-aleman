@@ -558,6 +558,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!subscriptionPlanId) {
         return res.status(400).json({ message: "معرف الخطة مطلوب" });
       }
+
+      // Verify subscription plan exists
+      const plan = await storage.getSubscriptionPlan(subscriptionPlanId);
+      if (!plan) {
+        return res.status(404).json({ message: "خطة الاشتراك غير موجودة" });
+      }
       
       // Store subscription in cart (for now, we'll use a simple approach)
       // In a real app, you'd have a subscription cart table
@@ -3869,36 +3875,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // =====================================================
-  // Subscription Cart Routes (Enhanced)
-  // =====================================================
-
-  // Add subscription plan to cart
-  app.post("/api/cart/subscription", isPhoneAuthenticated, async (req: any, res) => {
-    try {
-      const userId = (req.session as any).userId;
-      const { subscriptionPlanId } = req.body;
-
-      if (!subscriptionPlanId) {
-        return res.status(400).json({ message: "معرف خطة الاشتراك مطلوب" });
-      }
-
-      const cartItem = await storage.addToCart({
-        userId,
-        subscriptionPlanId,
-        itemType: "subscription",
-      });
-
-      res.json({
-        success: true,
-        message: "تمت إضافة خطة الاشتراك إلى السلة",
-        cartItem
-      });
-    } catch (error) {
-      console.error("Error adding subscription to cart:", error);
-      res.status(500).json({ message: "فشل في إضافة الخطة إلى السلة" });
-    }
-  });
 
   // Get cart with both courses and subscriptions
   app.get("/api/cart/full", isPhoneAuthenticated, async (req: any, res) => {
