@@ -53,13 +53,14 @@ import SubscriptionsPage from "./pages/SubscriptionsPage";
 import BankTransferCheckoutPage from "./pages/BankTransferCheckoutPage";
 import BankTransferAdminPage from "./pages/BankTransferAdminPage";
 import LessonRemindersPage from "./pages/LessonRemindersPage";
+import HomeworkPage from "./pages/HomeworkPage";
 import { PersistentHeader } from "./components/PersistentHeader";
 
-type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management' | 'quran-test' | 'hadith' | 'sheikh-errors' | 'quran-self-test' | 'subscriptions';
+type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management' | 'quran-test' | 'hadith' | 'sheikh-errors' | 'quran-self-test' | 'subscriptions' | 'homework';
 
 // Helper function to check if a path is a valid AppState
 const isValidAppState = (path: string): path is AppState => {
-  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications', 'enrollments', 'my-subscriptions', 'course-management', 'quran-test', 'hadith', 'sheikh-errors', 'quran-self-test', 'subscriptions'];
+  const validStates: AppState[] = ['splash', 'home', 'about', 'courses', 'my-courses', 'auth', 'dashboard', 'profile', 'quran', 'certificates', 'announcements', 'trips', 'quran-stats', 'memorization', 'quran-workspace', 'my-session', 'my-notes', 'sheikh-schedule', 'sheikh-quran-editing', 'data-management', 'create-course', 'cart', 'student-sessions', 'forgot-password', 'payments', 'course-students', 'notifications', 'enrollments', 'my-subscriptions', 'course-management', 'quran-test', 'hadith', 'sheikh-errors', 'quran-self-test', 'subscriptions', 'homework'];
   return validStates.includes(path as AppState);
 };
 
@@ -402,6 +403,13 @@ function AppContent() {
       case 'subscriptions':
         if (isAuthenticated && user?.role === 'student') {
           return <SubscriptionsPage />;
+        } else {
+          return <AuthPage />;
+        }
+      
+      case 'homework':
+        if (isAuthenticated) {
+          return <HomeworkPage />;
         } else {
           return <AuthPage />;
         }

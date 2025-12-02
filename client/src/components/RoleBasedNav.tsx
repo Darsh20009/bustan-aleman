@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
-import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical, ShoppingCart, Brain } from 'lucide-react';
+import { BookOpen, GraduationCap, Award, MapPin, Bell, BookMarked, User, Calendar, Star, TrendingUp, Trophy, Sparkles, MoreVertical, ShoppingCart, Brain, ClipboardList } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { SheikhDashboard } from './SheikhDashboard';
 import { SupervisorDashboard } from './SupervisorDashboard';
@@ -308,6 +308,13 @@ const roleNavigation = {
       gradient: 'from-cyan-500 to-blue-500'
     },
     { 
+      title: 'واجباتي', 
+      path: 'homework', 
+      description: 'عرض ومتابعة الواجبات والتكاليف', 
+      icon: ClipboardList,
+      gradient: 'from-violet-500 to-purple-500'
+    },
+    { 
       title: 'خطط الاشتراك', 
       path: '/subscriptions', 
       description: 'اختر خطتك واشترك في المنصة', 
@@ -350,6 +357,13 @@ const roleNavigation = {
       description: 'تسجيل أخطاء التلاوة والتجويد للطلاب', 
       icon: BookOpen,
       gradient: 'from-purple-500 to-pink-500'
+    },
+    { 
+      title: 'إدارة الواجبات', 
+      path: 'homework', 
+      description: 'إنشاء وتتبع واجبات الطلاب', 
+      icon: ClipboardList,
+      gradient: 'from-violet-500 to-purple-500'
     },
     { 
       title: 'إصدار الشهادات', 

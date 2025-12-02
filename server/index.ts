@@ -131,6 +131,11 @@ app.use((req, res, next) => {
     setupHalaqaRoutes(app);
     console.log("✅ Halaqa routes setup");
     
+    // Setup Homework routes (assignments, submissions, evaluations)
+    const { setupHomeworkRoutes } = await import("./homeworkRoutes");
+    setupHomeworkRoutes(app);
+    console.log("✅ Homework routes setup");
+    
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
     console.log("✅ Routes registered");

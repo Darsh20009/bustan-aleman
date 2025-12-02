@@ -365,6 +365,109 @@ export const dailyAssignments = bustanSchema.table("daily_assignments", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Homework assignments table - For teachers to create homework
+export const homeworks = bustanSchema.table("homeworks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  titleAr: varchar("title_ar").notNull(),
+  titleEn: varchar("title_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  type: varchar("type").notNull().default("memorization"), // memorization, review, recitation, written, quiz
+  halaqaId: varchar("halaqa_id").references(() => halaqat.id), // Optional - specific halaqa
+  courseId: varchar("course_id").references(() => courses.id), // Optional - specific course
+  assignedTo: varchar("assigned_to").array().default(sql`ARRAY[]::varchar[]`), // Student IDs if individual assignment
+  surahNumber: integer("surah_number"), // For Quran-related homework
+  startAyah: integer("start_ayah"),
+  endAyah: integer("end_ayah"),
+  dueDate: timestamp("due_date").notNull(),
+  points: integer("points").default(100), // Maximum points for grading
+  instructions: text("instructions"), // Detailed instructions
+  attachmentUrl: varchar("attachment_url"), // Optional file attachment
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("homework_halaqa_idx").on(table.halaqaId),
+  index("homework_course_idx").on(table.courseId),
+  index("homework_created_by_idx").on(table.createdBy),
+]);
+
+// Homework submissions table - For students to submit their work
+export const homeworkSubmissions = bustanSchema.table("homework_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  homeworkId: varchar("homework_id").references(() => homeworks.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  submissionText: text("submission_text"), // Student's written response
+  audioUrl: varchar("audio_url"), // Voice recording URL for recitation
+  attachmentUrl: varchar("attachment_url"), // File attachment
+  status: varchar("status").default("pending"), // pending, submitted, graded, late
+  submittedAt: timestamp("submitted_at"),
+  grade: integer("grade"), // Points earned
+  teacherFeedbackAr: text("teacher_feedback_ar"),
+  teacherFeedbackEn: text("teacher_feedback_en"),
+  gradedBy: varchar("graded_by").references(() => users.id),
+  gradedAt: timestamp("graded_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  unique("homework_submission_unique").on(table.homeworkId, table.studentId),
+  index("submission_homework_idx").on(table.homeworkId),
+  index("submission_student_idx").on(table.studentId),
+]);
+
+// Student evaluations table - For teacher assessments
+export const studentEvaluations = bustanSchema.table("student_evaluations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  teacherId: varchar("teacher_id").references(() => users.id).notNull(),
+  halaqaId: varchar("halaqa_id").references(() => halaqat.id),
+  evaluationDate: date("evaluation_date").notNull(),
+  type: varchar("type").notNull().default("weekly"), // daily, weekly, monthly, exam
+  memorizationScore: integer("memorization_score"), // 1-10
+  tajweedScore: integer("tajweed_score"), // 1-10
+  attendanceScore: integer("attendance_score"), // 1-10
+  participationScore: integer("participation_score"), // 1-10
+  homeworkScore: integer("homework_score"), // 1-10
+  overallScore: integer("overall_score"), // Calculated average
+  strengthsAr: text("strengths_ar"),
+  strengthsEn: text("strengths_en"),
+  areasForImprovementAr: text("areas_for_improvement_ar"),
+  areasForImprovementEn: text("areas_for_improvement_en"),
+  teacherNotesAr: text("teacher_notes_ar"),
+  teacherNotesEn: text("teacher_notes_en"),
+  isVisible: boolean("is_visible").default(true), // Visible to student/parent
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("evaluation_student_idx").on(table.studentId),
+  index("evaluation_teacher_idx").on(table.teacherId),
+  index("evaluation_date_idx").on(table.evaluationDate),
+]);
+
+// Parent weekly reports table
+export const parentReports = bustanSchema.table("parent_reports", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  parentPhone: varchar("parent_phone"), // Parent's WhatsApp/phone
+  parentEmail: varchar("parent_email"),
+  reportWeek: date("report_week").notNull(), // Week starting date
+  attendancePercentage: integer("attendance_percentage"),
+  homeworkCompletionRate: integer("homework_completion_rate"),
+  memorizationProgress: text("memorization_progress"), // JSON: new verses memorized
+  reviewProgress: text("review_progress"), // JSON: verses reviewed
+  overallGrade: varchar("overall_grade"), // A, B, C, D, F or descriptive
+  teacherCommentsAr: text("teacher_comments_ar"),
+  teacherCommentsEn: text("teacher_comments_en"),
+  sentVia: varchar("sent_via").array().default(sql`ARRAY[]::varchar[]`), // whatsapp, email, sms
+  sentAt: timestamp("sent_at"),
+  generatedBy: varchar("generated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("parent_report_student_idx").on(table.studentId),
+  index("parent_report_week_idx").on(table.reportWeek),
+]);
+
 // Educational trips table
 export const trips = bustanSchema.table("trips", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1061,6 +1164,29 @@ export const insertDailyAssignmentSchema = createInsertSchema(dailyAssignments).
   createdAt: true,
 });
 
+export const insertHomeworkSchema = createInsertSchema(homeworks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertHomeworkSubmissionSchema = createInsertSchema(homeworkSubmissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudentEvaluationSchema = createInsertSchema(studentEvaluations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertParentReportSchema = createInsertSchema(parentReports).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertTripSchema = createInsertSchema(trips).omit({
   id: true,
   createdAt: true,
@@ -1336,6 +1462,14 @@ export type SessionAccess = typeof sessionAccess.$inferSelect;
 export type InsertSessionAccess = z.infer<typeof insertSessionAccessSchema>;
 export type DailyAssignment = typeof dailyAssignments.$inferSelect;
 export type InsertDailyAssignment = z.infer<typeof insertDailyAssignmentSchema>;
+export type Homework = typeof homeworks.$inferSelect;
+export type InsertHomework = z.infer<typeof insertHomeworkSchema>;
+export type HomeworkSubmission = typeof homeworkSubmissions.$inferSelect;
+export type InsertHomeworkSubmission = z.infer<typeof insertHomeworkSubmissionSchema>;
+export type StudentEvaluation = typeof studentEvaluations.$inferSelect;
+export type InsertStudentEvaluation = z.infer<typeof insertStudentEvaluationSchema>;
+export type ParentReport = typeof parentReports.$inferSelect;
+export type InsertParentReport = z.infer<typeof insertParentReportSchema>;
 
 export type Trip = typeof trips.$inferSelect;
 export type InsertTrip = z.infer<typeof insertTripSchema>;

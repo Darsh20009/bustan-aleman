@@ -128,6 +128,18 @@ import {
   halaqaMembers,
   halaqaSchedules,
   halaqaAttendance,
+  homeworks,
+  homeworkSubmissions,
+  studentEvaluations,
+  parentReports,
+  type Homework,
+  type InsertHomework,
+  type HomeworkSubmission,
+  type InsertHomeworkSubmission,
+  type StudentEvaluation,
+  type InsertStudentEvaluation,
+  type ParentReport,
+  type InsertParentReport,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -463,6 +475,35 @@ export interface IStorage {
   getStudentHalaqaAttendance(studentId: string): Promise<HalaqaAttendance[]>;
   recordHalaqaAttendance(attendance: InsertHalaqaAttendance): Promise<HalaqaAttendance>;
   updateHalaqaAttendance(id: string, updates: Partial<InsertHalaqaAttendance>): Promise<HalaqaAttendance>;
+  
+  // Homework operations
+  getHomework(id: string): Promise<Homework | undefined>;
+  getHomeworksByTeacher(teacherId: string): Promise<Homework[]>;
+  getHomeworksForStudent(studentId: string): Promise<Homework[]>;
+  getHomeworksByHalaqa(halaqaId: string): Promise<Homework[]>;
+  createHomework(homework: InsertHomework): Promise<Homework>;
+  updateHomework(id: string, updates: Partial<InsertHomework>): Promise<Homework>;
+  deleteHomework(id: string): Promise<void>;
+  
+  // Homework submission operations
+  getHomeworkSubmissions(homeworkId: string): Promise<HomeworkSubmission[]>;
+  getStudentSubmission(homeworkId: string, studentId: string): Promise<HomeworkSubmission | undefined>;
+  getStudentSubmissions(studentId: string): Promise<HomeworkSubmission[]>;
+  createHomeworkSubmission(submission: InsertHomeworkSubmission): Promise<HomeworkSubmission>;
+  updateHomeworkSubmission(id: string, updates: Partial<InsertHomeworkSubmission>): Promise<HomeworkSubmission>;
+  gradeHomeworkSubmission(id: string, grading: { grade: number; teacherFeedbackAr?: string; teacherFeedbackEn?: string; gradedBy: string; gradedAt: Date; status: string }): Promise<HomeworkSubmission>;
+  
+  // Student evaluation operations
+  getStudentEvaluations(studentId: string): Promise<StudentEvaluation[]>;
+  getStudentEvaluation(id: string): Promise<StudentEvaluation | undefined>;
+  createStudentEvaluation(evaluation: InsertStudentEvaluation): Promise<StudentEvaluation>;
+  updateStudentEvaluation(id: string, updates: Partial<InsertStudentEvaluation>): Promise<StudentEvaluation>;
+  
+  // Parent report operations
+  getParentReports(studentId: string): Promise<ParentReport[]>;
+  getParentReport(id: string): Promise<ParentReport | undefined>;
+  createParentReport(report: InsertParentReport): Promise<ParentReport>;
+  updateParentReport(id: string, updates: Partial<InsertParentReport>): Promise<ParentReport>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3368,6 +3409,170 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db!.update(halaqaAttendance)
       .set(updates)
       .where(eq(halaqaAttendance.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Homework operations
+  async getHomework(id: string): Promise<Homework | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [homework] = await db!.select().from(homeworks).where(eq(homeworks.id, id));
+    return homework;
+  }
+
+  async getHomeworksByTeacher(teacherId: string): Promise<Homework[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(homeworks)
+      .where(eq(homeworks.createdBy, teacherId))
+      .orderBy(desc(homeworks.dueDate));
+  }
+
+  async getHomeworksForStudent(studentId: string): Promise<Homework[]> {
+    if (!this.isDbAvailable()) return [];
+    // Get homeworks where student is in assignedTo array OR homework is for all (empty array)
+    return await db!.select().from(homeworks)
+      .where(eq(homeworks.isActive, true))
+      .orderBy(desc(homeworks.dueDate));
+  }
+
+  async getHomeworksByHalaqa(halaqaId: string): Promise<Homework[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(homeworks)
+      .where(eq(homeworks.halaqaId, halaqaId))
+      .orderBy(desc(homeworks.dueDate));
+  }
+
+  async createHomework(homework: InsertHomework): Promise<Homework> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newHomework] = await db!.insert(homeworks).values(homework).returning();
+    return newHomework;
+  }
+
+  async updateHomework(id: string, updates: Partial<InsertHomework>): Promise<Homework> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(homeworks)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(homeworks.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteHomework(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    await db!.delete(homeworks).where(eq(homeworks.id, id));
+  }
+
+  // Homework submission operations
+  async getHomeworkSubmissions(homeworkId: string): Promise<HomeworkSubmission[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(homeworkSubmissions)
+      .where(eq(homeworkSubmissions.homeworkId, homeworkId))
+      .orderBy(desc(homeworkSubmissions.submittedAt));
+  }
+
+  async getStudentSubmission(homeworkId: string, studentId: string): Promise<HomeworkSubmission | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [submission] = await db!.select().from(homeworkSubmissions)
+      .where(and(
+        eq(homeworkSubmissions.homeworkId, homeworkId),
+        eq(homeworkSubmissions.studentId, studentId)
+      ));
+    return submission;
+  }
+
+  async getStudentSubmissions(studentId: string): Promise<HomeworkSubmission[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(homeworkSubmissions)
+      .where(eq(homeworkSubmissions.studentId, studentId))
+      .orderBy(desc(homeworkSubmissions.submittedAt));
+  }
+
+  async createHomeworkSubmission(submission: InsertHomeworkSubmission): Promise<HomeworkSubmission> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newSubmission] = await db!.insert(homeworkSubmissions).values(submission).returning();
+    return newSubmission;
+  }
+
+  async updateHomeworkSubmission(id: string, updates: Partial<InsertHomeworkSubmission>): Promise<HomeworkSubmission> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(homeworkSubmissions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(homeworkSubmissions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async gradeHomeworkSubmission(id: string, grading: { grade: number; teacherFeedbackAr?: string; teacherFeedbackEn?: string; gradedBy: string; gradedAt: Date; status: string }): Promise<HomeworkSubmission> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(homeworkSubmissions)
+      .set({
+        grade: grading.grade,
+        teacherFeedbackAr: grading.teacherFeedbackAr,
+        teacherFeedbackEn: grading.teacherFeedbackEn,
+        gradedBy: grading.gradedBy,
+        gradedAt: grading.gradedAt,
+        status: grading.status,
+        updatedAt: new Date(),
+      })
+      .where(eq(homeworkSubmissions.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Student evaluation operations
+  async getStudentEvaluations(studentId: string): Promise<StudentEvaluation[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(studentEvaluations)
+      .where(eq(studentEvaluations.studentId, studentId))
+      .orderBy(desc(studentEvaluations.evaluationDate));
+  }
+
+  async getStudentEvaluation(id: string): Promise<StudentEvaluation | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [evaluation] = await db!.select().from(studentEvaluations).where(eq(studentEvaluations.id, id));
+    return evaluation;
+  }
+
+  async createStudentEvaluation(evaluation: InsertStudentEvaluation): Promise<StudentEvaluation> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newEvaluation] = await db!.insert(studentEvaluations).values(evaluation).returning();
+    return newEvaluation;
+  }
+
+  async updateStudentEvaluation(id: string, updates: Partial<InsertStudentEvaluation>): Promise<StudentEvaluation> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(studentEvaluations)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(studentEvaluations.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Parent report operations
+  async getParentReports(studentId: string): Promise<ParentReport[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(parentReports)
+      .where(eq(parentReports.studentId, studentId))
+      .orderBy(desc(parentReports.reportWeek));
+  }
+
+  async getParentReport(id: string): Promise<ParentReport | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [report] = await db!.select().from(parentReports).where(eq(parentReports.id, id));
+    return report;
+  }
+
+  async createParentReport(report: InsertParentReport): Promise<ParentReport> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newReport] = await db!.insert(parentReports).values(report).returning();
+    return newReport;
+  }
+
+  async updateParentReport(id: string, updates: Partial<InsertParentReport>): Promise<ParentReport> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(parentReports)
+      .set(updates)
+      .where(eq(parentReports.id, id))
       .returning();
     return updated;
   }

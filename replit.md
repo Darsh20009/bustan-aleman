@@ -30,6 +30,9 @@ The platform uses a unified design with a core palette of Green (#10B981), White
 -   **Live Sessions**: Integrated with **BigBlueButton** for unlimited video conferencing with features like microphone, camera, screen sharing, and chat. Teachers manage sessions, and students can join from their dashboards.
 -   **Password Recovery**: Allows users to recover access via email and phone verification.
 -   **Quran Self-Test Page**: Students can test their Quran memorization with voice input, smart grading (ignoring diacritics and extra spaces), error feedback, and a hint feature.
+-   **Homework System**: Complete homework management with teacher creation (memorization, review, recitation, written, quiz types), student submission tracking, grading with points system, due date management, and late submission detection. Backend includes 15+ API endpoints in `server/homeworkRoutes.ts` with schema defined in `shared/schema.ts` (homeworks, homeworkSubmissions tables).
+-   **Student Evaluations**: Teachers can create evaluations with ratings for memorization, tajweed, concentration, and behavior. Stored in `studentEvaluations` table.
+-   **Parent Reports**: Weekly automated reports for parents with student progress, attendance, and teacher comments. Stored in `parentReports` table.
 
 ### System Design Choices
 -   **Type Safety**: Achieved with TypeScript.

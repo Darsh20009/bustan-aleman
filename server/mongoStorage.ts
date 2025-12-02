@@ -1361,6 +1361,35 @@ export class MongoDBStorage implements IStorage {
   async getStudentHalaqaAttendance(studentId: string): Promise<any[]> { return []; }
   async recordHalaqaAttendance(attendance: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
   async updateHalaqaAttendance(id: string, updates: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+
+  // Homework stub methods - MongoDB storage uses PostgreSQL for homework data
+  async getHomework(id: string): Promise<any> { return undefined; }
+  async getHomeworksByTeacher(teacherId: string): Promise<any[]> { return []; }
+  async getHomeworksForStudent(studentId: string): Promise<any[]> { return []; }
+  async getHomeworksByHalaqa(halaqaId: string): Promise<any[]> { return []; }
+  async createHomework(homework: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
+  async updateHomework(id: string, updates: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
+  async deleteHomework(id: string): Promise<void> { throw new Error("Homework operations require PostgreSQL"); }
+  
+  // Homework submission stub methods
+  async getHomeworkSubmissions(homeworkId: string): Promise<any[]> { return []; }
+  async getStudentSubmission(homeworkId: string, studentId: string): Promise<any> { return undefined; }
+  async getStudentSubmissions(studentId: string): Promise<any[]> { return []; }
+  async createHomeworkSubmission(submission: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
+  async updateHomeworkSubmission(id: string, updates: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
+  async gradeHomeworkSubmission(id: string, grading: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
+  
+  // Student evaluation stub methods
+  async getStudentEvaluations(studentId: string): Promise<any[]> { return []; }
+  async getStudentEvaluation(id: string): Promise<any> { return undefined; }
+  async createStudentEvaluation(evaluation: any): Promise<any> { throw new Error("Evaluation operations require PostgreSQL"); }
+  async updateStudentEvaluation(id: string, updates: any): Promise<any> { throw new Error("Evaluation operations require PostgreSQL"); }
+  
+  // Parent report stub methods
+  async getParentReports(studentId: string): Promise<any[]> { return []; }
+  async getParentReport(id: string): Promise<any> { return undefined; }
+  async createParentReport(report: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
+  async updateParentReport(id: string, updates: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
 }
 
 export const mongoStorage = new MongoDBStorage();
