@@ -10,7 +10,6 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 // Import our new authentication components
 import { AuthPage } from "./components/AuthPage";
 import { RoleBasedNav } from "./components/RoleBasedNav";
-import { AppLayout } from "./components/AppLayout";
 import { SupportChat } from "./components/SupportChat";
 
 // Import existing components
@@ -412,9 +411,7 @@ function AppContent() {
   return (
     <div className="min-h-screen" dir="rtl">
       <Toaster />
-      <AppLayout>
-        {renderCurrentState()}
-      </AppLayout>
+      {renderCurrentState()}
       {user && <SupportChat userId={user.id} userRole={user.role} />}
     </div>
   );
