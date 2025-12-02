@@ -3562,6 +3562,421 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // =====================================================
+  // Bank Transfer Request Routes (Enhanced)
+  // =====================================================
+  
+  // Create a new bank transfer request
+  app.post("/api/bank-transfer/request", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { 
+        subscriptionId, 
+        amount, 
+        currency, 
+        bankName, 
+        accountHolderName, 
+        transferReference, 
+        transferDate,
+        receiptUrl,
+        receiptFileName,
+        notes 
+      } = req.body;
+
+      if (!amount) {
+        return res.status(400).json({ message: "المبلغ مطلوب" });
+      }
+
+      const request = await storage.createBankTransferRequest({
+        userId,
+        subscriptionId,
+        amount: amount.toString(),
+        currency: currency || "SAR",
+        bankName,
+        accountHolderName,
+        transferReference,
+        transferDate: transferDate ? new Date(transferDate) : new Date(),
+        receiptUrl,
+        receiptFileName,
+        notes,
+      });
+
+      res.json({
+        success: true,
+        message: "تم تقديم طلب التحويل البنكي بنجاح",
+        request
+      });
+    } catch (error) {
+      console.error("Error creating bank transfer request:", error);
+      res.status(500).json({ message: "فشل في تقديم طلب التحويل البنكي" });
+    }
+  });
+
+  // Get user's bank transfer requests
+  app.get("/api/bank-transfer/my-requests", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const requests = await storage.getUserBankTransferRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching user bank transfer requests:", error);
+      res.status(500).json({ message: "فشل في جلب طلبات التحويل البنكي" });
+    }
+  });
+
+  // Get single bank transfer request
+  app.get("/api/bank-transfer/request/:id", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const request = await storage.getBankTransferRequest(id);
+      if (!request) {
+        return res.status(404).json({ message: "طلب التحويل غير موجود" });
+      }
+      res.json(request);
+    } catch (error) {
+      console.error("Error fetching bank transfer request:", error);
+      res.status(500).json({ message: "فشل في جلب طلب التحويل البنكي" });
+    }
+  });
+
+  // Admin: Get all bank transfer requests
+  app.get("/api/admin/bank-transfer/requests", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser((req.session as any).userId);
+      if (!user || !["teacher", "supervisor", "admin", "owner"].includes(user.role || "")) {
+        return res.status(403).json({ message: "غير مصرح لك بالوصول" });
+      }
+
+      const status = req.query.status as string | undefined;
+      const requests = await storage.getAllBankTransferRequests({ status });
+      
+      // Enrich with user info
+      const enrichedRequests = await Promise.all(requests.map(async (request) => {
+        const requestUser = await storage.getUser(request.userId);
+        return {
+          ...request,
+          userName: requestUser ? `${requestUser.firstName || ""} ${requestUser.lastName || ""}`.trim() : "غير معروف",
+          userPhone: requestUser?.phoneNumber || null,
+        };
+      }));
+
+      res.json(enrichedRequests);
+    } catch (error) {
+      console.error("Error fetching all bank transfer requests:", error);
+      res.status(500).json({ message: "فشل في جلب طلبات التحويل البنكي" });
+    }
+  });
+
+  // Admin: Approve bank transfer request
+  app.post("/api/admin/bank-transfer/request/:id/approve", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser((req.session as any).userId);
+      if (!user || !["teacher", "supervisor", "admin", "owner"].includes(user.role || "")) {
+        return res.status(403).json({ message: "غير مصرح لك بالوصول" });
+      }
+
+      const { id } = req.params;
+      const { notes } = req.body;
+
+      const approved = await storage.approveBankTransferRequest(id, user.id, notes);
+
+      // If there's a subscription ID, activate the subscription
+      if (approved.subscriptionId) {
+        await storage.updateSubscription(approved.subscriptionId, {
+          status: "active",
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days default
+        });
+      }
+
+      // Create notification for user
+      await storage.createNotification({
+        userId: approved.userId,
+        titleAr: "تمت الموافقة على التحويل البنكي",
+        titleEn: "Bank Transfer Approved",
+        messageAr: "تمت الموافقة على طلب التحويل البنكي الخاص بك. اشتراكك نشط الآن.",
+        messageEn: "Your bank transfer request has been approved. Your subscription is now active.",
+        type: "payment",
+        actionUrl: "/my-subscriptions",
+      });
+
+      res.json({
+        success: true,
+        message: "تمت الموافقة على طلب التحويل البنكي بنجاح",
+        request: approved
+      });
+    } catch (error) {
+      console.error("Error approving bank transfer request:", error);
+      res.status(500).json({ message: "فشل في الموافقة على طلب التحويل البنكي" });
+    }
+  });
+
+  // Admin: Reject bank transfer request
+  app.post("/api/admin/bank-transfer/request/:id/reject", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser((req.session as any).userId);
+      if (!user || !["teacher", "supervisor", "admin", "owner"].includes(user.role || "")) {
+        return res.status(403).json({ message: "غير مصرح لك بالوصول" });
+      }
+
+      const { id } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({ message: "سبب الرفض مطلوب" });
+      }
+
+      const rejected = await storage.rejectBankTransferRequest(id, user.id, reason);
+
+      // Create notification for user
+      await storage.createNotification({
+        userId: rejected.userId,
+        titleAr: "تم رفض طلب التحويل البنكي",
+        titleEn: "Bank Transfer Rejected",
+        messageAr: `تم رفض طلب التحويل البنكي. السبب: ${reason}`,
+        messageEn: `Your bank transfer request has been rejected. Reason: ${reason}`,
+        type: "payment",
+        actionUrl: "/my-subscriptions",
+      });
+
+      res.json({
+        success: true,
+        message: "تم رفض طلب التحويل البنكي",
+        request: rejected
+      });
+    } catch (error) {
+      console.error("Error rejecting bank transfer request:", error);
+      res.status(500).json({ message: "فشل في رفض طلب التحويل البنكي" });
+    }
+  });
+
+  // =====================================================
+  // Lesson Reminder Routes
+  // =====================================================
+
+  // Create a lesson reminder
+  app.post("/api/reminders", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { 
+        studentId,
+        liveRoomId,
+        reminderType,
+        scheduledFor,
+        channels,
+        messageAr,
+        messageEn,
+        metadata
+      } = req.body;
+
+      if (!scheduledFor) {
+        return res.status(400).json({ message: "وقت التذكير مطلوب" });
+      }
+
+      const reminder = await storage.createLessonReminder({
+        userId,
+        studentId,
+        liveRoomId,
+        reminderType: reminderType || "lesson",
+        scheduledFor: new Date(scheduledFor),
+        channels: channels ? JSON.stringify(channels) : null,
+        messageAr,
+        messageEn,
+        metadata: metadata ? JSON.stringify(metadata) : null,
+      });
+
+      res.json({
+        success: true,
+        message: "تم إنشاء التذكير بنجاح",
+        reminder
+      });
+    } catch (error) {
+      console.error("Error creating lesson reminder:", error);
+      res.status(500).json({ message: "فشل في إنشاء التذكير" });
+    }
+  });
+
+  // Get user's lesson reminders
+  app.get("/api/reminders", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const reminders = await storage.getUserLessonReminders(userId);
+      res.json(reminders);
+    } catch (error) {
+      console.error("Error fetching lesson reminders:", error);
+      res.status(500).json({ message: "فشل في جلب التذكيرات" });
+    }
+  });
+
+  // Update a lesson reminder
+  app.patch("/api/reminders/:id", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const updated = await storage.updateLessonReminder(id, updates);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating lesson reminder:", error);
+      res.status(500).json({ message: "فشل في تحديث التذكير" });
+    }
+  });
+
+  // Cancel a lesson reminder
+  app.post("/api/reminders/:id/cancel", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const cancelled = await storage.cancelReminder(id);
+      res.json({
+        success: true,
+        message: "تم إلغاء التذكير",
+        reminder: cancelled
+      });
+    } catch (error) {
+      console.error("Error cancelling lesson reminder:", error);
+      res.status(500).json({ message: "فشل في إلغاء التذكير" });
+    }
+  });
+
+  // =====================================================
+  // Subscription Cart Routes (Enhanced)
+  // =====================================================
+
+  // Add subscription plan to cart
+  app.post("/api/cart/subscription", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { subscriptionPlanId } = req.body;
+
+      if (!subscriptionPlanId) {
+        return res.status(400).json({ message: "معرف خطة الاشتراك مطلوب" });
+      }
+
+      const cartItem = await storage.addToCart({
+        userId,
+        subscriptionPlanId,
+        itemType: "subscription",
+      });
+
+      res.json({
+        success: true,
+        message: "تمت إضافة خطة الاشتراك إلى السلة",
+        cartItem
+      });
+    } catch (error) {
+      console.error("Error adding subscription to cart:", error);
+      res.status(500).json({ message: "فشل في إضافة الخطة إلى السلة" });
+    }
+  });
+
+  // Get cart with both courses and subscriptions
+  app.get("/api/cart/full", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const cartItems = await storage.getCartItems(userId);
+      
+      // Enrich cart items with course/subscription plan details
+      const enrichedItems = await Promise.all(cartItems.map(async (item: any) => {
+        if (item.itemType === "subscription" && item.subscriptionPlanId) {
+          const plan = await storage.getSubscriptionPlan(item.subscriptionPlanId);
+          return {
+            ...item,
+            plan
+          };
+        } else if (item.courseId) {
+          const course = await storage.getCourse(item.courseId);
+          return {
+            ...item,
+            course
+          };
+        }
+        return item;
+      }));
+
+      res.json(enrichedItems);
+    } catch (error) {
+      console.error("Error fetching full cart:", error);
+      res.status(500).json({ message: "فشل في جلب السلة" });
+    }
+  });
+
+  // Checkout cart with payment method
+  app.post("/api/cart/checkout-payment", isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { paymentMethod, bankTransferDetails } = req.body;
+
+      if (!["paypal", "bank_transfer"].includes(paymentMethod)) {
+        return res.status(400).json({ message: "طريقة دفع غير صحيحة" });
+      }
+
+      const cartItems = await storage.getCartItems(userId);
+      if (cartItems.length === 0) {
+        return res.status(400).json({ message: "السلة فارغة" });
+      }
+
+      // Calculate total amount
+      let totalAmount = 0;
+      const itemsDetails = await Promise.all(cartItems.map(async (item: any) => {
+        if (item.itemType === "subscription" && item.subscriptionPlanId) {
+          const plan = await storage.getSubscriptionPlan(item.subscriptionPlanId);
+          if (plan) {
+            totalAmount += parseFloat(plan.price);
+            return { type: "subscription", plan };
+          }
+        } else if (item.courseId) {
+          const course = await storage.getCourse(item.courseId);
+          if (course && course.price) {
+            totalAmount += parseFloat(course.price);
+            return { type: "course", course };
+          }
+        }
+        return null;
+      }));
+
+      if (paymentMethod === "bank_transfer") {
+        // Create bank transfer request
+        const transferRequest = await storage.createBankTransferRequest({
+          userId,
+          amount: totalAmount.toString(),
+          currency: "SAR",
+          bankName: bankTransferDetails?.bankName,
+          accountHolderName: bankTransferDetails?.accountHolderName,
+          transferReference: bankTransferDetails?.transferReference,
+          transferDate: bankTransferDetails?.transferDate ? new Date(bankTransferDetails.transferDate) : undefined,
+          receiptUrl: bankTransferDetails?.receiptUrl,
+          receiptFileName: bankTransferDetails?.receiptFileName,
+          notes: `Checkout for ${cartItems.length} items`,
+        });
+
+        // Clear cart
+        await storage.clearCart(userId);
+
+        return res.json({
+          success: true,
+          paymentMethod: "bank_transfer",
+          message: "تم تقديم طلب التحويل البنكي. سيتم مراجعته وتفعيل اشتراكك بعد التأكيد.",
+          transferRequest,
+          totalAmount,
+          itemsCount: cartItems.length
+        });
+      }
+
+      // PayPal checkout would be handled differently
+      res.json({
+        success: true,
+        paymentMethod: "paypal",
+        message: "تم توجيهك إلى PayPal للدفع",
+        totalAmount,
+        itemsCount: cartItems.length
+      });
+
+    } catch (error) {
+      console.error("Error processing checkout:", error);
+      res.status(500).json({ message: "فشل في معالجة الدفع" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

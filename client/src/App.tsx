@@ -49,6 +49,8 @@ import QuranSelfTestPage from "./pages/QuranSelfTestPage";
 import HadithPage from "./pages/HadithPage";
 import SheikhStudentErrorsPage from "./pages/SheikhStudentErrorsPage";
 import SubscriptionsPage from "./pages/SubscriptionsPage";
+import BankTransferCheckoutPage from "./pages/BankTransferCheckoutPage";
+import BankTransferAdminPage from "./pages/BankTransferAdminPage";
 
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management' | 'quran-test' | 'hadith' | 'sheikh-errors' | 'quran-self-test' | 'subscriptions';
 
@@ -422,6 +424,12 @@ function App() {
           <Switch>
             <Route path="/session/:roomToken">
               <LiveSession />
+            </Route>
+            <Route path="/bank-transfer-checkout">
+              <BankTransferCheckoutPage />
+            </Route>
+            <Route path="/admin/bank-transfers">
+              <BankTransferAdminPage />
             </Route>
             <Route>
               <AppContent />

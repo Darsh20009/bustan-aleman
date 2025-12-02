@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Building2, AlertCircle, ShoppingCart } from 'lucide-react';
+import { Check, CreditCard, Building2, AlertCircle, ShoppingCart, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 interface SubscriptionPlan {
   id: string;
@@ -37,6 +40,8 @@ interface UserSubscription {
 export default function SubscriptionsPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal' | 'bank_transfer' | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Fetch subscription plans
   const { data: plans = [] } = useQuery({
@@ -47,6 +52,53 @@ export default function SubscriptionsPage() {
   const { data: userSubscription } = useQuery({
     queryKey: ['/api/subscription/my-subscription'],
   }) as { data: UserSubscription | undefined };
+
+  // Add to cart mutation
+  const addToCartMutation = useMutation({
+    mutationFn: async (subscriptionPlanId: string) => {
+      return await apiRequest('/api/cart/subscription', 'POST', { subscriptionPlanId });
+    },
+    onSuccess: (data: any, planId: string) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/cart/full'] });
+      const plan = plans.find(p => p.id === planId);
+      toast({
+        title: "تمت الإضافة للسلة",
+        description: `تمت إضافة ${plan?.nameAr || 'الخطة'} إلى السلة بنجاح`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في إضافة الخطة للسلة",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Subscribe mutation
+  const subscribeMutation = useMutation({
+    mutationFn: async ({ planId, paymentMethod }: { planId: string; paymentMethod: string }) => {
+      return await apiRequest('/api/subscription/subscribe', 'POST', { planId, paymentMethod });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/subscription/my-subscription'] });
+      toast({
+        title: "تم إنشاء طلب الاشتراك",
+        description: data.message || "تم إنشاء طلب الاشتراك بنجاح",
+      });
+      if (selectedPaymentMethod === 'bank_transfer') {
+        setLocation('/bank-transfer-checkout');
+      }
+    },
+    onError: (error: any) => {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في إنشاء الاشتراك",
+        variant: "destructive",
+      });
+    },
+  });
 
   // Sort plans by featured and sort order
   const sortedPlans = (Array.isArray(plans) ? [...plans] : []).sort((a: SubscriptionPlan, b: SubscriptionPlan) => {
@@ -214,12 +266,15 @@ export default function SubscriptionsPage() {
                   {/* Add to Cart Button - Primary */}
                   <Button
                     className="w-full mb-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 text-lg shadow-lg"
-                    onClick={() => {
-                      alert(`✓✓✓ تمت إضافة ${plan.nameAr} إلى السلة بنجاح!\n\nيمكنك مراجعة السلة والمتابعة بالشراء`);
-                    }}
+                    onClick={() => addToCartMutation.mutate(plan.id)}
+                    disabled={addToCartMutation.isPending}
                     data-testid={`button-add-cart-${plan.id}`}
                   >
-                    <ShoppingCart className="w-5 h-5 ml-2" />
+                    {addToCartMutation.isPending ? (
+                      <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="w-5 h-5 ml-2" />
+                    )}
                     أضف للسلة
                   </Button>
 
@@ -228,38 +283,51 @@ export default function SubscriptionsPage() {
                     className="w-full mb-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-2 shadow-md"
                     onClick={() => {
                       setSelectedPlanId(plan.id);
-                      alert(`اختر طريقة الدفع:\n\n1️⃣ PayPal - دفع فوري\n2️⃣ التحويل البنكي - تحويل يدوي`);
+                      setSelectedPaymentMethod(null);
                     }}
                     data-testid={`button-subscribe-now-${plan.id}`}
                   >
-                    ✨ اشترك الآن
+                    اشترك الآن
                   </Button>
 
-                  {/* Payment Methods */}
-                  <div className="space-y-2">
-                    <Button
-                      className="w-full bg-emerald-600 hover:bg-emerald-700"
-                      onClick={() => {
-                        setSelectedPlanId(plan.id);
-                        setSelectedPaymentMethod('paypal');
-                      }}
-                      data-testid={`button-subscribe-paypal-${plan.id}`}
-                    >
-                      <CreditCard className="w-4 h-4 ml-2" />
-                      الدفع عبر PayPal
-                    </Button>
-                    <Button
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => {
-                        setSelectedPlanId(plan.id);
-                        setSelectedPaymentMethod('bank_transfer');
-                      }}
-                      data-testid={`button-subscribe-bank-${plan.id}`}
-                    >
-                      <Building2 className="w-4 h-4 ml-2" />
-                      التحويل البنكي
-                    </Button>
-                  </div>
+                  {/* Payment Methods - Show when plan is selected */}
+                  {selectedPlanId === plan.id && (
+                    <div className="space-y-2 mt-3 p-3 bg-gray-50 rounded-lg border">
+                      <p className="text-sm font-medium text-gray-700 mb-2">اختر طريقة الدفع:</p>
+                      <Button
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => {
+                          setSelectedPaymentMethod('paypal');
+                          subscribeMutation.mutate({ planId: plan.id, paymentMethod: 'paypal' });
+                        }}
+                        disabled={subscribeMutation.isPending}
+                        data-testid={`button-subscribe-paypal-${plan.id}`}
+                      >
+                        {subscribeMutation.isPending && selectedPaymentMethod === 'paypal' ? (
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                        ) : (
+                          <CreditCard className="w-4 h-4 ml-2" />
+                        )}
+                        الدفع عبر PayPal
+                      </Button>
+                      <Button
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        onClick={() => {
+                          setSelectedPaymentMethod('bank_transfer');
+                          subscribeMutation.mutate({ planId: plan.id, paymentMethod: 'bank_transfer' });
+                        }}
+                        disabled={subscribeMutation.isPending}
+                        data-testid={`button-subscribe-bank-${plan.id}`}
+                      >
+                        {subscribeMutation.isPending && selectedPaymentMethod === 'bank_transfer' ? (
+                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                        ) : (
+                          <Building2 className="w-4 h-4 ml-2" />
+                        )}
+                        التحويل البنكي
+                      </Button>
+                    </div>
+                  )}
 
                   {/* Is Active Status */}
                   {!plan.isActive && (

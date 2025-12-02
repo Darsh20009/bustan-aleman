@@ -553,10 +553,63 @@ export const examAttempts = bustanSchema.table("exam_attempts", {
 export const shoppingCart = bustanSchema.table("shopping_cart", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
-  courseId: varchar("course_id").references(() => courses.id).notNull(),
+  courseId: varchar("course_id").references(() => courses.id),
+  subscriptionPlanId: varchar("subscription_plan_id").references(() => subscriptionPlans.id),
+  itemType: varchar("item_type").default("course"), // course, subscription
   addedAt: timestamp("added_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Bank transfer requests - for bank transfer payment approval workflow
+export const bankTransferRequests = bustanSchema.table("bank_transfer_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  subscriptionId: varchar("subscription_id").references(() => subscriptions.id),
+  paymentTransactionId: varchar("payment_transaction_id").references(() => paymentTransactions.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency").default("SAR"),
+  bankName: varchar("bank_name"),
+  accountHolderName: varchar("account_holder_name"),
+  transferReference: varchar("transfer_reference"),
+  transferDate: timestamp("transfer_date"),
+  receiptUrl: varchar("receipt_url"),
+  receiptFileName: varchar("receipt_file_name"),
+  notes: text("notes"),
+  status: varchar("status").default("pending"), // pending, under_review, approved, rejected
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  rejectionReason: text("rejection_reason"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("bank_transfer_requests_user_idx").on(table.userId),
+  index("bank_transfer_requests_status_idx").on(table.status),
+]);
+
+// Lesson reminders - for scheduling and sending lesson reminders
+export const lessonReminders = bustanSchema.table("lesson_reminders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  studentId: varchar("student_id").references(() => students.id),
+  liveRoomId: varchar("live_room_id").references(() => liveRooms.id),
+  reminderType: varchar("reminder_type").default("lesson"), // lesson, assignment, exam, payment
+  scheduledFor: timestamp("scheduled_for").notNull(),
+  sentAt: timestamp("sent_at"),
+  channels: text("channels"), // JSON array: ["sms", "email", "push", "whatsapp"]
+  messageAr: text("message_ar"),
+  messageEn: text("message_en"),
+  status: varchar("status").default("pending"), // pending, sent, failed, cancelled
+  retryCount: integer("retry_count").default(0),
+  errorMessage: text("error_message"),
+  metadata: text("metadata"), // JSON additional data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("lesson_reminders_user_idx").on(table.userId),
+  index("lesson_reminders_scheduled_idx").on(table.scheduledFor),
+  index("lesson_reminders_status_idx").on(table.status),
+]);
 
 // Course payments - for paid course enrollments with receipt upload
 export const coursePayments = bustanSchema.table("course_payments", {
@@ -1005,6 +1058,18 @@ export const insertShoppingCartSchema = createInsertSchema(shoppingCart).omit({
   addedAt: true,
 });
 
+export const insertBankTransferRequestSchema = createInsertSchema(bankTransferRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLessonReminderSchema = createInsertSchema(lessonReminders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCoursePaymentSchema = createInsertSchema(coursePayments).omit({
   id: true,
   createdAt: true,
@@ -1155,6 +1220,10 @@ export type ExamAttempt = typeof examAttempts.$inferSelect;
 export type InsertExamAttempt = z.infer<typeof insertExamAttemptSchema>;
 export type ShoppingCartItem = typeof shoppingCart.$inferSelect;
 export type InsertShoppingCartItem = z.infer<typeof insertShoppingCartSchema>;
+export type BankTransferRequest = typeof bankTransferRequests.$inferSelect;
+export type InsertBankTransferRequest = z.infer<typeof insertBankTransferRequestSchema>;
+export type LessonReminder = typeof lessonReminders.$inferSelect;
+export type InsertLessonReminder = z.infer<typeof insertLessonReminderSchema>;
 export type CoursePayment = typeof coursePayments.$inferSelect;
 export type InsertCoursePayment = z.infer<typeof insertCoursePaymentSchema>;
 export type CourseReview = typeof courseReviews.$inferSelect;

@@ -34,6 +34,7 @@ const supervisorMenuItems = [
   { label: 'جدول الحصص', path: '/sheikh-schedule', icon: '📅' },
   { label: 'إنشاء دورة', path: '/supervisor/create-course', icon: '➕' },
   { label: 'إدارة الدورات', path: '/supervisor/courses', icon: '📚' },
+  { label: 'التحويلات البنكية', path: '/admin/bank-transfers', icon: '🏦' },
   { label: 'إصدار الشهادات', path: '/supervisor/certificates', icon: '🎖️' },
   { label: 'التقارير', path: '/supervisor/reports', icon: '📈' },
 ];
@@ -43,6 +44,7 @@ const adminMenuItems = [
   { label: 'المستخدمون', path: '/admin/users', icon: '👥' },
   { label: 'الدورات', path: '/admin/courses', icon: '📚' },
   { label: 'الرحلات', path: '/admin/trips', icon: '✈️' },
+  { label: 'التحويلات البنكية', path: '/admin/bank-transfers', icon: '🏦' },
   { label: 'المشرفين', path: '/admin/supervisors', icon: '👨‍💼' },
   { label: 'النظام', path: '/admin/system', icon: '🔧' },
 ];

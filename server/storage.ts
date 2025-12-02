@@ -36,6 +36,8 @@ import {
   subscriptions,
   paymentTransactions,
   paymentGatewaySettings,
+  bankTransferRequests,
+  lessonReminders,
   type User,
   type UpsertUser,
   type Course,
@@ -110,6 +112,10 @@ import {
   type InsertPaymentTransaction,
   type PaymentGatewaySettings,
   type InsertPaymentGatewaySettings,
+  type BankTransferRequest,
+  type InsertBankTransferRequest,
+  type LessonReminder,
+  type InsertLessonReminder,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -398,6 +404,24 @@ export interface IStorage {
   getContactMessages(filters: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]>;
   markMessageAsRead(id: string): Promise<ContactMessage>;
   assignStudentToTeacher(teacherId: string, studentId: string): Promise<any>;
+  
+  // Bank transfer request operations
+  createBankTransferRequest(request: InsertBankTransferRequest): Promise<BankTransferRequest>;
+  getBankTransferRequest(id: string): Promise<BankTransferRequest | undefined>;
+  getUserBankTransferRequests(userId: string): Promise<BankTransferRequest[]>;
+  getAllBankTransferRequests(filters?: { status?: string }): Promise<BankTransferRequest[]>;
+  updateBankTransferRequest(id: string, updates: Partial<BankTransferRequest>): Promise<BankTransferRequest>;
+  approveBankTransferRequest(id: string, reviewedBy: string, notes?: string): Promise<BankTransferRequest>;
+  rejectBankTransferRequest(id: string, reviewedBy: string, reason: string): Promise<BankTransferRequest>;
+  
+  // Lesson reminder operations
+  createLessonReminder(reminder: InsertLessonReminder): Promise<LessonReminder>;
+  getLessonReminder(id: string): Promise<LessonReminder | undefined>;
+  getUserLessonReminders(userId: string): Promise<LessonReminder[]>;
+  getPendingReminders(beforeTime: Date): Promise<LessonReminder[]>;
+  updateLessonReminder(id: string, updates: Partial<LessonReminder>): Promise<LessonReminder>;
+  markReminderSent(id: string): Promise<LessonReminder>;
+  cancelReminder(id: string): Promise<LessonReminder>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2963,6 +2987,186 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) throw new Error("Database not available");
     const [updated] = await db!.update(students).set({ sheikhId: teacherId, updatedAt: new Date() })
       .where(eq(students.id, studentId)).returning();
+    return updated;
+  }
+
+  // Bank transfer request operations
+  async createBankTransferRequest(request: InsertBankTransferRequest): Promise<BankTransferRequest> {
+    if (!this.isDbAvailable()) {
+      const mockRequest: BankTransferRequest = {
+        id: `btr_${Date.now()}`,
+        userId: request.userId,
+        subscriptionId: request.subscriptionId || null,
+        paymentTransactionId: request.paymentTransactionId || null,
+        amount: request.amount,
+        currency: request.currency || 'SAR',
+        bankName: request.bankName || null,
+        accountHolderName: request.accountHolderName || null,
+        transferReference: request.transferReference || null,
+        transferDate: request.transferDate ? new Date(request.transferDate) : null,
+        receiptUrl: request.receiptUrl || null,
+        receiptFileName: request.receiptFileName || null,
+        notes: request.notes || null,
+        status: 'pending',
+        reviewedBy: null,
+        reviewedAt: null,
+        reviewNotes: null,
+        rejectionReason: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return mockRequest;
+    }
+    const [newRequest] = await db!.insert(bankTransferRequests).values(request).returning();
+    return newRequest;
+  }
+
+  async getBankTransferRequest(id: string): Promise<BankTransferRequest | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [request] = await db!.select().from(bankTransferRequests).where(eq(bankTransferRequests.id, id));
+    return request;
+  }
+
+  async getUserBankTransferRequests(userId: string): Promise<BankTransferRequest[]> {
+    if (!this.isDbAvailable()) return [];
+    const requests = await db!.select().from(bankTransferRequests)
+      .where(eq(bankTransferRequests.userId, userId))
+      .orderBy(desc(bankTransferRequests.createdAt));
+    return requests;
+  }
+
+  async getAllBankTransferRequests(filters?: { status?: string }): Promise<BankTransferRequest[]> {
+    if (!this.isDbAvailable()) return [];
+    let query = db!.select().from(bankTransferRequests);
+    if (filters?.status) {
+      query = query.where(eq(bankTransferRequests.status, filters.status)) as any;
+    }
+    const requests = await query.orderBy(desc(bankTransferRequests.createdAt));
+    return requests;
+  }
+
+  async updateBankTransferRequest(id: string, updates: Partial<BankTransferRequest>): Promise<BankTransferRequest> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(bankTransferRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(bankTransferRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async approveBankTransferRequest(id: string, reviewedBy: string, notes?: string): Promise<BankTransferRequest> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(bankTransferRequests)
+      .set({
+        status: 'approved',
+        reviewedBy,
+        reviewedAt: new Date(),
+        reviewNotes: notes || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(bankTransferRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  async rejectBankTransferRequest(id: string, reviewedBy: string, reason: string): Promise<BankTransferRequest> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(bankTransferRequests)
+      .set({
+        status: 'rejected',
+        reviewedBy,
+        reviewedAt: new Date(),
+        rejectionReason: reason,
+        updatedAt: new Date(),
+      })
+      .where(eq(bankTransferRequests.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Lesson reminder operations
+  async createLessonReminder(reminder: InsertLessonReminder): Promise<LessonReminder> {
+    if (!this.isDbAvailable()) {
+      const mockReminder: LessonReminder = {
+        id: `lr_${Date.now()}`,
+        userId: reminder.userId,
+        studentId: reminder.studentId || null,
+        liveRoomId: reminder.liveRoomId || null,
+        reminderType: reminder.reminderType || 'lesson',
+        scheduledFor: reminder.scheduledFor ? new Date(reminder.scheduledFor) : new Date(),
+        sentAt: null,
+        channels: reminder.channels || null,
+        messageAr: reminder.messageAr || null,
+        messageEn: reminder.messageEn || null,
+        status: 'pending',
+        retryCount: 0,
+        errorMessage: null,
+        metadata: reminder.metadata || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      return mockReminder;
+    }
+    const [newReminder] = await db!.insert(lessonReminders).values(reminder).returning();
+    return newReminder;
+  }
+
+  async getLessonReminder(id: string): Promise<LessonReminder | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [reminder] = await db!.select().from(lessonReminders).where(eq(lessonReminders.id, id));
+    return reminder;
+  }
+
+  async getUserLessonReminders(userId: string): Promise<LessonReminder[]> {
+    if (!this.isDbAvailable()) return [];
+    const reminders = await db!.select().from(lessonReminders)
+      .where(eq(lessonReminders.userId, userId))
+      .orderBy(desc(lessonReminders.scheduledFor));
+    return reminders;
+  }
+
+  async getPendingReminders(beforeTime: Date): Promise<LessonReminder[]> {
+    if (!this.isDbAvailable()) return [];
+    const reminders = await db!.select().from(lessonReminders)
+      .where(and(
+        eq(lessonReminders.status, 'pending'),
+        lte(lessonReminders.scheduledFor, beforeTime)
+      ))
+      .orderBy(lessonReminders.scheduledFor);
+    return reminders;
+  }
+
+  async updateLessonReminder(id: string, updates: Partial<LessonReminder>): Promise<LessonReminder> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(lessonReminders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(lessonReminders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async markReminderSent(id: string): Promise<LessonReminder> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(lessonReminders)
+      .set({
+        status: 'sent',
+        sentAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(lessonReminders.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cancelReminder(id: string): Promise<LessonReminder> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(lessonReminders)
+      .set({
+        status: 'cancelled',
+        updatedAt: new Date(),
+      })
+      .where(eq(lessonReminders.id, id))
+      .returning();
     return updated;
   }
 }
