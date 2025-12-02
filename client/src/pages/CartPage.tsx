@@ -13,7 +13,7 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
   const { toast } = useToast();
 
   const { data: cartItems = [], isLoading } = useQuery<any[]>({
-    queryKey: ['/api/cart'],
+    queryKey: ['/api/cart/full'],
   });
 
   const removeFromCartMutation = useMutation({
@@ -21,6 +21,7 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
       await apiRequest(`/api/cart/${courseId}`, 'DELETE');
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart/full'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       toast({
         title: 'تم الحذف',
@@ -41,6 +42,7 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
       return await apiRequest('/api/cart/checkout', 'POST');
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/cart/full'] });
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
       queryClient.invalidateQueries({ queryKey: ['/api/user/enrollments'] });
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
@@ -104,7 +106,7 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
                 <ShoppingCart className="w-12 h-12 text-gray-400" />
               </div>
               <h3 className="text-2xl font-bold mb-2 text-gray-900">العربة فارغة</h3>
-              <p className="text-lg text-gray-600 mb-6">لم تقم بإضافة أي دورات للعربة بعد</p>
+              <p className="text-lg text-gray-600 mb-6">لم تقم بإضافة أي دورات أو اشتراكات للعربة بعد</p>
               {onBack && (
                 <Button
                   onClick={onBack}
@@ -121,37 +123,61 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
           <>
             {/* Cart Items */}
             <div className="space-y-4">
-              {cartItems.map((item: any) => (
-                <Card key={item.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                          {item.course?.titleAr || 'دورة تعليمية'}
-                        </h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">
-                          {item.course?.descriptionAr || ''}
-                        </p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                          <span>المدة: {item.course?.duration || 'غير محدد'}</span>
-                          <span>•</span>
-                          <span>المستوى: {item.course?.level || 'جميع المستويات'}</span>
+              {cartItems.map((item: any) => {
+                const isSubscription = item.type === 'subscription' || item.subscriptionPlanId;
+                const isCourse = item.courseId && !isSubscription;
+                
+                return (
+                  <Card key={item.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          {isCourse && (
+                            <>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {item.course?.titleAr || 'دورة تعليمية'}
+                              </h3>
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {item.course?.descriptionAr || ''}
+                              </p>
+                              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                                <span>المدة: {item.course?.duration || 'غير محدد'}</span>
+                                <span>•</span>
+                                <span>المستوى: {item.course?.level || 'جميع المستويات'}</span>
+                              </div>
+                            </>
+                          )}
+                          {isSubscription && (
+                            <>
+                              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {item.plan?.nameAr || 'خطة اشتراك'}
+                              </h3>
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {item.plan?.descriptionAr || ''}
+                              </p>
+                              <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                                <span>السعر: {item.plan?.price} {item.plan?.currency || 'SAR'}</span>
+                                <span>•</span>
+                                <span>عدد الحصص: {item.plan?.sessionsCount || 'غير محدد'}</span>
+                              </div>
+                            </>
+                          )}
                         </div>
-                      </div>
 
-                      <Button
-                        onClick={() => removeFromCartMutation.mutate(item.courseId)}
-                        disabled={removeFromCartMutation.isPending}
-                        variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50"
-                        data-testid={`button-remove-from-cart-${item.courseId}`}
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                        <Button
+                          onClick={() => removeFromCartMutation.mutate(isSubscription ? item.subscriptionPlanId : item.courseId)}
+                          disabled={removeFromCartMutation.isPending}
+                          variant="outline"
+                          className="border-red-300 text-red-600 hover:bg-red-50"
+                          data-testid={`button-remove-from-cart-${isSubscription ? item.subscriptionPlanId : item.courseId}`}
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Checkout Section */}

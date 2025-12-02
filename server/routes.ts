@@ -30,6 +30,9 @@ import {
   insertShoppingCartSchema,
 } from "@shared/schema";
 
+// In-memory storage for subscription carts (userId -> Set of planIds)
+const subscriptionCarts = new Map<string, Set<{ id: string; planId: string; addedAt: string }>>();
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log("🔄 registerRoutes: Setting up phone auth...");
   // Setup phone authentication
@@ -565,20 +568,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "خطة الاشتراك غير موجودة" });
       }
       
-      // Store subscription in cart (for now, we'll use a simple approach)
-      // In a real app, you'd have a subscription cart table
+      // Store subscription in in-memory cart
+      if (!subscriptionCarts.has(userId)) {
+        subscriptionCarts.set(userId, new Set());
+      }
+      
       const cartItem = {
         id: `sub_${Date.now()}`,
-        userId,
-        subscriptionPlanId,
-        type: 'subscription',
+        planId: subscriptionPlanId,
         addedAt: new Date().toISOString()
       };
+      
+      subscriptionCarts.get(userId)!.add(cartItem);
       
       res.status(201).json({
         success: true,
         message: "تمت إضافة خطة الاشتراك إلى السلة",
-        cartItem
+        cartItem: {
+          ...cartItem,
+          subscriptionPlanId,
+          type: 'subscription'
+        }
       });
     } catch (error) {
       console.error("Error adding subscription to cart:", error);
@@ -586,16 +596,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/cart/:courseId', isPhoneAuthenticated, async (req: any, res) => {
+  app.delete('/api/cart/:itemId', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const { courseId } = req.params;
+      const { itemId } = req.params;
       
-      await storage.removeFromCart(userId, courseId);
-      res.json({ message: "تم حذف الدورة من العربة" });
+      // Check if this is a subscription (starts with plan_) or a course
+      if (itemId.startsWith('plan_')) {
+        // This is a subscription plan ID - remove from in-memory cart
+        if (subscriptionCarts.has(userId)) {
+          const items = subscriptionCarts.get(userId)!;
+          const itemToRemove = Array.from(items).find(item => item.planId === itemId);
+          if (itemToRemove) {
+            items.delete(itemToRemove);
+          }
+        }
+        res.json({ success: true, message: "تم حذف الاشتراك من السلة" });
+      } else {
+        // This is a course ID
+        await storage.removeFromCart(userId, itemId);
+        res.json({ message: "تم حذف الدورة من العربة" });
+      }
     } catch (error) {
       console.error("Error removing from cart:", error);
-      res.status(500).json({ message: "فشل في حذف الدورة من العربة" });
+      res.status(500).json({ message: "فشل في حذف العنصر من العربة" });
     }
   });
 
@@ -3883,7 +3907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const cartItems = await storage.getCartItems(userId);
       
       // Enrich cart items with course/subscription plan details
-      const enrichedItems = await Promise.all(cartItems.map(async (item: any) => {
+      const enrichedCourseItems = await Promise.all(cartItems.map(async (item: any) => {
         if (item.itemType === "subscription" && item.subscriptionPlanId) {
           const plan = await storage.getSubscriptionPlan(item.subscriptionPlanId);
           return {
@@ -3900,7 +3924,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return item;
       }));
 
-      res.json(enrichedItems);
+      // Add subscriptions from in-memory cart
+      const subscriptionItems = subscriptionCarts.get(userId) ? Array.from(subscriptionCarts.get(userId)!) : [];
+      const enrichedSubscriptionItems = subscriptionItems.map((sub: any) => {
+        const plans = [
+          { id: "plan_1", nameAr: "خطة مجانية", nameEn: "Free Plan", price: "0.00", currency: "SAR", sessionsCount: 1, descriptionAr: "ابدأ مجاناً" },
+          { id: "plan_2", nameAr: "خطة أساسية", nameEn: "Basic Plan", price: "99.99", currency: "SAR", sessionsCount: 4, descriptionAr: "خطة مثالية للمبتدئين" },
+          { id: "plan_3", nameAr: "خطة احترافية", nameEn: "Pro Plan", price: "199.99", currency: "SAR", sessionsCount: 8, descriptionAr: "الخطة الأكثر شيوعاً" },
+          { id: "plan_4", nameAr: "خطة متقدمة", nameEn: "Advanced Plan", price: "299.99", currency: "SAR", sessionsCount: 12, descriptionAr: "للراغبين في التقدم السريع" },
+          { id: "plan_5", nameAr: "خطة ربع سنوية", nameEn: "Quarterly Plan", price: "499.99", currency: "SAR", sessionsCount: 24, descriptionAr: "توفير 15%" },
+          { id: "plan_6", nameAr: "خطة نصف سنوية", nameEn: "Semi-Annual Plan", price: "699.99", currency: "SAR", sessionsCount: 48, descriptionAr: "توفير 25%" }
+        ];
+        const plan = plans.find(p => p.id === sub.planId);
+        return {
+          ...sub,
+          subscriptionPlanId: sub.planId,
+          type: 'subscription',
+          plan
+        };
+      });
+
+      const allItems = [...enrichedCourseItems, ...enrichedSubscriptionItems];
+      res.json(allItems);
     } catch (error) {
       console.error("Error fetching full cart:", error);
       res.status(500).json({ message: "فشل في جلب السلة" });
