@@ -441,6 +441,77 @@ export const supervisors = bustanSchema.table("supervisors", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Halaqat (Groups/Classes) table - for organizing students into class groups
+export const halaqat = bustanSchema.table("halaqat", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  nameAr: varchar("name_ar").notNull(),
+  nameEn: varchar("name_en"),
+  descriptionAr: text("description_ar"),
+  descriptionEn: text("description_en"),
+  teacherId: varchar("teacher_id").references(() => users.id).notNull(),
+  supervisorId: varchar("supervisor_id").references(() => users.id),
+  level: varchar("level").default("beginner"),
+  category: varchar("category").default("quran"),
+  maxStudents: integer("max_students").default(20),
+  currentStudents: integer("current_students").default(0),
+  startTime: varchar("start_time"),
+  endTime: varchar("end_time"),
+  daysOfWeek: text("days_of_week"),
+  meetingLink: varchar("meeting_link"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("halaqat_teacher_idx").on(table.teacherId),
+  index("halaqat_supervisor_idx").on(table.supervisorId),
+]);
+
+// Halaqa members - students in each group
+export const halaqaMembers = bustanSchema.table("halaqa_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  halaqaId: varchar("halaqa_id").references(() => halaqat.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  joinDate: timestamp("join_date").defaultNow(),
+  status: varchar("status").default("active"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique("halaqa_member_unique").on(table.halaqaId, table.studentId),
+  index("halaqa_members_halaqa_idx").on(table.halaqaId),
+  index("halaqa_members_student_idx").on(table.studentId),
+]);
+
+// Halaqa schedules - recurring schedules for groups
+export const halaqaSchedules = bustanSchema.table("halaqa_schedules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  halaqaId: varchar("halaqa_id").references(() => halaqat.id).notNull(),
+  dayOfWeek: integer("day_of_week").notNull(),
+  startTime: varchar("start_time").notNull(),
+  endTime: varchar("end_time").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("halaqa_schedules_halaqa_idx").on(table.halaqaId),
+]);
+
+// Halaqa attendance - track attendance for group sessions
+export const halaqaAttendance = bustanSchema.table("halaqa_attendance", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  halaqaId: varchar("halaqa_id").references(() => halaqat.id).notNull(),
+  studentId: varchar("student_id").references(() => users.id).notNull(),
+  sessionDate: date("session_date").notNull(),
+  attended: boolean("attended").default(false),
+  excuseReason: text("excuse_reason"),
+  notes: text("notes"),
+  recordedBy: varchar("recorded_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  unique("halaqa_attendance_unique").on(table.halaqaId, table.studentId, table.sessionDate),
+  index("halaqa_attendance_halaqa_idx").on(table.halaqaId),
+  index("halaqa_attendance_student_idx").on(table.studentId),
+  index("halaqa_attendance_date_idx").on(table.sessionDate),
+]);
+
 // Student notes table - for supervisor notes on students
 export const studentNotes = bustanSchema.table("student_notes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1018,6 +1089,29 @@ export const insertSupervisorSchema = createInsertSchema(supervisors).omit({
   updatedAt: true,
 });
 
+export const insertHalaqaSchema = createInsertSchema(halaqat).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  currentStudents: true,
+});
+
+export const insertHalaqaMemberSchema = createInsertSchema(halaqaMembers).omit({
+  id: true,
+  createdAt: true,
+  joinDate: true,
+});
+
+export const insertHalaqaScheduleSchema = createInsertSchema(halaqaSchedules).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertHalaqaAttendanceSchema = createInsertSchema(halaqaAttendance).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertStudentNoteSchema = createInsertSchema(studentNotes).omit({
   id: true,
   createdAt: true,
@@ -1206,6 +1300,14 @@ export type QuranProgress = typeof quranProgress.$inferSelect;
 export type InsertQuranProgress = z.infer<typeof insertQuranProgressSchema>;
 export type Supervisor = typeof supervisors.$inferSelect;
 export type InsertSupervisor = z.infer<typeof insertSupervisorSchema>;
+export type Halaqa = typeof halaqat.$inferSelect;
+export type InsertHalaqa = z.infer<typeof insertHalaqaSchema>;
+export type HalaqaMember = typeof halaqaMembers.$inferSelect;
+export type InsertHalaqaMember = z.infer<typeof insertHalaqaMemberSchema>;
+export type HalaqaSchedule = typeof halaqaSchedules.$inferSelect;
+export type InsertHalaqaSchedule = z.infer<typeof insertHalaqaScheduleSchema>;
+export type HalaqaAttendance = typeof halaqaAttendance.$inferSelect;
+export type InsertHalaqaAttendance = z.infer<typeof insertHalaqaAttendanceSchema>;
 export type StudentNote = typeof studentNotes.$inferSelect;
 export type InsertStudentNote = z.infer<typeof insertStudentNoteSchema>;
 export type CourseModule = typeof courseModules.$inferSelect;

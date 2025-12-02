@@ -80,6 +80,43 @@ Typography predominantly uses emerald and orange shades, eliminating gray text f
 -   `typescript`: Superset of JavaScript for type safety
 -   `tsx`: TypeScript execution environment
 
+## Recent Changes (December 2025)
+
+### Groups/Halaqat System (December 2, 2025)
+- **Added**: Complete Groups/Halaqat (الحلقات) management system for organizing Quran classes
+- **Database Schema**: 4 new tables in PostgreSQL (Drizzle ORM):
+  - `halaqat` - Main groups table (name, teacher, supervisor, level, capacity, schedules)
+  - `halaqa_members` - Student memberships with join dates and status
+  - `halaqa_schedules` - Weekly session schedules (day, time, duration, room)
+  - `halaqa_attendance` - Attendance records with status tracking
+- **API Endpoints** (15+ routes):
+  - `GET /api/halaqat` - List groups (role-based filtering)
+  - `GET /api/halaqat/active` - Active groups only
+  - `GET/POST/PATCH/DELETE /api/halaqat/:id` - CRUD operations
+  - `GET/POST/DELETE /api/halaqat/:id/members` - Member management
+  - `GET/POST/PATCH/DELETE /api/halaqat/:id/schedules` - Schedule management
+  - `GET/POST /api/halaqat/:id/attendance` - Attendance tracking
+  - `POST /api/halaqat/:id/attendance/bulk` - Bulk attendance recording
+  - `GET /api/students/:studentId/attendance` - Student attendance history
+- **Role-Based Access Control**:
+  - Owners/Admins/Supervisors: Full access to all groups
+  - Teachers: Can manage their assigned groups only
+  - Students: Can view their enrolled groups only
+- **Features**:
+  - Ownership verification via `canManageHalaqa` helper function
+  - Arabic/English bilingual support (nameAr, nameEn)
+  - Group levels (beginner, intermediate, advanced, memorization)
+  - Session types (face-to-face, online, both)
+  - Attendance status tracking (present, absent, excused, late)
+  - Current student count auto-management
+- **Files Created/Modified**:
+  - `shared/schema.ts` - Added 4 tables + types + insert schemas
+  - `server/storage.ts` - Added IStorage interface methods + DatabaseStorage implementation
+  - `server/halaqaRoutes.ts` - New routes file with 15+ endpoints
+  - `server/mongoStorage.ts` - Added stub methods (PostgreSQL-only feature)
+  - `server/index.ts` - Registered halaqaRoutes
+- **Status**: ✅ Fully functional - Core CRUD, member management, schedules, attendance
+
 ## Recent Changes (November 2025)
 
 ### Quran Self-Testing Page (November 30, 2025)

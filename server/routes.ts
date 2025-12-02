@@ -6,7 +6,26 @@ import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type Authenti
 import { quranService } from "./quranService";
 import bcrypt from "bcrypt";
 import { telegramBot } from "./telegramBot";
-import { createPaypalOrder, capturePaypalOrder, loadPaypalDefault } from "./paypal";
+
+// PayPal is loaded dynamically to allow the app to start without credentials
+let paypalModule: {
+  createPaypalOrder: typeof import("./paypal").createPaypalOrder;
+  capturePaypalOrder: typeof import("./paypal").capturePaypalOrder;
+  loadPaypalDefault: typeof import("./paypal").loadPaypalDefault;
+} | null = null;
+
+const isPaypalConfigured = !!(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
+
+if (isPaypalConfigured) {
+  import("./paypal").then((module) => {
+    paypalModule = module;
+    console.log("✅ PayPal module loaded successfully");
+  }).catch((error) => {
+    console.warn("⚠️ PayPal module failed to load:", error.message);
+  });
+} else {
+  console.warn("⚠️ PayPal credentials not configured - PayPal payments disabled");
+}
 import {
   insertCourseSchema,
   insertCourseModuleSchema,
@@ -2834,7 +2853,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PayPal SDK setup - returns client token for frontend initialization
   app.get("/paypal/setup", isPhoneAuthenticated, async (req: any, res) => {
     try {
-      await loadPaypalDefault(req, res);
+      if (!paypalModule) {
+        return res.status(503).json({ 
+          error: "PayPal غير متاح حالياً", 
+          message: "يرجى استخدام التحويل البنكي كبديل" 
+        });
+      }
+      await paypalModule.loadPaypalDefault(req, res);
     } catch (error) {
       console.error("PayPal setup error:", error);
       res.status(500).json({ error: "فشل في إعداد PayPal" });
@@ -2844,6 +2869,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create PayPal order - requires authentication and validates plan
   app.post("/paypal/order", isPhoneAuthenticated, async (req: any, res) => {
     try {
+      if (!paypalModule) {
+        return res.status(503).json({ 
+          error: "PayPal غير متاح حالياً", 
+          message: "يرجى استخدام التحويل البنكي كبديل" 
+        });
+      }
+      
       const { planId, amount, currency, intent } = req.body;
       
       // Validate required fields
@@ -2867,7 +2899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      await createPaypalOrder(req, res);
+      await paypalModule.createPaypalOrder(req, res);
     } catch (error) {
       console.error("PayPal order creation error:", error);
       res.status(500).json({ error: "فشل في إنشاء الطلب" });
@@ -2877,7 +2909,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Capture PayPal order after approval - requires authentication
   app.post("/paypal/order/:orderID/capture", isPhoneAuthenticated, async (req: any, res) => {
     try {
-      await capturePaypalOrder(req, res);
+      if (!paypalModule) {
+        return res.status(503).json({ 
+          error: "PayPal غير متاح حالياً", 
+          message: "يرجى استخدام التحويل البنكي كبديل" 
+        });
+      }
+      await paypalModule.capturePaypalOrder(req, res);
     } catch (error) {
       console.error("PayPal capture error:", error);
       res.status(500).json({ error: "فشل في تأكيد الدفع" });

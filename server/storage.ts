@@ -116,6 +116,18 @@ import {
   type InsertBankTransferRequest,
   type LessonReminder,
   type InsertLessonReminder,
+  type Halaqa,
+  type InsertHalaqa,
+  type HalaqaMember,
+  type InsertHalaqaMember,
+  type HalaqaSchedule,
+  type InsertHalaqaSchedule,
+  type HalaqaAttendance,
+  type InsertHalaqaAttendance,
+  halaqat,
+  halaqaMembers,
+  halaqaSchedules,
+  halaqaAttendance,
 } from "@shared/schema";
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
@@ -423,6 +435,34 @@ export interface IStorage {
   markReminderSent(id: string): Promise<LessonReminder>;
   cancelReminder(id: string): Promise<LessonReminder>;
   getPendingRemindersToSend(): Promise<LessonReminder[]>;
+  
+  // Halaqa (Groups/Classes) operations
+  getHalaqat(): Promise<Halaqa[]>;
+  getActiveHalaqat(): Promise<Halaqa[]>;
+  getHalaqa(id: string): Promise<Halaqa | undefined>;
+  getTeacherHalaqat(teacherId: string): Promise<Halaqa[]>;
+  createHalaqa(halaqa: InsertHalaqa): Promise<Halaqa>;
+  updateHalaqa(id: string, halaqa: Partial<InsertHalaqa>): Promise<Halaqa>;
+  deleteHalaqa(id: string): Promise<void>;
+  
+  // Halaqa member operations
+  getHalaqaMembers(halaqaId: string): Promise<HalaqaMember[]>;
+  getStudentHalaqat(studentId: string): Promise<HalaqaMember[]>;
+  addHalaqaMember(member: InsertHalaqaMember): Promise<HalaqaMember>;
+  removeHalaqaMember(halaqaId: string, studentId: string): Promise<void>;
+  updateHalaqaMember(halaqaId: string, studentId: string, updates: Partial<InsertHalaqaMember>): Promise<HalaqaMember>;
+  
+  // Halaqa schedule operations
+  getHalaqaSchedules(halaqaId: string): Promise<HalaqaSchedule[]>;
+  createHalaqaSchedule(schedule: InsertHalaqaSchedule): Promise<HalaqaSchedule>;
+  updateHalaqaSchedule(id: string, schedule: Partial<InsertHalaqaSchedule>): Promise<HalaqaSchedule>;
+  deleteHalaqaSchedule(id: string): Promise<void>;
+  
+  // Halaqa attendance operations
+  getHalaqaAttendance(halaqaId: string, date?: string): Promise<HalaqaAttendance[]>;
+  getStudentHalaqaAttendance(studentId: string): Promise<HalaqaAttendance[]>;
+  recordHalaqaAttendance(attendance: InsertHalaqaAttendance): Promise<HalaqaAttendance>;
+  updateHalaqaAttendance(id: string, updates: Partial<InsertHalaqaAttendance>): Promise<HalaqaAttendance>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3181,6 +3221,155 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(lessonReminders.scheduledFor);
     return reminders;
+  }
+
+  // Halaqa (Groups/Classes) operations
+  async getHalaqat(): Promise<Halaqa[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqat).orderBy(desc(halaqat.createdAt));
+  }
+
+  async getActiveHalaqat(): Promise<Halaqa[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqat).where(eq(halaqat.isActive, true)).orderBy(halaqat.nameAr);
+  }
+
+  async getHalaqa(id: string): Promise<Halaqa | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    const [halaqa] = await db!.select().from(halaqat).where(eq(halaqat.id, id));
+    return halaqa;
+  }
+
+  async getTeacherHalaqat(teacherId: string): Promise<Halaqa[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqat).where(eq(halaqat.teacherId, teacherId)).orderBy(halaqat.nameAr);
+  }
+
+  async createHalaqa(halaqa: InsertHalaqa): Promise<Halaqa> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newHalaqa] = await db!.insert(halaqat).values(halaqa).returning();
+    return newHalaqa;
+  }
+
+  async updateHalaqa(id: string, updates: Partial<InsertHalaqa>): Promise<Halaqa> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(halaqat)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(halaqat.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteHalaqa(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    await db!.delete(halaqat).where(eq(halaqat.id, id));
+  }
+
+  // Halaqa member operations
+  async getHalaqaMembers(halaqaId: string): Promise<HalaqaMember[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqaMembers).where(eq(halaqaMembers.halaqaId, halaqaId));
+  }
+
+  async getStudentHalaqat(studentId: string): Promise<HalaqaMember[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqaMembers).where(eq(halaqaMembers.studentId, studentId));
+  }
+
+  async addHalaqaMember(member: InsertHalaqaMember): Promise<HalaqaMember> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newMember] = await db!.insert(halaqaMembers).values(member).returning();
+    await db!.update(halaqat)
+      .set({ currentStudents: sql`${halaqat.currentStudents} + 1` })
+      .where(eq(halaqat.id, member.halaqaId));
+    return newMember;
+  }
+
+  async removeHalaqaMember(halaqaId: string, studentId: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    await db!.delete(halaqaMembers)
+      .where(and(eq(halaqaMembers.halaqaId, halaqaId), eq(halaqaMembers.studentId, studentId)));
+    await db!.update(halaqat)
+      .set({ currentStudents: sql`GREATEST(${halaqat.currentStudents} - 1, 0)` })
+      .where(eq(halaqat.id, halaqaId));
+  }
+
+  async updateHalaqaMember(halaqaId: string, studentId: string, updates: Partial<InsertHalaqaMember>): Promise<HalaqaMember> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(halaqaMembers)
+      .set(updates)
+      .where(and(eq(halaqaMembers.halaqaId, halaqaId), eq(halaqaMembers.studentId, studentId)))
+      .returning();
+    return updated;
+  }
+
+  // Halaqa schedule operations
+  async getHalaqaSchedules(halaqaId: string): Promise<HalaqaSchedule[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqaSchedules).where(eq(halaqaSchedules.halaqaId, halaqaId));
+  }
+
+  async createHalaqaSchedule(schedule: InsertHalaqaSchedule): Promise<HalaqaSchedule> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newSchedule] = await db!.insert(halaqaSchedules).values(schedule).returning();
+    return newSchedule;
+  }
+
+  async updateHalaqaSchedule(id: string, updates: Partial<InsertHalaqaSchedule>): Promise<HalaqaSchedule> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(halaqaSchedules)
+      .set(updates)
+      .where(eq(halaqaSchedules.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteHalaqaSchedule(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    await db!.delete(halaqaSchedules).where(eq(halaqaSchedules.id, id));
+  }
+
+  // Halaqa attendance operations
+  async getHalaqaAttendance(halaqaId: string, date?: string): Promise<HalaqaAttendance[]> {
+    if (!this.isDbAvailable()) return [];
+    if (date) {
+      return await db!.select().from(halaqaAttendance)
+        .where(and(eq(halaqaAttendance.halaqaId, halaqaId), eq(halaqaAttendance.sessionDate, date)));
+    }
+    return await db!.select().from(halaqaAttendance).where(eq(halaqaAttendance.halaqaId, halaqaId));
+  }
+
+  async getStudentHalaqaAttendance(studentId: string): Promise<HalaqaAttendance[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(halaqaAttendance)
+      .where(eq(halaqaAttendance.studentId, studentId))
+      .orderBy(desc(halaqaAttendance.sessionDate));
+  }
+
+  async recordHalaqaAttendance(attendance: InsertHalaqaAttendance): Promise<HalaqaAttendance> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [newAttendance] = await db!.insert(halaqaAttendance)
+      .values(attendance)
+      .onConflictDoUpdate({
+        target: [halaqaAttendance.halaqaId, halaqaAttendance.studentId, halaqaAttendance.sessionDate],
+        set: {
+          attended: attendance.attended,
+          excuseReason: attendance.excuseReason,
+          notes: attendance.notes,
+          recordedBy: attendance.recordedBy,
+        },
+      })
+      .returning();
+    return newAttendance;
+  }
+
+  async updateHalaqaAttendance(id: string, updates: Partial<InsertHalaqaAttendance>): Promise<HalaqaAttendance> {
+    if (!this.isDbAvailable()) throw new Error("Database not available");
+    const [updated] = await db!.update(halaqaAttendance)
+      .set(updates)
+      .where(eq(halaqaAttendance.id, id))
+      .returning();
+    return updated;
   }
 }
 

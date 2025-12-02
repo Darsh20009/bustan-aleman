@@ -126,6 +126,11 @@ app.use((req, res, next) => {
     setupAdminDashboardRoutes(app);
     console.log("✅ Admin dashboard routes setup");
     
+    // Setup Halaqa routes (groups/classes management)
+    const { setupHalaqaRoutes } = await import("./halaqaRoutes");
+    setupHalaqaRoutes(app);
+    console.log("✅ Halaqa routes setup");
+    
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
     console.log("✅ Routes registered");

@@ -1339,6 +1339,28 @@ export class MongoDBStorage implements IStorage {
     }
     await Notification.findOneAndDelete({ _id: id, userId });
   }
+
+  // Halaqa stub methods - MongoDB storage uses PostgreSQL for halaqat data
+  async getHalaqat(): Promise<any[]> { return []; }
+  async getActiveHalaqat(): Promise<any[]> { return []; }
+  async getHalaqa(id: string): Promise<any> { return undefined; }
+  async getTeacherHalaqat(teacherId: string): Promise<any[]> { return []; }
+  async createHalaqa(halaqa: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async updateHalaqa(id: string, halaqa: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async deleteHalaqa(id: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async getHalaqaMembers(halaqaId: string): Promise<any[]> { return []; }
+  async getStudentHalaqat(studentId: string): Promise<any[]> { return []; }
+  async addHalaqaMember(member: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async removeHalaqaMember(halaqaId: string, studentId: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async updateHalaqaMember(halaqaId: string, studentId: string, updates: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async getHalaqaSchedules(halaqaId: string): Promise<any[]> { return []; }
+  async createHalaqaSchedule(schedule: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async updateHalaqaSchedule(id: string, schedule: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async deleteHalaqaSchedule(id: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async getHalaqaAttendance(halaqaId: string, date?: string): Promise<any[]> { return []; }
+  async getStudentHalaqaAttendance(studentId: string): Promise<any[]> { return []; }
+  async recordHalaqaAttendance(attendance: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  async updateHalaqaAttendance(id: string, updates: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
 }
 
 export const mongoStorage = new MongoDBStorage();
