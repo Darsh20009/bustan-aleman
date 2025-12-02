@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { useAuth } from '../hooks/useAuth';
 import { MoreVertical, ShoppingCart, LogOut } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -248,6 +249,12 @@ export function PersistentHeader({ onNavigate }: PersistentHeaderProps) {
     admin: 'مدير'
   }[user.role];
 
+  // Fetch cart items to show count
+  const { data: cartItems = [] } = useQuery<any[]>({
+    queryKey: ['/api/cart/full'],
+    enabled: user.role === 'student'
+  });
+
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#083530]">
@@ -278,6 +285,11 @@ export function PersistentHeader({ onNavigate }: PersistentHeaderProps) {
                 data-testid="button-shopping-cart"
               >
                 <ShoppingCart className="w-5 h-5" />
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {cartItems.length}
+                  </span>
+                )}
               </Button>
             )}
             
