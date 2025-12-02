@@ -57,7 +57,7 @@ export default function SubscriptionsPage() {
   // Add to cart mutation
   const addToCartMutation = useMutation({
     mutationFn: async (subscriptionPlanId: string) => {
-      return await apiRequest('/api/cart/subscription', 'POST', { subscriptionPlanId });
+      return await apiRequest('POST', '/api/cart/subscription', { subscriptionPlanId });
     },
     onSuccess: (data: any, planId: string) => {
       queryClient.invalidateQueries({ queryKey: ['/api/cart'] });
@@ -80,7 +80,7 @@ export default function SubscriptionsPage() {
   // Subscribe mutation
   const subscribeMutation = useMutation({
     mutationFn: async ({ planId, paymentMethod }: { planId: string; paymentMethod: string }) => {
-      return await apiRequest('/api/subscription/subscribe', 'POST', { planId, paymentMethod });
+      return await apiRequest('POST', '/api/subscription/subscribe', { planId, paymentMethod });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/subscription/my-subscription'] });
