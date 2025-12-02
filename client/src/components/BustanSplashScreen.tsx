@@ -1,275 +1,69 @@
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 
 interface BustanSplashScreenProps {
   onComplete: () => void;
 }
 
 export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
-  const [currentPhase, setCurrentPhase] = useState(0);
-  const [showLogo, setShowLogo] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const timer1 = setTimeout(() => setShowLogo(true), 300);
-    const timer2 = setTimeout(() => setCurrentPhase(1), 800);
-    const timer3 = setTimeout(() => setCurrentPhase(2), 1300);
-    const timer4 = setTimeout(() => setCurrentPhase(3), 1800);
-    const timer5 = setTimeout(() => onComplete(), 2500);
+    const timer1 = setTimeout(() => setProgress(50), 200);
+    const timer2 = setTimeout(() => setProgress(100), 400);
+    const timer3 = setTimeout(() => onComplete(), 800);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
-      clearTimeout(timer4);
-      clearTimeout(timer5);
     };
   }, [onComplete]);
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-white/5 animate-pulse"></div>
-
-        {[...Array(8)].map((_, i) => (
-          <motion.div
-            key={`floating-${i}`}
-            className="absolute w-20 h-20 opacity-10"
-            style={{
-              left: `${20 + (i % 3) * 30}%`,
-              top: `${20 + Math.floor(i / 3) * 25}%`,
-            }}
-            animate={{
-              y: [-20, 20, -20],
-              rotate: [0, 360],
-              scale: [0.8, 1.2, 0.8],
-            }}
-            transition={{
-              duration: 8 + i * 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+    <div className="fixed inset-0 bg-gradient-to-br from-emerald-600 to-emerald-800 flex items-center justify-center">
+      <div className="text-center px-4">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="mb-6"
+        >
+          <img 
+            src={logoImage} 
+            alt="بستان الإيمان" 
+            className="w-24 h-24 mx-auto mb-4 drop-shadow-lg"
+          />
+          <h1
+            className="text-4xl md:text-5xl font-bold text-white mb-2"
+            style={{ fontFamily: 'Amiri, serif' }}
           >
-            <div className="w-full h-full border-2 border-emerald-300 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 bg-emerald-300 rounded-full opacity-50"></div>
-            </div>
-          </motion.div>
-        ))}
+            بستان الإيمان
+          </h1>
+          <p className="text-emerald-100 text-lg">
+            منصة تحفيظ القرآن الكريم
+          </p>
+        </motion.div>
+
+        <div className="w-48 h-1.5 bg-emerald-900/50 rounded-full mx-auto overflow-hidden">
+          <motion.div
+            className="h-full bg-white rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.2 }}
+          />
+        </div>
+
+        <button
+          onClick={onComplete}
+          className="absolute bottom-6 left-6 text-emerald-200 text-sm hover:text-white transition-colors"
+          data-testid="button-skip-splash"
+        >
+          تخطي
+        </button>
       </div>
-
-      <div className="relative z-10 text-center">
-        <AnimatePresence>
-          {showLogo && (
-            <motion.div
-              key="logo-section"
-              initial={{ scale: 0, rotate: -180, opacity: 0 }}
-              animate={{ scale: 1, rotate: 0, opacity: 1 }}
-              exit={{ scale: 0, rotate: 180, opacity: 0 }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="mb-8"
-            >
-              <div className="relative mb-6">
-                <motion.div
-                  animate={{ rotateY: [0, 10, -10, 0] }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-40 h-40 mx-auto mb-4"
-                >
-                  <svg viewBox="0 0 240 200" className="w-full h-full text-white">
-                    <defs>
-                      <linearGradient id="bookGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#059669" />
-                        <stop offset="50%" stopColor="#047857" />
-                        <stop offset="100%" stopColor="#065f46" />
-                      </linearGradient>
-                      <linearGradient id="pageGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#fffbeb" />
-                        <stop offset="100%" stopColor="#fef3c7" />
-                      </linearGradient>
-                    </defs>
-
-                    {/* غلاف المصحف */}
-                    <motion.g
-                      animate={{ rotateY: currentPhase >= 1 ? -15 : 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      style={{ transformOrigin: "120px 100px" }}
-                    >
-                      {/* الصفحة اليسرى */}
-                      <motion.path
-                        d="M20 50 L20 170 Q20 175 25 175 L115 175 Q118 175 118 172 L118 53 Q118 50 115 50 Z"
-                        fill="url(#pageGradient)"
-                        stroke="#059669"
-                        strokeWidth="2"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: showLogo ? 1 : 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        style={{ transformOrigin: "118px 100px" }}
-                      />
-
-                      {/* النص في الصفحة اليسرى */}
-                      <motion.g
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: currentPhase >= 1 ? 1 : 0 }}
-                        transition={{ delay: 1 }}
-                      >
-                        <text x="70" y="70" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">بِسْمِ اللَّهِ</text>
-                        <text x="70" y="85" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">الرَّحْمَنِ الرَّحِيمِ</text>
-                        <line x1="30" y1="95" x2="110" y2="95" stroke="#059669" strokeWidth="1" opacity="0.6" />
-                        <line x1="30" y1="105" x2="110" y2="105" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                        <line x1="30" y1="115" x2="110" y2="115" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                        <line x1="30" y1="125" x2="110" y2="125" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                      </motion.g>
-                    </motion.g>
-
-                    {/* الصفحة اليمنى */}
-                    <motion.g
-                      animate={{ rotateY: currentPhase >= 1 ? 15 : 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      style={{ transformOrigin: "122px 100px" }}
-                    >
-                      <motion.path
-                        d="M122 50 L217 50 Q220 50 220 53 L220 172 Q220 175 217 175 L125 175 Q122 175 122 172 Z"
-                        fill="url(#pageGradient)"
-                        stroke="#059669"
-                        strokeWidth="2"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: showLogo ? 1 : 0 }}
-                        transition={{ duration: 0.8, delay: 0.5 }}
-                        style={{ transformOrigin: "122px 100px" }}
-                      />
-
-                      {/* النص في الصفحة اليمنى */}
-                      <motion.g
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: currentPhase >= 2 ? 1 : 0 }}
-                        transition={{ delay: 1.5 }}
-                      >
-                        <text x="170" y="70" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">الْحَمْدُ لِلَّهِ</text>
-                        <text x="170" y="85" textAnchor="middle" fill="#065f46" fontSize="8" fontFamily="serif">رَبِّ الْعَالَمِينَ</text>
-                        <line x1="130" y1="95" x2="210" y2="95" stroke="#059669" strokeWidth="1" opacity="0.6" />
-                        <line x1="130" y1="105" x2="210" y2="105" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                        <line x1="130" y1="115" x2="210" y2="115" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                        <line x1="130" y1="125" x2="210" y2="125" stroke="#059669" strokeWidth="1" opacity="0.4" />
-                      </motion.g>
-                    </motion.g>
-
-                    {/* زخرفة إسلامية في الوسط */}
-                    <motion.circle
-                      cx="120" cy="100" r="8"
-                      fill="url(#bookGradient)"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: currentPhase >= 1 ? 1 : 0 }}
-                      transition={{ delay: 0.8, type: "spring" }}
-                    />
-                    <motion.text
-                      x="120" y="105" textAnchor="middle" fill="white"
-                      fontSize="8" fontFamily="serif"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: currentPhase >= 2 ? 1 : 0 }}
-                      transition={{ delay: 1.2 }}
-                    >
-                      📖
-                    </motion.text>
-                  </svg>
-                </motion.div>
-
-                <motion.h1
-                  initial={{ y: 50, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                  className="text-6xl font-bold text-white mb-2"
-                  style={{ fontFamily: 'Amiri, serif' }}
-                >
-                  بستان الإيمان
-                </motion.h1>
-
-                <motion.h2
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.7, duration: 0.8 }}
-                  className="text-2xl text-emerald-100 mb-4"
-                  style={{ fontFamily: 'Amiri, serif' }}
-                >
-                  Garden of Faith
-                </motion.h2>
-
-                <motion.p
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.9, duration: 0.8 }}
-                  className="text-lg text-emerald-50"
-                  style={{ fontFamily: 'Amiri, serif' }}
-                >
-                  منصة تحفيظ القرآن الكريم الإبداعية
-                </motion.p>
-              </div>
-            </motion.div>
-          )}
-
-          {currentPhase >= 1 && (
-            <motion.div
-              key="progress-section"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.6 }}
-              className="mt-8"
-            >
-              <div className="relative">
-                <motion.p
-                  className="text-emerald-100 mb-4 text-lg"
-                  style={{ fontFamily: 'Amiri, serif' }}
-                >
-                  {currentPhase === 1 && "جاري فتح المصحف الشريف..."}
-                  {currentPhase === 2 && "إعداد البيئة التعليمية..."}
-                  {currentPhase === 3 && "مرحباً بك في رحلة الحفظ..."}
-                </motion.p>
-
-                <div className="w-64 h-2 bg-emerald-900 rounded-full mx-auto overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-emerald-300 to-emerald-400 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ 
-                      width: currentPhase === 1 ? '33%' : 
-                             currentPhase === 2 ? '66%' : 
-                             currentPhase === 3 ? '100%' : '0%' 
-                    }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
-                  />
-                </div>
-
-                <div className="flex justify-center mt-4 space-x-2">
-                  {[0, 1, 2].map((dot) => (
-                    <motion.div
-                      key={`dot-${dot}`}
-                      className="w-3 h-3 bg-emerald-300 rounded-full"
-                      animate={{
-                        scale: [1, 1.5, 1],
-                        opacity: [0.5, 1, 0.5],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                        delay: dot * 0.2,
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-      </div>
-
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.7 }}
-        whileHover={{ opacity: 1 }}
-        onClick={onComplete}
-        className="absolute bottom-6 right-6 text-emerald-200 text-sm hover:text-white transition-colors"
-      >
-        تخطي ←
-      </motion.button>
     </div>
   );
 }
