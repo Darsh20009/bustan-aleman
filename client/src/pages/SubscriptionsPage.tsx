@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Check, CreditCard, Building2, AlertCircle, ShoppingCart, Loader2 } from 'lucide-react';
+import { Check, CreditCard, Building2, AlertCircle, ShoppingCart, Loader2, Zap, Users, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 
@@ -40,6 +40,7 @@ interface UserSubscription {
 export default function SubscriptionsPage() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'paypal' | 'bank_transfer' | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
+  const [expandedPlanId, setExpandedPlanId] = useState<string | null>(null);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -144,51 +145,54 @@ export default function SubscriptionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 dark:from-slate-900 dark:via-emerald-950 dark:to-slate-900 py-12 px-4" dir="rtl">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">خطط الاشتراك</h1>
-          <p className="text-xl text-gray-600">اختر الخطة المناسبة لك وابدأ رحلتك في تعلم القرآن الكريم</p>
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          <div className="inline-block mb-6">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full p-4">
+              <Zap className="w-8 h-8 text-white" />
+            </div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3 font-amiri">
+            خطط الاشتراك
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            اختر الخطة المناسبة لك وابدأ رحلتك في تعلم القرآن الكريم مع أفضل المعلمين
+          </p>
         </div>
 
-        {/* Current Subscription Status */}
-        {userSubscription && (userSubscription as UserSubscription) && (
-          <Card className="mb-12 border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-emerald-900">
-                <Check className="w-5 h-5" />
-                اشتراكك الحالي
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-4 gap-4">
+        {/* Current Subscription Card */}
+        {userSubscription && (
+          <Card className="mb-12 bg-gradient-to-r from-emerald-600 to-teal-600 dark:from-emerald-700 dark:to-teal-700 text-white border-0 shadow-lg">
+            <CardContent className="p-8">
+              <div className="grid md:grid-cols-4 gap-8">
                 <div>
-                  <p className="text-sm text-gray-600">الحالة</p>
-                  <Badge className={`${getStatusColor((userSubscription as UserSubscription).status)} mt-2`}>
+                  <p className="text-emerald-100 text-sm mb-2">اشتراكك الحالي</p>
+                  <Badge className="bg-white/20 text-white border-0">
                     {getStatusLabel((userSubscription as UserSubscription).status)}
                   </Badge>
                 </div>
                 {(userSubscription as UserSubscription).startDate && (
                   <div>
-                    <p className="text-sm text-gray-600">تاريخ البدء</p>
-                    <p className="font-semibold text-gray-900 mt-1">
+                    <p className="text-emerald-100 text-sm mb-2">تاريخ البدء</p>
+                    <p className="font-bold text-lg">
                       {new Date((userSubscription as UserSubscription).startDate!).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                 )}
                 {(userSubscription as UserSubscription).endDate && (
                   <div>
-                    <p className="text-sm text-gray-600">تاريخ الانتهاء</p>
-                    <p className="font-semibold text-gray-900 mt-1">
+                    <p className="text-emerald-100 text-sm mb-2">تاريخ الانتهاء</p>
+                    <p className="font-bold text-lg">
                       {new Date((userSubscription as UserSubscription).endDate!).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                 )}
                 {(userSubscription as UserSubscription).sessionsRemaining !== undefined && (
                   <div>
-                    <p className="text-sm text-gray-600">الحصص المتبقية</p>
-                    <p className="font-semibold text-gray-900 mt-1">
+                    <p className="text-emerald-100 text-sm mb-2">الحصص المتبقية</p>
+                    <p className="font-bold text-lg">
                       {(userSubscription as UserSubscription).sessionsRemaining} حصة
                     </p>
                   </div>
@@ -202,186 +206,203 @@ export default function SubscriptionsPage() {
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           {(Array.isArray(sortedPlans) && sortedPlans.length > 0) ? (
             sortedPlans.map((plan: SubscriptionPlan) => (
-              <Card
-                key={plan.id}
-                className={`relative transition-all duration-300 ${
-                  plan.isFeatured
-                    ? 'md:scale-105 border-2 border-orange-400 shadow-2xl'
-                    : 'border-gray-200 hover:shadow-lg'
-                }`}
-              >
-                {/* Featured Badge */}
-                {plan.isFeatured && (
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-r from-orange-400 to-amber-400 text-white py-2 text-center font-bold">
-                    خطة مميزة
-                  </div>
-                )}
-
-                <CardHeader className={plan.isFeatured ? 'pt-16' : ''}>
-                  <CardTitle className="text-2xl text-emerald-700 mb-2">
-                    {plan.nameAr}
-                  </CardTitle>
-                  {plan.descriptionAr && (
-                    <p className="text-sm text-gray-600 mb-4">{plan.descriptionAr}</p>
-                  )}
-
-                  {/* Price */}
-                  <div className="mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-bold text-gray-900">
-                        {parseFloat(plan.price.toString()).toFixed(2)}
-                      </span>
-                      <span className="text-xl text-gray-600">{plan.currency}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">
-                      لمدة {plan.duration === 'weekly' ? 'أسبوع' : plan.duration === 'monthly' ? 'شهر' : plan.duration === 'quarterly' ? '3 أشهر' : 'سنة'}
-                    </p>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="flex flex-col h-full">
-                  {/* Sessions Count */}
-                  {plan.sessionsCount && (
-                    <div className="mb-6 p-4 bg-emerald-50 rounded-lg">
-                      <p className="text-sm text-gray-600">عدد الحصص</p>
-                      <p className="text-2xl font-bold text-emerald-700">{plan.sessionsCount} حصة</p>
+              <div key={plan.id} className="h-full">
+                <Card
+                  className={`h-full flex flex-col transition-all duration-300 hover:shadow-xl ${
+                    plan.isFeatured
+                      ? 'md:scale-105 border-2 border-orange-400 shadow-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20'
+                      : 'border-gray-200 hover:border-emerald-300 dark:border-slate-700'
+                  }`}
+                >
+                  {/* Featured Badge */}
+                  {plan.isFeatured && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-orange-400 to-amber-400 text-white border-0 px-4 py-1 shadow-lg">
+                        ⭐ خطة مميزة
+                      </Badge>
                     </div>
                   )}
 
-                  {/* Features */}
-                  {parseFeatures(plan.features).length > 0 && (
-                    <div className="mb-6 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 mb-3">المميزات:</p>
-                      <ul className="space-y-2">
-                        {parseFeatures(plan.features).map((feature: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
-                            <Check className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Add to Cart Button - Primary */}
-                  <Button
-                    className="w-full mb-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 text-lg shadow-lg"
-                    onClick={() => addToCartMutation.mutate(plan.id)}
-                    disabled={addToCartMutation.isPending}
-                    data-testid={`button-add-cart-${plan.id}`}
-                  >
-                    {addToCartMutation.isPending ? (
-                      <Loader2 className="w-5 h-5 ml-2 animate-spin" />
-                    ) : (
-                      <ShoppingCart className="w-5 h-5 ml-2" />
+                  {/* Plan Header */}
+                  <CardHeader className={`pb-4 ${plan.isFeatured ? 'pt-6' : ''}`}>
+                    <CardTitle className="text-2xl text-emerald-700 dark:text-emerald-400 mb-2 font-amiri">
+                      {plan.nameAr}
+                    </CardTitle>
+                    {plan.descriptionAr && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{plan.descriptionAr}</p>
                     )}
-                    أضف للسلة
-                  </Button>
+                  </CardHeader>
 
-                  {/* Subscribe Now Button */}
-                  <Button
-                    className="w-full mb-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-2 shadow-md"
-                    onClick={() => {
-                      setSelectedPlanId(plan.id);
-                      setSelectedPaymentMethod(null);
-                    }}
-                    data-testid={`button-subscribe-now-${plan.id}`}
-                  >
-                    اشترك الآن
-                  </Button>
+                  {/* Plan Content */}
+                  <CardContent className="flex-1 flex flex-col pb-4">
+                    {/* Price Section */}
+                    <div className="mb-8 p-6 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">السعر</p>
+                      <div className="flex items-baseline gap-2 mb-3">
+                        <span className="text-5xl font-bold text-emerald-700 dark:text-emerald-400">
+                          {parseFloat(plan.price.toString()).toFixed(0)}
+                        </span>
+                        <span className="text-xl text-gray-600 dark:text-gray-400">{plan.currency}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        لمدة {plan.duration === 'weekly' ? 'أسبوع' : plan.duration === 'monthly' ? 'شهر' : plan.duration === 'quarterly' ? '3 أشهر' : 'سنة'}
+                      </p>
+                    </div>
 
-                  {/* Payment Methods - Show when plan is selected */}
-                  {selectedPlanId === plan.id && (
-                    <div className="space-y-2 mt-3 p-3 bg-gray-50 rounded-lg border">
-                      <p className="text-sm font-medium text-gray-700 mb-2">اختر طريقة الدفع:</p>
+                    {/* Sessions Count */}
+                    {plan.sessionsCount && (
+                      <div className="mb-6 flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <Clock className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">عدد الحصص</p>
+                          <p className="font-bold text-gray-900 dark:text-white">{plan.sessionsCount} حصة</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Features Section */}
+                    {parseFeatures(plan.features).length > 0 && (
+                      <div className="mb-6 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                          <Users className="w-4 h-4" />
+                          المميزات
+                        </p>
+                        <ul className="space-y-2">
+                          {parseFeatures(plan.features).map((feature: string, idx: number) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" />
+                              <span>{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3 mt-auto">
                       <Button
-                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        onClick={() => addToCartMutation.mutate(plan.id)}
+                        disabled={addToCartMutation.isPending || !plan.isActive}
+                        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 text-base shadow-md disabled:opacity-50"
+                        data-testid={`button-add-cart-${plan.id}`}
+                      >
+                        {addToCartMutation.isPending ? (
+                          <>
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            جاري الإضافة...
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4 ml-2" />
+                            أضف للسلة
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          setSelectedPlanId(plan.id);
+                          setSelectedPaymentMethod(null);
+                          setExpandedPlanId(expandedPlanId === plan.id ? null : plan.id);
+                        }}
+                        disabled={!plan.isActive}
+                        className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 text-base shadow-md disabled:opacity-50"
+                        data-testid={`button-subscribe-now-${plan.id}`}
+                      >
+                        اشترك الآن مباشرة
+                      </Button>
+
+                      {!plan.isActive && (
+                        <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 p-3 rounded-lg">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          الخطة غير متاحة حالياً
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+
+                  {/* Payment Methods - Collapsible */}
+                  {selectedPlanId === plan.id && expandedPlanId === plan.id && (
+                    <div className="border-t border-gray-200 dark:border-slate-700 p-4 space-y-3 bg-gray-50 dark:bg-slate-800">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">اختر طريقة الدفع:</p>
+                      
+                      <Button
                         onClick={() => {
                           setSelectedPaymentMethod('paypal');
                           subscribeMutation.mutate({ planId: plan.id, paymentMethod: 'paypal' });
                         }}
                         disabled={subscribeMutation.isPending}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                         data-testid={`button-subscribe-paypal-${plan.id}`}
                       >
                         {subscribeMutation.isPending && selectedPaymentMethod === 'paypal' ? (
-                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          <>
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            جاري المعالجة...
+                          </>
                         ) : (
-                          <CreditCard className="w-4 h-4 ml-2" />
+                          <>
+                            <CreditCard className="w-4 h-4 ml-2" />
+                            الدفع عبر PayPal
+                          </>
                         )}
-                        الدفع عبر PayPal
                       </Button>
+
                       <Button
-                        className="w-full bg-blue-600 hover:bg-blue-700"
                         onClick={() => {
                           setSelectedPaymentMethod('bank_transfer');
                           subscribeMutation.mutate({ planId: plan.id, paymentMethod: 'bank_transfer' });
                         }}
                         disabled={subscribeMutation.isPending}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
                         data-testid={`button-subscribe-bank-${plan.id}`}
                       >
                         {subscribeMutation.isPending && selectedPaymentMethod === 'bank_transfer' ? (
-                          <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                          <>
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                            جاري المعالجة...
+                          </>
                         ) : (
-                          <Building2 className="w-4 h-4 ml-2" />
+                          <>
+                            <Building2 className="w-4 h-4 ml-2" />
+                            التحويل البنكي
+                          </>
                         )}
-                        التحويل البنكي
                       </Button>
                     </div>
                   )}
-
-                  {/* Is Active Status */}
-                  {!plan.isActive && (
-                    <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-2 rounded">
-                      <AlertCircle className="w-4 h-4" />
-                      الخطة غير متاحة حالياً
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                </Card>
+              </div>
             ))
           ) : (
             <Card className="md:col-span-3">
               <CardContent className="p-12 text-center">
-                <p className="text-gray-600">لا توجد خطط اشتراك متاحة حالياً</p>
+                <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-gray-400 text-lg">لا توجد خطط اشتراك متاحة حالياً</p>
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* Payment Method Info */}
-        {selectedPaymentMethod === 'bank_transfer' && (
-          <Card className="mb-8 border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-900">
-                <Building2 className="w-5 h-5" />
-                بيانات التحويل البنكي
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 mb-4">
-                يرجى الانتظار لتحميل بيانات الحساب البنكي. سيتم إرسال تعليمات التحويل إلى بريدك الإلكتروني.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         {/* FAQ Section */}
-        <Card className="border-gray-200">
-          <CardHeader>
-            <CardTitle>الأسئلة الشائعة</CardTitle>
+        <Card className="border-gray-200 dark:border-slate-700 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/30">
+            <CardTitle className="text-2xl text-emerald-900 dark:text-emerald-300 font-amiri">
+              الأسئلة الشائعة
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">هل يمكنني تغيير الخطة لاحقاً؟</h4>
-              <p className="text-gray-600">نعم، يمكنك تغيير خطتك في أي وقت وستتم معالجة الفرق في السعر.</p>
+          <CardContent className="p-8 space-y-6">
+            <div className="border-b border-gray-200 dark:border-slate-700 pb-6 last:border-b-0 last:pb-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">هل يمكنني تغيير الخطة لاحقاً؟</h4>
+              <p className="text-gray-600 dark:text-gray-400">نعم، يمكنك تغيير خطتك في أي وقت وستتم معالجة الفرق في السعر تلقائياً.</p>
+            </div>
+            <div className="border-b border-gray-200 dark:border-slate-700 pb-6 last:border-b-0 last:pb-0">
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">هل هناك ضمان استرجاع الأموال؟</h4>
+              <p className="text-gray-600 dark:text-gray-400">نعم، نقدم ضمان استرجاع كامل الأموال خلال 7 أيام من الاشتراك بدون شروط.</p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 mb-1">هل هناك ضمان استرجاع الأموال؟</h4>
-              <p className="text-gray-600">نعم، نقدم ضمان استرجاع كامل الأموال خلال 7 أيام من الاشتراك.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-1">متى يتم تجديد الاشتراك؟</h4>
-              <p className="text-gray-600">يتم التجديد تلقائياً في نهاية فترة الاشتراك إذا لم تقم بإلغاء الاشتراك.</p>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-lg">متى يتم تجديد الاشتراك؟</h4>
+              <p className="text-gray-600 dark:text-gray-400">يتم التجديد تلقائياً في نهاية فترة الاشتراك إذا كان الاشتراك مفعلاً. يمكنك إلغاء الاشتراك في أي وقت.</p>
             </div>
           </CardContent>
         </Card>
