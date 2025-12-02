@@ -204,7 +204,7 @@ export default function SubscriptionsPage() {
             sortedPlans.map((plan: SubscriptionPlan) => (
               <Card
                 key={plan.id}
-                className={`relative overflow-hidden transition-all duration-300 ${
+                className={`relative transition-all duration-300 ${
                   plan.isFeatured
                     ? 'md:scale-105 border-2 border-orange-400 shadow-2xl'
                     : 'border-gray-200 hover:shadow-lg'
