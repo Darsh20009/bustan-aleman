@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "./hooks/useAuth";
 import { Route, Switch, Redirect } from "wouter";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 
 // Import our new authentication components
 import { AuthPage } from "./components/AuthPage";
@@ -65,6 +66,7 @@ const isValidAppState = (path: string): path is AppState => {
 function AppContent() {
   const [appState, setAppState] = useState<AppState>('splash');
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { dir } = useLanguage();
 
   // Initialize default students on app start
   useEffect(() => {
@@ -410,7 +412,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen" dir="rtl">
+    <div className="min-h-screen" dir={dir}>
       <Toaster />
       {isAuthenticated && user && (
         <>
@@ -438,25 +440,27 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
-          <Switch>
-            <Route path="/session/:roomToken">
-              <LiveSession />
-            </Route>
-            <Route path="/bank-transfer-checkout">
-              <BankTransferCheckoutPage />
-            </Route>
-            <Route path="/admin/bank-transfers">
-              <BankTransferAdminPage />
-            </Route>
-            <Route path="/reminders">
-              <LessonRemindersPage />
-            </Route>
-            <Route>
-              <AppContent />
-            </Route>
-          </Switch>
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <Switch>
+              <Route path="/session/:roomToken">
+                <LiveSession />
+              </Route>
+              <Route path="/bank-transfer-checkout">
+                <BankTransferCheckoutPage />
+              </Route>
+              <Route path="/admin/bank-transfers">
+                <BankTransferAdminPage />
+              </Route>
+              <Route path="/reminders">
+                <LessonRemindersPage />
+              </Route>
+              <Route>
+                <AppContent />
+              </Route>
+            </Switch>
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

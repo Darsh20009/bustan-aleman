@@ -1255,6 +1255,53 @@ export const insertQuranRecitationAttemptSchema = createInsertSchema(quranRecita
   mode: recitationModeEnum.optional(),
 });
 
+// Academy Settings table - for customizing academy branding
+export const academySettings = bustanSchema.table("academy_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  academyName: varchar("academy_name").default("بستان الإيمان"),
+  academyNameEn: varchar("academy_name_en").default("Bustan Al-Iman"),
+  logoUrl: varchar("logo_url").default("/logo.png"),
+  faviconUrl: varchar("favicon_url"),
+  primaryColor: varchar("primary_color").default("#10b981"),
+  secondaryColor: varchar("secondary_color").default("#f97316"),
+  accentColor: varchar("accent_color").default("#083530"),
+  backgroundColor: varchar("background_color").default("#ffffff"),
+  textColor: varchar("text_color").default("#1f2937"),
+  headerText: text("header_text"),
+  footerText: text("footer_text"),
+  aboutUs: text("about_us"),
+  aboutUsEn: text("about_us_en"),
+  contactEmail: varchar("contact_email"),
+  contactPhone: varchar("contact_phone"),
+  contactWhatsapp: varchar("contact_whatsapp"),
+  address: text("address"),
+  socialFacebook: varchar("social_facebook"),
+  socialTwitter: varchar("social_twitter"),
+  socialInstagram: varchar("social_instagram"),
+  socialYoutube: varchar("social_youtube"),
+  socialTelegram: varchar("social_telegram"),
+  defaultLanguage: varchar("default_language").default("ar"),
+  enableEnglish: boolean("enable_english").default(true),
+  enableNotifications: boolean("enable_notifications").default(true),
+  enableEmailNotifications: boolean("enable_email_notifications").default(false),
+  enableSmsNotifications: boolean("enable_sms_notifications").default(false),
+  enableWhatsappNotifications: boolean("enable_whatsapp_notifications").default(false),
+  workingHoursStart: varchar("working_hours_start").default("08:00"),
+  workingHoursEnd: varchar("working_hours_end").default("22:00"),
+  workingDays: varchar("working_days").array().default(sql`ARRAY['sunday', 'monday', 'tuesday', 'wednesday', 'thursday']::varchar[]`),
+  currency: varchar("currency").default("SAR"),
+  currencySymbol: varchar("currency_symbol").default("ريال"),
+  timezone: varchar("timezone").default("Asia/Riyadh"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertAcademySettingsSchema = createInsertSchema(academySettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Export types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -1354,6 +1401,8 @@ export type QuranAyahMarker = typeof quranAyahMarkers.$inferSelect;
 export type InsertQuranAyahMarker = z.infer<typeof insertQuranAyahMarkerSchema>;
 export type QuranRecitationAttempt = typeof quranRecitationAttempts.$inferSelect;
 export type InsertQuranRecitationAttempt = z.infer<typeof insertQuranRecitationAttemptSchema>;
+export type AcademySettings = typeof academySettings.$inferSelect;
+export type InsertAcademySettings = z.infer<typeof insertAcademySettingsSchema>;
 
 // Draw command schema for whiteboard validation
 export const drawCommandSchema = z.object({

@@ -4091,6 +4091,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Academy Settings routes
+  app.get('/api/academy-settings', async (req, res) => {
+    try {
+      const settings = await storage.getAcademySettings();
+      if (!settings) {
+        // Return default settings if none exist
+        return res.json({
+          id: 'default',
+          academyName: 'بستان الإيمان',
+          academyNameEn: 'Bustan Al-Iman',
+          logoUrl: '/logo.png',
+          faviconUrl: null,
+          primaryColor: '#10b981',
+          secondaryColor: '#f97316',
+          accentColor: '#083530',
+          backgroundColor: '#ffffff',
+          textColor: '#1f2937',
+          headerText: null,
+          footerText: null,
+          aboutUs: null,
+          aboutUsEn: null,
+          contactEmail: null,
+          contactPhone: null,
+          contactWhatsapp: null,
+          address: null,
+          socialFacebook: null,
+          socialTwitter: null,
+          socialInstagram: null,
+          socialYoutube: null,
+          socialTelegram: null,
+          defaultLanguage: 'ar',
+          enableEnglish: true,
+          enableNotifications: true,
+          enableEmailNotifications: false,
+          enableSmsNotifications: false,
+          enableWhatsappNotifications: false,
+          workingHoursStart: '08:00',
+          workingHoursEnd: '22:00',
+          workingDays: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday'],
+          currency: 'SAR',
+          currencySymbol: 'ريال',
+          timezone: 'Asia/Riyadh',
+        });
+      }
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching academy settings:", error);
+      res.status(500).json({ message: "Failed to fetch academy settings" });
+    }
+  });
+
+  app.put('/api/academy-settings', requireSupervisorOrAdmin, async (req: any, res) => {
+    try {
+      const settingsData = req.body;
+      const updatedSettings = await storage.updateAcademySettings(settingsData);
+      res.json(updatedSettings);
+    } catch (error) {
+      console.error("Error updating academy settings:", error);
+      res.status(500).json({ message: "Failed to update academy settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

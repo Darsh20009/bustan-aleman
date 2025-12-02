@@ -13,6 +13,8 @@ import {
   DropdownMenuGroup,
 } from './ui/dropdown-menu';
 import { BookMarked, GraduationCap, Brain, Calendar, Award, MapPin, TrendingUp, Sparkles, Trophy, Bell, User, BookOpen } from 'lucide-react';
+import { LanguageToggle } from './LanguageToggle';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface NavItem {
   title: string;
@@ -233,6 +235,7 @@ interface PersistentHeaderProps {
 
 export function PersistentHeader({ onNavigate }: PersistentHeaderProps) {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
 
   if (!user) {
     return null;
@@ -341,14 +344,16 @@ export function PersistentHeader({ onNavigate }: PersistentHeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
             
+            <LanguageToggle />
+            
             <Button
               onClick={handleLogout}
               variant="outline"
               className="border-red-300 text-red-600 hover:bg-red-50"
               data-testid="button-logout"
             >
-              <span className="hidden sm:inline">تسجيل الخروج</span>
-              <span className="sm:hidden">خروج</span>
+              <span className="hidden sm:inline">{t('common.logout')}</span>
+              <span className="sm:hidden">{t('common.logout')}</span>
             </Button>
           </div>
         </div>
