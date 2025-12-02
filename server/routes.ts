@@ -559,9 +559,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "معرف الخطة مطلوب" });
       }
 
-      // Verify subscription plan exists
-      const plan = await storage.getSubscriptionPlan(subscriptionPlanId);
-      if (!plan) {
+      // Validate against available plans
+      const validPlanIds = ["plan_1", "plan_2", "plan_3", "plan_4", "plan_5", "plan_6"];
+      if (!validPlanIds.includes(subscriptionPlanId)) {
         return res.status(404).json({ message: "خطة الاشتراك غير موجودة" });
       }
       
