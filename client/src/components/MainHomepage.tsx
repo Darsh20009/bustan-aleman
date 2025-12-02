@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { BookOpen, User, Calendar, Users, MessageCircle, Star, ChevronRight, Info, GraduationCap, Award, Heart, PlayCircle, Sparkles, ExternalLink, CheckCircle, TrendingUp, Shield, Clock, Globe } from 'lucide-react';
@@ -16,6 +17,7 @@ interface MainHomepageProps {
 
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
   const [scrolled, setScrolled] = useState(false);
+  const [, setLocation] = useLocation();
   const { scrollY } = useScroll();
   const headerOpacity = useTransform(scrollY, [0, 100], [0.95, 1]);
   const headerScale = useTransform(scrollY, [0, 100], [1, 0.98]);
@@ -539,7 +541,11 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                         </li>
                       ))}
                     </ul>
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                    <Button 
+                      onClick={() => setLocation('/subscriptions')}
+                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      data-testid="button-select-plan"
+                    >
                       اختر الخطة
                     </Button>
                   </CardContent>
@@ -550,8 +556,10 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
 
           <motion.div className="text-center">
             <Button
+              onClick={() => setLocation('/subscriptions')}
               size="lg"
               className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-8 py-6"
+              data-testid="button-view-all-plans"
             >
               <TrendingUp className="ml-2 h-5 w-5" />
               عرض جميع الخطط
