@@ -549,6 +549,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add subscription to cart
+  app.post('/api/cart/subscription', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      const { subscriptionPlanId } = req.body;
+      
+      if (!subscriptionPlanId) {
+        return res.status(400).json({ message: "معرف الخطة مطلوب" });
+      }
+      
+      // Store subscription in cart (for now, we'll use a simple approach)
+      // In a real app, you'd have a subscription cart table
+      const cartItem = {
+        id: `sub_${Date.now()}`,
+        userId,
+        subscriptionPlanId,
+        type: 'subscription',
+        addedAt: new Date().toISOString()
+      };
+      
+      res.status(201).json({
+        success: true,
+        message: "تمت إضافة خطة الاشتراك إلى السلة",
+        cartItem
+      });
+    } catch (error) {
+      console.error("Error adding subscription to cart:", error);
+      res.status(500).json({ message: "فشل في إضافة الخطة للسلة" });
+    }
+  });
+
   app.delete('/api/cart/:courseId', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;

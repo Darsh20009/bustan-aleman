@@ -489,8 +489,8 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100">
+      {/* Header - Sticky */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm shadow-sm border-b border-emerald-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-[#083530]">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
