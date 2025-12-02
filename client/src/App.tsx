@@ -52,6 +52,7 @@ import SubscriptionsPage from "./pages/SubscriptionsPage";
 import BankTransferCheckoutPage from "./pages/BankTransferCheckoutPage";
 import BankTransferAdminPage from "./pages/BankTransferAdminPage";
 import LessonRemindersPage from "./pages/LessonRemindersPage";
+import { PersistentHeader } from "./components/PersistentHeader";
 
 type AppState = 'splash' | 'home' | 'about' | 'courses' | 'my-courses' | 'auth' | 'dashboard' | 'profile' | 'quran' | 'certificates' | 'announcements' | 'trips' | 'quran-stats' | 'memorization' | 'quran-workspace' | 'my-session' | 'my-notes' | 'sheikh-schedule' | 'sheikh-quran-editing' | 'data-management' | 'create-course' | 'cart' | 'student-sessions' | 'forgot-password' | 'payments' | 'course-students' | 'notifications' | 'enrollments' | 'my-subscriptions' | 'course-management' | 'quran-test' | 'hadith' | 'sheikh-errors' | 'quran-self-test' | 'subscriptions';
 
@@ -411,7 +412,23 @@ function AppContent() {
   return (
     <div className="min-h-screen" dir="rtl">
       <Toaster />
-      {renderCurrentState()}
+      {isAuthenticated && user && (
+        <>
+          <PersistentHeader onNavigate={(path) => {
+            const normalized = path.replace(/^\/+|\/+$/g, "");
+            if (isValidAppState(normalized)) {
+              setAppState(normalized);
+            } else {
+              const fullPath = path.startsWith('/') ? path : `/${path}`;
+              window.location.href = fullPath;
+            }
+          }} />
+          <div className="flex-1">
+            {renderCurrentState()}
+          </div>
+        </>
+      )}
+      {!isAuthenticated && renderCurrentState()}
       {user && <SupportChat userId={user.id} userRole={user.role} />}
     </div>
   );
