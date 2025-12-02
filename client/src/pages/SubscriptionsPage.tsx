@@ -160,6 +160,19 @@ export default function SubscriptionsPage() {
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             اختر الخطة المناسبة لك وابدأ رحلتك في تعلم القرآن الكريم مع أفضل المعلمين
           </p>
+          
+          {/* Cart Button */}
+          <div className="mt-6">
+            <Button
+              onClick={() => setLocation('/cart')}
+              variant="outline"
+              className="border-emerald-500 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-400 dark:text-emerald-400"
+              data-testid="button-view-cart"
+            >
+              <ShoppingCart className="w-4 h-4 ml-2" />
+              عرض السلة
+            </Button>
+          </div>
         </div>
 
         {/* Current Subscription Card */}

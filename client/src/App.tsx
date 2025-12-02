@@ -463,6 +463,12 @@ function App() {
               <Route path="/reminders">
                 <LessonRemindersPage />
               </Route>
+              <Route path="/cart">
+                <CartPage onBack={() => window.history.back()} />
+              </Route>
+              <Route path="/subscriptions">
+                <SubscriptionsPage />
+              </Route>
               <Route>
                 <AppContent />
               </Route>

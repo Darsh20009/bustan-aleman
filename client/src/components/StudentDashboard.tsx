@@ -38,12 +38,12 @@ export function StudentDashboard({ student, onLogout, onQuranReader, onProfile, 
   const [checkingAccess, setCheckingAccess] = useState(false);
   const { toast } = useToast();
 
-  const { data: certificates = [], isLoading: certificatesLoading, isError: certificatesError } = useQuery({
+  const { data: certificates = [], isLoading: certificatesLoading, isError: certificatesError } = useQuery<any[]>({
     queryKey: ['/api/certificates'],
     enabled: !!student.id,
   });
 
-  const { data: myCourses = [], isLoading: coursesLoading, isError: coursesError } = useQuery({
+  const { data: myCourses = [], isLoading: coursesLoading, isError: coursesError } = useQuery<any[]>({
     queryKey: ['/api/my-courses'],
     enabled: !!student.id,
   });

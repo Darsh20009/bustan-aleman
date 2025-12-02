@@ -2,8 +2,9 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { queryClient, apiRequest } from '../lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { ShoppingCart, Trash2, CreditCard, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Trash2, CreditCard, ArrowRight, Building2 } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { useLocation } from 'wouter';
 
 interface CartPageProps {
   onBack?: () => void;
@@ -11,6 +12,7 @@ interface CartPageProps {
 
 export default function CartPage({ onBack }: CartPageProps = {}) {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: cartItems = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/cart/full'],
@@ -183,25 +185,68 @@ export default function CartPage({ onBack }: CartPageProps = {}) {
             {/* Checkout Section */}
             <Card className="border-0 shadow-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">إتمام التسجيل</CardTitle>
+                <CardTitle className="text-2xl text-white">إتمام الطلب</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between text-lg">
-                  <span>إجمالي الدورات:</span>
-                  <span className="font-bold">{cartItems.length} دورة</span>
+                  <span>إجمالي العناصر:</span>
+                  <span className="font-bold">{cartItems.length} عنصر</span>
                 </div>
-                <Button
-                  onClick={() => checkoutMutation.mutate()}
-                  disabled={checkoutMutation.isPending}
-                  className="w-full bg-white text-emerald-700 hover:bg-emerald-50 text-lg py-6"
-                  data-testid="button-checkout"
-                >
-                  <CreditCard className="w-5 h-5 ml-2" />
-                  {checkoutMutation.isPending ? 'جاري التسجيل...' : 'تسجيل في جميع الدورات'}
-                </Button>
-                <p className="text-sm text-white/80 text-center">
-                  سيتم تسجيلك تلقائياً في جميع الدورات المختارة
-                </p>
+                
+                {/* Calculate total price */}
+                {(() => {
+                  let totalPrice = 0;
+                  let hasPaidItems = false;
+                  cartItems.forEach((item: any) => {
+                    const price = item.plan?.price || item.course?.price || 0;
+                    if (parseFloat(price) > 0) {
+                      hasPaidItems = true;
+                      totalPrice += parseFloat(price);
+                    }
+                  });
+                  
+                  return (
+                    <>
+                      {hasPaidItems && (
+                        <div className="flex items-center justify-between text-lg border-t border-white/20 pt-4">
+                          <span>الإجمالي:</span>
+                          <span className="font-bold text-2xl">{totalPrice.toFixed(2)} ر.س</span>
+                        </div>
+                      )}
+                      
+                      {hasPaidItems ? (
+                        <>
+                          <Button
+                            onClick={() => setLocation('/bank-transfer-checkout')}
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-6"
+                            data-testid="button-bank-transfer"
+                          >
+                            <Building2 className="w-5 h-5 ml-2" />
+                            الدفع عبر التحويل البنكي
+                          </Button>
+                          <p className="text-sm text-white/80 text-center">
+                            سيتم توجيهك لصفحة إتمام الدفع
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            onClick={() => checkoutMutation.mutate()}
+                            disabled={checkoutMutation.isPending}
+                            className="w-full bg-white text-emerald-700 hover:bg-emerald-50 text-lg py-6"
+                            data-testid="button-checkout"
+                          >
+                            <CreditCard className="w-5 h-5 ml-2" />
+                            {checkoutMutation.isPending ? 'جاري التسجيل...' : 'تسجيل في جميع الدورات'}
+                          </Button>
+                          <p className="text-sm text-white/80 text-center">
+                            سيتم تسجيلك تلقائياً في جميع الدورات المختارة
+                          </p>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           </>
