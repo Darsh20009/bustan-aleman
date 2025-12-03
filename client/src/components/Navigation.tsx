@@ -60,7 +60,7 @@ export default function Navigation() {
   );
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-lg sticky top-0 z-50 transition-colors">
+    <nav className="bg-[hsl(var(--sidebar))] shadow-lg sticky top-0 z-50 transition-colors">
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex justify-between items-center py-3 sm:py-4">
           {/* Logo */}

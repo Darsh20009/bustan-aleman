@@ -68,6 +68,17 @@ export default {
         "warm-white": "var(--warm-white)",
         "light-beige": "var(--light-beige)",
         "dark-charcoal": "var(--dark-charcoal)",
+        // Button colors
+        "btn": {
+          DEFAULT: "hsl(var(--btn-bg))",
+          foreground: "hsl(var(--btn-fg))",
+        },
+        // Quran section colors
+        "quran": {
+          DEFAULT: "hsl(var(--quran-bg))",
+          foreground: "hsl(var(--quran-fg))",
+          border: "hsl(var(--quran-border))",
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)"],

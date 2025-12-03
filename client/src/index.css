@@ -4,72 +4,138 @@
 @tailwind utilities;
 
 :root {
-  --background: 50 23% 98%;
-  --foreground: 0 0% 15%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 15%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 15%;
+  /* Page Background: Light green */
+  --background: 140 30% 95%;
+  /* Text: Black */
+  --foreground: 0 0% 10%;
+  
+  /* Cards with subtle contrast */
+  --card: 140 25% 97%;
+  --card-foreground: 0 0% 10%;
+  --popover: 140 25% 97%;
+  --popover-foreground: 0 0% 10%;
+  
+  /* Primary: Islamic green */
   --primary: 140 71% 35%;
   --primary-foreground: 0 0% 100%;
+  
+  /* Secondary */
   --secondary: 32 100% 60%;
   --secondary-foreground: 0 0% 15%;
-  --muted: 0 0% 80%;
-  --muted-foreground: 0 0% 45%;
+  
+  /* Muted */
+  --muted: 140 15% 85%;
+  --muted-foreground: 0 0% 35%;
+  
+  /* Accent */
   --accent: 140 71% 35%;
   --accent-foreground: 0 0% 100%;
+  
+  /* Destructive */
   --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 50 20% 85%;
-  --input: 0 0% 100%;
+  
+  /* Border & Input */
+  --border: 140 20% 85%;
+  --input: 140 25% 97%;
   --ring: 140 71% 35%;
+  
+  /* Charts */
   --chart-1: 140 71% 35%;
   --chart-2: 32 100% 60%;
   --chart-3: 32 100% 50%;
   --chart-4: 30 80% 45%;
   --chart-5: 45 95% 50%;
-  --sidebar: 140 71% 35%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 140 71% 35%;
+  
+  /* Sidebar/Nav: Light black background with beige text */
+  --sidebar: 0 0% 20%;
+  --sidebar-foreground: 40 30% 85%;
+  --sidebar-primary: 140 71% 45%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 32 100% 60%;
-  --sidebar-accent-foreground: 0 0% 15%;
-  --sidebar-border: 140 71% 35%;
-  --sidebar-ring: 140 71% 35%;
+  --sidebar-accent: 0 0% 28%;
+  --sidebar-accent-foreground: 40 30% 90%;
+  --sidebar-border: 0 0% 25%;
+  --sidebar-ring: 140 71% 45%;
+  
+  /* Fonts */
   --font-sans: 'Noto Sans Arabic', Arial, sans-serif;
   --font-serif: 'Amiri', serif;
   --font-mono: 'Courier New', monospace;
   --radius: 0.75rem;
+  
+  /* Buttons: Light black background with beige text */
+  --btn-bg: 0 0% 25%;
+  --btn-fg: 40 30% 85%;
   
   /* Islamic theme colors */
   --islamic-green: 140 71% 35%;
   --warm-gold: 32 100% 60%;
   --earth-brown: 25 70% 40%;
   --warm-white: 50 23% 98%;
-  --light-beige: 50 20% 95%;
+  --light-beige: 40 30% 85%;
   --dark-charcoal: 0 0% 15%;
+  
+  /* Quran: Dark green background with white text */
+  --quran-bg: 140 50% 25%;
+  --quran-fg: 0 0% 100%;
+  --quran-border: 140 50% 30%;
 }
 
 .dark {
-  --background: 200 40% 8%;
-  --foreground: 50 20% 92%;
-  --card: 200 40% 12%;
-  --card-foreground: 50 20% 92%;
-  --popover: 200 40% 8%;
-  --popover-foreground: 50 20% 92%;
+  /* Page Background: Dark green */
+  --background: 140 40% 12%;
+  /* Text: White */
+  --foreground: 0 0% 95%;
+  
+  /* Cards */
+  --card: 140 35% 15%;
+  --card-foreground: 0 0% 95%;
+  --popover: 140 35% 15%;
+  --popover-foreground: 0 0% 95%;
+  
+  /* Primary: Light green */
   --primary: 140 71% 45%;
   --primary-foreground: 0 0% 100%;
+  
+  /* Secondary */
   --secondary: 32 100% 65%;
   --secondary-foreground: 0 0% 15%;
-  --muted: 0 0% 30%;
+  
+  /* Muted */
+  --muted: 140 30% 20%;
   --muted-foreground: 0 0% 70%;
+  
+  /* Accent */
   --accent: 140 71% 45%;
   --accent-foreground: 0 0% 100%;
+  
+  /* Destructive */
   --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 100%;
-  --border: 200 30% 20%;
-  --input: 200 40% 15%;
+  
+  /* Border & Input */
+  --border: 140 30% 20%;
+  --input: 140 35% 18%;
   --ring: 140 71% 45%;
+  
+  /* Sidebar/Nav: Beige background with green text */
+  --sidebar: 40 30% 85%;
+  --sidebar-foreground: 140 50% 25%;
+  --sidebar-primary: 140 71% 35%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 40 25% 80%;
+  --sidebar-accent-foreground: 140 50% 20%;
+  --sidebar-border: 40 25% 75%;
+  --sidebar-ring: 140 71% 35%;
+  
+  /* Buttons: Light green background with white text */
+  --btn-bg: 140 50% 40%;
+  --btn-fg: 0 0% 100%;
+  
+  /* Quran: Black background with white text */
+  --quran-bg: 0 0% 8%;
+  --quran-fg: 0 0% 100%;
+  --quran-border: 0 0% 15%;
 }
 
 @layer base {
@@ -101,6 +167,32 @@
     font-family: 'Amiri Quran', 'Amiri', serif;
     font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
     line-height: 2;
+  }
+
+  /* Quran section styles */
+  .quran-section {
+    background-color: hsl(var(--quran-bg));
+    color: hsl(var(--quran-fg));
+    border-color: hsl(var(--quran-border));
+  }
+  
+  .bg-quran {
+    background-color: hsl(var(--quran-bg));
+  }
+  
+  .text-quran {
+    color: hsl(var(--quran-fg));
+  }
+  
+  /* Custom button styles */
+  .btn-custom {
+    background-color: hsl(var(--btn-bg));
+    color: hsl(var(--btn-fg));
+    transition: all 0.2s ease;
+  }
+  
+  .btn-custom:hover {
+    filter: brightness(1.1);
   }
 
   /* Enhanced Islamic color utilities */
@@ -391,20 +483,20 @@
 }
 
 @layer components {
-  /* Navigation components */
+  /* Navigation components - uses sidebar colors */
   .nav-link {
-    color: var(--midnight-navy);
+    color: hsl(var(--sidebar-foreground));
     font-weight: 500;
     position: relative;
     transition: color 0.2s ease;
   }
   
   .nav-link:hover {
-    color: var(--islamic-emerald);
+    color: hsl(var(--sidebar-primary));
   }
 
   .nav-link.active {
-    color: var(--islamic-emerald);
+    color: hsl(var(--sidebar-primary));
   }
 
   .nav-link.active::after {
@@ -414,7 +506,7 @@
     right: 0;
     width: 100%;
     height: 0.125rem;
-    background: var(--islamic-emerald);
+    background: hsl(var(--sidebar-primary));
   }
 
   /* Hero section */
