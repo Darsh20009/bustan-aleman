@@ -97,10 +97,7 @@ export function RegisterPage() {
         formData.append('documents', file);
       });
       
-      return apiRequest('/api/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', '/api/register', data);
     },
     onSuccess: () => {
       setIsSuccess(true);

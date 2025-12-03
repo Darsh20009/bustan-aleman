@@ -14,7 +14,7 @@ export interface User {
 }
 
 export function useAuth() {
-  const { data: user, isLoading, refetch, error, isFetching } = useQuery<User>({
+  const { data: user, isLoading, refetch, error } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
       const response = await fetch('/api/auth/user', {
@@ -24,17 +24,16 @@ export function useAuth() {
         },
       });
 
+      if (response.status === 401) {
+        return null;
+      }
+
       if (!response.ok) {
-        if (response.status === 401) {
-          console.log('[useAuth] Not authenticated');
-        } else {
-          console.error('[useAuth] Error:', response.status);
-        }
-        throw new Error('Not authenticated');
+        console.error('[useAuth] Error:', response.status);
+        throw new Error('Auth error');
       }
 
       const userData = await response.json();
-      console.log('[useAuth] User data received:', userData);
       return userData;
     },
     retry: false,
@@ -73,7 +72,7 @@ export function useAuth() {
     isLoading,
     isError: !!error,
     error,
-    isAuthenticated: !!user && !error,
+    isAuthenticated: !!user,
     isStudent: user?.role === 'student',
     isSupervisor: user?.role === 'supervisor',
     isAdmin: user?.role === 'admin',
