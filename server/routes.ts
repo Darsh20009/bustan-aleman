@@ -575,16 +575,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/cart/subscription', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const { subscriptionPlanId } = req.body;
+      const { subscriptionPlanId, planId, sheikhId } = req.body;
       
-      if (!subscriptionPlanId) {
+      const effectivePlanId = subscriptionPlanId || planId;
+      
+      if (!effectivePlanId) {
         return res.status(400).json({ message: "معرف الخطة مطلوب" });
       }
 
-      // Validate against available plans
-      const validPlanIds = ["plan_1", "plan_2", "plan_3", "plan_4", "plan_5", "plan_6"];
-      if (!validPlanIds.includes(subscriptionPlanId)) {
-        return res.status(404).json({ message: "خطة الاشتراك غير موجودة" });
+      // Try to validate against database subscription plans first
+      let planName = null;
+      try {
+        const plan = await storage.getSubscriptionPlan(effectivePlanId);
+        if (plan) {
+          planName = plan.name;
+        }
+      } catch (e) {
+        // Fallback to hardcoded validation if storage method not available
+      }
+      
+      // If not found in database, validate against legacy hardcoded plans
+      if (!planName) {
+        const validPlanIds = ["plan_1", "plan_2", "plan_3", "plan_4", "plan_5", "plan_6"];
+        if (!validPlanIds.includes(effectivePlanId)) {
+          return res.status(404).json({ message: "خطة الاشتراك غير موجودة" });
+        }
+      }
+
+      // Get sheikh name if sheikhId provided
+      let sheikhName = null;
+      if (sheikhId) {
+        try {
+          const sheikh = await storage.getUser(sheikhId);
+          if (sheikh) {
+            sheikhName = sheikh.firstName + (sheikh.lastName ? ' ' + sheikh.lastName : '');
+          }
+        } catch (e) {
+          // Continue without sheikh name
+        }
       }
       
       // Store subscription in in-memory cart
@@ -594,7 +622,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const cartItem = {
         id: `sub_${Date.now()}`,
-        planId: subscriptionPlanId,
+        planId: effectivePlanId,
+        planName: planName,
+        sheikhId: sheikhId || null,
+        sheikhName: sheikhName,
         addedAt: new Date().toISOString()
       };
       
@@ -605,7 +636,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "تمت إضافة خطة الاشتراك إلى السلة",
         cartItem: {
           ...cartItem,
-          subscriptionPlanId,
+          subscriptionPlanId: effectivePlanId,
           type: 'subscription'
         }
       });

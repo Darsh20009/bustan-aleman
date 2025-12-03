@@ -61,10 +61,7 @@ export function StudentContactPage() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (data: MessageFormData) => {
-      return apiRequest('/api/messages', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return apiRequest('POST', '/api/messages', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/student/messages'] });

@@ -86,6 +86,28 @@ export function setupSubscriptionRoutes(app: Express) {
 
   // ==================== User Subscriptions ====================
 
+  // Get current user's subscription (alias for student page)
+  app.get('/api/student/subscription', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const subscription = await storage.getUserActiveSubscription(userId);
+      if (subscription) {
+        // Get plan details for display
+        const plan = await storage.getSubscriptionPlan(subscription.planId);
+        res.json({
+          ...subscription,
+          planName: plan?.name || 'غير معروف',
+          remainingSessions: subscription.sessionsRemaining || 0,
+        });
+      } else {
+        res.json(null);
+      }
+    } catch (error) {
+      console.error("Error fetching student subscription:", error);
+      res.status(500).json({ message: "خطأ في جلب الاشتراك" });
+    }
+  });
+
   // Get current user's subscription
   app.get('/api/my-subscription', requireAuth, async (req: AuthenticatedRequest, res) => {
     try {
@@ -183,6 +205,18 @@ export function setupSubscriptionRoutes(app: Express) {
   });
 
   // ==================== Payment Transactions ====================
+
+  // Get student's payment history (alias for student page)
+  app.get('/api/student/payments', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const payments = await storage.getUserPaymentTransactions(userId);
+      res.json(payments || []);
+    } catch (error) {
+      console.error("Error fetching student payments:", error);
+      res.status(500).json({ message: "خطأ في جلب سجل المدفوعات" });
+    }
+  });
 
   // Get user's payment history
   app.get('/api/my-payments', requireAuth, async (req: AuthenticatedRequest, res) => {

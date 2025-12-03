@@ -42,7 +42,7 @@ The frontend has been completely restructured with a modern, role-based dashboar
 
 ### Feature Specifications
 -   **Quran Reader**: Displays Quran text, translations, tafsir, and offers reciter selection with audio. Includes word-level highlights, notes, memorization progress tracking (range-based, mastery levels, review scheduling), and daily reading statistics.
--   **Student Dashboard**: Role-based dashboard with stats cards, upcoming sessions, homework tracking, memorization progress, attendance records, subscription management, and teacher contact.
+-   **Student Dashboard**: Role-based dashboard with stats cards, upcoming sessions, homework tracking, memorization progress, attendance records, subscription management with sheikh selection, cart integration for subscription plans, and teacher contact.
 -   **Teacher Dashboard**: Student management, attendance recording, memorization evaluation with grading, homework creation and tracking, detailed student reports.
 -   **Admin Dashboard**: Platform statistics, teacher management (CRUD), halaqa creation, subscription approval/rejection, message management.
 -   **Splash Screen**: Animated Quran book opening sequence.
