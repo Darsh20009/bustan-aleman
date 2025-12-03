@@ -508,4 +508,279 @@ export function setupSheikhRoutes(app: Express) {
       res.status(500).json({ message: "خطأ في حذف الخطأ" });
     }
   });
+
+  // ============================================
+  // TEACHER ROUTES (Aliases for Sheikh routes)
+  // ============================================
+
+  // Get all students for teacher (alias for /api/sheikh/students)
+  app.get('/api/teacher/students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      
+      // Filter to only show active subscribed students (not all students in database)
+      const activeStudents = students.filter(s => s.isActive);
+      
+      const studentsWithProgress = await Promise.all(
+        activeStudents.map(async (student) => {
+          try {
+            const user = student.userId ? await storage.getUser(student.userId) : null;
+            const progress = student.userId ? await storage.getQuranProgress(student.userId) : null;
+            const sessions = await storage.getStudentSessions(student.id);
+            const schedules = await storage.getStudentSchedules(student.id);
+            
+            return {
+              ...student,
+              firstName: student.studentName?.split(' ')[0] || '',
+              lastName: student.studentName?.split(' ').slice(1).join(' ') || '',
+              user,
+              progress,
+              sessions,
+              schedules,
+              attendanceRate: sessions.length > 0 
+                ? Math.round((sessions.filter((s: any) => s.status === 'completed').length / sessions.length) * 100)
+                : 0,
+              status: student.isActive ? 'active' : 'inactive',
+            };
+          } catch (error) {
+            console.error(`Error processing student ${student.id}:`, error);
+            return {
+              ...student,
+              firstName: student.studentName?.split(' ')[0] || '',
+              lastName: student.studentName?.split(' ').slice(1).join(' ') || '',
+              user: null,
+              progress: null,
+              sessions: [],
+              schedules: [],
+              attendanceRate: 0,
+              status: student.isActive ? 'active' : 'inactive',
+            };
+          }
+        })
+      );
+      
+      res.json(studentsWithProgress);
+    } catch (error) {
+      console.error("Error fetching teacher students:", error);
+      res.status(500).json({ message: "خطأ في جلب بيانات الطلاب" });
+    }
+  });
+
+  // Get today's sessions for teacher
+  app.get('/api/teacher/sessions/today', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sheikhId = req.user!.id;
+      const sessions = await storage.getSheikhSessions(sheikhId, 'today');
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching today's sessions:", error);
+      res.status(500).json({ message: "خطأ في جلب حصص اليوم" });
+    }
+  });
+
+  // Record attendance for teacher
+  app.post('/api/teacher/attendance', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId, sessionId, status, notes } = req.body;
+      
+      // Validate required fields
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      if (!status || !['present', 'absent', 'late', 'excused'].includes(status)) {
+        return res.status(400).json({ message: "حالة الحضور غير صالحة" });
+      }
+      
+      // Get student to verify they exist
+      const student = await storage.getStudentById(studentId);
+      if (!student) {
+        return res.status(404).json({ message: "الطالب غير موجود" });
+      }
+      
+      // Create a session record for attendance with the provided status
+      const session = await storage.createStudentSession({
+        studentId,
+        sessionDate: new Date().toISOString().split('T')[0],
+        sessionNumber: 1,
+        sessionTime: new Date().toISOString().split('T')[1].slice(0, 5),
+        notes: notes || '',
+        attended: status === 'present' || status === 'late',
+      });
+      
+      res.status(201).json({ 
+        ...session, 
+        attendanceStatus: status,
+        message: "تم تسجيل الحضور بنجاح" 
+      });
+    } catch (error) {
+      console.error("Error recording attendance:", error);
+      res.status(500).json({ message: "خطأ في تسجيل الحضور" });
+    }
+  });
+
+  // Get homework for teacher
+  app.get('/api/teacher/homework', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Get all students and their assignments
+      const students = await storage.getAllStudents();
+      const allAssignments: any[] = [];
+      
+      for (const student of students) {
+        if (student.isActive) {
+          try {
+            const assignments = await storage.getDailyAssignments(student.id);
+            allAssignments.push(...assignments);
+          } catch (err) {
+            // Skip if no assignments found
+          }
+        }
+      }
+      
+      res.json(allAssignments);
+    } catch (error) {
+      console.error("Error fetching homework:", error);
+      res.status(500).json({ message: "خطأ في جلب الواجبات" });
+    }
+  });
+
+  // Create homework for teacher
+  app.post('/api/teacher/homework', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const assignmentData = assignmentSchema.parse(req.body);
+      const sheikhId = req.user!.id;
+      
+      const assignment = await storage.createDailyAssignment({
+        ...assignmentData,
+        assignedBy: sheikhId,
+      });
+      
+      wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
+      
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error("Error creating homework:", error);
+      res.status(500).json({ message: "خطأ في إنشاء الواجب" });
+    }
+  });
+
+  // Get evaluations for teacher
+  app.get('/api/teacher/evaluations', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Return empty array for now - evaluations can be added later
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching evaluations:", error);
+      res.status(500).json({ message: "خطأ في جلب التقييمات" });
+    }
+  });
+
+  // Create evaluation for teacher
+  app.post('/api/teacher/evaluations', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const evaluationData = req.body;
+      
+      // Store evaluation as a note for now
+      const student = await storage.getStudent(evaluationData.studentId);
+      if (student) {
+        await storage.updateStudent(evaluationData.studentId, {
+          notes: (student.notes || '') + `\n[تقييم ${new Date().toLocaleDateString('ar-SA')}]: ${evaluationData.notes || ''}`
+        });
+      }
+      
+      res.status(201).json({ success: true, message: "تم حفظ التقييم" });
+    } catch (error) {
+      console.error("Error creating evaluation:", error);
+      res.status(500).json({ message: "خطأ في إنشاء التقييم" });
+    }
+  });
+
+  // Get student report for teacher
+  app.get('/api/teacher/student-report', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId } = req.query;
+      
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      const student = await storage.getStudent(studentId as string);
+      
+      if (!student) {
+        return res.status(404).json({ message: "الطالب غير موجود" });
+      }
+      
+      const sessions = await storage.getStudentSessions(studentId as string);
+      const errors = await storage.getStudentErrors(studentId as string).catch(() => []);
+      const schedules = await storage.getStudentSchedules(studentId as string);
+      const assignments = await storage.getDailyAssignments(studentId as string).catch(() => []);
+      
+      res.json({
+        student,
+        sessions,
+        errors,
+        schedules,
+        assignments,
+        summary: {
+          totalSessions: sessions.length,
+          completedSessions: sessions.filter((s: any) => s.status === 'completed').length,
+          totalErrors: errors.length,
+          resolvedErrors: errors.filter((e: any) => e.isResolved).length,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching student report:", error);
+      res.status(500).json({ message: "خطأ في جلب تقرير الطالب" });
+    }
+  });
+
+  // Admin route to clean up duplicate/fake students
+  app.delete('/api/admin/cleanup-students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      
+      // Keep only students that have a valid userId or are marked as active with a subscription
+      const studentsToKeep: string[] = [];
+      const studentsToRemove: string[] = [];
+      const seen = new Set<string>();
+      
+      for (const student of students) {
+        // Create unique key based on phone number or name
+        const key = student.phoneNumber || student.studentName || student.id;
+        
+        if (seen.has(key)) {
+          // Duplicate found
+          studentsToRemove.push(student.id);
+        } else {
+          seen.add(key);
+          // Keep students with userId (linked accounts) or with isPaid/isActive
+          if (student.userId || (student.isActive && student.isPaid)) {
+            studentsToKeep.push(student.id);
+          } else if (!student.isActive) {
+            studentsToRemove.push(student.id);
+          } else {
+            studentsToKeep.push(student.id);
+          }
+        }
+      }
+      
+      // Delete duplicate/inactive students
+      for (const studentId of studentsToRemove) {
+        try {
+          await storage.deleteStudent(studentId);
+        } catch (err) {
+          console.error(`Failed to delete student ${studentId}:`, err);
+        }
+      }
+      
+      res.json({
+        message: "تم تنظيف بيانات الطلاب بنجاح",
+        removed: studentsToRemove.length,
+        kept: studentsToKeep.length,
+      });
+    } catch (error) {
+      console.error("Error cleaning up students:", error);
+      res.status(500).json({ message: "خطأ في تنظيف بيانات الطلاب" });
+    }
+  });
 }
