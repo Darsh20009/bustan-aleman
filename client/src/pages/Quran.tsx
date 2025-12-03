@@ -233,13 +233,13 @@ export default function Quran() {
   };
 
   return (
-    <div className="min-h-screen bg-warm-white">
+    <div className="min-h-screen bg-background">
       <Navigation />
       
-      {/* Header */}
-      <section className="hero-section">
+      {/* Header - Quran Section */}
+      <section className="quran-section py-16">
         <div className="islamic-pattern-overlay"></div>
-        <div className="hero-content container mx-auto px-4">
+        <div className="container mx-auto px-4 text-center relative z-10">
           <h1 
             className="text-4xl md:text-5xl font-bold font-arabic-serif mb-6"
             data-testid="page-title"
@@ -252,7 +252,7 @@ export default function Quran() {
           {!isAuthenticated && (
             <Button 
               onClick={() => window.location.href = "/api/login"}
-              className="btn-islamic-secondary px-8 py-3 text-lg font-semibold"
+              className="bg-btn text-btn-foreground hover:opacity-90 px-8 py-3 text-lg font-semibold"
               data-testid="button-login-to-start"
             >
               سجل دخولك للبدء
@@ -264,18 +264,18 @@ export default function Quran() {
       {isAuthenticated ? (
         <>
           {/* Enhanced Controls Bar */}
-          <section className="py-6 bg-islamic-green text-white">
+          <section className="py-6 quran-section">
             <div className="container mx-auto px-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 text-white" size={20} />
+                  <Search className="absolute left-3 top-3 text-quran-foreground" size={20} />
                   <Input
                     type="text"
                     placeholder="البحث في السور..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70"
+                    className="pl-10 bg-white/20 border-white/30 text-quran-foreground placeholder:text-white/70"
                     data-testid="search-surahs"
                   />
                 </div>
@@ -320,7 +320,7 @@ export default function Quran() {
                 {/* Settings */}
                 <Button 
                   variant="ghost" 
-                  className="text-white hover:bg-white/20"
+                  className="text-quran-foreground hover:bg-white/20"
                   onClick={() => setShowTafseer(!showTafseer)}
                   data-testid="toggle-tafseer"
                 >
@@ -332,7 +332,7 @@ export default function Quran() {
           </section>
 
           {/* Progress Overview */}
-          <section className="py-12 bg-light-beige">
+          <section className="py-12 bg-muted">
             <div className="container mx-auto px-4">
               {notesLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -405,7 +405,7 @@ export default function Quran() {
           </section>
 
           {/* Enhanced Quran Reader */}
-          <section className="py-16 bg-white">
+          <section className="py-16 bg-card">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
                 <Card className="mb-8">

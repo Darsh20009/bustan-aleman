@@ -162,7 +162,7 @@ export default function Navigation() {
                   <Button 
                     variant="outline"
                     size="sm"
-                    className="hidden sm:flex px-3 sm:px-4 text-islamic-green hover:bg-islamic-green hover:text-white transition-colors rounded-lg border border-islamic-green"
+                    className="hidden sm:flex px-3 sm:px-4 text-[hsl(var(--sidebar-foreground))] hover:bg-[hsl(var(--sidebar-primary))] hover:text-white transition-colors rounded-lg border border-[hsl(var(--sidebar-foreground))]"
                     data-testid="button-login"
                   >
                     <span className="text-sm">تسجيل الدخول</span>
@@ -171,7 +171,7 @@ export default function Navigation() {
                 <Link href="/register">
                   <Button 
                     size="sm"
-                    className="btn-islamic-primary px-3 sm:px-4 text-xs sm:text-sm"
+                    className="bg-btn text-btn-foreground hover:opacity-90 px-3 sm:px-4 text-xs sm:text-sm"
                     data-testid="button-register"
                   >
                     إنشاء حساب
@@ -189,22 +189,25 @@ export default function Navigation() {
                   className="md:hidden"
                   data-testid="mobile-menu-trigger"
                 >
-                  <Menu className="text-islamic-green" size={24} />
+                  <Menu className="text-[hsl(var(--sidebar-foreground))]" size={24} />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col space-y-6 mt-6">
-                  {/* Logo in mobile menu */}
-                  <div className="flex items-center space-x-reverse space-x-4 pb-4 border-b">
-                    <div className="w-10 h-10 bg-islamic-green rounded-full flex items-center justify-center">
-                      <BookOpen className="text-white" size={20} />
+                  {/* Logo in mobile menu with Theme Toggle */}
+                  <div className="flex items-center justify-between pb-4 border-b">
+                    <div className="flex items-center space-x-reverse space-x-4">
+                      <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                        <BookOpen className="text-white" size={20} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-primary font-arabic-serif">
+                          بستان الإيمان
+                        </h3>
+                        <p className="text-xs text-muted-foreground">منصة التعليم الإسلامي</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-bold text-islamic-green font-arabic-serif">
-                        بستان الإيمان
-                      </h3>
-                      <p className="text-xs text-gray-600">منصة التعليم الإسلامي</p>
-                    </div>
+                    <ThemeToggle />
                   </div>
 
                   {/* Mobile Navigation Items */}
@@ -216,7 +219,7 @@ export default function Navigation() {
                   <div className="pt-4 border-t">
                     {isAuthenticated ? (
                       <div className="space-y-3">
-                        <div className="flex items-center space-x-reverse space-x-3 p-3 bg-light-beige rounded-lg">
+                        <div className="flex items-center space-x-reverse space-x-3 p-3 bg-muted rounded-lg">
                           {(user as any)?.profileImageUrl ? (
                             <img 
                               src={(user as any).profileImageUrl} 
@@ -224,13 +227,13 @@ export default function Navigation() {
                               className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-10 h-10 bg-islamic-green rounded-full flex items-center justify-center">
+                            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                               <User className="text-white" size={20} />
                             </div>
                           )}
                           <div>
                             <p className="font-semibold">{(user as any)?.firstName || "المستخدم"}</p>
-                            <p className="text-sm text-gray-600">{(user as any)?.email}</p>
+                            <p className="text-sm text-muted-foreground">{(user as any)?.email}</p>
                           </div>
                         </div>
                         <Button 
@@ -257,7 +260,7 @@ export default function Navigation() {
                         </Link>
                         <Link href="/register">
                           <Button 
-                            className="btn-islamic-primary w-full"
+                            className="bg-btn text-btn-foreground hover:opacity-90 w-full"
                             onClick={() => setIsOpen(false)}
                             data-testid="mobile-button-register"
                           >
