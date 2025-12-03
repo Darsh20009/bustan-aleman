@@ -221,19 +221,19 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
   const renderModeSelector = () => null; // Hidden - only using pre-registered users with phone login
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-green-50 flex items-center justify-center p-4" dir="rtl">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-2xl">
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+        <Card className="border shadow-2xl bg-card/95 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
-                <BookOpen className="text-white" size={40} />
+              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                <BookOpen className="text-primary-foreground" size={40} />
               </div>
             </div>
-            <CardTitle className="text-3xl font-bold text-emerald-800 mb-2 font-amiri">
+            <CardTitle className="text-3xl font-bold text-foreground mb-2 font-amiri">
               {mode === 'login' ? 'تسجيل الدخول' : mode === 'register' ? 'تسجيل جديد' : mode === 'telegram' ? 'تسجيل الدخول عبر التليجرام' : 'مرحباً بك'}
             </CardTitle>
-            <p className="text-emerald-600 mt-2 text-lg">
+            <p className="text-muted-foreground mt-2 text-lg">
               {mode === 'login' 
                 ? 'مرحباً بك في بستان الإيمان' 
                 : mode === 'register'
@@ -243,7 +243,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
                 : 'اختر طريقة تسجيل الدخول المفضلة لك'}
             </p>
             <div className="flex justify-center my-4">
-              <span className="text-amber-500 text-2xl">✦</span>
+              <Sparkles className="text-secondary w-6 h-6" />
             </div>
           </CardHeader>
           
@@ -259,13 +259,13 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
 
             {mode === 'replit' && (
               <div className="text-center">
-                <p className="text-emerald-700 mb-6 leading-relaxed">
+                <p className="text-muted-foreground mb-6 leading-relaxed">
                   سجل دخولك للوصول إلى دوراتك وتتبع تقدمك في حفظ القرآن الكريم
                 </p>
                 
                 <Button 
                   onClick={() => window.location.href = "/api/login"}
-                  className="w-full py-4 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-xl transition-all duration-300 transform hover:scale-105"
+                  className="w-full py-4 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl transition-all duration-300"
                   data-testid="button-login-with-replit"
                 >
                   <div className="flex items-center justify-center gap-3">
@@ -274,7 +274,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
                   </div>
                 </Button>
                 
-                <p className="text-sm text-emerald-600 mt-4 leading-relaxed">
+                <p className="text-sm text-muted-foreground mt-4 leading-relaxed">
                   نستخدم نظام Replit الآمن لحماية حسابك
                 </p>
               </div>
@@ -363,7 +363,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
 
                   <Button 
                     type="submit"
-                    className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                    className="w-full py-3 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={loginMutation.isPending}
                     data-testid="button-login"
                   >
@@ -374,7 +374,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
                   <Button
                     type="button"
                     variant="ghost"
-                    className="w-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                    className="w-full text-primary hover:bg-accent/10"
                     onClick={() => onForgotPasswordClick?.()}
                     data-testid="button-forgot-password"
                   >
@@ -658,7 +658,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
 
                   <Button 
                     type="submit"
-                    className="w-full py-3 text-lg font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                    className="w-full py-3 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={registerMutation.isPending}
                     data-testid="button-register"
                   >
@@ -669,25 +669,25 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
               </Form>
             )}
 
-            <div className="border-t border-emerald-200 pt-6">
+            <div className="border-t border-border pt-6">
               <div className="text-center space-y-3">
                 {mode === 'login' ? (
-                  <p className="text-emerald-600">
+                  <p className="text-muted-foreground">
                     ليس لديك حساب؟{' '}
                     <button
                       onClick={() => setMode('register')}
-                      className="text-emerald-700 hover:text-emerald-900 font-semibold underline"
+                      className="text-primary hover:text-primary/80 font-semibold underline"
                       data-testid="link-register"
                     >
                       إنشاء حساب جديد
                     </button>
                   </p>
                 ) : mode === 'register' ? (
-                  <p className="text-emerald-600">
+                  <p className="text-muted-foreground">
                     لديك حساب؟{' '}
                     <button
                       onClick={() => setMode('login')}
-                      className="text-emerald-700 hover:text-emerald-900 font-semibold underline"
+                      className="text-primary hover:text-primary/80 font-semibold underline"
                       data-testid="link-login"
                     >
                       تسجيل الدخول
@@ -696,7 +696,7 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
                 ) : null}
                 <button 
                   onClick={() => window.location.href = "/"}
-                  className="text-emerald-500 hover:text-emerald-700 transition-colors block w-full"
+                  className="text-muted-foreground hover:text-foreground transition-colors block w-full"
                   data-testid="link-back-home"
                 >
                   العودة للصفحة الرئيسية
@@ -708,33 +708,33 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
 
         {/* Features Section */}
         <div className="mt-8 grid grid-cols-1 gap-4">
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <BookOpen className="text-emerald-600 flex-shrink-0" size={24} />
+                <BookOpen className="text-primary flex-shrink-0" size={24} />
                 <div>
-                  <h3 className="font-semibold text-emerald-800">حفظ القرآن الكريم</h3>
-                  <p className="text-sm text-emerald-600">تتبع تقدمك في الحفظ مع مصحف تفاعلي</p>
+                  <h3 className="font-semibold text-foreground">حفظ القرآن الكريم</h3>
+                  <p className="text-sm text-muted-foreground">تتبع تقدمك في الحفظ مع مصحف تفاعلي</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
             <CardContent className="p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <Sparkles className="text-amber-500 flex-shrink-0" size={24} />
+                <Sparkles className="text-secondary flex-shrink-0" size={24} />
                 <div>
-                  <h3 className="font-semibold text-emerald-800">الدورات التعليمية</h3>
-                  <p className="text-sm text-emerald-600">التسجيل في الرحلات التعليمية الإسلامية</p>
+                  <h3 className="font-semibold text-foreground">الدورات التعليمية</h3>
+                  <p className="text-sm text-muted-foreground">التسجيل في الرحلات التعليمية الإسلامية</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
         
-        <div className="text-center mt-6 text-sm text-emerald-600">
-          🌿 بستان الإيمان • منصة تعليمية إسلامية شاملة 🌿
+        <div className="text-center mt-6 text-sm text-muted-foreground">
+          بستان الإيمان - منصة تعليمية إسلامية شاملة
         </div>
       </div>
     </div>

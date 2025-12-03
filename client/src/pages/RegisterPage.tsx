@@ -53,6 +53,7 @@ const registrationSchema = z.object({
   phoneNumber: z.string().min(10, 'رقم الهاتف مطلوب'),
   password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'),
   confirmPassword: z.string(),
+  academy: z.string().min(1, 'اختيار الأكاديمية مطلوب'),
   age: z.string().min(1, 'العمر مطلوب'),
   gender: z.string().min(1, 'الجنس مطلوب'),
   currentLevel: z.string().min(1, 'المستوى مطلوب'),
@@ -81,6 +82,7 @@ export function RegisterPage() {
       phoneNumber: '',
       password: '',
       confirmPassword: '',
+      academy: '',
       age: '',
       gender: '',
       currentLevel: '',
@@ -117,7 +119,7 @@ export function RegisterPage() {
     let fieldsToValidate: (keyof RegistrationFormData)[] = [];
     
     if (step === 1) {
-      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber', 'password', 'confirmPassword'];
+      fieldsToValidate = ['firstName', 'lastName', 'email', 'phoneNumber', 'password', 'confirmPassword', 'academy'];
     } else if (step === 2) {
       fieldsToValidate = ['age', 'gender', 'currentLevel', 'preferredTime'];
     }
@@ -379,6 +381,29 @@ export function RegisterPage() {
                           <FormControl>
                             <Input {...field} type="password" data-testid="input-confirm-password" />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="academy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>اختر الأكاديمية</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-academy">
+                                <SelectValue placeholder="اختر الأكاديمية التي تريد الالتحاق بها" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="bustan_aleman">بستان الإيمان</SelectItem>
+                              <SelectItem value="rawafed_alnoor">روافد النور</SelectItem>
+                              <SelectItem value="manara_alhuda">منارة الهدى</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
