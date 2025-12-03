@@ -17,25 +17,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Configure sessions
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "bustan-aleman-secret-key-2024",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      client: mongoose.connection.getClient(),
-      ttl: 7 * 24 * 60 * 60,
-    }),
-    cookie: {
-      secure: false, // تعطيل secure في بيئة التطوير
-      httpOnly: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      sameSite: "lax", // استخدام lax بدلاً من none
-    },
-  })
-);
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -82,6 +63,32 @@ app.use((req, res, next) => {
     // Initialize MongoDB connection
     await connectMongoDB();
     console.log("✅ MongoDB connection initialized");
+
+    // Configure sessions with MongoDB store if available
+    const sessionConfig: any = {
+      secret: process.env.SESSION_SECRET || "bustan-aleman-secret-key-2024",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: false,
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        sameSite: "lax",
+      },
+    };
+
+    // Add MongoDB store only if MongoDB is connected
+    if (mongoose.connection.readyState === 1) {
+      sessionConfig.store = MongoStore.create({
+        client: mongoose.connection.getClient(),
+        ttl: 7 * 24 * 60 * 60,
+      });
+      console.log("✅ Using MongoDB for session storage");
+    } else {
+      console.log("⚠️ Using memory store for sessions (MongoDB not connected)");
+    }
+
+    app.use(session(sessionConfig));
 
     // Run password migration on startup
     await migratePasswords();
