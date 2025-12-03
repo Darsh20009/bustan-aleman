@@ -82,10 +82,15 @@ export default function Login() {
       <div className="min-h-screen bg-warm-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحقق من حالة تسجيل الدخول...</p>
+          <p className="text-gray-600">جاري التحميل...</p>
         </div>
       </div>
     );
+  }
+
+  // If already authenticated, redirect immediately
+  if (isAuthenticated && user) {
+    return null; // Will redirect via useEffect
   }
 
   return (
