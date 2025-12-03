@@ -22,9 +22,29 @@ The platform uses a unified design with a core palette of Green (#10B981), White
 -   **Database**: MongoDB Atlas with Mongoose ODM, utilizing `MONGODB_URI`.
 -   **SEO & Performance**: Enhanced meta tags, dns-prefetch, optimized font loading, and PWA-ready meta tags.
 
+### Frontend Architecture (December 2024 Restructure)
+The frontend has been completely restructured with a modern, role-based dashboard system:
+
+-   **DashboardLayout**: Base layout component with sidebar navigation, user info display, and theme toggle. Supports three roles: student, supervisor (teacher), admin.
+-   **Shared UI Components** (in `client/src/components/shared/`):
+    - `StatsCard`: Statistics display with icon, value, subtitle, and optional trend
+    - `DataTable`: Reusable table with loading states and empty messages
+    - `PageHeader`: Page title with description and action buttons
+    - `EmptyState`: Empty data placeholder with icon and optional action
+    - `LoadingState`: Loading skeletons for cards and pages
+-   **Student Dashboard** (6 pages in `client/src/pages/student/`):
+    - Dashboard, Homework, Memorization progress, Attendance, Subscription, Contact teacher
+-   **Teacher Dashboard** (5 pages in `client/src/pages/teacher/`):
+    - Students list, Attendance recording, Memorization evaluation, Homework assignment, Reports
+-   **Admin Dashboard** (5 pages in `client/src/pages/admin/`):
+    - Statistics, Teachers management, Halaqas creation, Subscriptions control, Messages
+-   **Registration Page**: Multi-step form with document upload capability
+
 ### Feature Specifications
 -   **Quran Reader**: Displays Quran text, translations, tafsir, and offers reciter selection with audio. Includes word-level highlights, notes, memorization progress tracking (range-based, mastery levels, review scheduling), and daily reading statistics.
--   **Student Dashboard**: Personalized welcome, profile, stats cards, news, and quick actions.
+-   **Student Dashboard**: Role-based dashboard with stats cards, upcoming sessions, homework tracking, memorization progress, attendance records, subscription management, and teacher contact.
+-   **Teacher Dashboard**: Student management, attendance recording, memorization evaluation with grading, homework creation and tracking, detailed student reports.
+-   **Admin Dashboard**: Platform statistics, teacher management (CRUD), halaqa creation, subscription approval/rejection, message management.
 -   **Splash Screen**: Animated Quran book opening sequence.
 -   **Course Management**: Sheikhs can create customizable courses with content (videos, files), auto/manual grading, certificate customization, and expert reviews.
 -   **Live Sessions**: Integrated with **BigBlueButton** for unlimited video conferencing with features like microphone, camera, screen sharing, and chat. Teachers manage sessions, and students can join from their dashboards.
