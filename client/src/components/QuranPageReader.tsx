@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +28,10 @@ import {
   Play,
   Pause,
   Volume2,
-  FileText
+  FileText,
+  Settings,
+  Book,
+  Navigation
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -75,8 +78,8 @@ interface AyahMarker {
 
 export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [fontSize, setFontSize] = useState([28]);
-  const [lineSpacing, setLineSpacing] = useState([2]);
+  const [fontSize, setFontSize] = useState([32]);
+  const [lineSpacing, setLineSpacing] = useState([2.2]);
   const { toast } = useToast();
 
   const [notes, setNotes] = useState<AyahNote[]>([]);
@@ -85,15 +88,24 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchMode, setSearchMode] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [selectedReciter, setSelectedReciter] = useState('ar.alafasy');
   const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
   const [playingAyah, setPlayingAyah] = useState<number | null>(null);
   const [showTafsir, setShowTafsir] = useState<{ [key: number]: boolean }>({});
   const [tafsirData, setTafsirData] = useState<{ [key: number]: string }>({});
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(true);
   const [globalSearchResults, setGlobalSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [ayahActionPanel, setAyahActionPanel] = useState<Ayah | null>(null);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
+  const isDraggingRef = useRef(false);
+  const dragDistanceRef = useRef(0);
 
   const reciters: Reciter[] = [
     { id: 'ar.alafasy', name: 'مشاري العفاسي', style: 'مرتل' },
@@ -108,9 +120,15 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   useEffect(() => {
     const savedNotes = localStorage.getItem('quran-notes');
     const savedMarkers = localStorage.getItem('quran-markers');
+    const savedPage = localStorage.getItem('quran-current-page');
     if (savedNotes) setNotes(JSON.parse(savedNotes));
     if (savedMarkers) setMarkers(JSON.parse(savedMarkers));
+    if (savedPage) setCurrentPage(parseInt(savedPage));
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('quran-current-page', currentPage.toString());
+  }, [currentPage]);
 
   const saveNotes = (newNotes: AyahNote[]) => {
     setNotes(newNotes);
@@ -146,17 +164,19 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     },
   });
 
-  const goToNextPage = () => {
+  const goToNextPage = useCallback(() => {
     if (currentPage < 604) {
+      setSwipeDirection('left');
       setCurrentPage(prev => prev + 1);
     }
-  };
+  }, [currentPage]);
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = useCallback(() => {
     if (currentPage > 1) {
+      setSwipeDirection('right');
       setCurrentPage(prev => prev - 1);
     }
-  };
+  }, [currentPage]);
 
   const goToPage = (page: number) => {
     if (page >= 1 && page <= 604) {
@@ -164,32 +184,90 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }
   };
 
+  // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
         goToNextPage();
       } else if (e.key === 'ArrowRight') {
         goToPreviousPage();
+      } else if (e.key === 'Escape') {
+        setAyahActionPanel(null);
+        setSearchOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage]);
+  }, [goToNextPage, goToPreviousPage]);
+
+  // Swipe gesture handling - track drag distance to distinguish clicks from swipes
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+    dragDistanceRef.current = 0;
+    setIsDragging(true);
+  };
+
+  const handleDrag = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    // Track the maximum drag distance
+    dragDistanceRef.current = Math.max(dragDistanceRef.current, Math.abs(info.offset.x));
+  };
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const threshold = 100;
+    const velocity = 500;
+    const hadSignificantDrag = dragDistanceRef.current > 10; // Small threshold to detect actual drags vs clicks
+    
+    // Only trigger page change if drag exceeded threshold
+    if (Math.abs(info.offset.x) > threshold || Math.abs(info.velocity.x) > velocity) {
+      if (info.offset.x > threshold || info.velocity.x > velocity) {
+        goToPreviousPage();
+      } else if (info.offset.x < -threshold || info.velocity.x < -velocity) {
+        goToNextPage();
+      }
+    }
+    
+    // Reset dragging state - use timeout only if there was significant drag
+    // This prevents blocking immediate post-drag clicks
+    if (hadSignificantDrag) {
+      requestAnimationFrame(() => {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+        dragDistanceRef.current = 0;
+      });
+    } else {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+      dragDistanceRef.current = 0;
+    }
+  };
+  
+  // Check if click should be allowed - only block if there was significant drag movement
+  const shouldAllowClick = () => {
+    return dragDistanceRef.current < 10;
+  };
+
+  // Handle ayah click with keyboard support
+  const handleAyahKeyDown = (e: React.KeyboardEvent, ayah: Ayah) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleAyahClick(ayah);
+    }
+  };
 
   const increaseFontSize = () => {
     setFontSize(prev => [Math.min(prev[0] + 2, 48)]);
   };
 
   const decreaseFontSize = () => {
-    setFontSize(prev => [Math.max(prev[0] - 2, 18)]);
+    setFontSize(prev => [Math.max(prev[0] - 2, 20)]);
   };
 
   const resetSettings = () => {
-    setFontSize([28]);
-    setLineSpacing([2]);
+    setFontSize([32]);
+    setLineSpacing([2.2]);
     toast({
-      title: "✅ تم إعادة التعيين",
+      title: "تم إعادة التعيين",
       description: "تمت إعادة الإعدادات إلى الوضع الافتراضي"
     });
   };
@@ -221,7 +299,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     saveNotes(newNotes);
     setNoteDialogOpen(false);
     toast({
-      title: "✅ تم حفظ الملاحظة",
+      title: "تم حفظ الملاحظة",
       description: noteText.trim() ? "تمت إضافة الملاحظة بنجاح" : "تم حذف الملاحظة"
     });
   };
@@ -247,7 +325,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         type
       }];
       toast({
-        title: "✅ تم الإضافة",
+        title: "تمت الإضافة",
         description: type === 'memorized' ? "تمت إضافة علامة الحفظ" : "تمت إضافة علامة المراجعة"
       });
     }
@@ -270,9 +348,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   };
 
   const normalizeArabicForSearch = (text: string): string => {
-    // إزالة التشكيل
     let normalized = text
-      .replace(/[\u064B-\u065F]/g, '') // تشكيل
+      .replace(/[\u064B-\u065F]/g, '')
       .replace(/[\u0670]/g, '')
       .replace(/[\u06D6-\u06DC]/g, '')
       .replace(/[\u06DF-\u06E8]/g, '')
@@ -280,20 +357,18 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       .replace(/[\u08D3-\u08E1]/g, '')
       .replace(/[\u08E3-\u08FF]/g, '');
     
-    // توحيد الحروف المتشابهة
     normalized = normalized
-      .replace(/[أإآ]/g, 'ا') // توحيد الألف
-      .replace(/[ؤ]/g, 'و') // همزة على واو
-      .replace(/[ئ]/g, 'ي') // همزة على ياء
-      .replace(/[ة]/g, 'ه') // تاء مربوطة
-      .replace(/[ى]/g, 'ي') // ألف مقصورة
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/[ؤ]/g, 'و')
+      .replace(/[ئ]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ى]/g, 'ي')
       .toLowerCase()
       .trim();
     
     return normalized;
   };
 
-  // البحث الشامل في القرآن كاملاً
   const searchInQuran = async (query: string) => {
     if (!query.trim() || query.trim().length < 2) {
       setGlobalSearchResults([]);
@@ -314,7 +389,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }
   };
 
-  // استخدام useEffect للبحث عند تغيير النص
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length >= 2) {
@@ -322,11 +396,12 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       } else {
         setGlobalSearchResults([]);
       }
-    }, 500); // تأخير نصف ثانية لتجنب البحث مع كل حرف
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  // Search filtering for current page ayahs
   const matchesSearch = (ayah: Ayah) => {
     if (!searchQuery.trim()) return true;
     const normalizedQuery = normalizeArabicForSearch(searchQuery);
@@ -415,85 +490,632 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     };
   }, [currentAudio]);
 
+  const handleAyahClick = (ayah: Ayah) => {
+    if (ayahActionPanel?.number === ayah.number) {
+      setAyahActionPanel(null);
+    } else {
+      setAyahActionPanel(ayah);
+    }
+  };
+
+  // Get unique surahs on the page
+  const getSurahsOnPage = () => {
+    if (!pageData?.ayahs) return [];
+    const uniqueSurahs = new Map();
+    pageData.ayahs.forEach(ayah => {
+      if (!uniqueSurahs.has(ayah.surah.number)) {
+        uniqueSurahs.set(ayah.surah.number, ayah.surah);
+      }
+    });
+    return Array.from(uniqueSurahs.values());
+  };
+
+  // Page animation variants
+  const pageVariants = {
+    enter: (direction: 'left' | 'right' | null) => ({
+      x: direction === 'left' ? 300 : direction === 'right' ? -300 : 0,
+      opacity: 0,
+      rotateY: direction === 'left' ? -15 : direction === 'right' ? 15 : 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      rotateY: 0,
+    },
+    exit: (direction: 'left' | 'right' | null) => ({
+      x: direction === 'left' ? -300 : direction === 'right' ? 300 : 0,
+      opacity: 0,
+      rotateY: direction === 'left' ? 15 : direction === 'right' ? -15 : 0,
+    }),
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 via-emerald-100 to-green-50" dir="rtl">
+    <div className="min-h-screen bg-[#F5F0E6] dark:bg-[#1A1A1A]" dir="rtl">
+      {/* Decorative border pattern */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-4 border-4 border-[#8B7355]/20 dark:border-[#D4AF37]/20 rounded-lg" />
+        <div className="absolute inset-6 border-2 border-[#8B7355]/10 dark:border-[#D4AF37]/10 rounded-lg" />
+      </div>
+
+      {/* Top navigation bar */}
       <motion.div 
-        className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600 to-green-600 shadow-lg backdrop-blur-sm"
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="sticky top-0 z-50 bg-gradient-to-b from-[#2D5A3D] to-[#1E4D2B] shadow-xl"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
-          {/* الصف الأول: العودة ومعلومات الصفحة */}
-          <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="max-w-7xl mx-auto px-3 py-2">
+          <div className="flex items-center justify-between gap-2">
+            {/* Right side - Back and Surah info */}
             <div className="flex items-center gap-2">
               {onBack && (
                 <Button
                   onClick={onBack}
                   size="sm"
                   variant="ghost"
-                  className="text-white hover:bg-emerald-700 px-2 sm:px-3"
+                  className="text-[#D4AF37] hover:bg-white/10"
                   data-testid="button-back-home"
                 >
-                  <span className="hidden sm:inline">← العودة</span>
-                  <span className="sm:hidden">←</span>
+                  <ChevronRight className="w-5 h-5" />
                 </Button>
               )}
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                <div className="text-white">
-                  <div className="text-sm sm:text-lg font-bold">صفحة {currentPage}</div>
-                  <div className="text-xs opacity-90">من 604</div>
+              <div className="text-[#D4AF37]">
+                <div className="text-sm font-bold flex items-center gap-2">
+                  <Book className="w-4 h-4" />
+                  <span>الجزء {pageData?.juz || 1}</span>
                 </div>
+                {getSurahsOnPage()[0] && (
+                  <div className="text-xs opacity-80">{getSurahsOnPage()[0].name}</div>
+                )}
               </div>
             </div>
 
-            {/* أزرار التنقل */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            {/* Center - Page number with ornamental design */}
+            <div className="flex items-center gap-1">
               <Button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700 disabled:opacity-50 px-2 sm:px-3"
+                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30"
                 data-testid="button-previous-page"
               >
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline mr-1">السابق</span>
+                <ChevronRight className="w-6 h-6" />
               </Button>
-
-              <input
-                type="number"
-                min="1"
-                max="604"
-                value={currentPage}
-                onChange={(e) => goToPage(Number(e.target.value))}
-                className="w-14 sm:w-20 px-1 sm:px-2 py-1 text-center text-sm sm:text-base rounded-md border-2 border-emerald-300 bg-white text-emerald-900 font-bold"
-                data-testid="input-page-number"
-              />
+              
+              <div className="relative">
+                <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-full blur-md" />
+                <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-4 py-1 rounded-full font-bold text-lg min-w-[80px] text-center">
+                  {currentPage}
+                </div>
+              </div>
 
               <Button
                 onClick={goToNextPage}
                 disabled={currentPage === 604}
                 size="sm"
                 variant="ghost"
-                className="text-white hover:bg-emerald-700 disabled:opacity-50 px-2 sm:px-3"
+                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30"
                 data-testid="button-next-page"
               >
-                <span className="hidden sm:inline ml-1">التالي</span>
-                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                <ChevronLeft className="w-6 h-6" />
+              </Button>
+            </div>
+
+            {/* Left side - Actions */}
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={() => setSearchOpen(true)}
+                size="sm"
+                variant="ghost"
+                className="text-[#D4AF37] hover:bg-white/10"
+                data-testid="button-search"
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={() => setShowSettings(true)}
+                size="sm"
+                variant="ghost"
+                className="text-[#D4AF37] hover:bg-white/10"
+                data-testid="button-settings"
+              >
+                <Settings className="w-5 h-5" />
               </Button>
             </div>
           </div>
+        </div>
+      </motion.div>
 
-          {/* الصف الثاني: أدوات القراءة */}
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            {/* القارئ والبحث */}
-            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+      {/* Main content area with swipe gesture */}
+      <div 
+        ref={containerRef}
+        className="relative min-h-[calc(100vh-60px)] flex items-center justify-center p-4 overflow-hidden"
+      >
+        <AnimatePresence mode="wait" custom={swipeDirection}>
+          <motion.div
+            key={currentPage}
+            custom={swipeDirection}
+            variants={pageVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 30,
+              duration: 0.4 
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragStart={handleDragStart}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
+            className="w-full max-w-3xl mx-auto cursor-grab active:cursor-grabbing"
+            style={{ perspective: 1000 }}
+          >
+            {/* Mushaf Page */}
+            <div className="relative bg-[#FDF8F0] dark:bg-[#2A2A2A] rounded-lg shadow-2xl overflow-hidden">
+              {/* Ornamental frame */}
+              <div className="absolute inset-0 pointer-events-none">
+                {/* Corner decorations */}
+                <div className="absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-tr-lg" />
+                <div className="absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-tl-lg" />
+                <div className="absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-br-lg" />
+                <div className="absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-bl-lg" />
+                {/* Inner frame */}
+                <div className="absolute inset-4 border border-[#8B7355]/20 dark:border-[#D4AF37]/20 rounded" />
+              </div>
+
+              {/* Page header with Surah name */}
+              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] text-white py-3 px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getSurahsOnPage().map((surah, idx) => (
+                      <Badge 
+                        key={surah.number} 
+                        className="bg-[#D4AF37] text-[#2D5A3D] font-bold"
+                      >
+                        {surah.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="text-[#D4AF37] text-sm font-medium">
+                    صفحة {currentPage} من 604
+                  </div>
+                </div>
+              </div>
+
+              {/* Ayahs content */}
+              <div className="p-6 md:p-10 min-h-[60vh]">
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-96">
+                    <div className="text-center">
+                      <div className="relative">
+                        <div className="w-16 h-16 border-4 border-[#2D5A3D]/20 rounded-full" />
+                        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#2D5A3D] border-t-transparent rounded-full animate-spin" />
+                      </div>
+                      <p className="text-[#2D5A3D] dark:text-[#D4AF37] mt-4 font-semibold">جاري التحميل...</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="text-right font-arabic leading-loose"
+                    style={{
+                      fontSize: `${fontSize[0]}px`,
+                      lineHeight: `${lineSpacing[0]}em`,
+                    }}
+                  >
+                    {/* Bismillah for new Surahs */}
+                    {pageData?.ayahs[0]?.numberInSurah === 1 && 
+                     pageData.ayahs[0].surah.number !== 1 && 
+                     pageData.ayahs[0].surah.number !== 9 && (
+                      <div className="text-center mb-8 py-4">
+                        <div className="inline-block relative">
+                          <div className="absolute inset-0 bg-[#D4AF37]/10 blur-xl rounded-full" />
+                          <p className="relative text-[#2D5A3D] dark:text-[#D4AF37] font-bold text-2xl md:text-3xl">
+                            بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Continuous text layout like traditional Mushaf */}
+                    <div className="text-justify" dir="rtl">
+                      {filteredAyahs.length === 0 && searchQuery ? (
+                        <div className="text-center py-12">
+                          <Search className="w-12 h-12 text-[#8B7355]/40 mx-auto mb-4" />
+                          <p className="text-[#8B7355] dark:text-[#D4AF37] text-lg">لم يتم العثور على نتائج</p>
+                          <p className="text-[#8B7355]/60 dark:text-[#D4AF37]/60 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                        </div>
+                      ) : (
+                        filteredAyahs.map((ayah, index) => {
+                          const isMemorized = hasMarker(ayah, 'memorized');
+                          const needsReview = hasMarker(ayah, 'review');
+                          const hasNote = getAyahNote(ayah);
+                          const isSelected = ayahActionPanel?.number === ayah.number;
+                          
+                          return (
+                            <span
+                              key={ayah.number}
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`آية ${ayah.numberInSurah} من ${ayah.surah.name}`}
+                              aria-pressed={isSelected}
+                              className={`inline cursor-pointer transition-all duration-200 rounded-sm px-0.5 outline-none
+                                focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1
+                                ${isSelected ? 'bg-[#D4AF37]/30 dark:bg-[#D4AF37]/40' : ''}
+                                ${isMemorized ? 'text-[#2D5A3D] dark:text-emerald-400' : ''}
+                                ${needsReview ? 'text-amber-700 dark:text-amber-400' : ''}
+                                ${!isMemorized && !needsReview ? 'text-[#1A1A1A] dark:text-[#E8E8E8]' : ''}
+                                hover:bg-[#D4AF37]/20
+                              `}
+                              onClick={() => shouldAllowClick() && handleAyahClick(ayah)}
+                              onKeyDown={(e) => handleAyahKeyDown(e, ayah)}
+                              data-testid={`ayah-${ayah.number}`}
+                            >
+                              {/* Surah header inline */}
+                              {ayah.numberInSurah === 1 && index > 0 && (
+                                <span className="block w-full text-center my-6">
+                                  <span className="inline-block bg-gradient-to-r from-[#2D5A3D] to-[#3D7A4D] text-white px-6 py-2 rounded-full text-lg font-bold shadow-lg">
+                                    {ayah.surah.name}
+                                  </span>
+                                </span>
+                              )}
+                              {ayah.text}
+                              <span className="inline-flex items-center justify-center w-8 h-8 mx-1 text-[#D4AF37] text-sm font-bold align-middle">
+                                ﴿{ayah.numberInSurah.toLocaleString('ar-EG')}﴾
+                              </span>
+                              {/* Markers indicators */}
+                              {(isMemorized || needsReview || hasNote) && (
+                                <span className="inline-flex gap-0.5 mx-1 align-middle">
+                                  {isMemorized && <span className="w-2 h-2 rounded-full bg-emerald-500" aria-label="محفوظ" />}
+                                  {needsReview && <span className="w-2 h-2 rounded-full bg-amber-500" aria-label="للمراجعة" />}
+                                  {hasNote && <span className="w-2 h-2 rounded-full bg-blue-500" aria-label="يوجد ملاحظة" />}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Page footer */}
+              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] py-2 px-6">
+                <div className="flex items-center justify-center gap-4 text-[#D4AF37] text-sm">
+                  <span>الجزء {pageData?.juz || 1}</span>
+                  <span className="opacity-50">|</span>
+                  <span>الحزب {Math.ceil((pageData?.juz || 1) * 2)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Swipe hint */}
+            <div className="flex items-center justify-center mt-4 gap-6 text-[#8B7355]/60 dark:text-[#D4AF37]/40 text-sm">
+              <div className="flex items-center gap-1">
+                <ChevronRight className="w-4 h-4" />
+                <span>اسحب للسابق</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span>اسحب للتالي</span>
+                <ChevronLeft className="w-4 h-4" />
+              </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation arrows for desktop */}
+        <Button
+          onClick={goToPreviousPage}
+          disabled={currentPage === 1}
+          className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
+          size="icon"
+          data-testid="button-nav-prev"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </Button>
+        <Button
+          onClick={goToNextPage}
+          disabled={currentPage === 604}
+          className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
+          size="icon"
+          data-testid="button-nav-next"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </Button>
+      </div>
+
+      {/* Ayah Action Panel - Appears when ayah is clicked */}
+      <AnimatePresence>
+        {ayahActionPanel && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#2A2A2A] rounded-t-3xl shadow-2xl border-t-4 border-[#D4AF37]"
+          >
+            <div className="max-w-3xl mx-auto p-4">
+              {/* Handle bar */}
+              <div className="flex justify-center mb-3">
+                <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full" />
+              </div>
+
+              {/* Ayah preview */}
+              <div className="mb-4 p-3 bg-[#F5F0E6] dark:bg-[#1A1A1A] rounded-xl">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className="bg-[#2D5A3D] text-white">
+                    {ayahActionPanel.surah.name}
+                  </Badge>
+                  <span className="text-sm text-[#8B7355] dark:text-[#D4AF37]">
+                    آية {ayahActionPanel.numberInSurah}
+                  </span>
+                  <Button
+                    onClick={() => setAyahActionPanel(null)}
+                    size="sm"
+                    variant="ghost"
+                    className="mr-auto text-gray-400 hover:text-gray-600"
+                    data-testid="button-close-panel"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+                <p className="text-[#1A1A1A] dark:text-[#E8E8E8] text-lg font-arabic leading-relaxed line-clamp-2">
+                  {ayahActionPanel.text}
+                </p>
+              </div>
+
+              {/* Action buttons grid */}
+              <div className="grid grid-cols-5 gap-2 mb-4">
+                <Button
+                  onClick={() => playAyah(ayahActionPanel)}
+                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                    playingAyah === ayahActionPanel.number 
+                      ? 'bg-purple-600 text-white' 
+                      : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                  }`}
+                  data-testid={`button-play-${ayahActionPanel.number}`}
+                >
+                  {playingAyah === ayahActionPanel.number ? (
+                    <Pause className="w-5 h-5" />
+                  ) : (
+                    <Play className="w-5 h-5" />
+                  )}
+                  <span className="text-xs">استماع</span>
+                </Button>
+
+                <Button
+                  onClick={() => toggleTafsir(ayahActionPanel)}
+                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                    showTafsir[ayahActionPanel.number]
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
+                  }`}
+                  data-testid={`button-tafsir-${ayahActionPanel.number}`}
+                >
+                  <FileText className="w-5 h-5" />
+                  <span className="text-xs">التفسير</span>
+                </Button>
+
+                <Button
+                  onClick={() => toggleMarker(ayahActionPanel, 'memorized')}
+                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                    hasMarker(ayahActionPanel, 'memorized')
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
+                  }`}
+                  data-testid={`button-memorized-${ayahActionPanel.number}`}
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span className="text-xs">محفوظ</span>
+                </Button>
+
+                <Button
+                  onClick={() => toggleMarker(ayahActionPanel, 'review')}
+                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                    hasMarker(ayahActionPanel, 'review')
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                  }`}
+                  data-testid={`button-review-${ayahActionPanel.number}`}
+                >
+                  <RefreshCw className="w-5 h-5" />
+                  <span className="text-xs">مراجعة</span>
+                </Button>
+
+                <Button
+                  onClick={() => openNoteDialog(ayahActionPanel)}
+                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                    getAyahNote(ayahActionPanel)
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                  }`}
+                  data-testid={`button-note-${ayahActionPanel.number}`}
+                >
+                  <StickyNote className="w-5 h-5" />
+                  <span className="text-xs">ملاحظة</span>
+                </Button>
+              </div>
+
+              {/* Tafsir display */}
+              {showTafsir[ayahActionPanel.number] && tafsirData[ayahActionPanel.number] && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl mb-3"
+                >
+                  <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-300 mb-2 flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    التفسير الميسر
+                  </h4>
+                  <p className="text-indigo-900 dark:text-indigo-100 text-sm leading-relaxed">
+                    {tafsirData[ayahActionPanel.number]}
+                  </p>
+                </motion.div>
+              )}
+
+              {/* Note display */}
+              {getAyahNote(ayahActionPanel) && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
+                  <h4 className="text-sm font-bold text-blue-700 dark:text-blue-300 mb-1 flex items-center gap-2">
+                    <StickyNote className="w-4 h-4" />
+                    ملاحظتك
+                  </h4>
+                  <p className="text-blue-900 dark:text-blue-100 text-sm">
+                    {getAyahNote(ayahActionPanel)?.note}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Search Dialog */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-hidden" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#2D5A3D] dark:text-[#D4AF37]">
+              <Search className="w-5 h-5" />
+              البحث في القرآن
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="relative">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="ابحث في القرآن الكريم..."
+                className="w-full pr-10 pl-4 py-3 border-2 border-[#2D5A3D]/30 rounded-xl focus:border-[#2D5A3D] focus:ring-2 focus:ring-[#2D5A3D]/20 outline-none transition-all bg-white dark:bg-[#2A2A2A] dark:text-white"
+                data-testid="input-search"
+              />
+            </div>
+
+            {/* Quick navigation */}
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400 w-full mb-1">انتقال سريع:</span>
+              {[1, 50, 100, 200, 300, 400, 500, 604].map((page) => (
+                <Button
+                  key={page}
+                  onClick={() => {
+                    goToPage(page);
+                    setSearchOpen(false);
+                  }}
+                  size="sm"
+                  variant="outline"
+                  className="text-[#2D5A3D] border-[#2D5A3D]/30 hover:bg-[#2D5A3D] hover:text-white"
+                  data-testid={`button-quick-nav-${page}`}
+                >
+                  صفحة {page}
+                </Button>
+              ))}
+            </div>
+
+            {/* Search results */}
+            {isSearching && (
+              <div className="text-center py-4 text-gray-500">
+                <div className="animate-spin w-6 h-6 border-2 border-[#2D5A3D] border-t-transparent rounded-full mx-auto mb-2" />
+                جاري البحث...
+              </div>
+            )}
+
+            {globalSearchResults.length > 0 && (
+              <div className="max-h-[40vh] overflow-y-auto space-y-2">
+                <p className="text-sm text-[#2D5A3D] dark:text-[#D4AF37] font-bold">
+                  عدد النتائج: {globalSearchResults.length}
+                </p>
+                {globalSearchResults.map((result, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      goToPage(result.page);
+                      setSearchOpen(false);
+                      setSearchQuery('');
+                      setGlobalSearchResults([]);
+                    }}
+                    className="w-full text-right p-3 bg-[#F5F0E6] dark:bg-[#2A2A2A] hover:bg-[#2D5A3D]/10 rounded-lg border border-[#2D5A3D]/20 transition-colors"
+                    data-testid={`search-result-${idx}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge className="bg-[#2D5A3D] text-white text-xs">
+                        {result.surahName}
+                      </Badge>
+                      <span className="text-xs text-[#8B7355] dark:text-[#D4AF37]">
+                        آية {result.ayahNumber} - صفحة {result.page}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[#1A1A1A] dark:text-[#E8E8E8] leading-relaxed line-clamp-2">
+                      {result.ayahText}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="sm:max-w-[400px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#2D5A3D] dark:text-[#D4AF37]">
+              <Settings className="w-5 h-5" />
+              إعدادات القراءة
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Font size */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block">
+                حجم الخط: {fontSize[0]}
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={decreaseFontSize}
+                  size="sm"
+                  variant="outline"
+                  className="border-[#2D5A3D] text-[#2D5A3D]"
+                  data-testid="button-decrease-font"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                  <div 
+                    className="h-full bg-[#2D5A3D] rounded-full transition-all"
+                    style={{ width: `${((fontSize[0] - 20) / 28) * 100}%` }}
+                  />
+                </div>
+                <Button
+                  onClick={increaseFontSize}
+                  size="sm"
+                  variant="outline"
+                  className="border-[#2D5A3D] text-[#2D5A3D]"
+                  data-testid="button-increase-font"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Reciter selection */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">
+                القارئ
+              </label>
               <select
                 value={selectedReciter}
                 onChange={(e) => setSelectedReciter(e.target.value)}
-                className="px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm rounded-md bg-emerald-700 text-white border-2 border-emerald-500 max-w-[150px] sm:max-w-none"
+                className="w-full px-4 py-2 border-2 border-[#2D5A3D]/30 rounded-lg focus:border-[#2D5A3D] outline-none bg-white dark:bg-[#2A2A2A] dark:text-white"
                 data-testid="select-reciter"
               >
                 {reciters.map(reciter => (
@@ -502,426 +1124,29 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   </option>
                 ))}
               </select>
-
-              <Button
-                onClick={() => setSearchMode(!searchMode)}
-                size="sm"
-                variant="ghost"
-                className={`text-white hover:bg-emerald-700 p-1.5 sm:p-2 ${searchMode ? 'bg-emerald-700' : ''}`}
-                data-testid="button-toggle-search"
-              >
-                <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
             </div>
 
-            {/* أدوات حجم الخط */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button
-                onClick={decreaseFontSize}
-                size="sm"
-                variant="ghost"
-                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
-                data-testid="button-decrease-font"
-              >
-                <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-
-              <span className="text-white text-xs sm:text-sm min-w-[2.5rem] sm:min-w-[3rem] text-center">
-                {fontSize[0]}
-              </span>
-
-              <Button
-                onClick={increaseFontSize}
-                size="sm"
-                variant="ghost"
-                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
-                data-testid="button-increase-font"
-              >
-                <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-
-              <Button
-                onClick={resetSettings}
-                size="sm"
-                variant="ghost"
-                className="text-white hover:bg-emerald-700 p-1.5 sm:p-2"
-                data-testid="button-reset-settings"
-              >
-                <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* شريط البحث */}
-          <AnimatePresence>
-            {searchMode && (
-              <motion.div 
-                className="mt-3"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="ابحث عن آية... (بدون تشكيل)"
-                    className="w-full px-4 py-2 pr-10 text-sm sm:text-base rounded-lg text-emerald-900 border-2 border-emerald-300"
-                    data-testid="input-search-ayah"
-                  />
-                  <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
-                  {searchQuery && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
-                      data-testid="button-clear-search"
-                    >
-                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
-                  )}
-                </div>
-                {searchQuery && (
-                  <div className="text-xs text-emerald-100 mt-2 space-y-1">
-                    <p>
-                      {isSearching ? '🔍 جاري البحث...' : `✅ وجدت ${globalSearchResults.length} نتيجة في القرآن كاملاً`}
-                      <span className="mr-2 opacity-75">(البحث يتجاهل التشكيل والهمزات)</span>
-                    </p>
-                    <p className="opacity-90">
-                      {filteredAyahs.length} آية في الصفحة الحالية
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* شريط التقدم */}
-          <motion.div 
-            className="mt-3"
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <div className="w-full bg-emerald-800/30 rounded-full h-1.5 sm:h-2 overflow-hidden">
-              <motion.div
-                className="bg-emerald-200 h-full rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${(currentPage / 604) * 100}%` }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
-              />
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Card className="bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 shadow-2xl border-4 border-green-300/50 rounded-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-600 via-green-600 to-emerald-600 text-white py-4 px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {pageData?.ayahs[0] && (
-                      <>
-                        <Badge className="bg-emerald-800 text-white px-4 py-1 text-base">
-                          {pageData.ayahs[0].surah.name}
-                        </Badge>
-                        <span className="text-emerald-100 text-sm">
-                          ({pageData.ayahs[0].surah.englishName})
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  <Badge className="bg-emerald-800 text-white px-4 py-1 text-base">
-                    الجزء {pageData?.juz || 1}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="p-8 md:p-12">
-                {/* نتائج البحث الشامل */}
-                {searchQuery.trim() && globalSearchResults.length > 0 && (
-                  <div className="mb-6 bg-emerald-50 border-2 border-emerald-200 rounded-lg p-4">
-                    <h3 className="text-lg font-bold text-emerald-800 mb-3 flex items-center gap-2">
-                      <Search className="w-5 h-5" />
-                      نتائج البحث في القرآن كاملاً ({globalSearchResults.length} نتيجة)
-                    </h3>
-                    <div className="max-h-96 overflow-y-auto space-y-2">
-                      {globalSearchResults.map((result, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            goToPage(result.page);
-                            setSearchMode(false);
-                            setSearchQuery('');
-                            setGlobalSearchResults([]);
-                            
-                            setTimeout(() => {
-                              const ayahElement = document.querySelector(`[data-testid="ayah-container-${result.ayahNumber}"]`);
-                              if (ayahElement) {
-                                ayahElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                ayahElement.classList.add('ring-4', 'ring-emerald-400', 'ring-opacity-50');
-                                setTimeout(() => {
-                                  ayahElement.classList.remove('ring-4', 'ring-emerald-400', 'ring-opacity-50');
-                                }, 2000);
-                              }
-                            }, 300);
-                          }}
-                          className="w-full text-right p-3 bg-white hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors"
-                        >
-                          <div className="flex items-start justify-between gap-2 mb-2">
-                            <Badge className="bg-emerald-600 text-white text-xs">
-                              {result.surahName}
-                            </Badge>
-                            <span className="text-xs text-emerald-600">
-                              آية {result.ayahNumber} - صفحة {result.page}
-                            </span>
-                          </div>
-                          <p className="text-sm text-emerald-900 leading-relaxed">
-                            {result.ayahText}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {isLoading ? (
-                  <div className="flex items-center justify-center h-96">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-emerald-600 mx-auto mb-4" />
-                      <p className="text-emerald-700 text-lg font-semibold">جاري التحميل...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="text-right leading-loose space-y-1"
-                    style={{
-                      fontSize: `${fontSize[0]}px`,
-                      lineHeight: `${lineSpacing[0]}em`,
-                    }}
-                  >
-                    {pageData?.ayahs[0]?.numberInSurah === 1 && pageData.ayahs[0].surah.number !== 1 && pageData.ayahs[0].surah.number !== 9 && (
-                      <div className="text-center mb-8 py-4">
-                        <p className="text-emerald-800 font-semibold text-3xl">
-                          بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      {filteredAyahs.length === 0 && searchQuery ? (
-                        <div className="text-center py-12">
-                          <Search className="w-12 h-12 text-emerald-300 mx-auto mb-4" />
-                          <p className="text-emerald-600 text-lg">لم يتم العثور على نتائج</p>
-                          <p className="text-emerald-500 text-sm mt-2">جرب كلمات بحث أخرى</p>
-                        </div>
-                      ) : (
-                        filteredAyahs.map((ayah, index) => {
-                          const ayahNote = getAyahNote(ayah);
-                          const isMemorized = hasMarker(ayah, 'memorized');
-                          const needsReview = hasMarker(ayah, 'review');
-                          
-                          return (
-                            <div
-                              key={ayah.number}
-                              className={`relative p-4 rounded-lg transition-all ${
-                                isMemorized ? 'bg-green-100 border-r-4 border-green-600' :
-                                needsReview ? 'bg-amber-100 border-r-4 border-amber-500' :
-                                'bg-green-50/70 border-r-4 border-transparent hover:border-green-300'
-                              }`}
-                              data-testid={`ayah-container-${ayah.number}`}
-                            >
-                              <div className="flex items-start gap-3">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-500 text-white text-sm font-bold shadow-md">
-                                      {ayah.numberInSurah}
-                                    </span>
-                                    <span className="text-xs text-emerald-600">
-                                      {ayah.surah.name}
-                                    </span>
-                                  </div>
-                                  
-                                  <p
-                                    className="font-arabic text-emerald-900 leading-loose mb-3"
-                                    data-testid={`ayah-${ayah.number}`}
-                                  >
-                                    {ayah.text}
-                                  </p>
-
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => playAyah(ayah)}
-                                      className={`h-8 ${playingAyah === ayah.number ? 'bg-purple-600 text-white border-purple-600' : 'text-purple-600 border-purple-300 hover:bg-purple-50'}`}
-                                      data-testid={`button-play-${ayah.number}`}
-                                    >
-                                      {playingAyah === ayah.number ? (
-                                        <Pause className="w-4 h-4 ml-1" />
-                                      ) : (
-                                        <Play className="w-4 h-4 ml-1" />
-                                      )}
-                                      {playingAyah === ayah.number ? 'إيقاف' : 'استماع'}
-                                    </Button>
-
-                                    <Button
-                                      size="sm"
-                                      variant={showTafsir[ayah.number] ? "default" : "outline"}
-                                      onClick={() => toggleTafsir(ayah)}
-                                      className={`h-8 ${showTafsir[ayah.number] ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'text-indigo-600 border-indigo-300 hover:bg-indigo-50'}`}
-                                      data-testid={`button-tafsir-${ayah.number}`}
-                                    >
-                                      <FileText className="w-4 h-4 ml-1" />
-                                      {showTafsir[ayah.number] ? 'إخفاء التفسير' : 'التفسير'}
-                                    </Button>
-
-                                    <Button
-                                      size="sm"
-                                      variant={isMemorized ? "default" : "outline"}
-                                      onClick={() => toggleMarker(ayah, 'memorized')}
-                                      className={`h-8 ${isMemorized ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-green-600 border-green-300 hover:bg-green-50'}`}
-                                      data-testid={`button-memorized-${ayah.number}`}
-                                    >
-                                      <CheckCircle2 className="w-4 h-4 ml-1" />
-                                      {isMemorized ? 'محفوظ' : 'حفظ'}
-                                    </Button>
-                                    
-                                    <Button
-                                      size="sm"
-                                      variant={needsReview ? "default" : "outline"}
-                                      onClick={() => toggleMarker(ayah, 'review')}
-                                      className={`h-8 ${needsReview ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-amber-600 border-amber-300 hover:bg-amber-50'}`}
-                                      data-testid={`button-review-${ayah.number}`}
-                                    >
-                                      <RefreshCw className="w-4 h-4 ml-1" />
-                                      {needsReview ? 'للمراجعة' : 'مراجعة'}
-                                    </Button>
-                                    
-                                    <Button
-                                      size="sm"
-                                      variant={ayahNote ? "default" : "outline"}
-                                      onClick={() => openNoteDialog(ayah)}
-                                      className={`h-8 ${ayahNote ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'text-blue-600 border-blue-300 hover:bg-blue-50'}`}
-                                      data-testid={`button-note-${ayah.number}`}
-                                    >
-                                      <StickyNote className="w-4 h-4 ml-1" />
-                                      {ayahNote ? 'تعديل الملاحظة' : 'إضافة ملاحظة'}
-                                    </Button>
-                                  </div>
-                                  
-                                  {showTafsir[ayah.number] && tafsirData[ayah.number] && (
-                                    <div className="mt-3 p-4 bg-indigo-50 border-r-2 border-indigo-400 rounded">
-                                      <div className="flex items-start gap-2">
-                                        <FileText className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
-                                        <div className="flex-1">
-                                          <p className="text-xs text-indigo-600 font-bold mb-1">التفسير الميسر:</p>
-                                          <p className="text-indigo-900 text-right text-sm leading-relaxed">{tafsirData[ayah.number]}</p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {ayahNote && (
-                                    <div className="mt-3 p-3 bg-blue-50 border-r-2 border-blue-400 rounded">
-                                      <div className="flex items-start gap-2">
-                                        <StickyNote className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                        <p className="text-blue-800 text-right text-sm">{ayahNote.note}</p>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-12 pt-6 border-t-2 border-emerald-200">
-                  <div className="flex items-center justify-center gap-2 text-emerald-600">
-                    <div className="w-16 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full" />
-                    <BookOpen className="w-5 h-5" />
-                    <div className="w-16 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent rounded-full" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        </AnimatePresence>
-
-        <div className="mt-6 grid grid-cols-4 gap-3">
-          {[1, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 480, 510, 540, 570, 600].map((page) => (
+            {/* Reset button */}
             <Button
-              key={page}
-              onClick={() => goToPage(page)}
-              variant={currentPage === page ? "default" : "outline"}
-              className={
-                currentPage === page
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700"
-                  : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-              }
-              data-testid={`button-jump-${page}`}
+              onClick={resetSettings}
+              variant="outline"
+              className="w-full border-[#2D5A3D] text-[#2D5A3D] hover:bg-[#2D5A3D] hover:text-white"
+              data-testid="button-reset-settings"
             >
-              صفحة {page}
-            </Button>
-          ))}
-        </div>
-      </div>
-
-      {showKeyboardShortcuts && (
-        <div className="fixed bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-4 border-2 border-emerald-200">
-          <div className="flex items-start justify-between gap-2 mb-2">
-            <p className="font-bold text-xs text-emerald-800">اختصارات لوحة المفاتيح:</p>
-            <Button
-              onClick={() => setShowKeyboardShortcuts(false)}
-              size="sm"
-              variant="ghost"
-              className="h-5 w-5 p-0 hover:bg-emerald-100"
-              data-testid="button-close-shortcuts"
-            >
-              <X className="w-3 h-3 text-emerald-600" />
+              <RotateCcw className="w-4 h-4 ml-2" />
+              إعادة تعيين الإعدادات
             </Button>
           </div>
-          <div className="text-xs text-emerald-800">
-            <p>← السهم الأيسر: الصفحة التالية</p>
-            <p>→ السهم الأيمن: الصفحة السابقة</p>
-            <div className="mt-3 pt-3 border-t border-emerald-200">
-              <p className="font-bold mb-1">العلامات:</p>
-              <div className="flex items-center gap-1 mb-1">
-                <CheckCircle2 className="w-3 h-3 text-green-600" />
-                <span>محفوظ</span>
-              </div>
-              <div className="flex items-center gap-1 mb-1">
-                <RefreshCw className="w-3 h-3 text-amber-600" />
-                <span>للمراجعة</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <StickyNote className="w-3 h-3 text-blue-600" />
-                <span>ملاحظة</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
+      {/* Note Dialog */}
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
         <DialogContent className="sm:max-w-[500px]" dir="rtl">
           <DialogHeader>
-            <DialogTitle>إضافة ملاحظة</DialogTitle>
+            <DialogTitle className="text-[#2D5A3D] dark:text-[#D4AF37]">
+              إضافة ملاحظة
+            </DialogTitle>
             <DialogDescription>
               {selectedAyah && (
                 <span>
@@ -935,7 +1160,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder="اكتب ملاحظتك هنا..."
-              className="min-h-[150px] text-right"
+              className="min-h-[150px] text-right border-[#2D5A3D]/30 focus:border-[#2D5A3D]"
               data-testid="textarea-note"
             />
             <div className="flex gap-2 justify-end">
@@ -948,7 +1173,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </Button>
               <Button
                 onClick={saveNote}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className="bg-[#2D5A3D] hover:bg-[#1E4D2B] text-white"
                 data-testid="button-save-note"
               >
                 حفظ
