@@ -14,42 +14,36 @@ export interface User {
 }
 
 export function useAuth() {
-  const { data: user, isLoading, refetch, error } = useQuery<User>({
+  const { data: user, isLoading, refetch, error, isFetching } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      try {
-        const response = await fetch('/api/auth/user', {
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+      const response = await fetch('/api/auth/user', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            console.log('[useAuth] Not authenticated');
-          } else {
-            console.error('[useAuth] Error:', response.status);
-          }
-          throw new Error('Not authenticated');
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('[useAuth] Not authenticated');
+        } else {
+          console.error('[useAuth] Error:', response.status);
         }
-
-        const userData = await response.json();
-        console.log('[useAuth] User data received:', userData);
-        return userData;
-      } catch (err) {
-        console.error('[useAuth] Fetch error:', err);
-        throw err;
+        throw new Error('Not authenticated');
       }
+
+      const userData = await response.json();
+      console.log('[useAuth] User data received:', userData);
+      return userData;
     },
-    retry: 1,
-    retryDelay: 1000,
-    staleTime: 5 * 60 * 1000, // 5 دقائق
-    gcTime: 10 * 60 * 1000, // 10 دقائق
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchInterval: false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchOnReconnect: true,
+    refetchOnReconnect: false,
   });
 
   const logout = async () => {
@@ -77,6 +71,8 @@ export function useAuth() {
   return {
     user,
     isLoading,
+    isError: !!error,
+    error,
     isAuthenticated: !!user && !error,
     isStudent: user?.role === 'student',
     isSupervisor: user?.role === 'supervisor',
