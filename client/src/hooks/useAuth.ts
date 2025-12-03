@@ -17,25 +17,39 @@ export function useAuth() {
   const { data: user, isLoading, refetch, error } = useQuery<User>({
     queryKey: ["/api/auth/user"],
     queryFn: async () => {
-      const response = await fetch('/api/auth/user', {
-        credentials: 'include'
-      });
+      try {
+        const response = await fetch('/api/auth/user', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (!response.ok) {
-        throw new Error('Not authenticated');
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log('[useAuth] Not authenticated');
+          } else {
+            console.error('[useAuth] Error:', response.status);
+          }
+          throw new Error('Not authenticated');
+        }
+
+        const userData = await response.json();
+        console.log('[useAuth] User data received:', userData);
+        return userData;
+      } catch (err) {
+        console.error('[useAuth] Fetch error:', err);
+        throw err;
       }
-
-      const userData = await response.json();
-      console.log('[useAuth] User data received:', userData);
-      return userData;
     },
-    retry: false,
-    staleTime: 0, // تحديث فوري عند invalidate
-    gcTime: 5 * 60 * 1000, // احتفظ لمدة 5 دقائق
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000, // 5 دقائق
+    gcTime: 10 * 60 * 1000, // 10 دقائق
     refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   const logout = async () => {

@@ -131,6 +131,7 @@ export function setupAuthRoutes(app: Express) {
   // Universal user login (supports phone or email)
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('[auth] Login attempt:', { phoneNumber: req.body.phoneNumber, email: req.body.email });
       const { phoneNumber, email, password } = loginSchema.parse(req.body);
 
       // Find user by phone number or email
@@ -140,8 +141,11 @@ export function setupAuthRoutes(app: Express) {
       );
 
       if (!user) {
+        console.log('[auth] User not found');
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
+      
+      console.log('[auth] User found:', user.id);
 
       // Verify password against user's stored hash
       let isValidPassword = false;
@@ -186,6 +190,8 @@ export function setupAuthRoutes(app: Express) {
       }
       req.session.userId = user.id;
       req.session.userRole = user.role as "student" | "supervisor" | "admin";
+      
+      console.log('[auth] Session created:', { userId: user.id, role: user.role });
 
       // Get additional data based on role
       let additionalData: any = {};
@@ -243,7 +249,15 @@ export function setupAuthRoutes(app: Express) {
 
       console.log('[auth] Login response:', JSON.stringify(loginResponse, null, 2));
 
-      res.json(loginResponse);
+      // حفظ الجلسة بشكل صريح
+      req.session.save((err) => {
+        if (err) {
+          console.error('[auth] Session save error:', err);
+          return res.status(500).json({ message: "خطأ في حفظ الجلسة" });
+        }
+        console.log('[auth] Session saved successfully');
+        res.json(loginResponse);
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({

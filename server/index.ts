@@ -10,22 +10,31 @@ import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { wsService } from "./websocket";
 import { connectMongoDB } from "./mongodb";
+import MongoStore from 'connect-mongo';
+import mongoose from 'mongoose';
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Configure sessions
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'bustan-al-iman-secret-key-2025',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: false, // Set to true in production with HTTPS
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "bustan-aleman-secret-key-2024",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+      ttl: 7 * 24 * 60 * 60,
+    }),
+    cookie: {
+      secure: false, // تعطيل secure في بيئة التطوير
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      sameSite: "lax", // استخدام lax بدلاً من none
+    },
+  })
+);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -44,15 +53,15 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
       let logLine = `${method} ${path} ${res.statusCode} in ${duration}ms`;
-      
+
       if (userId) {
         logLine += ` [user:${userId.slice(0, 8)}]`;
       }
-      
+
       if (duration > 1000) {
         logLine += ` ⚠️ SLOW`;
       }
-      
+
       if (capturedJsonResponse) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
@@ -73,77 +82,77 @@ app.use((req, res, next) => {
     // Initialize MongoDB connection
     await connectMongoDB();
     console.log("✅ MongoDB connection initialized");
-    
+
     // Run password migration on startup
     await migratePasswords();
     console.log("✅ Password migration completed");
-    
+
     // Note: Pre-registered users are now initialized in routes.ts using phone auth
-    
+
     // Initialize Telegram Bot
     initializeTelegramBot();
     console.log("✅ Telegram bot initialized");
-    
+
     // Setup authentication routes (universal auth system)
     setupAuthRoutes(app);
     console.log("✅ Auth routes setup");
-    
+
     // Setup additional routes (student progress, supervisor management, certificates)
     setupAdditionalRoutes(app);
     console.log("✅ Additional routes setup");
-    
+
     // Setup JSON routes (legacy student system)
     setupJSONRoutes(app);
     console.log("✅ JSON routes setup");
-    
+
     // Setup Sheikh routes (session management, assignments)
     const { setupSheikhRoutes } = await import("./sheikhRoutes");
     setupSheikhRoutes(app);
     console.log("✅ Sheikh routes setup");
-    
+
     // Setup Student Session routes (my sessions page)
     const { setupStudentSessionRoutes } = await import("./studentSessionRoutes");
     setupStudentSessionRoutes(app);
     console.log("✅ Student session routes setup");
-    
+
     // Setup Surah routes (surah list API)
     const { setupSurahRoutes } = await import("./surahRoutes");
     setupSurahRoutes(app);
     console.log("✅ Surah routes setup");
-    
+
     // Setup Course routes (enrollments, quizzes, certificates)
     const { setupCourseRoutes } = await import("./courseRoutes");
     setupCourseRoutes(app);
     console.log("✅ Course routes setup");
-    
+
     // Setup Subscription routes (plans, subscriptions, payments)
     const { setupSubscriptionRoutes } = await import("./subscriptionRoutes");
     setupSubscriptionRoutes(app);
     console.log("✅ Subscription routes setup");
-    
+
     // Setup Admin Dashboard routes (stats, reports, user management)
     const { setupAdminDashboardRoutes } = await import("./adminDashboardRoutes");
     setupAdminDashboardRoutes(app);
     console.log("✅ Admin dashboard routes setup");
-    
+
     // Setup Halaqa routes (groups/classes management)
     const { setupHalaqaRoutes } = await import("./halaqaRoutes");
     setupHalaqaRoutes(app);
     console.log("✅ Halaqa routes setup");
-    
+
     // Setup Homework routes (assignments, submissions, evaluations)
     const { setupHomeworkRoutes } = await import("./homeworkRoutes");
     setupHomeworkRoutes(app);
     console.log("✅ Homework routes setup");
-    
+
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
     console.log("✅ Routes registered");
-  
+
     // Initialize WebSocket server
     wsService.initialize(server);
     console.log("✅ WebSocket initialized");
-    
+
     // جدولة تنظيف الحصص المنتهية كل ساعة
     const { storage } = await import("./storage");
     setInterval(async () => {
@@ -153,7 +162,7 @@ app.use((req, res, next) => {
         console.error('❌ خطأ في تنظيف الحصص المنتهية:', error);
       }
     }, 60 * 60 * 1000); // كل ساعة
-    
+
     // تنفيذ تنظيف فوري عند بدء السيرفر
     setTimeout(async () => {
       try {
