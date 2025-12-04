@@ -97,7 +97,7 @@ export default function SheikhScheduleManager() {
         startTime: data.startTime,
         endTime: data.endTime,
       };
-      const response = await apiRequest(`/api/students/${data.studentId}/schedules`, 'POST', scheduleData);
+      const response = await apiRequest('POST', `/api/students/${data.studentId}/schedules`, scheduleData);
       return response;
     },
     onSuccess: () => {
@@ -120,7 +120,7 @@ export default function SheikhScheduleManager() {
   // Delete schedule mutation
   const deleteSchedule = useMutation({
     mutationFn: async (scheduleId: string) => {
-      return apiRequest(`/api/schedules/${scheduleId}/delete`, 'POST');
+      return apiRequest('POST', `/api/schedules/${scheduleId}/delete`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
@@ -141,7 +141,7 @@ export default function SheikhScheduleManager() {
   // Enable session mutation
   const enableSession = useMutation({
     mutationFn: async (data: any) => {
-      return apiRequest('/api/sheikh/enable-session', 'POST', data);
+      return apiRequest('POST', '/api/sheikh/enable-session', data);
     },
     onSuccess: () => {
       toast({
