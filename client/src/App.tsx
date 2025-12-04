@@ -24,12 +24,19 @@ import { StudentMemorizationPage } from "./pages/student/StudentMemorization";
 import { StudentAttendancePage } from "./pages/student/StudentAttendance";
 import { StudentSubscriptionPage } from "./pages/student/StudentSubscription";
 import { StudentContactPage } from "./pages/student/StudentContact";
+import { StudentSessionsPage } from "./pages/student/StudentSessions";
 
 import { TeacherStudentsPage } from "./pages/teacher/TeacherStudents";
 import { TeacherAttendancePage } from "./pages/teacher/TeacherAttendance";
 import { TeacherMemorizationPage } from "./pages/teacher/TeacherMemorization";
 import { TeacherHomeworkPage } from "./pages/teacher/TeacherHomework";
 import { TeacherReportsPage } from "./pages/teacher/TeacherReports";
+import { TeacherSessionsPage } from "./pages/teacher/TeacherSessions";
+import { TeacherSchedulePage } from "./pages/teacher/TeacherSchedule";
+import { TeacherSubscriptionsPage } from "./pages/teacher/TeacherSubscriptions";
+import { TeacherMessagesPage } from "./pages/teacher/TeacherMessages";
+
+import CartPage from "./pages/CartPage";
 
 import { AdminStatisticsPage } from "./pages/admin/AdminStatistics";
 import { AdminTeachersPage } from "./pages/admin/AdminTeachers";
@@ -181,6 +188,18 @@ function AppRoutes() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/student/sessions">
+        <ProtectedRoute allowedRoles={['student']}>
+          <StudentSessionsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/cart">
+        <ProtectedRoute allowedRoles={['student']}>
+          <CartPage onBack={() => window.history.back()} />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/teacher">
         <ProtectedRoute allowedRoles={['supervisor']}>
           <TeacherStudentsPage />
@@ -208,6 +227,30 @@ function AppRoutes() {
       <Route path="/teacher/reports">
         <ProtectedRoute allowedRoles={['supervisor']}>
           <TeacherReportsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/sessions">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherSessionsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/schedule">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherSchedulePage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/subscriptions">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherSubscriptionsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/messages">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherMessagesPage />
         </ProtectedRoute>
       </Route>
 

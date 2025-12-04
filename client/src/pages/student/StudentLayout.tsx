@@ -6,7 +6,8 @@ import {
   TrendingUp, 
   Calendar, 
   CreditCard, 
-  MessageCircle 
+  MessageCircle,
+  Video
 } from 'lucide-react';
 
 const studentNavItems = [
@@ -14,6 +15,11 @@ const studentNavItems = [
     title: 'دروسي',
     href: '/student',
     icon: <BookOpen className="h-4 w-4" />
+  },
+  {
+    title: 'حصتي',
+    href: '/student/sessions',
+    icon: <Video className="h-4 w-4" />
   },
   {
     title: 'واجباتي',

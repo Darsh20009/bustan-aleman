@@ -5,7 +5,10 @@ import {
   Calendar, 
   BookOpen, 
   ClipboardList, 
-  FileText 
+  FileText,
+  Video,
+  CreditCard,
+  MessageCircle
 } from 'lucide-react';
 
 const teacherNavItems = [
@@ -13,6 +16,16 @@ const teacherNavItems = [
     title: 'عرض الطلاب',
     href: '/teacher',
     icon: <Users className="h-4 w-4" />
+  },
+  {
+    title: 'إدارة الحصص',
+    href: '/teacher/sessions',
+    icon: <Video className="h-4 w-4" />
+  },
+  {
+    title: 'جدول الحصص',
+    href: '/teacher/schedule',
+    icon: <Calendar className="h-4 w-4" />
   },
   {
     title: 'تسجيل الحضور',
@@ -28,6 +41,16 @@ const teacherNavItems = [
     title: 'إرسال واجبات',
     href: '/teacher/homework',
     icon: <ClipboardList className="h-4 w-4" />
+  },
+  {
+    title: 'إدارة الاشتراكات',
+    href: '/teacher/subscriptions',
+    icon: <CreditCard className="h-4 w-4" />
+  },
+  {
+    title: 'الرسائل',
+    href: '/teacher/messages',
+    icon: <MessageCircle className="h-4 w-4" />
   },
   {
     title: 'تقارير الطلاب',
