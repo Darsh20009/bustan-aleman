@@ -1,58 +1,103 @@
 import { hashPassword } from "./authUtils";
 import { storage } from "./storage";
 
-const preRegisteredUsers = [
-  {
+// Admin credentials from environment (secure - not hardcoded)
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+interface PreRegisteredUser {
+  id: string;
+  name: string;
+  email?: string;
+  phoneNumber?: string;
+  password: string;
+  role: "admin" | "supervisor" | "student";
+  academy?: string;
+}
+
+// Build list of pre-registered users dynamically
+function buildPreRegisteredUsers(): PreRegisteredUser[] {
+  const users: PreRegisteredUser[] = [];
+
+  // Only add platform admin if environment variables are properly set
+  if (ADMIN_EMAIL && ADMIN_PASSWORD && ADMIN_PASSWORD.length >= 8) {
+    users.push({
+      id: "platform_admin",
+      name: "مدير المنصة",
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+      role: "admin",
+    });
+    console.log("📧 Platform admin will be initialized from environment variables");
+  } else {
+    console.log("⚠️ ADMIN_EMAIL and ADMIN_PASSWORD not set - skipping platform admin initialization");
+  }
+
+  // Sheikh for "Bustan Al-Iman Academy" - supervises his own students
+  users.push({
     id: "sheikh_ahmad_abu_mazen",
     name: "أحمد أبو مازن",
     phoneNumber: "0549947386",
     password: "0549947386",
-    role: "supervisor" as const,
-  },
-  {
+    role: "supervisor",
+    academy: "bustan-aliman",
+  });
+
+  // Pre-registered students
+  users.push({
     id: "student_yousef",
     name: "يوسف",
     phoneNumber: "0532441566",
     password: "0532441566",
-    role: "student" as const,
-  },
-  {
+    role: "student",
+  });
+
+  users.push({
     id: "student_ahmad",
     name: "أحمد",
     phoneNumber: "0532449303",
     password: "0532449303",
-    role: "student" as const,
-  },
-  {
+    role: "student",
+  });
+
+  users.push({
     id: "student_mahmoud",
     name: "محمود",
     phoneNumber: "0598765966",
     password: "0598765966",
-    role: "student" as const,
-  },
-];
+    role: "student",
+  });
+
+  return users;
+}
 
 export async function initializePreRegisteredUsers() {
   try {
-    console.log("🔐 Initializing pre-registered users...");
+    const preRegisteredUsers = buildPreRegisteredUsers();
+    console.log(`🔐 Initializing ${preRegisteredUsers.length} pre-registered users...`);
+    
     const allUsers = await storage.getAllUsers();
 
     // First pass: create all users
     for (const preUser of preRegisteredUsers) {
       try {
-        const existingUser = allUsers.find(u => u.phoneNumber === preUser.phoneNumber);
+        // Check if user exists by email or phone
+        const existingUser = allUsers.find(u => 
+          (preUser.email && u.email === preUser.email) || 
+          (preUser.phoneNumber && u.phoneNumber === preUser.phoneNumber)
+        );
 
         if (!existingUser) {
           // Hash password before storing
           const hashedPassword = await hashPassword(preUser.password);
           
           const userData = {
-            email: `${preUser.phoneNumber}@bustan.local`,
+            email: preUser.email || `${preUser.phoneNumber}@bustan.local`,
             firstName: preUser.name.split(' ')[0],
             lastName: preUser.name.split(' ').slice(1).join(' ') || preUser.name,
             role: preUser.role,
             passwordHash: hashedPassword,
-            phoneNumber: preUser.phoneNumber,
+            phoneNumber: preUser.phoneNumber || null,
             isActive: true,
             registrationCompleted: true,
           };
@@ -64,7 +109,7 @@ export async function initializePreRegisteredUsers() {
             await storage.createSupervisor({
               userId: user.id,
               name: preUser.name,
-              whatsappNumber: preUser.phoneNumber,
+              whatsappNumber: preUser.phoneNumber || '',
               specialization: "القرآن الكريم",
               experience: "شيخ معتمد",
               qualifications: "إجازة في القرآن الكريم",
@@ -72,9 +117,9 @@ export async function initializePreRegisteredUsers() {
             });
           }
 
-          console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.phoneNumber})`);
+          console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.email || preUser.phoneNumber})`);
         } else {
-          console.log(`ℹ️  User already exists: ${preUser.name} (${preUser.phoneNumber})`);
+          console.log(`ℹ️  User already exists: ${preUser.name} (${preUser.email || preUser.phoneNumber})`);
         }
       } catch (userError) {
         console.error(`Error initializing user ${preUser.name}:`, userError);
@@ -102,11 +147,12 @@ export async function initializePreRegisteredUsers() {
               // Use the already-hashed password from user record
               await storage.createStudent({
                 userId: user.id,
-                sheikhId: defaultSheikh?.id || null, // Assign to default sheikh
+                sheikhId: defaultSheikh?.id || null,
                 studentName: preUser.name,
                 passwordHash: user.passwordHash || '',
                 dateOfBirth: null,
                 grade: null,
+                academy: "bustan-aliman", // Default academy for legacy students
                 monthlySessionsCount: 0,
                 monthlyPrice: "0",
                 isPaid: false,

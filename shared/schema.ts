@@ -141,6 +141,7 @@ export const students = bustanSchema.table("students", {
   phoneNumber: varchar("phone_number"), // رقم الهاتف
   dateOfBirth: date("date_of_birth"),
   grade: varchar("grade"), // الصف الدراسي
+  academy: varchar("academy"), // الأكاديمية: bustan-aliman, rawafed-alnoor, manarat-alhuda
   monthlySessionsCount: integer("monthly_sessions_count").default(0),
   monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).default("0"),
   isPaid: boolean("is_paid").default(false),

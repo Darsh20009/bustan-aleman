@@ -5,12 +5,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, UserPlus, Phone, Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { BookOpen, UserPlus, Phone, Mail, Lock, User, Eye, EyeOff, Building2 } from "lucide-react";
 import { z } from "zod";
+
+const academies = [
+  { id: "quran-online", name: "أكاديمية قرآن عن بعد", description: "تحفيظ القرآن الكريم عن بعد" },
+  { id: "quran-local", name: "حلقات القرآن الحضورية", description: "حلقات تحفيظ حضورية" },
+  { id: "quran-remote", name: "حلقات القرآن عن بعد", description: "حلقات تحفيظ عن بعد" },
+];
 
 const registrationSchema = z.object({
   firstName: z.string().min(2, "الاسم الأول مطلوب"),
@@ -19,6 +26,7 @@ const registrationSchema = z.object({
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   confirmPassword: z.string(),
   phoneNumber: z.string().min(10, "رقم الهاتف يجب أن يكون على الأقل 10 أرقام"),
+  academy: z.string().min(1, "الرجاء اختيار الأكاديمية"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "كلمة المرور غير متطابقة",
   path: ["confirmPassword"],
@@ -49,6 +57,7 @@ export default function Register() {
       password: "",
       confirmPassword: "",
       phoneNumber: "",
+      academy: "",
     },
   });
 
@@ -92,34 +101,33 @@ export default function Register() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-warm-white flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green mx-auto mb-4"></div>
-          <p className="text-gray-600">جاري التحميل...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري التحميل...</p>
         </div>
       </div>
     );
   }
 
-  // If already authenticated, redirect immediately
-  if (isAuthenticated && user) {
-    return null; // Will redirect via useEffect
+  if (isAuthenticated) {
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-warm-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
       <div className="w-full max-w-md">
-        <Card className="islamic-card">
-          <CardHeader className="text-center">
+        <Card className="border-primary/20 shadow-lg">
+          <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-islamic-green rounded-full flex items-center justify-center">
-                <UserPlus className="text-white" size={32} />
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                <UserPlus className="text-primary-foreground" size={32} />
               </div>
             </div>
-            <CardTitle className="text-2xl font-bold font-arabic-serif text-islamic-green">
+            <CardTitle className="text-2xl font-bold text-primary">
               إنشاء حساب جديد
             </CardTitle>
-            <p className="text-gray-600 mt-2">
+            <p className="text-muted-foreground mt-2">
               انضم إلى بستان الإيمان لتعلم القرآن الكريم والعلوم الشرعية
             </p>
           </CardHeader>
@@ -136,7 +144,7 @@ export default function Register() {
                         <FormLabel>الاسم الأول</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User size={16} className="absolute right-3 top-3 text-gray-400" />
+                            <User size={16} className="absolute right-3 top-3 text-muted-foreground" />
                             <Input 
                               placeholder="محمد"
                               className="pr-10"
@@ -158,7 +166,7 @@ export default function Register() {
                         <FormLabel>اسم العائلة</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <User size={16} className="absolute right-3 top-3 text-gray-400" />
+                            <User size={16} className="absolute right-3 top-3 text-muted-foreground" />
                             <Input 
                               placeholder="أحمد"
                               className="pr-10"
@@ -175,13 +183,44 @@ export default function Register() {
 
                 <FormField
                   control={form.control}
+                  name="academy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الأكاديمية</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="w-full" data-testid="select-academy">
+                            <div className="flex items-center gap-2">
+                              <Building2 size={16} className="text-muted-foreground" />
+                              <SelectValue placeholder="اختر الأكاديمية التي تريد الانضمام إليها" />
+                            </div>
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {academies.map((academy) => (
+                            <SelectItem key={academy.id} value={academy.id}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{academy.name}</span>
+                                <span className="text-xs text-muted-foreground">{academy.description}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>البريد الإلكتروني</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Mail size={16} className="absolute right-3 top-3 text-muted-foreground" />
                           <Input 
                             type="email"
                             placeholder="example@email.com"
@@ -204,7 +243,7 @@ export default function Register() {
                       <FormLabel>رقم الهاتف</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Phone size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Phone size={16} className="absolute right-3 top-3 text-muted-foreground" />
                           <Input 
                             placeholder="05xxxxxxxx"
                             className="pr-10"
@@ -226,7 +265,7 @@ export default function Register() {
                       <FormLabel>كلمة المرور</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Lock size={16} className="absolute right-3 top-3 text-muted-foreground" />
                           <Input 
                             type={showPassword ? "text" : "password"}
                             placeholder="••••••••"
@@ -238,7 +277,7 @@ export default function Register() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+                            className="absolute left-0 top-0 h-full px-3"
                             onClick={() => setShowPassword(!showPassword)}
                             data-testid="button-toggle-password"
                           >
@@ -259,7 +298,7 @@ export default function Register() {
                       <FormLabel>تأكيد كلمة المرور</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Lock size={16} className="absolute right-3 top-3 text-gray-400" />
+                          <Lock size={16} className="absolute right-3 top-3 text-muted-foreground" />
                           <Input 
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="••••••••"
@@ -271,7 +310,7 @@ export default function Register() {
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
+                            className="absolute left-0 top-0 h-full px-3"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             data-testid="button-toggle-confirm-password"
                           >
@@ -286,7 +325,7 @@ export default function Register() {
 
                 <Button 
                   type="submit"
-                  className="btn-islamic-primary w-full py-3 text-lg font-semibold"
+                  className="w-full py-3 text-lg font-semibold"
                   disabled={registerMutation.isPending}
                   data-testid="button-register"
                 >
@@ -297,11 +336,11 @@ export default function Register() {
             </Form>
             
             <div className="text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 لديك حساب بالفعل؟{" "}
                 <button 
                   onClick={() => setLocation("/login")}
-                  className="text-islamic-green hover:underline font-semibold"
+                  className="text-primary hover:underline font-semibold"
                   data-testid="link-login"
                 >
                   سجل دخولك من هنا
@@ -313,7 +352,7 @@ export default function Register() {
               <div className="text-center">
                 <button 
                   onClick={() => setLocation("/")}
-                  className="text-gray-500 hover:text-islamic-green transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   data-testid="link-back-home"
                 >
                   العودة للصفحة الرئيسية
@@ -323,27 +362,26 @@ export default function Register() {
           </CardContent>
         </Card>
 
-        {/* Features Section */}
         <div className="mt-8 grid grid-cols-1 gap-4">
-          <Card className="islamic-card">
+          <Card className="border-primary/20">
             <CardContent className="p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <BookOpen className="text-islamic-green" size={24} />
+                <BookOpen className="text-primary" size={24} />
                 <div>
                   <h3 className="font-semibold">حفظ القرآن الكريم</h3>
-                  <p className="text-sm text-gray-600">ابدأ رحلتك في حفظ القرآن</p>
+                  <p className="text-sm text-muted-foreground">ابدأ رحلتك في حفظ القرآن</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="islamic-card">
+          <Card className="border-secondary/20">
             <CardContent className="p-4">
               <div className="flex items-center space-x-reverse space-x-3">
-                <UserPlus className="text-warm-gold" size={24} />
+                <UserPlus className="text-secondary" size={24} />
                 <div>
                   <h3 className="font-semibold">الدورات التعليمية</h3>
-                  <p className="text-sm text-gray-600">انضم للدورات الإسلامية المتميزة</p>
+                  <p className="text-sm text-muted-foreground">انضم للدورات الإسلامية المتميزة</p>
                 </div>
               </div>
             </CardContent>

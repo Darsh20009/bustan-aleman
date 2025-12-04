@@ -9,7 +9,9 @@
     "name": "أحمد أبو مازن",
     "phoneNumber": "0549947386",
     "password": "0549947386",
-    "role": "supervisor"
+    "role": "supervisor",
+    "academy": "quran-online",
+    "description": "شيخ أكاديمية قرآن عن بعد"
   },
   {
     "name": "أحمد",

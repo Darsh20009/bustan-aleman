@@ -10,6 +10,8 @@ const userRegistrationSchema = z.object({
   email: z.string().email("بريد إلكتروني صالح مطلوب"),
   password: z.string().min(8, "كلمة المرور يجب أن تكون 8 أحرف على الأقل"),
   phoneNumber: z.string().min(10, "رقم الهاتف مطلوب"),
+  // Academy selection for students
+  academy: z.string().min(1, "الرجاء اختيار الأكاديمية"),
   // Role is always 'student' for public registration - supervisors/admins must be created separately
   role: z.literal("student").default("student"),
   // Optional fields for students
@@ -84,6 +86,7 @@ export function setupAuthRoutes(app: Express) {
         passwordHash: hashedPassword,
         dateOfBirth: null,
         grade: null,
+        academy: registrationData.academy, // Store academy selection
         monthlySessionsCount: 0,
         monthlyPrice: "0",
         isPaid: false,
