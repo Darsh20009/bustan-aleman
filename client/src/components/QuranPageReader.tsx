@@ -31,7 +31,9 @@ import {
   FileText,
   Settings,
   Book,
-  Navigation
+  Navigation,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -100,6 +102,12 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [ayahActionPanel, setAyahActionPanel] = useState<Ayah | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [quranTheme, setQuranTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('quran-theme') as 'light' | 'dark' || 'light';
+    }
+    return 'light';
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
@@ -125,6 +133,12 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     if (savedMarkers) setMarkers(JSON.parse(savedMarkers));
     if (savedPage) setCurrentPage(parseInt(savedPage));
   }, []);
+
+  const toggleQuranTheme = () => {
+    const newTheme = quranTheme === 'light' ? 'dark' : 'light';
+    setQuranTheme(newTheme);
+    localStorage.setItem('quran-theme', newTheme);
+  };
 
   useEffect(() => {
     localStorage.setItem('quran-current-page', currentPage.toString());
@@ -529,12 +543,14 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
+  const isDarkTheme = quranTheme === 'dark';
+
   return (
-    <div className="min-h-screen bg-[#F5F0E6] dark:bg-[#1A1A1A]" dir="rtl">
-      {/* Decorative border pattern */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-4 border-4 border-[#8B7355]/20 dark:border-[#D4AF37]/20 rounded-lg" />
-        <div className="absolute inset-6 border-2 border-[#8B7355]/10 dark:border-[#D4AF37]/10 rounded-lg" />
+    <div className={`min-h-screen ${isDarkTheme ? 'bg-[#1A1A1A]' : 'bg-[#F5F0E6]'}`} dir="rtl">
+      {/* Decorative border pattern - hidden on mobile */}
+      <div className="hidden sm:block fixed inset-0 pointer-events-none z-0">
+        <div className={`absolute inset-4 border-4 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-lg`} />
+        <div className={`absolute inset-6 border-2 ${isDarkTheme ? 'border-[#D4AF37]/10' : 'border-[#8B7355]/10'} rounded-lg`} />
       </div>
 
       {/* Top navigation bar */}
@@ -630,7 +646,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       {/* Main content area with swipe gesture */}
       <div 
         ref={containerRef}
-        className="relative min-h-[calc(100vh-60px)] flex items-center justify-center p-4 overflow-hidden"
+        className="relative min-h-[calc(100vh-60px)] flex items-center justify-center p-2 sm:p-4 overflow-hidden"
       >
         <AnimatePresence mode="wait" custom={swipeDirection}>
           <motion.div
@@ -656,20 +672,20 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             style={{ perspective: 1000 }}
           >
             {/* Mushaf Page */}
-            <div className="relative bg-[#FDF8F0] dark:bg-[#2A2A2A] rounded-lg shadow-2xl overflow-hidden">
-              {/* Ornamental frame */}
-              <div className="absolute inset-0 pointer-events-none">
+            <div className={`relative ${isDarkTheme ? 'bg-[#2A2A2A]' : 'bg-[#FDF8F0]'} rounded-lg shadow-2xl overflow-hidden`}>
+              {/* Ornamental frame - hidden on mobile */}
+              <div className="hidden sm:block absolute inset-0 pointer-events-none">
                 {/* Corner decorations */}
-                <div className="absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-tr-lg" />
-                <div className="absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-tl-lg" />
-                <div className="absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-br-lg" />
-                <div className="absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 border-[#8B7355]/40 dark:border-[#D4AF37]/40 rounded-bl-lg" />
+                <div className={`absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-tr-lg`} />
+                <div className={`absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-tl-lg`} />
+                <div className={`absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-br-lg`} />
+                <div className={`absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-bl-lg`} />
                 {/* Inner frame */}
-                <div className="absolute inset-4 border border-[#8B7355]/20 dark:border-[#D4AF37]/20 rounded" />
+                <div className={`absolute inset-4 border ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded`} />
               </div>
 
               {/* Page header with Surah name */}
-              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] text-white py-3 px-6">
+              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] text-white py-2 sm:py-3 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getSurahsOnPage().map((surah, idx) => (
@@ -688,15 +704,15 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </div>
 
               {/* Ayahs content */}
-              <div className="p-6 md:p-10 min-h-[60vh]">
+              <div className="p-3 sm:p-6 md:p-10 min-h-[60vh]">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-96">
                     <div className="text-center">
                       <div className="relative">
-                        <div className="w-16 h-16 border-4 border-[#2D5A3D]/20 dark:border-[#D4AF37]/20 rounded-full" />
-                        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#2D5A3D] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                        <div className={`w-16 h-16 border-4 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#2D5A3D]/20'} rounded-full`} />
+                        <div className={`absolute top-0 left-0 w-16 h-16 border-4 ${isDarkTheme ? 'border-[#D4AF37]' : 'border-[#2D5A3D]'} border-t-transparent rounded-full animate-spin`} />
                       </div>
-                      <p className="text-[#2D5A3D] dark:text-[#D4AF37] mt-4 font-semibold">جاري التحميل...</p>
+                      <p className={`${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'} mt-4 font-semibold`}>جاري التحميل...</p>
                     </div>
                   </div>
                 ) : (
@@ -711,10 +727,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                     {pageData?.ayahs[0]?.numberInSurah === 1 && 
                      pageData.ayahs[0].surah.number !== 1 && 
                      pageData.ayahs[0].surah.number !== 9 && (
-                      <div className="text-center mb-8 py-4">
+                      <div className="text-center mb-4 sm:mb-8 py-2 sm:py-4">
                         <div className="inline-block relative">
                           <div className="absolute inset-0 bg-[#D4AF37]/10 blur-xl rounded-full" />
-                          <p className="relative text-[#2D5A3D] dark:text-[#D4AF37] font-bold text-2xl md:text-3xl">
+                          <p className={`relative ${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'} font-bold text-xl sm:text-2xl md:text-3xl`}>
                             بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
                           </p>
                         </div>
@@ -725,9 +741,9 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                     <div className="text-justify" dir="rtl">
                       {filteredAyahs.length === 0 && searchQuery ? (
                         <div className="text-center py-12">
-                          <Search className="w-12 h-12 text-[#8B7355]/40 mx-auto mb-4" />
-                          <p className="text-[#8B7355] dark:text-[#D4AF37] text-lg">لم يتم العثور على نتائج</p>
-                          <p className="text-[#8B7355]/60 dark:text-[#D4AF37]/60 text-sm mt-2">جرب كلمات بحث أخرى</p>
+                          <Search className={`w-12 h-12 ${isDarkTheme ? 'text-[#D4AF37]/40' : 'text-[#8B7355]/40'} mx-auto mb-4`} />
+                          <p className={`${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#8B7355]'} text-lg`}>لم يتم العثور على نتائج</p>
+                          <p className={`${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#8B7355]/60'} text-sm mt-2`}>جرب كلمات بحث أخرى</p>
                         </div>
                       ) : (
                         filteredAyahs.map((ayah, index) => {
@@ -745,10 +761,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                               aria-pressed={isSelected}
                               className={`inline cursor-pointer transition-all duration-200 rounded-sm px-0.5 outline-none
                                 focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1
-                                ${isSelected ? 'bg-[#D4AF37]/30 dark:bg-[#D4AF37]/40' : ''}
-                                ${isMemorized ? 'text-[#2D5A3D] dark:text-emerald-400' : ''}
-                                ${needsReview ? 'text-amber-700 dark:text-amber-400' : ''}
-                                ${!isMemorized && !needsReview ? 'text-[#1A1A1A] dark:text-[#E8E8E8]' : ''}
+                                ${isSelected ? 'bg-[#D4AF37]/30' : ''}
+                                ${isMemorized ? (isDarkTheme ? 'text-emerald-400' : 'text-[#2D5A3D]') : ''}
+                                ${needsReview ? (isDarkTheme ? 'text-amber-400' : 'text-amber-700') : ''}
+                                ${!isMemorized && !needsReview ? (isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]') : ''}
                                 hover:bg-[#D4AF37]/20
                               `}
                               onClick={() => shouldAllowClick() && handleAyahClick(ayah)}
