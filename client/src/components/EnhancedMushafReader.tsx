@@ -17,7 +17,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { QuranSearch } from '@/components/QuranSearch';
 import { EnhancedAudioPlayer } from '@/components/EnhancedAudioPlayer';
 import { MemorizationMarkers } from '@/components/MemorizationMarkers';
-import { WordNotes } from '@/components/WordNotes';
 import { RecitationMode } from '@/components/RecitationMode';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -311,15 +310,12 @@ export function EnhancedMushafReader({ initialPage = 1, mode = 'read' }: Enhance
                           <span className="inline hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-1 rounded transition-colors">
                             {currentMode === 'memorize' ? (
                               words.map((word, wordIndex) => (
-                                <WordNotes
+                                <span 
                                   key={wordIndex}
-                                  surahNumber={verse.surahNumber}
-                                  ayahNumber={verse.numberInSurah}
-                                  wordIndex={wordIndex}
-                                  wordText={word}
+                                  className="hover:bg-amber-100 dark:hover:bg-amber-900/40 cursor-pointer rounded px-0.5 transition-colors"
                                 >
                                   {word}{' '}
-                                </WordNotes>
+                                </span>
                               ))
                             ) : (
                               verse.text

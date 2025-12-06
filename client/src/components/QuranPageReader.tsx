@@ -693,8 +693,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   <div className="flex items-center justify-center h-96">
                     <div className="text-center">
                       <div className="relative">
-                        <div className="w-16 h-16 border-4 border-[#2D5A3D]/20 rounded-full" />
-                        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#2D5A3D] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-16 h-16 border-4 border-[#2D5A3D]/20 dark:border-[#D4AF37]/20 rounded-full" />
+                        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-[#2D5A3D] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
                       </div>
                       <p className="text-[#2D5A3D] dark:text-[#D4AF37] mt-4 font-semibold">جاري التحميل...</p>
                     </div>
@@ -1011,7 +1011,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   }}
                   size="sm"
                   variant="outline"
-                  className="text-[#2D5A3D] border-[#2D5A3D]/30 hover:bg-[#2D5A3D] hover:text-white"
+                  className="text-[#2D5A3D] dark:text-[#D4AF37] border-[#2D5A3D]/30 dark:border-[#D4AF37]/30 hover:bg-[#2D5A3D] dark:hover:bg-[#D4AF37] hover:text-white dark:hover:text-[#1A1A1A]"
                   data-testid={`button-quick-nav-${page}`}
                 >
                   صفحة {page}
@@ -1084,14 +1084,14 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   onClick={decreaseFontSize}
                   size="sm"
                   variant="outline"
-                  className="border-[#2D5A3D] text-[#2D5A3D]"
+                  className="border-[#2D5A3D] dark:border-[#D4AF37] text-[#2D5A3D] dark:text-[#D4AF37]"
                   data-testid="button-decrease-font"
                 >
                   <ZoomOut className="w-4 h-4" />
                 </Button>
                 <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
                   <div 
-                    className="h-full bg-[#2D5A3D] rounded-full transition-all"
+                    className="h-full bg-[#2D5A3D] dark:bg-[#D4AF37] rounded-full transition-all"
                     style={{ width: `${((fontSize[0] - 20) / 28) * 100}%` }}
                   />
                 </div>
@@ -1099,7 +1099,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   onClick={increaseFontSize}
                   size="sm"
                   variant="outline"
-                  className="border-[#2D5A3D] text-[#2D5A3D]"
+                  className="border-[#2D5A3D] dark:border-[#D4AF37] text-[#2D5A3D] dark:text-[#D4AF37]"
                   data-testid="button-increase-font"
                 >
                   <ZoomIn className="w-4 h-4" />
@@ -1130,7 +1130,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             <Button
               onClick={resetSettings}
               variant="outline"
-              className="w-full border-[#2D5A3D] text-[#2D5A3D] hover:bg-[#2D5A3D] hover:text-white"
+              className="w-full border-[#2D5A3D] dark:border-[#D4AF37] text-[#2D5A3D] dark:text-[#D4AF37] hover:bg-[#2D5A3D] dark:hover:bg-[#D4AF37] hover:text-white dark:hover:text-[#1A1A1A]"
               data-testid="button-reset-settings"
             >
               <RotateCcw className="w-4 h-4 ml-2" />

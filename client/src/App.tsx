@@ -25,6 +25,7 @@ import { StudentAttendancePage } from "./pages/student/StudentAttendance";
 import { StudentSubscriptionPage } from "./pages/student/StudentSubscription";
 import { StudentContactPage } from "./pages/student/StudentContact";
 import { StudentSessionsPage } from "./pages/student/StudentSessions";
+import { StudentQuranTrackingPage } from "./pages/student/StudentQuranTracking";
 
 import { TeacherStudentsPage } from "./pages/teacher/TeacherStudents";
 import { TeacherAttendancePage } from "./pages/teacher/TeacherAttendance";
@@ -191,6 +192,12 @@ function AppRoutes() {
       <Route path="/student/sessions">
         <ProtectedRoute allowedRoles={['student']}>
           <StudentSessionsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/student/quran-tracking">
+        <ProtectedRoute allowedRoles={['student']}>
+          <StudentQuranTrackingPage />
         </ProtectedRoute>
       </Route>
 
