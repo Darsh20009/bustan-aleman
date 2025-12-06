@@ -885,11 +885,11 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 </p>
               </div>
 
-              {/* Action buttons grid */}
-              <div className="grid grid-cols-5 gap-2 mb-4">
+              {/* Action buttons grid - responsive: 3 cols on mobile, 5 on larger screens */}
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 mb-4">
                 <Button
                   onClick={() => playAyah(ayahActionPanel)}
-                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-3 sm:py-4 min-h-[60px] sm:min-h-[70px] ${
                     playingAyah === ayahActionPanel.number 
                       ? 'bg-purple-600 text-white' 
                       : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
@@ -897,63 +897,63 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   data-testid={`button-play-${ayahActionPanel.number}`}
                 >
                   {playingAyah === ayahActionPanel.number ? (
-                    <Pause className="w-5 h-5" />
+                    <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
                   ) : (
-                    <Play className="w-5 h-5" />
+                    <Play className="w-5 h-5 sm:w-6 sm:h-6" />
                   )}
-                  <span className="text-xs">استماع</span>
+                  <span className="text-xs sm:text-sm">استماع</span>
                 </Button>
 
                 <Button
                   onClick={() => toggleTafsir(ayahActionPanel)}
-                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-3 sm:py-4 min-h-[60px] sm:min-h-[70px] ${
                     showTafsir[ayahActionPanel.number]
                       ? 'bg-indigo-600 text-white'
                       : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
                   }`}
                   data-testid={`button-tafsir-${ayahActionPanel.number}`}
                 >
-                  <FileText className="w-5 h-5" />
-                  <span className="text-xs">التفسير</span>
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-xs sm:text-sm">التفسير</span>
                 </Button>
 
                 <Button
                   onClick={() => toggleMarker(ayahActionPanel, 'memorized')}
-                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-3 sm:py-4 min-h-[60px] sm:min-h-[70px] ${
                     hasMarker(ayahActionPanel, 'memorized')
                       ? 'bg-emerald-600 text-white'
                       : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'
                   }`}
                   data-testid={`button-memorized-${ayahActionPanel.number}`}
                 >
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span className="text-xs">محفوظ</span>
+                  <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-xs sm:text-sm">محفوظ</span>
                 </Button>
 
                 <Button
                   onClick={() => toggleMarker(ayahActionPanel, 'review')}
-                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-3 sm:py-4 min-h-[60px] sm:min-h-[70px] ${
                     hasMarker(ayahActionPanel, 'review')
                       ? 'bg-amber-600 text-white'
                       : 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
                   }`}
                   data-testid={`button-review-${ayahActionPanel.number}`}
                 >
-                  <RefreshCw className="w-5 h-5" />
-                  <span className="text-xs">مراجعة</span>
+                  <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-xs sm:text-sm">مراجعة</span>
                 </Button>
 
                 <Button
                   onClick={() => openNoteDialog(ayahActionPanel)}
-                  className={`flex flex-col items-center gap-1 h-auto py-3 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-3 sm:py-4 min-h-[60px] sm:min-h-[70px] ${
                     getAyahNote(ayahActionPanel)
                       ? 'bg-blue-600 text-white'
                       : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                   }`}
                   data-testid={`button-note-${ayahActionPanel.number}`}
                 >
-                  <StickyNote className="w-5 h-5" />
-                  <span className="text-xs">ملاحظة</span>
+                  <StickyNote className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span className="text-xs sm:text-sm">ملاحظة</span>
                 </Button>
               </div>
 
@@ -1119,6 +1119,41 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   data-testid="button-increase-font"
                 >
                   <ZoomIn className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Theme toggle */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 block">
+                مظهر المصحف
+              </label>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={toggleQuranTheme}
+                  variant="outline"
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 ${
+                    !isDarkTheme 
+                      ? 'bg-[#2D5A3D] text-white border-[#2D5A3D]' 
+                      : 'border-[#2D5A3D]/30 text-[#2D5A3D] dark:text-[#D4AF37] dark:border-[#D4AF37]/30'
+                  }`}
+                  data-testid="button-light-theme"
+                >
+                  <Sun className="w-4 h-4" />
+                  <span className="text-sm">فاتح</span>
+                </Button>
+                <Button
+                  onClick={toggleQuranTheme}
+                  variant="outline"
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 ${
+                    isDarkTheme 
+                      ? 'bg-[#D4AF37] text-[#1A1A1A] border-[#D4AF37]' 
+                      : 'border-[#2D5A3D]/30 text-[#2D5A3D] dark:text-[#D4AF37] dark:border-[#D4AF37]/30'
+                  }`}
+                  data-testid="button-dark-theme"
+                >
+                  <Moon className="w-4 h-4" />
+                  <span className="text-sm">داكن</span>
                 </Button>
               </div>
             </div>

@@ -10,6 +10,13 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Link } from 'wouter';
 import { 
   BookOpen, 
@@ -22,7 +29,11 @@ import {
   RefreshCw,
   CheckCircle2,
   BookMarked,
-  FileText
+  FileText,
+  Share2,
+  Download,
+  Copy,
+  Check
 } from 'lucide-react';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -58,6 +69,8 @@ const TOTAL_QURAN_AYAHS = 6236;
 export function StudentQuranTrackingPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { data: progress, isLoading: progressLoading } = useQuery<any>({
     queryKey: ['/api/student/progress'],
@@ -159,6 +172,93 @@ export function StudentQuranTrackingPage() {
     });
     
     return completedCount;
+  };
+
+  const generateReportText = () => {
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('ar-EG', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    const rating = weeklyStats.daysActive >= 5 ? "ممتاز" : weeklyStats.daysActive >= 3 ? "جيد" : "يحتاج تحسين";
+    const commitment = Math.round((weeklyStats.daysActive / 7) * 100);
+    
+    return `التقرير الأسبوعي لحفظ القرآن الكريم
+التاريخ: ${dateStr}
+
+نسبة الإنجاز الكلية: ${overallProgress.percentage}%
+عدد الآيات المحفوظة: ${overallProgress.memorized} آية من ${TOTAL_QURAN_AYAHS}
+السور المكتملة: ${getCompletedSurahsCount()} من 114 سورة
+
+إحصائيات الأسبوع:
+- عدد الآيات المقروءة: ${weeklyStats.totalAyahs} آية
+- عدد الصفحات: ${weeklyStats.totalPages} صفحة
+- وقت القراءة: ${Math.round(weeklyStats.totalMinutes / 60)} ساعة
+- أيام النشاط: ${weeklyStats.daysActive} أيام
+
+معدل القراءة اليومي: ${weeklyStats.daysActive > 0 ? Math.round(weeklyStats.totalAyahs / weeklyStats.daysActive) : 0} آية
+نسبة الالتزام: ${commitment}%
+التقييم العام: ${rating}
+
+${lastPosition ? `آخر موضع: سورة ${lastPosition.surahName || SURAH_NAMES[lastPosition.surah - 1]} - الآية ${lastPosition.ayah}` : ''}
+
+بارك الله في جهودكم ووفقكم لحفظ كتابه الكريم`;
+  };
+
+  const copyReportToClipboard = async () => {
+    const reportText = generateReportText();
+    
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      toast({
+        title: "غير مدعوم",
+        description: "يرجى نسخ التقرير يدوياً من النص أعلاه",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      await navigator.clipboard.writeText(reportText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "تم النسخ",
+        description: "تم نسخ التقرير إلى الحافظة"
+      });
+    } catch (err) {
+      toast({
+        title: "خطأ",
+        description: "فشل نسخ التقرير، يرجى النسخ يدوياً",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const shareReport = async () => {
+    const reportText = generateReportText();
+    
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'التقرير الأسبوعي لحفظ القرآن',
+          text: reportText
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          copyReportToClipboard();
+        }
+      }
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      copyReportToClipboard();
+    } else {
+      toast({
+        title: "المشاركة غير متاحة",
+        description: "يمكنك نسخ النص يدوياً من التقرير أعلاه"
+      });
+    }
   };
 
   return (
@@ -428,9 +528,14 @@ export function StudentQuranTrackingPage() {
                     <p className="text-sm text-muted-foreground mb-3">
                       يمكن إرسال هذا التقرير لولي الأمر
                     </p>
-                    <Button variant="outline" size="sm" disabled>
-                      <FileText className="ml-2 h-4 w-4" />
-                      إرسال التقرير (قريباً)
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setReportDialogOpen(true)}
+                      data-testid="button-send-report"
+                    >
+                      <Share2 className="ml-2 h-4 w-4" />
+                      مشاركة التقرير
                     </Button>
                   </div>
                 </CardContent>
@@ -439,6 +544,55 @@ export function StudentQuranTrackingPage() {
           </Tabs>
         </>
       )}
+
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              التقرير الأسبوعي
+            </DialogTitle>
+            <DialogDescription>
+              شارك هذا التقرير مع ولي الأمر لمتابعة تقدم الحفظ
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-4 rounded-lg bg-muted text-sm leading-relaxed whitespace-pre-line max-h-[300px] overflow-y-auto">
+              {generateReportText()}
+            </div>
+            
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Button
+                onClick={copyReportToClipboard}
+                variant="outline"
+                className="flex items-center gap-2"
+                data-testid="button-copy-report"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 text-green-600" />
+                    تم النسخ
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    نسخ التقرير
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={shareReport}
+                className="flex items-center gap-2"
+                data-testid="button-share-report"
+              >
+                <Share2 className="h-4 w-4" />
+                مشاركة
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </StudentLayout>
   );
 }
