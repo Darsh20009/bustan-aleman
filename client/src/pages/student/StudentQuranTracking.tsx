@@ -251,7 +251,7 @@ ${lastPosition ? `آخر موضع: سورة ${lastPosition.surahName || SURAH_NA
           copyReportToClipboard();
         }
       }
-    } else if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    } else if (typeof navigator !== 'undefined' && typeof navigator.clipboard?.writeText === 'function') {
       copyReportToClipboard();
     } else {
       toast({

@@ -47,6 +47,9 @@ import {
   insertQuranAyahMarkerSchema,
   insertQuranRecitationAttemptSchema,
   insertShoppingCartSchema,
+  teacherAssignmentInputSchema,
+  teacherStudentIdQuerySchema,
+  teacherErrorInputSchema,
 } from "@shared/schema";
 
 // In-memory storage for subscription carts (userId -> Set of planIds)
@@ -2416,6 +2419,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching sheikh sessions:', error);
       res.status(500).json({ message: 'فشل جلب الحصص' });
+    }
+  });
+
+  // Teacher students list endpoint (with proper middleware)
+  app.get('/api/teacher/students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const students = await storage.getAllStudents();
+      const activeStudents = students.filter(s => s.isActive !== false);
+      res.json(activeStudents);
+    } catch (error) {
+      console.error('Error fetching students:', error);
+      res.status(500).json({ message: 'فشل جلب الطلاب' });
+    }
+  });
+
+  // Teacher student assignment endpoints (with proper middleware and Zod validation)
+  app.get('/api/teacher/student-assignment', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const queryResult = teacherStudentIdQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ message: 'معرف الطالب مطلوب', errors: queryResult.error.errors });
+      }
+      
+      const { studentId } = queryResult.data;
+      const assignments = await storage.getDailyAssignments(studentId);
+      const today = new Date().toISOString().split('T')[0];
+      const todayAssignment = assignments.find((a: any) => 
+        a.assignmentDate && a.assignmentDate.startsWith(today)
+      );
+      
+      res.json(todayAssignment || null);
+    } catch (error) {
+      console.error('Error fetching student assignment:', error);
+      res.status(500).json({ message: 'فشل جلب التكليف' });
+    }
+  });
+
+  app.post('/api/teacher/student-assignment', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const bodyResult = teacherAssignmentInputSchema.safeParse(req.body);
+      if (!bodyResult.success) {
+        return res.status(400).json({ message: 'بيانات غير صحيحة', errors: bodyResult.error.errors });
+      }
+      
+      const payload = bodyResult.data;
+      const assignmentDate = payload.assignmentDate || new Date().toISOString().split('T')[0];
+      
+      const assignment = await storage.upsertDailyAssignment({
+        studentId: payload.studentId,
+        assignmentDate,
+        memorization: payload.memorization || '',
+        review: payload.review || '',
+        notes: payload.notes || '',
+        assignedBy: req.session?.userId,
+      });
+      
+      res.status(201).json(assignment);
+    } catch (error) {
+      console.error('Error creating student assignment:', error);
+      res.status(500).json({ message: 'فشل حفظ التكليف' });
+    }
+  });
+
+  // Teacher student errors endpoints (with proper middleware and Zod validation)
+  app.get('/api/teacher/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const queryResult = teacherStudentIdQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ message: 'معرف الطالب مطلوب', errors: queryResult.error.errors });
+      }
+      
+      const { studentId } = queryResult.data;
+      const errors = await storage.getStudentErrors(studentId);
+      res.json(errors);
+    } catch (error) {
+      console.error('Error fetching student errors:', error);
+      res.status(500).json({ message: 'فشل جلب الأخطاء' });
+    }
+  });
+
+  app.post('/api/teacher/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const bodyResult = teacherErrorInputSchema.safeParse(req.body);
+      if (!bodyResult.success) {
+        return res.status(400).json({ message: 'بيانات غير صحيحة', errors: bodyResult.error.errors });
+      }
+      
+      const payload = bodyResult.data;
+      const errorData = {
+        studentId: payload.studentId,
+        surahNumber: payload.surahNumber,
+        surahName: payload.surahName || '',
+        ayahNumber: payload.ayahNumber,
+        wordIndex: 0,
+        errorType: payload.errorType || 'recitation',
+        errorDescription: payload.errorDescription || '',
+        sheikhNote: payload.sheikhNote || '',
+        severity: payload.severity || 'medium',
+        sheikhId: req.session?.userId,
+        isResolved: false,
+      };
+      
+      const error = await storage.createStudentError(errorData);
+      res.status(201).json(error);
+    } catch (error) {
+      console.error('Error creating student error:', error);
+      res.status(500).json({ message: 'فشل إضافة الخطأ' });
+    }
+  });
+
+  app.patch('/api/teacher/student-errors/:errorId/resolve', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { errorId } = req.params;
+      const updatedError = await storage.updateStudentError(errorId, { 
+        isResolved: true,
+        resolvedAt: new Date(),
+        resolvedBy: req.session?.userId,
+      });
+      
+      res.json(updatedError);
+    } catch (error) {
+      console.error('Error resolving student error:', error);
+      res.status(500).json({ message: 'فشل تحديث الخطأ' });
+    }
+  });
+
+  // Teacher student memorization tracking (with proper middleware)
+  app.get('/api/teacher/student-memorization', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const queryResult = teacherStudentIdQuerySchema.safeParse(req.query);
+      if (!queryResult.success) {
+        return res.status(400).json({ message: 'معرف الطالب مطلوب', errors: queryResult.error.errors });
+      }
+      
+      const { studentId } = queryResult.data;
+      const memorizations = await storage.getStudentMemorization(studentId);
+      res.json(memorizations);
+    } catch (error) {
+      console.error('Error fetching student memorization:', error);
+      res.status(500).json({ message: 'فشل جلب سجل الحفظ' });
     }
   });
 

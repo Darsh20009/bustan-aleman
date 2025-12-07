@@ -145,6 +145,7 @@ import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
 import { hashPassword, verifyPassword } from "./authUtils";
 import { eq, and, gte, lte, lt, desc, sql } from "drizzle-orm";
+import { normalizePhoneNumber, phonesMatch } from "./phoneUtils";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -337,6 +338,7 @@ export interface IStorage {
   getDailyAssignments(studentId: string): Promise<DailyAssignment[]>;
   getAllDailyAssignments(): Promise<DailyAssignment[]>;
   updateDailyAssignment(id: string, updates: Partial<InsertDailyAssignment>): Promise<DailyAssignment>;
+  upsertDailyAssignment(assignment: InsertDailyAssignment): Promise<DailyAssignment>;
   
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
@@ -603,17 +605,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+    const normalizedInput = normalizePhoneNumber(phoneNumber);
+    
     if (this.isDbAvailable()) {
-      const [user] = await db!
+      const [exactMatch] = await db!
         .select()
         .from(users)
         .where(eq(users.phoneNumber, phoneNumber));
-      return user;
+      if (exactMatch) return exactMatch;
+      
+      if (normalizedInput) {
+        const allUsers = await db!.select().from(users);
+        return allUsers.find(u => phonesMatch(u.phoneNumber, phoneNumber));
+      }
+      return undefined;
     }
 
-    // JSON fallback
+    // JSON fallback with normalized comparison
     const allUsers = await this.getAllUsers();
-    return allUsers.find(u => u.phoneNumber === phoneNumber);
+    const exactMatch = allUsers.find(u => u.phoneNumber === phoneNumber);
+    if (exactMatch) return exactMatch;
+    
+    return allUsers.find(u => phonesMatch(u.phoneNumber, phoneNumber));
   }
 
   async createUserWithPhone(data: { firstName: string; phoneNumber: string; passwordHash: string; role: string }): Promise<User> {
@@ -2049,6 +2062,30 @@ export class DatabaseStorage implements IStorage {
     }
     const [updated] = await db!.update(dailyAssignments).set(updates).where(eq(dailyAssignments.id, id)).returning();
     return updated;
+  }
+
+  async upsertDailyAssignment(assignment: InsertDailyAssignment): Promise<DailyAssignment> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    
+    const existing = await this.getDailyAssignment(assignment.studentId, assignment.assignmentDate || new Date().toISOString().split('T')[0]);
+    
+    if (existing) {
+      const [updated] = await db!.update(dailyAssignments)
+        .set({
+          memorization: assignment.memorization,
+          review: assignment.review,
+          notes: assignment.notes,
+          assignedBy: assignment.assignedBy,
+        })
+        .where(eq(dailyAssignments.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [newAssignment] = await db!.insert(dailyAssignments).values(assignment).returning();
+      return newAssignment;
+    }
   }
 
   // Session access operations

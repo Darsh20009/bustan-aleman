@@ -1121,6 +1121,18 @@ export const insertStudentErrorSchema = createInsertSchema(studentErrors).omit({
   createdAt: true,
 });
 
+export const teacherErrorInputSchema = z.object({
+  studentId: z.string().min(1),
+  surahNumber: z.number().int().min(1).max(114),
+  surahName: z.string().optional(),
+  ayahNumber: z.number().int().min(1),
+  errorType: z.enum(['tajweed', 'pronunciation', 'memorization', 'recitation']).optional(),
+  errorDescription: z.string().optional(),
+  sheikhNote: z.string().optional(),
+  severity: z.enum(['low', 'medium', 'high']).optional(),
+});
+export type TeacherErrorInput = z.infer<typeof teacherErrorInputSchema>;
+
 export const insertStudentPaymentSchema = createInsertSchema(studentPayments).omit({
   id: true,
   createdAt: true,
@@ -1164,6 +1176,21 @@ export const insertDailyAssignmentSchema = createInsertSchema(dailyAssignments).
   id: true,
   createdAt: true,
 });
+
+export const teacherAssignmentInputSchema = createInsertSchema(dailyAssignments).pick({
+  studentId: true,
+  memorization: true,
+  review: true,
+  notes: true,
+}).extend({
+  assignmentDate: z.string().optional(),
+});
+export type TeacherAssignmentInput = z.infer<typeof teacherAssignmentInputSchema>;
+
+export const teacherStudentIdQuerySchema = z.object({
+  studentId: z.string().min(1, 'معرف الطالب مطلوب'),
+});
+export type TeacherStudentIdQuery = z.infer<typeof teacherStudentIdQuerySchema>;
 
 export const insertHomeworkSchema = createInsertSchema(homeworks).omit({
   id: true,

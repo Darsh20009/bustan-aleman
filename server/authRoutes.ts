@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { hashPassword, verifyPassword } from "./authUtils";
 import { storage } from "./storage";
 import { z } from "zod";
+import { normalizePhoneNumber, phonesMatch } from "./phoneUtils";
 
 // Enhanced registration schema supporting all roles
 const userRegistrationSchema = z.object({
@@ -46,10 +47,14 @@ export function setupAuthRoutes(app: Express) {
     try {
       const registrationData = userRegistrationSchema.parse(req.body);
 
-      // Check if email or phone already exists
+      // Check if email or phone already exists (with normalized phone comparison)
       const existingUsers = await storage.getAllUsers();
+      const normalizedInputPhone = normalizePhoneNumber(registrationData.phoneNumber);
       const emailExists = existingUsers.some((user: any) => user.email === registrationData.email);
-      const phoneExists = existingUsers.some((user: any) => user.phoneNumber === registrationData.phoneNumber);
+      const phoneExists = existingUsers.some((user: any) => {
+        const userPhone = normalizePhoneNumber(user.phoneNumber);
+        return userPhone && normalizedInputPhone && userPhone === normalizedInputPhone;
+      });
 
       if (emailExists) {
         return res.status(409).json({
@@ -86,9 +91,13 @@ export function setupAuthRoutes(app: Express) {
 
       const user = await storage.upsertUser(userData);
 
-      // Check if student record already exists for this user
+      // Check if student record already exists for this user (check by userId OR phone number to prevent duplicates)
       const existingStudents = await storage.getAllStudents();
-      let student = existingStudents.find(s => s.userId === user.id);
+      let student = existingStudents.find(s => {
+        if (s.userId === user.id) return true;
+        const studentPhone = normalizePhoneNumber(s.phoneNumber);
+        return studentPhone && normalizedInputPhone && studentPhone === normalizedInputPhone;
+      });
       
       if (!student) {
         // Create student record (all public registrations are students)
@@ -96,6 +105,7 @@ export function setupAuthRoutes(app: Express) {
           userId: user.id,
           studentName: `${registrationData.firstName} ${registrationData.lastName}`,
           passwordHash: hashedPassword,
+          phoneNumber: registrationData.phoneNumber,
           dateOfBirth: null,
           grade: null,
           academy: registrationData.academy,
@@ -108,6 +118,10 @@ export function setupAuthRoutes(app: Express) {
           notes: "طالب جديد",
           whatsappContact: registrationData.whatsappNumber || "+966532441566",
         });
+      } else if (!student.userId) {
+        // Link existing student to user account if they weren't linked
+        await storage.updateStudent(student.id, { userId: user.id });
+        student.userId = user.id;
       }
 
       // Create session automatically after successful registration
@@ -149,11 +163,18 @@ export function setupAuthRoutes(app: Express) {
       console.log('[auth] Login attempt:', { phoneNumber: req.body.phoneNumber, email: req.body.email });
       const { phoneNumber, email, password } = loginSchema.parse(req.body);
 
-      // Find user by phone number or email
+      // Find user by phone number or email (with normalized phone comparison)
       const users = await storage.getAllUsers();
-      const user = users.find((u: any) =>
-        ((phoneNumber && u.phoneNumber === phoneNumber) || (email && u.email === email)) && u.isActive
-      );
+      const normalizedInputPhone = phoneNumber ? normalizePhoneNumber(phoneNumber) : null;
+      const user = users.find((u: any) => {
+        if (!u.isActive) return false;
+        if (email && u.email === email) return true;
+        if (normalizedInputPhone && u.phoneNumber) {
+          const userPhone = normalizePhoneNumber(u.phoneNumber);
+          return userPhone && userPhone === normalizedInputPhone;
+        }
+        return false;
+      });
 
       if (!user) {
         console.log('[auth] User not found');
@@ -215,6 +236,17 @@ export function setupAuthRoutes(app: Express) {
         const students = await storage.getAllStudents();
         let student = students.find(s => s.userId === user.id);
 
+        // Check by phone number as well to prevent duplicates
+        if (!student && user.phoneNumber) {
+          student = students.find(s => s.phoneNumber === user.phoneNumber);
+          if (student && !student.userId) {
+            // Link existing student to user account
+            await storage.updateStudent(student.id, { userId: user.id });
+            student.userId = user.id;
+            console.log('[auth] Linked existing student to userId:', user.id);
+          }
+        }
+        
         // If no student record exists, create one automatically
         if (!student) {
           console.log('[auth] No student record found for userId:', user.id, 'Creating new student record...');
@@ -223,6 +255,7 @@ export function setupAuthRoutes(app: Express) {
             userId: user.id,
             studentName: user.firstName || 'طالب جديد',
             passwordHash: user.passwordHash || '',
+            phoneNumber: user.phoneNumber,
             dateOfBirth: null,
             grade: null,
             monthlySessionsCount: 0,
