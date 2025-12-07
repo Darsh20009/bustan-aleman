@@ -46,13 +46,20 @@ export function setupAuthRoutes(app: Express) {
     try {
       const registrationData = userRegistrationSchema.parse(req.body);
 
-      // Check if email already exists
+      // Check if email or phone already exists
       const existingUsers = await storage.getAllUsers();
       const emailExists = existingUsers.some((user: any) => user.email === registrationData.email);
+      const phoneExists = existingUsers.some((user: any) => user.phoneNumber === registrationData.phoneNumber);
 
       if (emailExists) {
         return res.status(409).json({
           message: "البريد الإلكتروني مُستخدم بالفعل"
+        });
+      }
+
+      if (phoneExists) {
+        return res.status(409).json({
+          message: "رقم الهاتف مُستخدم بالفعل"
         });
       }
 
@@ -79,24 +86,29 @@ export function setupAuthRoutes(app: Express) {
 
       const user = await storage.upsertUser(userData);
 
-      // Create student record (all public registrations are students)
-      const student = await storage.createStudent({
-        userId: user.id,
-        studentName: `${registrationData.firstName} ${registrationData.lastName}`,
-        passwordHash: hashedPassword,
-        dateOfBirth: null,
-        grade: null,
-        academy: registrationData.academy, // Store academy selection
-        monthlySessionsCount: 0,
-        monthlyPrice: "0",
-        isPaid: false,
-        isActive: true,
-        memorizedSurahs: "[]",
-        currentLevel: "beginner",
-        notes: "طالب جديد",
-        zoomLink: null,
-        whatsappContact: registrationData.whatsappNumber || "+966532441566", // Use provided WhatsApp or fallback
-      });
+      // Check if student record already exists for this user
+      const existingStudents = await storage.getAllStudents();
+      let student = existingStudents.find(s => s.userId === user.id);
+      
+      if (!student) {
+        // Create student record (all public registrations are students)
+        student = await storage.createStudent({
+          userId: user.id,
+          studentName: `${registrationData.firstName} ${registrationData.lastName}`,
+          passwordHash: hashedPassword,
+          dateOfBirth: null,
+          grade: null,
+          academy: registrationData.academy,
+          monthlySessionsCount: 0,
+          monthlyPrice: "0",
+          isPaid: false,
+          isActive: true,
+          memorizedSurahs: "[]",
+          currentLevel: "beginner",
+          notes: "طالب جديد",
+          whatsappContact: registrationData.whatsappNumber || "+966532441566",
+        });
+      }
 
       // Create session automatically after successful registration
       if (!req.session) {
@@ -456,7 +468,7 @@ export function setupAuthRoutes(app: Express) {
     try {
       req.session?.destroy?.((err) => {
         if (err) {
-          console.error("Session destruction error:", error);
+          console.error("Session destruction error:", err);
           return res.status(500).json({ message: "خطأ في تسجيل الخروج" });
         }
         res.clearCookie('connect.sid');
