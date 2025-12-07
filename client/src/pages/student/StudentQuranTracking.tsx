@@ -88,7 +88,15 @@ export function StudentQuranTrackingPage() {
     queryKey: ['/api/quran/reviews/due'],
   });
 
-  const isLoading = progressLoading || memorizationsLoading || statsLoading || reviewsLoading;
+  const { data: todayAssignment, isLoading: assignmentLoading } = useQuery<any>({
+    queryKey: ['/api/student/assignment/today'],
+  });
+
+  const { data: allAssignments = [], isLoading: assignmentsLoading } = useQuery<any[]>({
+    queryKey: ['/api/student/assignments'],
+  });
+
+  const isLoading = progressLoading || memorizationsLoading || statsLoading || reviewsLoading || assignmentLoading;
 
   const calculateOverallProgress = () => {
     if (!memorizations || memorizations.length === 0) return { memorized: 0, percentage: 0 };
@@ -406,6 +414,60 @@ ${lastPosition ? `آخر موضع: سورة ${lastPosition.surahName || SURAH_NA
             </TabsContent>
 
             <TabsContent value="daily" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    تكليف الشيخ لليوم
+                  </CardTitle>
+                  <CardDescription>ما يجب حفظه ومراجعته اليوم</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {todayAssignment ? (
+                    <div className="space-y-4">
+                      {todayAssignment.memorization && (
+                        <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <BookMarked className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <h4 className="font-medium text-emerald-800 dark:text-emerald-200">الحفظ الجديد</h4>
+                          </div>
+                          <p className="text-emerald-700 dark:text-emerald-300">{todayAssignment.memorization}</p>
+                        </div>
+                      )}
+                      {todayAssignment.review && (
+                        <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <RefreshCw className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            <h4 className="font-medium text-blue-800 dark:text-blue-200">المراجعة المطلوبة</h4>
+                          </div>
+                          <p className="text-blue-700 dark:text-blue-300">{todayAssignment.review}</p>
+                        </div>
+                      )}
+                      {todayAssignment.mistakes && (
+                        <div className="p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                            <h4 className="font-medium text-amber-800 dark:text-amber-200">ملاحظات الشيخ</h4>
+                          </div>
+                          <p className="text-amber-700 dark:text-amber-300">{todayAssignment.mistakes}</p>
+                        </div>
+                      )}
+                      {todayAssignment.notes && (
+                        <div className="p-4 rounded-lg bg-muted">
+                          <p className="text-sm text-muted-foreground">{todayAssignment.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>لا يوجد تكليف محدد لليوم</p>
+                      <p className="text-sm">سيظهر تكليفك هنا عندما يحدده الشيخ</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardHeader>
                   <CardTitle>إحصائيات اليوم</CardTitle>

@@ -364,7 +364,9 @@ export const dailyAssignments = bustanSchema.table("daily_assignments", {
   notes: text("notes"),
   assignedBy: varchar("assigned_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  unique("daily_assignment_student_date_unique").on(table.studentId, table.assignmentDate),
+]);
 
 // Homework assignments table - For teachers to create homework
 export const homeworks = bustanSchema.table("homeworks", {

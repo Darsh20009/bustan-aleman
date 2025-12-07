@@ -630,26 +630,43 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUserWithPhone(data: { firstName: string; phoneNumber: string; passwordHash: string; role: string }): Promise<User> {
+    const normalizedPhone = normalizePhoneNumber(data.phoneNumber) || data.phoneNumber;
+    
+    const existingUser = await this.getUserByPhone(data.phoneNumber);
+    if (existingUser) {
+      throw new Error("User with this phone number already exists");
+    }
+    
     if (this.isDbAvailable()) {
-      const [user] = await db!
-        .insert(users)
-        .values({
-          firstName: data.firstName,
-          phoneNumber: data.phoneNumber,
-          passwordHash: data.passwordHash,
-          role: data.role,
-          isActive: true,
-          registrationCompleted: true,
-        })
-        .returning();
-      return user;
+      try {
+        const [user] = await db!
+          .insert(users)
+          .values({
+            firstName: data.firstName,
+            phoneNumber: normalizedPhone,
+            passwordHash: data.passwordHash,
+            role: data.role,
+            isActive: true,
+            registrationCompleted: true,
+          })
+          .returning();
+        return user;
+      } catch (error: any) {
+        if (error?.message?.includes('unique') || error?.code === '23505') {
+          const refetchedUser = await this.getUserByPhone(normalizedPhone);
+          if (refetchedUser) {
+            return refetchedUser;
+          }
+        }
+        throw error;
+      }
     }
 
     // JSON fallback for development/testing
     const newUser: User = {
       id: `user_${Date.now()}`,
       firstName: data.firstName,
-      phoneNumber: data.phoneNumber,
+      phoneNumber: normalizedPhone,
       passwordHash: data.passwordHash,
       role: data.role as any,
       email: null,
@@ -2069,23 +2086,27 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Database not available");
     }
     
-    const existing = await this.getDailyAssignment(assignment.studentId, assignment.assignmentDate || new Date().toISOString().split('T')[0]);
+    const assignmentDate = assignment.assignmentDate || new Date().toISOString().split('T')[0];
     
-    if (existing) {
-      const [updated] = await db!.update(dailyAssignments)
-        .set({
+    const [result] = await db!
+      .insert(dailyAssignments)
+      .values({
+        ...assignment,
+        assignmentDate,
+      })
+      .onConflictDoUpdate({
+        target: [dailyAssignments.studentId, dailyAssignments.assignmentDate],
+        set: {
           memorization: assignment.memorization,
           review: assignment.review,
+          mistakes: assignment.mistakes,
           notes: assignment.notes,
           assignedBy: assignment.assignedBy,
-        })
-        .where(eq(dailyAssignments.id, existing.id))
-        .returning();
-      return updated;
-    } else {
-      const [newAssignment] = await db!.insert(dailyAssignments).values(assignment).returning();
-      return newAssignment;
-    }
+        },
+      })
+      .returning();
+    
+    return result;
   }
 
   // Session access operations
