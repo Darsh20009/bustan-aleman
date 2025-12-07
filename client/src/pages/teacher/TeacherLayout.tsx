@@ -8,7 +8,8 @@ import {
   FileText,
   Video,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  BookMarked
 } from 'lucide-react';
 
 const teacherNavItems = [
@@ -36,6 +37,11 @@ const teacherNavItems = [
     title: 'تقييم الحفظ',
     href: '/teacher/memorization',
     icon: <BookOpen className="h-4 w-4" />
+  },
+  {
+    title: 'متابعة القرآن',
+    href: '/teacher/quran-tracking',
+    icon: <BookMarked className="h-4 w-4" />
   },
   {
     title: 'إرسال واجبات',

@@ -336,6 +336,7 @@ export interface IStorage {
   getDailyAssignment(studentId: string, date: string): Promise<DailyAssignment | undefined>;
   getDailyAssignments(studentId: string): Promise<DailyAssignment[]>;
   getAllDailyAssignments(): Promise<DailyAssignment[]>;
+  updateDailyAssignment(id: string, updates: Partial<InsertDailyAssignment>): Promise<DailyAssignment>;
   
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
@@ -2040,6 +2041,14 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
     return db!.select().from(dailyAssignments).orderBy(desc(dailyAssignments.assignmentDate));
+  }
+
+  async updateDailyAssignment(id: string, updates: Partial<InsertDailyAssignment>): Promise<DailyAssignment> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(dailyAssignments).set(updates).where(eq(dailyAssignments.id, id)).returning();
+    return updated;
   }
 
   // Session access operations

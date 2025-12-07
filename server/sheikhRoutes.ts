@@ -734,6 +734,154 @@ export function setupSheikhRoutes(app: Express) {
     }
   });
 
+  // ============================================
+  // TEACHER QURAN TRACKING ROUTES
+  // ============================================
+
+  // Get today's assignment for a specific student
+  app.get('/api/teacher/student-assignment', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.query.studentId as string;
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      const today = new Date().toISOString().split('T')[0];
+      const assignment = await storage.getDailyAssignment(studentId, today);
+      res.json(assignment || null);
+    } catch (error) {
+      console.error("Error fetching student assignment:", error);
+      res.status(500).json({ message: "خطأ في جلب التكليف" });
+    }
+  });
+
+  // Create/update assignment for student (upsert by student + date)
+  app.post('/api/teacher/student-assignment', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const assignmentData = assignmentSchema.parse(req.body);
+      const sheikhId = req.user!.id;
+      
+      // Check if assignment already exists for this student on this date
+      const existingAssignment = await storage.getDailyAssignment(
+        assignmentData.studentId, 
+        assignmentData.assignmentDate
+      );
+      
+      let assignment;
+      if (existingAssignment) {
+        // Update existing assignment
+        assignment = await storage.updateDailyAssignment(existingAssignment.id, {
+          memorization: assignmentData.memorization,
+          review: assignmentData.review,
+          mistakes: assignmentData.mistakes,
+          notes: assignmentData.notes,
+          assignedBy: sheikhId,
+        });
+      } else {
+        // Create new assignment
+        assignment = await storage.createDailyAssignment({
+          ...assignmentData,
+          assignedBy: sheikhId,
+        });
+      }
+      
+      // Notify student via WebSocket
+      wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
+      
+      res.status(existingAssignment ? 200 : 201).json(assignment);
+    } catch (error) {
+      console.error("Error creating/updating student assignment:", error);
+      res.status(500).json({ message: "خطأ في حفظ التكليف" });
+    }
+  });
+
+  // Get student errors for teacher
+  app.get('/api/teacher/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.query.studentId as string;
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      const errors = await storage.getStudentErrors(studentId);
+      res.json(errors);
+    } catch (error) {
+      console.error("Error fetching student errors:", error);
+      res.status(500).json({ message: "خطأ في جلب الأخطاء" });
+    }
+  });
+
+  // Add student error for teacher
+  app.post('/api/teacher/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId, surahNumber, surahName, ayahNumber, errorType, errorDescription, sheikhNote, severity } = req.body;
+      
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      const error = await storage.createStudentError({
+        studentId,
+        surahNumber,
+        surahName,
+        ayahNumber,
+        errorType: errorType || 'recitation',
+        errorDescription: errorDescription || '',
+        sheikhNote: sheikhNote || null,
+        severity: severity || 'medium',
+        isResolved: false,
+      });
+      
+      // Notify student via WebSocket
+      wsService.notifyStudentOfNewError(studentId, error);
+      
+      res.status(201).json(error);
+    } catch (error) {
+      console.error("Error creating student error:", error);
+      res.status(500).json({ message: "خطأ في تسجيل الخطأ" });
+    }
+  });
+
+  // Resolve student error
+  app.patch('/api/teacher/student-errors/:errorId/resolve', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { errorId } = req.params;
+      
+      const updatedError = await storage.updateStudentError(errorId, {
+        isResolved: true,
+        resolvedDate: new Date(),
+      });
+      
+      res.json(updatedError);
+    } catch (error) {
+      console.error("Error resolving student error:", error);
+      res.status(500).json({ message: "خطأ في تحديث الخطأ" });
+    }
+  });
+
+  // Get student memorization progress
+  app.get('/api/teacher/student-memorization', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const studentId = req.query.studentId as string;
+      if (!studentId) {
+        return res.status(400).json({ message: "معرف الطالب مطلوب" });
+      }
+      
+      // Get student's user ID first
+      const student = await storage.getStudentById(studentId);
+      if (!student || !student.userId) {
+        // Return empty memorization if student not found or no userId
+        return res.json([]);
+      }
+      
+      const memorization = await storage.getStudentMemorization(student.userId);
+      res.json(memorization);
+    } catch (error) {
+      console.error("Error fetching student memorization:", error);
+      res.status(500).json({ message: "خطأ في جلب تقدم الحفظ" });
+    }
+  });
+
   // Admin route to clean up duplicate/fake students
   app.delete('/api/admin/cleanup-students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {

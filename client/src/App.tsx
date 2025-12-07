@@ -36,6 +36,7 @@ import { TeacherSessionsPage } from "./pages/teacher/TeacherSessions";
 import { TeacherSchedulePage } from "./pages/teacher/TeacherSchedule";
 import { TeacherSubscriptionsPage } from "./pages/teacher/TeacherSubscriptions";
 import { TeacherMessagesPage } from "./pages/teacher/TeacherMessages";
+import { TeacherQuranTrackingPage } from "./pages/teacher/TeacherQuranTracking";
 
 import CartPage from "./pages/CartPage";
 
@@ -258,6 +259,12 @@ function AppRoutes() {
       <Route path="/teacher/messages">
         <ProtectedRoute allowedRoles={['supervisor']}>
           <TeacherMessagesPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/quran-tracking">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherQuranTrackingPage />
         </ProtectedRoute>
       </Route>
 
