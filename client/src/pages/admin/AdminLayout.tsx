@@ -7,6 +7,8 @@ import {
   CreditCard, 
   MessageSquare 
 } from 'lucide-react';
+import { Redirect } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
   {
@@ -41,11 +43,18 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
+  const { user, isLoading } = useAuth();
+
+  // Redirect if not admin or owner
+  if (!isLoading && user?.role !== 'admin' && user?.role !== 'owner') {
+    return <Redirect to="/" />;
+  }
+
   return (
     <DashboardLayout 
       navItems={adminNavItems} 
       title="لوحة المدير"
-      userRole="admin"
+      userRole={user?.role}
     >
       {children}
     </DashboardLayout>

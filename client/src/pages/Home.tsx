@@ -181,6 +181,25 @@ export default function Home() {
   const todaysSessions = sessions.filter(s => s.sessionDate === new Date().toISOString().split('T')[0]);
   const isStudent = user?.role === 'student';
 
+  // Redirect owner/admin to admin dashboard
+  useEffect(() => {
+    if (user?.role === 'owner' || user?.role === 'admin') {
+      setLocation('/admin/statistics');
+    }
+  }, [user?.role, setLocation]);
+
+  // Show loading while redirecting owner/admin
+  if (user?.role === 'owner' || user?.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-warm-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">جاري التحويل إلى لوحة الإدارة...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-warm-white dark:bg-gray-950 transition-colors">
       <Navigation />
