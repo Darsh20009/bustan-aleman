@@ -71,7 +71,7 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
   return (
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
-        <Sidebar collapsible="offcanvas">
+        <Sidebar collapsible="icon">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <div className={`w-10 h-10 rounded-full ${getRoleColor()} flex items-center justify-center text-white font-bold`}>

@@ -1,1 +1,56 @@
-[]
+[
+  {
+    "studentName": "يوسف",
+    "email": "",
+    "password": "$2b$10$9ZesS8FSJbhVgPHw5ISoquDsZ65LVD0RQu2HZYSwadGakF0Ima0ZK",
+    "phone": "",
+    "dateOfBirth": "2025-12-08",
+    "age": 20,
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "المستوى الأول",
+    "notes": "",
+    "isActive": true,
+    "id": "kkki0oivdmixp4bpt",
+    "createdAt": "2025-12-08T22:01:08.177Z"
+  },
+  {
+    "studentName": "يوسف",
+    "email": "",
+    "password": "$2b$10$9ZesS8FSJbhVgPHw5ISoquDsZ65LVD0RQu2HZYSwadGakF0Ima0ZK",
+    "phone": "",
+    "dateOfBirth": "2025-12-08",
+    "age": 20,
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "المستوى الأول",
+    "notes": "",
+    "isActive": true,
+    "id": "mhntetssymixp4bul",
+    "createdAt": "2025-12-08T22:01:08.349Z"
+  },
+  {
+    "studentName": "يوسف",
+    "email": "",
+    "password": "$2b$10$9ZesS8FSJbhVgPHw5ISoquDsZ65LVD0RQu2HZYSwadGakF0Ima0ZK",
+    "phone": "",
+    "dateOfBirth": "2025-12-08",
+    "age": 20,
+    "memorizedSurahs": [],
+    "errors": [],
+    "sessions": [],
+    "payments": [],
+    "schedules": [],
+    "currentLevel": "المستوى الأول",
+    "notes": "",
+    "isActive": true,
+    "id": "q2zyi3c1smixp4crz",
+    "createdAt": "2025-12-08T22:01:09.551Z"
+  }
+]
