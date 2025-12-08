@@ -25,11 +25,28 @@ export function setupSubscriptionRoutes(app: Express) {
   // Get active subscription plans (public)
   app.get('/api/subscription-plans/active', async (req, res) => {
     try {
-      const plans = await storage.getActiveSubscriptionPlans();
+      let plans = await storage.getActiveSubscriptionPlans();
+      
+      // Fallback to JSON file if no plans found
+      if (!plans || plans.length === 0) {
+        const { jsonStorage } = await import('./jsonStorage');
+        const jsonPlans = await jsonStorage.readJSON('data/subscriptionPlans.json');
+        plans = Array.isArray(jsonPlans) ? jsonPlans.filter((p: any) => p.isActive !== false) : [];
+      }
+      
       res.json(plans);
     } catch (error) {
       console.error("Error fetching active subscription plans:", error);
-      res.status(500).json({ message: "خطأ في جلب خطط الاشتراك" });
+      
+      // Final fallback to JSON file
+      try {
+        const { jsonStorage } = await import('./jsonStorage');
+        const jsonPlans = await jsonStorage.readJSON('data/subscriptionPlans.json');
+        const plans = Array.isArray(jsonPlans) ? jsonPlans.filter((p: any) => p.isActive !== false) : [];
+        res.json(plans);
+      } catch (jsonError) {
+        res.status(500).json({ message: "خطأ في جلب خطط الاشتراك" });
+      }
     }
   });
 
