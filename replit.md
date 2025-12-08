@@ -54,6 +54,20 @@ The frontend has been completely restructured with a modern, role-based dashboar
 -   **Homework System**: Complete homework management with teacher creation (memorization, review, recitation, written, quiz types), student submission tracking, grading with points system, due date management, and late submission detection. Backend includes 15+ API endpoints in `server/homeworkRoutes.ts` with schema defined in `shared/schema.ts` (homeworks, homeworkSubmissions tables).
 -   **Student Evaluations**: Teachers can create evaluations with ratings for memorization, tajweed, concentration, and behavior. Stored in `studentEvaluations` table.
 -   **Parent Reports**: Weekly automated reports for parents with student progress, attendance, and teacher comments. Stored in `parentReports` table.
+-   **Voice Self-Recitation**: Free browser-based Quran recitation feature using Web Speech API. Hook: `client/src/hooks/useSpeechRecognition.ts`. Supports Arabic speech recognition, text comparison with normalization (removes diacritics), and similarity scoring.
+-   **Subscription Plans**: Three tiers (Basic, Premium, VIP) defined in `data/subscriptionPlans.json`. Schema supports billing cycles (monthly/quarterly/yearly) and special features per plan.
+
+### Role Hierarchy & Pre-registered Users
+-   **Roles**: student < teacher < supervisor < admin < owner
+-   **Owner Account**: Phone 0500000000, Password admin123456 - Full platform access, can manage academies and all users
+-   **Pre-registered Users**: Defined in `server/preregistered-users.json`, auto-initialized on server start
+
+### Recent Changes (December 2024)
+-   Fixed Quran data sync: Routes now correctly map `userId` to `studentId` for memorization, reading stats, and reviews
+-   Added `/api/quran/reviews/due` and `/api/quran/reading-stats` endpoints for student Quran tracking
+-   Implemented `useSpeechRecognition` hook for free voice-based Quran recitation using Web Speech API
+-   Added subscription plans (Basic, Premium, VIP) to `data/subscriptionPlans.json`
+-   Created owner account with full platform management capabilities
 
 ### System Design Choices
 -   **Type Safety**: Achieved with TypeScript.

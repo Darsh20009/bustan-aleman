@@ -42,5 +42,16 @@
     "isActive": true,
     "registrationCompleted": true,
     "emailVerified": false
+  },
+  {
+    "id": "user_1765232884565",
+    "firstName": "مدير المنصة",
+    "phoneNumber": "0500000000",
+    "passwordHash": "$2b$10$UBoBcx8MQqcHnISofYtB5OLqDUW5JluBa1o0Zg/5VtPi7t0nIfBMK",
+    "role": "owner",
+    "email": null,
+    "isActive": true,
+    "registrationCompleted": true,
+    "emailVerified": false
   }
 ]

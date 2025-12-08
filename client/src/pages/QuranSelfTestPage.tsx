@@ -15,9 +15,13 @@ import {
   EyeOff,
   SkipForward,
   Trophy,
-  Target
+  Target,
+  Mic,
+  MicOff,
+  Volume2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSpeechRecognition, compareArabicTexts } from '@/hooks/useSpeechRecognition';
 
 interface Ayah {
   number: number;
@@ -196,6 +200,42 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
   const [session, setSession] = useState<TestSession | null>(null);
   const [userInput, setUserInput] = useState('');
   const [testStarted, setTestStarted] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  
+  const {
+    transcript,
+    interimTranscript,
+    isListening,
+    isSupported: speechSupported,
+    error: speechError,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (voiceMode && transcript) {
+      setUserInput(prev => prev + ' ' + transcript.trim());
+      resetTranscript();
+    }
+  }, [transcript, voiceMode, resetTranscript]);
+
+  useEffect(() => {
+    if (speechError) {
+      toast({ title: 'خطأ في التسميع', description: speechError });
+    }
+  }, [speechError, toast]);
+
+  const toggleVoiceMode = () => {
+    if (isListening) {
+      stopListening();
+      setVoiceMode(false);
+    } else {
+      setVoiceMode(true);
+      startListening();
+      toast({ title: 'التسميع الصوتي', description: 'ابدأ القراءة الآن...' });
+    }
+  };
 
   const { data: ayahs = [] } = useQuery<Ayah[]>({
     queryKey: [`/api/quran/ayahs/${selectedSurah}`],
@@ -222,6 +262,9 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     });
     setTestStarted(true);
     setUserInput('');
+    stopListening();
+    setVoiceMode(false);
+    resetTranscript();
   };
 
   const handleCheck = () => {
@@ -230,11 +273,12 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
       return;
     }
 
+    stopListening();
+    setVoiceMode(false);
+
     const currentAyah = session.ayahs[session.currentIndex];
-    // Normalize and compare without diacritics or extra spaces
-    const cleanUserInput = normalize(userInput);
-    const cleanCorrectText = normalize(currentAyah.text);
-    const isCorrect = cleanUserInput === cleanCorrectText;
+    const comparison = compareArabicTexts(userInput, currentAyah.text);
+    const isCorrect = comparison.isCorrect;
 
     const newSession = {
       ...session,
@@ -249,9 +293,15 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     if (isCorrect) {
       toast({ 
         title: 'ممتاز!', 
-        description: 'إجابة صحيحة',
+        description: `إجابة صحيحة - نسبة التطابق: ${Math.round(comparison.similarity)}%`,
+      });
+    } else {
+      toast({ 
+        title: 'حاول مرة أخرى', 
+        description: `نسبة التطابق: ${Math.round(comparison.similarity)}% - تحتاج 70% للنجاح`,
       });
     }
+    resetTranscript();
   };
 
   const handleNext = () => {
@@ -265,6 +315,9 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
         hintShown: false,
       });
       setUserInput('');
+      stopListening();
+      setVoiceMode(false);
+      resetTranscript();
     } else {
       handleFinish();
     }
@@ -288,6 +341,9 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
     });
     setTestStarted(false);
     setSession(null);
+    stopListening();
+    setVoiceMode(false);
+    resetTranscript();
   };
 
   const toggleReveal = () => {
@@ -442,20 +498,66 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
             {/* User Input */}
             {!session.revealed ? (
               <>
-                <textarea
-                  value={userInput}
-                  onChange={(e) => setUserInput(e.target.value)}
-                  placeholder="أكتب النص الذي تتذكره..."
-                  className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none mb-4 font-arabic text-lg"
-                  rows={4}
-                  data-testid="input-ayah-answer"
-                />
-
-                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    💡 <strong>نصيحة:</strong> يمكنك استخدام ميكروفون هاتفك أو الكمبيوتر للكتابة بالصوت
-                  </p>
+                <div className="relative mb-4">
+                  <textarea
+                    value={userInput}
+                    onChange={(e) => setUserInput(e.target.value)}
+                    placeholder={isListening ? "استمع... تحدث الآن" : "أكتب النص الذي تتذكره أو اضغط على الميكروفون للتسميع الصوتي..."}
+                    className={`w-full p-4 pr-16 border-2 rounded-lg focus:outline-none font-arabic text-lg ${
+                      isListening 
+                        ? 'border-red-400 bg-red-50' 
+                        : 'border-gray-300 focus:border-emerald-500'
+                    }`}
+                    rows={4}
+                    data-testid="input-ayah-answer"
+                  />
+                  
+                  {speechSupported && (
+                    <Button
+                      type="button"
+                      onClick={toggleVoiceMode}
+                      size="icon"
+                      variant={isListening ? "destructive" : "outline"}
+                      className={`absolute top-3 left-3 ${isListening ? 'animate-pulse' : ''}`}
+                      data-testid="button-voice-recitation"
+                    >
+                      {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                    </Button>
+                  )}
                 </div>
+
+                {interimTranscript && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-600 font-semibold mb-1">جاري التعرف على الصوت:</p>
+                    <p className="text-blue-800 font-arabic">{interimTranscript}</p>
+                  </div>
+                )}
+
+                {isListening && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                    <p className="text-sm text-red-800 font-semibold">
+                      جاري التسميع... تحدث بصوت واضح
+                    </p>
+                  </div>
+                )}
+
+                {speechSupported && !isListening && (
+                  <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <p className="text-sm text-emerald-800">
+                      <Mic className="w-4 h-4 inline ml-1" />
+                      <strong>ميزة التسميع المجانية:</strong> اضغط على زر الميكروفون لقراءة الآية بصوتك. سيتم التعرف على صوتك تلقائياً.
+                    </p>
+                  </div>
+                )}
+
+                {!speechSupported && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm text-yellow-800">
+                      المتصفح لا يدعم التسميع الصوتي. جرب Chrome أو Edge.
+                    </p>
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <div className="flex gap-3">

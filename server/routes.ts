@@ -1537,9 +1537,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/quran/memorization', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
+      // Convert userId to studentId for proper data storage
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.status(404).json({ message: "Student record not found" });
+      }
+      
       const memorizationData = insertQuranMemorizationSchema.parse({
         ...req.body,
-        studentId: userId,
+        studentId: student.id,
       });
       const memorization = await storage.createMemorization(memorizationData);
       res.status(201).json(memorization);
@@ -1552,7 +1560,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/quran/memorization', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const memorizations = await storage.getStudentMemorization(userId);
+      // Convert userId to studentId for proper data lookup
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json([]);
+      }
+      
+      const memorizations = await storage.getStudentMemorization(student.id);
       res.json(memorizations);
     } catch (error) {
       console.error("Error fetching memorization:", error);
@@ -1587,9 +1603,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/quran/stats', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
+      // Convert userId to studentId for proper data storage
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.status(404).json({ message: "Student record not found" });
+      }
+      
       const statsData = insertQuranReadingStatsSchema.parse({
         ...req.body,
-        studentId: userId,
+        studentId: student.id,
       });
       const stats = await storage.createOrUpdateReadingStats(statsData);
       res.status(201).json(stats);
@@ -1602,9 +1626,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/quran/stats', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
+      // Convert userId to studentId for proper data lookup
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json([]);
+      }
+      
       const { startDate, endDate } = req.query;
       const stats = await storage.getStudentReadingStats(
-        userId,
+        student.id,
         startDate as string,
         endDate as string
       );
@@ -1618,11 +1650,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/quran/stats/today', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.session as any).userId;
-      const stats = await storage.getTodayReadingStats(userId);
+      // Convert userId to studentId for proper data lookup
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json(null);
+      }
+      
+      const stats = await storage.getTodayReadingStats(student.id);
       res.json(stats || null);
     } catch (error) {
       console.error("Error fetching today's reading stats:", error);
       res.status(500).json({ message: "Failed to fetch today's reading stats" });
+    }
+  });
+
+  // Quran reading stats for student
+  app.get('/api/quran/reading-stats', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      // Convert userId to studentId for proper data lookup
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json([]);
+      }
+      
+      const stats = await storage.getStudentReadingStats(student.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching reading stats:", error);
+      res.status(500).json({ message: "Failed to fetch reading stats" });
+    }
+  });
+
+  // Quran reviews due for student
+  app.get('/api/quran/reviews/due', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.session as any).userId;
+      // Convert userId to studentId for proper data lookup
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json([]);
+      }
+      
+      const reviews = await storage.getDueReviews(student.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching due reviews:", error);
+      res.status(500).json({ message: "Failed to fetch due reviews" });
     }
   });
 

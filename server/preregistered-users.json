@@ -1,5 +1,12 @@
 [
   {
+    "name": "مدير المنصة",
+    "phoneNumber": "0500000000",
+    "password": "admin123456",
+    "role": "owner",
+    "description": "صاحب المنصة - يمكنه إضافة الأكاديميات والمشايخ"
+  },
+  {
     "name": "يوسف",
     "phoneNumber": "0532441566",
     "password": "0532441566",
