@@ -7,7 +7,7 @@ import {
   CreditCard, 
   MessageSquare 
 } from 'lucide-react';
-import { Redirect } from 'react-router-dom';
+import { Redirect } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 
 const adminNavItems = [
