@@ -30,7 +30,7 @@ interface DashboardLayoutProps {
   children: ReactNode;
   navItems: NavItem[];
   title: string;
-  userRole: 'student' | 'supervisor' | 'admin';
+  userRole?: 'student' | 'supervisor' | 'admin' | 'owner';
 }
 
 export function DashboardLayout({ children, navItems, title, userRole }: DashboardLayoutProps) {
@@ -50,6 +50,7 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
       case 'student': return 'طالب';
       case 'supervisor': return 'معلم';
       case 'admin': return 'مدير';
+      case 'owner': return 'صاحب المنصة';
       default: return '';
     }
   };
@@ -59,6 +60,7 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
       case 'student': return 'bg-emerald-600';
       case 'supervisor': return 'bg-blue-600';
       case 'admin': return 'bg-purple-600';
+      case 'owner': return 'bg-amber-600';
       default: return 'bg-primary';
     }
   };

@@ -38,11 +38,11 @@ export function AppRoutes() {
       <Route path="/sessions" component={() => requireSheikh(SessionManagementPage)} />
       <Route path="/session/:roomToken" component={() => requireAuth(LiveSession)} />
       {/* Admin Routes - accessible by admin and owner roles */}
-      <Route path="/admin/statistics" component={AdminStatistics} />
-      <Route path="/admin/teachers" component={AdminTeachers} />
-      <Route path="/admin/halaqas" component={AdminHalaqas} />
-      <Route path="/admin/subscriptions" component={AdminSubscriptions} />
-      <Route path="/admin/messages" component={AdminMessages} />
+      <Route path="/admin/statistics" component={() => requireAdminOrOwner(AdminStatistics)} />
+      <Route path="/admin/teachers" component={() => requireAdminOrOwner(AdminTeachers)} />
+      <Route path="/admin/halaqas" component={() => requireAdminOrOwner(AdminHalaqas)} />
+      <Route path="/admin/subscriptions" component={() => requireAdminOrOwner(AdminSubscriptions)} />
+      <Route path="/admin/messages" component={() => requireAdminOrOwner(AdminMessages)} />
       <Route>404: لم يتم العثور على الصفحة</Route>
     </Switch>
   );
