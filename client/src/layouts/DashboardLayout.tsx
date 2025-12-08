@@ -73,18 +73,21 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
       <div className="flex h-screen w-full">
         <Sidebar collapsible="offcanvas">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full ${getRoleColor()} flex items-center justify-center text-white font-bold`}>
-                {user?.firstName?.charAt(0) || 'م'}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className={`w-10 h-10 rounded-full ${getRoleColor()} flex items-center justify-center text-white font-bold shrink-0`}>
+                  {user?.firstName?.charAt(0) || 'م'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sidebar-foreground truncate">
+                    {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'مستخدم'}
+                  </p>
+                  <p className="text-xs text-sidebar-foreground/70">
+                    {getRoleLabel()}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sidebar-foreground truncate">
-                  {user?.firstName ? `${user.firstName} ${user.lastName || ''}` : 'مستخدم'}
-                </p>
-                <p className="text-xs text-sidebar-foreground/70">
-                  {getRoleLabel()}
-                </p>
-              </div>
+              <SidebarTrigger data-testid="button-sidebar-close" />
             </div>
           </SidebarHeader>
 
