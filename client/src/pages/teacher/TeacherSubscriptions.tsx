@@ -31,6 +31,7 @@ export function TeacherSubscriptionsPage() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [activationDialogOpen, setActivationDialogOpen] = useState(false);
 
   const { data: students = [], isLoading: studentsLoading } = useQuery<any[]>({
@@ -78,6 +79,7 @@ export function TeacherSubscriptionsPage() {
 
   const handleActivateSubscription = (student: any) => {
     setSelectedSubscription(student);
+    setSelectedPlanId('');
     setActivationDialogOpen(true);
   };
 
@@ -212,16 +214,20 @@ export function TeacherSubscriptionsPage() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium">اختر خطة الاشتراك</label>
-                <Select>
+                <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
                   <SelectTrigger data-testid="select-plan">
                     <SelectValue placeholder="اختر الخطة" />
                   </SelectTrigger>
                   <SelectContent>
-                    {plans.map((plan: any) => (
-                      <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} - {plan.price} ر.س
-                      </SelectItem>
-                    ))}
+                    {plans.length > 0 ? (
+                      plans.map((plan: any) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.nameAr || plan.name} - {plan.price} {plan.currency || 'ر.س'}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-sm text-muted-foreground">لا توجد خطط متاحة</div>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -234,14 +240,14 @@ export function TeacherSubscriptionsPage() {
             </Button>
             <Button 
               onClick={() => {
-                if (selectedSubscription) {
+                if (selectedSubscription && selectedPlanId) {
                   activateSubscriptionMutation.mutate({
                     studentId: selectedSubscription.id,
-                    planId: plans[0]?.id || '',
+                    planId: selectedPlanId,
                   });
                 }
               }}
-              disabled={activateSubscriptionMutation.isPending}
+              disabled={activateSubscriptionMutation.isPending || !selectedPlanId}
               data-testid="button-confirm-activation"
             >
               {activateSubscriptionMutation.isPending ? 'جاري التفعيل...' : 'تفعيل الاشتراك'}
