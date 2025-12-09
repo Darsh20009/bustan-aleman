@@ -91,12 +91,16 @@ export function setupAuthRoutes(app: Express) {
 
       const user = await storage.upsertUser(userData);
 
-      // Check if student record already exists for this user (check by userId OR phone number to prevent duplicates)
+      // Check if student record already exists for this user (check by multiple fields to prevent duplicates)
       const existingStudents = await storage.getAllStudents();
       let student = existingStudents.find(s => {
         if (s.userId === user.id) return true;
         const studentPhone = normalizePhoneNumber(s.phoneNumber);
-        return studentPhone && normalizedInputPhone && studentPhone === normalizedInputPhone;
+        if (studentPhone && normalizedInputPhone && studentPhone === normalizedInputPhone) return true;
+        if (s.email && s.email === registrationData.email) return true;
+        const studentName = `${registrationData.firstName} ${registrationData.lastName}`;
+        if (s.studentName === studentName) return true;
+        return false;
       });
       
       if (!student) {
@@ -106,6 +110,7 @@ export function setupAuthRoutes(app: Express) {
           studentName: `${registrationData.firstName} ${registrationData.lastName}`,
           passwordHash: hashedPassword,
           phoneNumber: registrationData.phoneNumber,
+          email: registrationData.email,
           dateOfBirth: null,
           grade: null,
           academy: registrationData.academy,
@@ -120,7 +125,11 @@ export function setupAuthRoutes(app: Express) {
         });
       } else if (!student.userId) {
         // Link existing student to user account if they weren't linked
-        await storage.updateStudent(student.id, { userId: user.id });
+        await storage.updateStudent(student.id, { 
+          userId: user.id,
+          email: registrationData.email,
+          phoneNumber: registrationData.phoneNumber,
+        });
         student.userId = user.id;
       }
 
@@ -234,20 +243,23 @@ export function setupAuthRoutes(app: Express) {
 
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
-        let student = students.find(s => s.userId === user.id);
-
-        // Check by phone number as well to prevent duplicates
-        if (!student && user.phoneNumber) {
-          student = students.find(s => s.phoneNumber === user.phoneNumber);
-          if (student && !student.userId) {
-            // Link existing student to user account
-            await storage.updateStudent(student.id, { userId: user.id });
-            student.userId = user.id;
-            console.log('[auth] Linked existing student to userId:', user.id);
-          }
+        
+        // البحث عن الطالب بطرق متعددة لتجنب التكرار
+        let student = students.find(s => 
+          s.userId === user.id || 
+          (user.phoneNumber && s.phoneNumber === user.phoneNumber) ||
+          (user.email && s.email === user.email) ||
+          (user.firstName && s.studentName === user.firstName)
+        );
+        
+        // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
+        if (student && !student.userId) {
+          await storage.updateStudent(student.id, { userId: user.id });
+          student.userId = user.id;
+          console.log('[auth] Linked existing student to userId:', user.id);
         }
         
-        // If no student record exists, create one automatically
+        // فقط إذا لم نجد الطالب نهائياً، نقوم بإنشاء سجل جديد
         if (!student) {
           console.log('[auth] No student record found for userId:', user.id, 'Creating new student record...');
 
@@ -256,6 +268,7 @@ export function setupAuthRoutes(app: Express) {
             studentName: user.firstName || 'طالب جديد',
             passwordHash: user.passwordHash || '',
             phoneNumber: user.phoneNumber,
+            email: user.email,
             dateOfBirth: null,
             grade: null,
             monthlySessionsCount: 0,
@@ -336,9 +349,23 @@ export function setupAuthRoutes(app: Express) {
 
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
-        let student = students.find(s => s.userId === user.id);
+        
+        // البحث عن الطالب بطرق متعددة لتجنب التكرار
+        let student = students.find(s => 
+          s.userId === user.id || 
+          (user.phoneNumber && s.phoneNumber === user.phoneNumber) ||
+          (user.email && s.email === user.email) ||
+          (user.firstName && s.studentName === user.firstName)
+        );
 
-        // If no student record exists, create one automatically
+        // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
+        if (student && !student.userId) {
+          await storage.updateStudent(student.id, { userId: user.id });
+          student.userId = user.id;
+          console.log('[auth/user] Linked existing student to userId:', user.id);
+        }
+        
+        // فقط إذا لم نجد الطالب نهائياً، نقوم بإنشاء سجل جديد
         if (!student) {
           console.log('[auth/user] No student record found for userId:', user.id, 'Creating new student record...');
 
@@ -346,6 +373,8 @@ export function setupAuthRoutes(app: Express) {
             userId: user.id,
             studentName: user.firstName || 'طالب جديد',
             passwordHash: user.passwordHash || '',
+            phoneNumber: user.phoneNumber,
+            email: user.email,
             dateOfBirth: null,
             grade: null,
             monthlySessionsCount: 0,
