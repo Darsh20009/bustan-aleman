@@ -141,6 +141,28 @@ export function setupJSONRoutes(app: Express) {
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
 
+      // Check if user already exists with this email or phone
+      const existingUsers = await storage.getAllUsers();
+      const existingUser = existingUsers.find((u: any) => 
+        u.email === registrationData.email || u.phoneNumber === registrationData.phoneNumber
+      );
+      
+      if (existingUser) {
+        return res.status(400).json({ message: "هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً" });
+      }
+
+      // Create user record first (for login)
+      const user = await storage.upsertUser({
+        email: registrationData.email,
+        firstName: registrationData.firstName,
+        lastName: registrationData.lastName,
+        phoneNumber: registrationData.phoneNumber,
+        passwordHash: hashedPassword,
+        role: 'student',
+        isActive: true,
+        registrationCompleted: true,
+      });
+
       // Create new student with proper field mapping
       const student = await jsonStorage.createStudent({
         studentName,
@@ -158,6 +180,25 @@ export function setupJSONRoutes(app: Express) {
         notes: registrationData.notes || registrationData.goals || 'طالب جديد',
         zoomLink: '',
         isActive: true,
+      });
+
+      // Also create student record in main storage linked to user
+      await storage.createStudent({
+        userId: user.id,
+        studentName,
+        passwordHash: hashedPassword,
+        phoneNumber: registrationData.phoneNumber,
+        email: registrationData.email,
+        dateOfBirth,
+        grade: null,
+        monthlySessionsCount: 0,
+        monthlyPrice: "0",
+        isPaid: false,
+        isActive: true,
+        memorizedSurahs: '[]',
+        currentLevel: registrationData.currentLevel || 'beginner',
+        notes: registrationData.notes || registrationData.goals || 'طالب جديد',
+        whatsappContact: registrationData.phoneNumber,
       });
 
       // Send registration details to WhatsApp (without password for security)
