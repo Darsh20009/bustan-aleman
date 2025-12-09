@@ -998,8 +998,23 @@ export function setupSheikhRoutes(app: Express) {
         return res.status(400).json({ message: "معرف الطالب والخطة مطلوبان" });
       }
 
-      // Get the plan details
-      const plan = await storage.getSubscriptionPlan(planId);
+      // Get the plan details from database or JSON file
+      let plan = await storage.getSubscriptionPlan(planId);
+      
+      // If not found in database, try to read from JSON file
+      if (!plan) {
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        try {
+          const plansPath = path.join(process.cwd(), 'data', 'subscriptionPlans.json');
+          const plansData = await fs.readFile(plansPath, 'utf-8');
+          const jsonPlans = JSON.parse(plansData);
+          plan = jsonPlans.find((p: any) => p.id === planId);
+        } catch (jsonError) {
+          console.error('Error reading plans from JSON:', jsonError);
+        }
+      }
+      
       if (!plan) {
         return res.status(404).json({ message: "الخطة غير موجودة" });
       }
