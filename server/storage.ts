@@ -532,9 +532,12 @@ export class DatabaseStorage implements IStorage {
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     if (!this.isDbAvailable()) {
-      // Create a user object with default values for JSON storage fallback
+      // JSON storage fallback - actually persist to users.json
+      const allUsers = await this.getAllUsers();
+      const existingIndex = userData.id ? allUsers.findIndex(u => u.id === userData.id) : -1;
+      
       const user: User = {
-        id: userData.id || `user_${Date.now()}`,
+        id: userData.id || `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         email: userData.email || null,
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
@@ -550,9 +553,21 @@ export class DatabaseStorage implements IStorage {
         whatsappNumber: userData.whatsappNumber || null,
         isActive: userData.isActive ?? true,
         registrationCompleted: userData.registrationCompleted ?? false,
-        createdAt: new Date(),
+        memorization_level: (userData as any).memorization_level || null,
+        emailVerified: (userData as any).emailVerified ?? false,
+        passwordResetToken: (userData as any).passwordResetToken || null,
+        passwordResetExpiry: (userData as any).passwordResetExpiry || null,
+        createdAt: existingIndex >= 0 ? allUsers[existingIndex].createdAt : new Date(),
         updatedAt: new Date(),
       };
+      
+      if (existingIndex >= 0) {
+        allUsers[existingIndex] = user;
+      } else {
+        allUsers.push(user);
+      }
+      
+      await jsonStorage.writeJSON('users.json', allUsers);
       return user;
     }
     const [user] = await db!

@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "bash"]
+modules = ["nodejs-20", "web", "bash", "postgresql-16"]
 run = "npm run dev"
 hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
@@ -119,9 +119,8 @@ AWS_DATABASE_PORT = "5432"
 AWS_DATABASE_USER = "postgres"
 AWS_DATABASE_PASSWORD = "18082009"
 AWS_DATABASE_NAME = "postgres"
-ENABLE_AWS_RDS = "true"
+ENABLE_AWS_RDS = "false"
 VITE_BBB_SERVER = "https://demo.bigbluebutton.org"
 VITE_ZEGO_APP_ID = "499288133"
 VITE_ZEGO_SERVER_SECRET = "9948285f589febe75d440d0017a7e8be"
 VITE_ZEGO_USER_ID = "532441566"
-DATABASE_URL = "postgresql://postgres:18082009@bustanaleman.cfcagsig2mjq.eu-north-1.rds.amazonaws.com:5432/postgres"
