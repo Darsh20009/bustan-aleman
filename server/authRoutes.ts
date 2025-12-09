@@ -281,13 +281,18 @@ export function setupAuthRoutes(app: Express) {
         if (student) {
           // تحديث الربط إذا لم يكن مربوطاً أو مربوط بـ userId مختلف
           if (!student.userId || student.userId !== user.id) {
-            await storage.updateStudent(student.id, { 
-              userId: user.id,
-              email: user.email || student.email,
-              phoneNumber: user.phoneNumber || student.phoneNumber,
-            });
-            student.userId = user.id;
-            console.log('[auth] ✅ Linked/updated student', student.id, 'to userId:', user.id);
+            try {
+              console.log('[auth] Attempting to update student:', student.id);
+              await storage.updateStudent(student.id, { 
+                userId: user.id,
+                email: user.email || student.email,
+                phoneNumber: user.phoneNumber || student.phoneNumber,
+              });
+              student.userId = user.id;
+              console.log('[auth] ✅ Linked/updated student', student.id, 'to userId:', user.id);
+            } catch (updateError) {
+              console.log('[auth] ⚠️ Could not update student record, continuing with login:', updateError);
+            }
           }
           
           additionalData = {
@@ -299,7 +304,7 @@ export function setupAuthRoutes(app: Express) {
         } else {
           // لا نقوم بإنشاء طالب جديد تلقائياً عند تسجيل الدخول
           // الطالب يجب أن يكون موجوداً مسبقاً أو يتم إنشاؤه عند التسجيل
-          console.log('[auth] ⚠️ No student record found for user:', user.id, '- Student must register first');
+          console.log('[auth] ⚠️ No student record found for user:', user.id, '- continuing without student data');
         }
       }
 
