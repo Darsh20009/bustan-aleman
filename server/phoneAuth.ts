@@ -6,14 +6,17 @@ import preregisteredUsers from "./preregistered-users.json";
 
 export function getPhoneSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   return session({
     secret: process.env.SESSION_SECRET || "ZkkGjcF7yHW5r+3ca/QIiT+Yz3h/W+aHmpAFspW38Ss=",
     resave: true,
     saveUninitialized: true,
     cookie: {
       httpOnly: true,
-      secure: false,
+      secure: isProduction,
       maxAge: sessionTtl,
+      sameSite: isProduction ? 'none' : 'lax',
     },
   });
 }
