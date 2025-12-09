@@ -887,65 +887,91 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const students = await storage.getAllStudents();
       
-      // Group students by userId, phoneNumber, and email
-      const studentMap = new Map<string, any[]>();
+      // Group students by multiple criteria to find duplicates
+      const studentGroups = new Map<string, any[]>();
       
       for (const student of students) {
-        let key = '';
+        // Create composite keys to identify duplicates
+        const keys: string[] = [];
         
-        // Prefer userId as the primary key
+        // Key by userId if exists
         if (student.userId) {
-          key = `userId:${student.userId}`;
-        } else if (student.phoneNumber) {
-          const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
-          key = `phone:${normalizedPhone || student.phoneNumber}`;
-        } else if (student.email) {
-          key = `email:${student.email}`;
-        } else if (student.studentName) {
-          key = `name:${student.studentName}`;
-        } else {
-          key = `id:${student.id}`;
+          keys.push(`userId:${student.userId}`);
         }
         
-        if (!studentMap.has(key)) {
-          studentMap.set(key, []);
+        // Key by normalized phone number
+        if (student.phoneNumber) {
+          const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
+          if (normalizedPhone) {
+            keys.push(`phone:${normalizedPhone}`);
+          } else {
+            keys.push(`phone:${student.phoneNumber}`);
+          }
         }
-        studentMap.get(key)!.push(student);
+        
+        // Key by name + phone combination
+        if (student.studentName && student.phoneNumber) {
+          const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
+          keys.push(`name-phone:${student.studentName}-${normalizedPhone || student.phoneNumber}`);
+        }
+        
+        // Use at least one key
+        if (keys.length === 0) {
+          keys.push(`id:${student.id}`);
+        }
+        
+        // Add to all matching groups
+        for (const key of keys) {
+          if (!studentGroups.has(key)) {
+            studentGroups.set(key, []);
+          }
+          studentGroups.get(key)!.push(student);
+        }
       }
       
-      const studentsToRemove: string[] = [];
+      // Find unique students and duplicates
+      const seenIds = new Set<string>();
       const studentsToKeep: string[] = [];
+      const studentsToRemove: string[] = [];
       
-      // For each group, keep only one student (preferring the one with userId)
-      for (const [key, group] of studentMap.entries()) {
+      for (const [key, group] of studentGroups.entries()) {
         if (group.length > 1) {
-          // Sort: prefer students with userId, then with email, then oldest
-          group.sort((a, b) => {
-            if (a.userId && !b.userId) return -1;
-            if (!a.userId && b.userId) return 1;
-            if (a.email && !b.email) return -1;
-            if (!a.email && b.email) return 1;
-            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-          });
+          // Remove duplicates from group
+          const uniqueGroup = Array.from(new Map(group.map(s => [s.id, s])).values());
           
-          // Keep the first (best) student
-          studentsToKeep.push(group[0].id);
-          
-          // Remove the rest
-          for (let i = 1; i < group.length; i++) {
-            studentsToRemove.push(group[i].id);
+          if (uniqueGroup.length > 1) {
+            // Sort: prefer students with userId, then oldest
+            uniqueGroup.sort((a, b) => {
+              if (a.userId && !b.userId) return -1;
+              if (!a.userId && b.userId) return 1;
+              return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            });
+            
+            // Keep the first one if not already kept
+            if (!seenIds.has(uniqueGroup[0].id)) {
+              studentsToKeep.push(uniqueGroup[0].id);
+              seenIds.add(uniqueGroup[0].id);
+            }
+            
+            // Mark the rest for deletion
+            for (let i = 1; i < uniqueGroup.length; i++) {
+              if (!seenIds.has(uniqueGroup[i].id)) {
+                studentsToRemove.push(uniqueGroup[i].id);
+                seenIds.add(uniqueGroup[i].id);
+              }
+            }
+            
+            console.log(`🔍 Found ${uniqueGroup.length} duplicates for ${key}, keeping ${uniqueGroup[0].id}`);
           }
-          
-          console.log(`🔍 Found ${group.length} duplicates for ${key}, keeping ${group[0].id}`);
-        } else {
-          studentsToKeep.push(group[0].id);
         }
       }
       
       // Delete duplicate students
+      let deletedCount = 0;
       for (const studentId of studentsToRemove) {
         try {
           await storage.deleteStudent(studentId);
+          deletedCount++;
           console.log(`🗑️ Deleted duplicate student: ${studentId}`);
         } catch (err) {
           console.error(`❌ Failed to delete student ${studentId}:`, err);
@@ -954,9 +980,9 @@ export function setupSheikhRoutes(app: Express) {
       
       res.json({
         message: "تم تنظيف بيانات الطلاب بنجاح",
-        removed: studentsToRemove.length,
+        removed: deletedCount,
         kept: studentsToKeep.length,
-        details: `تم حذف ${studentsToRemove.length} طالب مكرر والاحتفاظ بـ ${studentsToKeep.length} طالب`,
+        details: `تم حذف ${deletedCount} طالب مكرر والاحتفاظ بـ ${studentsToKeep.length} طالب`,
       });
     } catch (error) {
       console.error("Error cleaning up students:", error);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { TeacherLayout } from './TeacherLayout';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { StatsCard } from '@/components/shared/StatsCard';
@@ -16,20 +16,66 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Users, UserCheck, UserX, Search, Eye } from 'lucide-react';
+import { Users, UserCheck, UserX, Search, Eye, Trash2, UserPlus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+// Define a type for Student for better type safety
+type Student = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  currentLevel: 'beginner' | 'intermediate' | 'advanced';
+  attendanceRate: number;
+  status: 'active' | 'inactive';
+  email?: string;
+  memorizedSurahs?: string;
+};
 
 export function TeacherStudentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false); // State for the add student dialog
+  const { toast } = useToast();
 
-  const { data: students = [], isLoading } = useQuery<any[]>({
+  const { data: students = [], isLoading } = useQuery<Student[]>({
     queryKey: ['/api/teacher/students'],
   });
 
-  const activeStudents = students.filter((s: any) => s.status === 'active');
-  const inactiveStudents = students.filter((s: any) => s.status !== 'active');
+  const cleanupDuplicatesMutation = useMutation({
+    mutationFn: () => apiRequest('DELETE', '/api/admin/cleanup-students'),
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/teacher/students'] });
+      toast({
+        title: 'تم تنظيف البيانات بنجاح',
+        description: `تم حذف ${data.removed} طالب مكرر`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'خطأ',
+        description: 'فشل في تنظيف البيانات المكررة',
+        variant: 'destructive',
+      });
+    },
+  });
 
-  const filteredStudents = students.filter((s: any) => 
+  const activeStudents = students.filter((s: Student) => s.status === 'active');
+  const inactiveStudents = students.filter((s: Student) => s.status !== 'active');
+
+  const filteredStudents = students.filter((s: Student) => 
     s.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.phoneNumber?.includes(searchQuery)
@@ -39,7 +85,7 @@ export function TeacherStudentsPage() {
     {
       key: 'name',
       header: 'الاسم',
-      render: (s: any) => (
+      render: (s: Student) => (
         <div className="flex items-center gap-3">
           <Avatar className="h-8 w-8">
             <AvatarFallback>{s.firstName?.charAt(0)}</AvatarFallback>
@@ -52,7 +98,7 @@ export function TeacherStudentsPage() {
     { 
       key: 'currentLevel', 
       header: 'المستوى',
-      render: (s: any) => (
+      render: (s: Student) => (
         <Badge variant="secondary">
           {s.currentLevel === 'advanced' ? 'متقدم' : s.currentLevel === 'intermediate' ? 'متوسط' : 'مبتدئ'}
         </Badge>
@@ -61,12 +107,12 @@ export function TeacherStudentsPage() {
     { 
       key: 'attendanceRate', 
       header: 'نسبة الحضور',
-      render: (s: any) => `${s.attendanceRate || 0}%`
+      render: (s: Student) => `${s.attendanceRate || 0}%`
     },
     { 
       key: 'status', 
       header: 'الحالة',
-      render: (s: any) => (
+      render: (s: Student) => (
         <Badge variant={s.status === 'active' ? 'default' : 'secondary'}>
           {s.status === 'active' ? 'نشط' : 'غير نشط'}
         </Badge>
@@ -75,7 +121,7 @@ export function TeacherStudentsPage() {
     {
       key: 'actions',
       header: 'إجراءات',
-      render: (s: any) => (
+      render: (s: Student) => (
         <Button 
           size="sm" 
           variant="ghost"
@@ -93,6 +139,42 @@ export function TeacherStudentsPage() {
       <PageHeader 
         title="عرض الطلاب"
         description="إدارة ومتابعة الطلاب المسجلين"
+        actions={
+          <div className="flex items-center gap-2">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="gap-2 text-red-600 hover:text-red-700">
+                  <Trash2 className="h-4 w-4" />
+                  حذف المكررات
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>تنظيف البيانات المكررة</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    سيتم حذف جميع الطلاب المكررين والاحتفاظ بنسخة واحدة فقط من كل طالب. هل تريد المتابعة؟
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={() => cleanupDuplicatesMutation.mutate()}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    {cleanupDuplicatesMutation.isPending ? 'جاري التنظيف...' : 'نعم، احذف المكررات'}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              إضافة طالب
+            </Button>
+          </div>
+        }
       />
 
       {isLoading ? (
@@ -173,7 +255,7 @@ export function TeacherStudentsPage() {
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">المستوى</p>
                   <Badge variant="secondary">
-                    {selectedStudent.currentLevel === 'advanced' ? 'متقدم' : 'مبتدئ'}
+                    {selectedStudent.currentLevel === 'advanced' ? 'متقدم' : selectedStudent.currentLevel === 'intermediate' ? 'متوسط' : 'مبتدئ'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
@@ -202,6 +284,20 @@ export function TeacherStudentsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Student Dialog - assuming this is handled elsewhere or needs to be added */}
+      {/* For now, we'll keep it as a placeholder */}
+      {isAddDialogOpen && (
+        <Dialog open={isAddDialogOpen} onOpenChange={() => setIsAddDialogOpen(false)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>إضافة طالب جديد</DialogTitle>
+            </DialogHeader>
+            {/* Add form for adding a new student here */}
+            <p>Form to add new student will go here.</p>
+          </DialogContent>
+        </Dialog>
+      )}
     </TeacherLayout>
   );
 }
