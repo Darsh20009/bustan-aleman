@@ -41,7 +41,7 @@ export function StudentSubscriptionPage() {
     queryKey: ['/api/student/payments'],
   });
 
-  const { data: plans = [] } = useQuery<any[]>({
+  const { data: plans = [], isLoading: plansLoading } = useQuery<any[]>({
     queryKey: ['/api/subscription-plans/active'],
   });
 
@@ -105,7 +105,7 @@ export function StudentSubscriptionPage() {
     });
   };
 
-  const isLoading = subLoading || paymentsLoading;
+  const isLoading = subLoading || paymentsLoading || plansLoading;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -261,7 +261,9 @@ export function StudentSubscriptionPage() {
                           <Check className="h-3 w-3 text-green-500" />
                           {plan.durationDays} يوم
                         </li>
-                        {plan.features && plan.features.map((feature: string, idx: number) => (
+                        {plan.features && (Array.isArray(plan.features) ? plan.features : 
+                        (typeof plan.features === 'string' ? JSON.parse(plan.features) : [])
+                      ).map((feature: string, idx: number) => (
                           <li key={idx} className="flex items-center gap-1">
                             <Check className="h-3 w-3 text-green-500" />
                             {feature}

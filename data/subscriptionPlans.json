@@ -1,3 +1,4 @@
+
 [
   {
     "id": "plan_monthly_basic",
@@ -10,7 +11,7 @@
     "price": "200",
     "currency": "SAR",
     "sessionsCount": 8,
-    "features": "[\"8 حصص شهرياً\", \"متابعة يومية\", \"تقارير أسبوعية\"]",
+    "features": ["8 حصص شهرياً", "متابعة يومية", "تقارير أسبوعية"],
     "isActive": true,
     "isFeatured": false,
     "sortOrder": 1
@@ -26,7 +27,7 @@
     "price": "350",
     "currency": "SAR",
     "sessionsCount": 12,
-    "features": "[\"12 حصة شهرياً\", \"متابعة يومية\", \"تقارير أسبوعية\", \"جلسات إضافية\"]",
+    "features": ["12 حصة شهرياً", "متابعة يومية", "تقارير أسبوعية", "جلسات إضافية"],
     "isActive": true,
     "isFeatured": true,
     "sortOrder": 2
@@ -42,7 +43,7 @@
     "price": "900",
     "currency": "SAR",
     "sessionsCount": 36,
-    "features": "[\"36 حصة (3 أشهر)\", \"متابعة يومية\", \"تقارير شهرية\", \"خصم 10%\"]",
+    "features": ["36 حصة (3 أشهر)", "متابعة يومية", "تقارير شهرية", "خصم 10%"],
     "isActive": true,
     "isFeatured": false,
     "sortOrder": 3
