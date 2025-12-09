@@ -194,13 +194,20 @@ export function setupAuthRoutes(app: Express) {
 
       // Verify password against user's stored hash
       let isValidPassword = false;
+      
+      console.log('[auth] Checking password for user:', user.id);
+      console.log('[auth] User passwordHash exists:', !!user.passwordHash);
+      console.log('[auth] PasswordHash prefix:', user.passwordHash ? user.passwordHash.substring(0, 10) : 'none');
 
       if (user.passwordHash) {
         // Check if passwordHash is already hashed or plain text
         if (user.passwordHash.startsWith('$2b$') || user.passwordHash.startsWith('$2a$')) {
+          console.log('[auth] Using bcrypt verification');
           isValidPassword = await verifyPassword(password, user.passwordHash);
+          console.log('[auth] Bcrypt verification result:', isValidPassword);
         } else {
           // Plain text password for pre-registered users
+          console.log('[auth] Using plain text comparison');
           isValidPassword = password === user.passwordHash;
 
           // If valid, hash it for future use
