@@ -243,75 +243,56 @@ export function setupAuthRoutes(app: Express) {
 
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
+        const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
         
-        // البحث عن الطالب بطرق متعددة مع أولوية للـ userId
+        // البحث عن الطالب بعدة طرق مع منع التكرار
+        // أولاً: البحث بالـ userId
         let student = students.find(s => s.userId === user.id);
         
-        // إذا لم نجد بالـ userId، نبحث بالبيانات الأخرى
-        if (!student) {
-          const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
-          
+        // ثانياً: البحث برقم الهاتف (مع التطبيع)
+        if (!student && normalizedUserPhone) {
           student = students.find(s => {
-            // البحث برقم الهاتف (مع التطبيع)
-            if (normalizedUserPhone && s.phoneNumber) {
+            if (s.phoneNumber) {
               const studentPhone = normalizePhoneNumber(s.phoneNumber);
-              if (studentPhone === normalizedUserPhone) return true;
+              return studentPhone === normalizedUserPhone;
             }
-            
-            // البحث بالبريد الإلكتروني
-            if (user.email && s.email === user.email) return true;
-            
-            // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
-            if (!s.userId && user.firstName && s.studentName === user.firstName) return true;
-            
             return false;
           });
         }
         
-        // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه
-        if (student && !student.userId) {
-          await storage.updateStudent(student.id, { 
-            userId: user.id,
-            email: user.email || student.email,
-            phoneNumber: user.phoneNumber || student.phoneNumber,
-          });
-          student.userId = user.id;
-          console.log('[auth] ✅ Linked existing student', student.id, 'to userId:', user.id);
+        // ثالثاً: البحث بالبريد الإلكتروني
+        if (!student && user.email) {
+          student = students.find(s => s.email === user.email);
         }
         
-        // فقط إذا لم نجد الطالب نهائياً، نقوم بإنشاء سجل جديد
-        if (!student) {
-          console.log('[auth] ⚠️ No student record found for user:', user.id, '- Creating new student...');
-
-          const newStudentData = {
-            userId: user.id,
-            studentName: user.firstName || 'طالب جديد',
-            passwordHash: user.passwordHash || '',
-            phoneNumber: user.phoneNumber,
-            email: user.email,
-            dateOfBirth: null,
-            grade: null,
-            monthlySessionsCount: 0,
-            monthlyPrice: "0",
-            isPaid: false,
-            isActive: true,
-            memorizedSurahs: '[]',
-            currentLevel: 'المستوى الأول',
-            notes: null,
-            whatsappContact: user.phoneNumber || '+966532441566',
-          };
-
-          student = await storage.createStudent(newStudentData);
-          console.log('[auth] ✅ Created new student record:', student.id);
+        // رابعاً: البحث بالاسم (فقط إذا لم يكن هناك userId مرتبط)
+        if (!student && user.firstName) {
+          student = students.find(s => !s.userId && s.studentName === user.firstName);
         }
-
+        
+        // إذا وجدنا الطالب، نتأكد من ربطه بالـ userId
         if (student) {
+          // تحديث الربط إذا لم يكن مربوطاً أو مربوط بـ userId مختلف
+          if (!student.userId || student.userId !== user.id) {
+            await storage.updateStudent(student.id, { 
+              userId: user.id,
+              email: user.email || student.email,
+              phoneNumber: user.phoneNumber || student.phoneNumber,
+            });
+            student.userId = user.id;
+            console.log('[auth] ✅ Linked/updated student', student.id, 'to userId:', user.id);
+          }
+          
           additionalData = {
             studentId: student.id,
             currentLevel: student.currentLevel,
             memorizedSurahs: student.memorizedSurahs,
           };
           console.log('[auth] ✅ Loaded student data - studentId:', student.id, 'userId:', user.id);
+        } else {
+          // لا نقوم بإنشاء طالب جديد تلقائياً عند تسجيل الدخول
+          // الطالب يجب أن يكون موجوداً مسبقاً أو يتم إنشاؤه عند التسجيل
+          console.log('[auth] ⚠️ No student record found for user:', user.id, '- Student must register first');
         }
       }
 
