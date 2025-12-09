@@ -39,14 +39,22 @@ async function getCurrentStudent(req: any) {
   return null;
 }
 
-// Registration schema
+// Registration schema - matches frontend form fields
 const registrationSchema = z.object({
-  studentName: z.string().min(2),
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  phone: z.string().min(10),
-  dateOfBirth: z.string(),
-  age: z.number().min(5).max(100),
+  phoneNumber: z.string().min(10),
+  academy: z.string().optional(),
+  age: z.string().or(z.number()).transform((val) => typeof val === 'string' ? parseInt(val, 10) : val),
+  gender: z.string().optional(),
+  currentLevel: z.string().optional(),
+  memorizedParts: z.string().optional(),
+  preferredTime: z.string().optional(),
+  goals: z.string().optional(),
+  notes: z.string().optional(),
+  confirmPassword: z.string().optional(),
 });
 
 export function setupJSONRoutes(app: Express) {
@@ -122,36 +130,49 @@ export function setupJSONRoutes(app: Express) {
     try {
       const registrationData = registrationSchema.parse(req.body);
 
+      // Combine firstName and lastName into studentName
+      const studentName = `${registrationData.firstName} ${registrationData.lastName}`;
+      
+      // Calculate approximate date of birth from age
+      const currentYear = new Date().getFullYear();
+      const birthYear = currentYear - registrationData.age;
+      const dateOfBirth = `${birthYear}-01-01`;
+
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
 
-      // Create new student
+      // Create new student with proper field mapping
       const student = await jsonStorage.createStudent({
-        ...registrationData,
-        password: hashedPassword, // Store hashed password
+        studentName,
+        email: registrationData.email,
+        phone: registrationData.phoneNumber,
+        dateOfBirth,
+        age: registrationData.age,
+        password: hashedPassword,
         memorizedSurahs: [],
         errors: [],
         sessions: [],
         payments: [],
         schedules: [],
-        currentLevel: 'beginner',
-        notes: 'طالب جديد',
+        currentLevel: registrationData.currentLevel || 'beginner',
+        notes: registrationData.notes || registrationData.goals || 'طالب جديد',
         zoomLink: '',
         isActive: true,
       });
 
       // Send registration details to WhatsApp (without password for security)
       const whatsappMessage = `
-🌟 تسجيل طالب جديد في بستان الإيمان 🌟
+تسجيل طالب جديد في بستان الإيمان
 
 الاسم: ${student.studentName}
 الإيميل: ${student.email}
 الهاتف: ${student.phone}
-تاريخ الميلاد: ${student.dateOfBirth}
-العمر: ${student.age} سنة
+العمر: ${registrationData.age} سنة
+المستوى: ${registrationData.currentLevel || 'مبتدئ'}
+الوقت المفضل: ${registrationData.preferredTime || 'غير محدد'}
 
 تم التسجيل بنجاح في ${new Date().toLocaleString('ar-SA')}
-سيتم التواصل معك قريباً لتأكيد بيانات الدخول.
+سيتم التواصل معك قريبا لتأكيد بيانات الدخول.
       `.trim();
 
       // Create WhatsApp link for user to send the message
