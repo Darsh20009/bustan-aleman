@@ -1,4 +1,3 @@
-
 import type { Express } from "express";
 import { storage } from "./storage";
 import { requireAuth, requireSupervisorOrAdmin, type AuthenticatedRequest } from "./authMiddleware";
@@ -70,9 +69,9 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const studentData = createStudentSchema.parse(req.body);
       const bcrypt = await import('bcrypt');
-      
+
       const passwordHash = await bcrypt.hash(studentData.password, 10);
-      
+
       const student = await storage.createStudent({
         studentName: studentData.studentName,
         passwordHash,
@@ -90,9 +89,9 @@ export function setupSheikhRoutes(app: Express) {
         grade: null,
         userId: null,
       });
-      
+
       wsService.notifySheikhOfNewStudent(student);
-      
+
       res.status(201).json(student);
     } catch (error) {
       console.error("Error creating student:", error);
@@ -104,7 +103,7 @@ export function setupSheikhRoutes(app: Express) {
   app.get('/api/sheikh/students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const students = await storage.getAllStudents();
-      
+
       const studentsWithProgress = await Promise.all(
         students.map(async (student) => {
           try {
@@ -116,7 +115,7 @@ export function setupSheikhRoutes(app: Express) {
               return [];
             });
             const schedules = await storage.getStudentSchedules(student.id);
-            
+
             return {
               ...student,
               user,
@@ -138,7 +137,7 @@ export function setupSheikhRoutes(app: Express) {
           }
         })
       );
-      
+
       res.json(studentsWithProgress);
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -151,15 +150,15 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const assignmentData = assignmentSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       const assignment = await storage.createDailyAssignment({
         ...assignmentData,
         assignedBy: sheikhId,
       });
-      
+
       // Notify student via WebSocket
       wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
-      
+
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Error creating assignment:", error);
@@ -172,7 +171,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const sessionData = sessionEnableSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       // Create or activate live room atomically
       const liveRoom = await storage.createOrActivateLiveRoom(
         sessionData.studentId,
@@ -180,7 +179,7 @@ export function setupSheikhRoutes(app: Express) {
         new Date(sessionData.sessionDate),
         sessionData.startTime
       );
-      
+
       // Upsert session access (prevents duplicates)
       const sessionAccess = await storage.upsertSessionAccess({
         ...sessionData,
@@ -188,7 +187,7 @@ export function setupSheikhRoutes(app: Express) {
         isEnabled: true,
         enabledBy: sheikhId,
       });
-      
+
       // Prepare enriched session data for WebSocket notification
       const enrichedSessionData = {
         ...sessionAccess,
@@ -199,10 +198,10 @@ export function setupSheikhRoutes(app: Express) {
         isEnabled: liveRoom.isEnabled,
         enabledAt: liveRoom.enabledAt,
       };
-      
+
       // Notify student via WebSocket with full room context
       wsService.enableSessionAccess(sessionData.studentId, enrichedSessionData);
-      
+
       res.status(201).json(enrichedSessionData);
     } catch (error) {
       console.error("Error enabling session:", error);
@@ -215,7 +214,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const sheikhId = req.user!.id;
       const range = req.query.range as 'upcoming' | 'past' | 'today' | undefined;
-      
+
       const sessions = await storage.getSheikhSessions(sheikhId, range);
       res.json(sessions);
     } catch (error) {
@@ -228,13 +227,13 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/sheikh/update-student-progress', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { studentId, memorizedSurahs, errors, notes } = req.body;
-      
+
       // Update student data
       const updatedStudent = await storage.updateStudent(studentId, {
         memorizedSurahs: JSON.stringify(memorizedSurahs),
         notes,
       });
-      
+
       // Add errors if any
       if (errors && errors.length > 0) {
         for (const error of errors) {
@@ -244,13 +243,13 @@ export function setupSheikhRoutes(app: Express) {
           });
         }
       }
-      
+
       // Notify student via WebSocket
       wsService.notifyStudentOfAssignment(studentId, {
         type: 'progress_update',
         data: updatedStudent
       });
-      
+
       res.json(updatedStudent);
     } catch (error) {
       console.error("Error updating student progress:", error);
@@ -263,7 +262,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const studentId = req.params.studentId;
       const today = new Date().toISOString().split('T')[0];
-      
+
       const assignment = await storage.getDailyAssignment(studentId, today);
       res.json(assignment);
     } catch (error) {
@@ -287,7 +286,7 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/sheikh/payments', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const paymentData = paymentSchema.parse(req.body);
-      
+
       const payment = await storage.createStudentPayment({
         studentId: paymentData.studentId,
         amount: paymentData.amount.toString(),
@@ -300,9 +299,9 @@ export function setupSheikhRoutes(app: Express) {
         status: 'active',
         notes: paymentData.notes || null,
       });
-      
+
       wsService.notifyStudentOfPayment(paymentData.studentId, payment);
-      
+
       res.status(201).json(payment);
     } catch (error) {
       console.error("Error creating payment:", error);
@@ -330,7 +329,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const studentId = req.params.id;
       const updateData = studentUpdateSchema.parse(req.body);
-      
+
       // Convert monthlyPrice to string if it's a number
       const cleanedUpdateData = {
         ...updateData,
@@ -338,9 +337,9 @@ export function setupSheikhRoutes(app: Express) {
           ? updateData.monthlyPrice.toString() 
           : updateData.monthlyPrice
       };
-      
+
       const updatedStudent = await storage.updateStudent(studentId, cleanedUpdateData);
-      
+
       res.json(updatedStudent);
     } catch (error) {
       console.error("Error updating student:", error);
@@ -353,7 +352,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const studentId = req.params.id;
       await storage.deleteStudent(studentId);
-      
+
       res.json({ message: "تم حذف الطالب بنجاح" });
     } catch (error) {
       console.error("Error deleting student:", error);
@@ -365,7 +364,7 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/sheikh/schedules', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const scheduleData = scheduleSchema.parse(req.body);
-      
+
       const schedule = await storage.createClassSchedule({
         studentId: scheduleData.studentId,
         dayOfWeek: scheduleData.dayOfWeek,
@@ -373,7 +372,7 @@ export function setupSheikhRoutes(app: Express) {
         endTime: scheduleData.endTime,
         isActive: true,
       });
-      
+
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating schedule:", error);
@@ -401,14 +400,14 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const scheduleId = req.params.id;
       const scheduleData = req.body;
-      
+
       const updatedSchedule = await storage.updateClassSchedule(scheduleId, {
         dayOfWeek: scheduleData.dayOfWeek,
         startTime: scheduleData.startTime,
         endTime: scheduleData.endTime,
         isActive: scheduleData.isActive !== undefined ? scheduleData.isActive : true,
       });
-      
+
       res.json(updatedSchedule);
     } catch (error) {
       console.error("Error updating schedule:", error);
@@ -433,10 +432,10 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const meetingData = meetingSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       const meetingId = `meeting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const meetingLink = `/meeting/${meetingId}`;
-      
+
       const meeting = {
         id: meetingId,
         sheikhId,
@@ -447,9 +446,9 @@ export function setupSheikhRoutes(app: Express) {
         status: 'scheduled',
         createdAt: new Date(),
       };
-      
+
       wsService.notifyStudentOfMeeting(meetingData.studentId, meeting);
-      
+
       res.status(201).json(meeting);
     } catch (error) {
       console.error("Error creating meeting:", error);
@@ -476,7 +475,7 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const errorData = studentErrorSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       const error = await storage.createStudentError({
         studentId: errorData.studentId,
         surahNumber: errorData.surahNumber,
@@ -485,9 +484,9 @@ export function setupSheikhRoutes(app: Express) {
         errorType: errorData.errorType,
         errorDescription: errorData.errorDescription,
       });
-      
+
       wsService.notifyStudentOfNewError(errorData.studentId, error);
-      
+
       res.status(201).json(error);
     } catch (error) {
       console.error("Error creating student error:", error);
@@ -510,17 +509,17 @@ export function setupSheikhRoutes(app: Express) {
   });
 
   // ============================================
-  // TEACHER ROUTES (Aliases for Sheikh routes)
+  // TEACHERROUTES (Aliases for Sheikh routes)
   // ============================================
 
   // Get all students for teacher (alias for /api/sheikh/students)
   app.get('/api/teacher/students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const students = await storage.getAllStudents();
-      
+
       // Filter to only show active subscribed students (not all students in database)
       const activeStudents = students.filter(s => s.isActive);
-      
+
       const studentsWithProgress = await Promise.all(
         activeStudents.map(async (student) => {
           try {
@@ -528,7 +527,7 @@ export function setupSheikhRoutes(app: Express) {
             const progress = student.userId ? await storage.getQuranProgress(student.userId) : null;
             const sessions = await storage.getStudentSessions(student.id);
             const schedules = await storage.getStudentSchedules(student.id);
-            
+
             return {
               ...student,
               firstName: student.studentName?.split(' ')[0] || '',
@@ -558,7 +557,7 @@ export function setupSheikhRoutes(app: Express) {
           }
         })
       );
-      
+
       res.json(studentsWithProgress);
     } catch (error) {
       console.error("Error fetching teacher students:", error);
@@ -582,22 +581,22 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/teacher/attendance', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { studentId, sessionId, status, notes } = req.body;
-      
+
       // Validate required fields
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       if (!status || !['present', 'absent', 'late', 'excused'].includes(status)) {
         return res.status(400).json({ message: "حالة الحضور غير صالحة" });
       }
-      
+
       // Get student to verify they exist
       const student = await storage.getStudentById(studentId);
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
-      
+
       // Create a session record for attendance with the provided status
       const session = await storage.createStudentSession({
         studentId,
@@ -607,7 +606,7 @@ export function setupSheikhRoutes(app: Express) {
         notes: notes || '',
         attended: status === 'present' || status === 'late',
       });
-      
+
       res.status(201).json({ 
         ...session, 
         attendanceStatus: status,
@@ -625,7 +624,7 @@ export function setupSheikhRoutes(app: Express) {
       // Get all students and their assignments
       const students = await storage.getAllStudents();
       const allAssignments: any[] = [];
-      
+
       for (const student of students) {
         if (student.isActive) {
           try {
@@ -636,7 +635,7 @@ export function setupSheikhRoutes(app: Express) {
           }
         }
       }
-      
+
       res.json(allAssignments);
     } catch (error) {
       console.error("Error fetching homework:", error);
@@ -649,14 +648,14 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const assignmentData = assignmentSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       const assignment = await storage.createDailyAssignment({
         ...assignmentData,
         assignedBy: sheikhId,
       });
-      
+
       wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
-      
+
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Error creating homework:", error);
@@ -679,7 +678,7 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/teacher/evaluations', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const evaluationData = req.body;
-      
+
       // Store evaluation as a note for now
       const student = await storage.getStudent(evaluationData.studentId);
       if (student) {
@@ -687,7 +686,7 @@ export function setupSheikhRoutes(app: Express) {
           notes: (student.notes || '') + `\n[تقييم ${new Date().toLocaleDateString('ar-SA')}]: ${evaluationData.notes || ''}`
         });
       }
-      
+
       res.status(201).json({ success: true, message: "تم حفظ التقييم" });
     } catch (error) {
       console.error("Error creating evaluation:", error);
@@ -699,22 +698,22 @@ export function setupSheikhRoutes(app: Express) {
   app.get('/api/teacher/student-report', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { studentId } = req.query;
-      
+
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       const student = await storage.getStudent(studentId as string);
-      
+
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
-      
+
       const sessions = await storage.getStudentSessions(studentId as string);
       const errors = await storage.getStudentErrors(studentId as string).catch(() => []);
       const schedules = await storage.getStudentSchedules(studentId as string);
       const assignments = await storage.getDailyAssignments(studentId as string).catch(() => []);
-      
+
       res.json({
         student,
         sessions,
@@ -745,7 +744,7 @@ export function setupSheikhRoutes(app: Express) {
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       const today = new Date().toISOString().split('T')[0];
       const assignment = await storage.getDailyAssignment(studentId, today);
       res.json(assignment || null);
@@ -760,13 +759,13 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const assignmentData = assignmentSchema.parse(req.body);
       const sheikhId = req.user!.id;
-      
+
       // Check if assignment already exists for this student on this date
       const existingAssignment = await storage.getDailyAssignment(
         assignmentData.studentId, 
         assignmentData.assignmentDate
       );
-      
+
       let assignment;
       if (existingAssignment) {
         // Update existing assignment
@@ -784,10 +783,10 @@ export function setupSheikhRoutes(app: Express) {
           assignedBy: sheikhId,
         });
       }
-      
+
       // Notify student via WebSocket
       wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
-      
+
       res.status(existingAssignment ? 200 : 201).json(assignment);
     } catch (error) {
       console.error("Error creating/updating student assignment:", error);
@@ -802,7 +801,7 @@ export function setupSheikhRoutes(app: Express) {
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       const errors = await storage.getStudentErrors(studentId);
       res.json(errors);
     } catch (error) {
@@ -815,11 +814,11 @@ export function setupSheikhRoutes(app: Express) {
   app.post('/api/teacher/student-errors', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { studentId, surahNumber, surahName, ayahNumber, errorType, errorDescription, sheikhNote, severity } = req.body;
-      
+
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       const error = await storage.createStudentError({
         studentId,
         surahNumber,
@@ -831,10 +830,10 @@ export function setupSheikhRoutes(app: Express) {
         severity: severity || 'medium',
         isResolved: false,
       });
-      
+
       // Notify student via WebSocket
       wsService.notifyStudentOfNewError(studentId, error);
-      
+
       res.status(201).json(error);
     } catch (error) {
       console.error("Error creating student error:", error);
@@ -846,12 +845,12 @@ export function setupSheikhRoutes(app: Express) {
   app.patch('/api/teacher/student-errors/:errorId/resolve', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const { errorId } = req.params;
-      
+
       const updatedError = await storage.updateStudentError(errorId, {
         isResolved: true,
         resolvedDate: new Date(),
       });
-      
+
       res.json(updatedError);
     } catch (error) {
       console.error("Error resolving student error:", error);
@@ -866,14 +865,14 @@ export function setupSheikhRoutes(app: Express) {
       if (!studentId) {
         return res.status(400).json({ message: "معرف الطالب مطلوب" });
       }
-      
+
       // Get student's user ID first
       const student = await storage.getStudentById(studentId);
       if (!student || !student.userId) {
         // Return empty memorization if student not found or no userId
         return res.json([]);
       }
-      
+
       const memorization = await storage.getStudentMemorization(student.userId);
       res.json(memorization);
     } catch (error) {
@@ -886,19 +885,19 @@ export function setupSheikhRoutes(app: Express) {
   app.delete('/api/admin/cleanup-students', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
       const students = await storage.getAllStudents();
-      
+
       // Group students by multiple criteria to find duplicates
       const studentGroups = new Map<string, any[]>();
-      
+
       for (const student of students) {
         // Create composite keys to identify duplicates
         const keys: string[] = [];
-        
+
         // Key by userId if exists
         if (student.userId) {
           keys.push(`userId:${student.userId}`);
         }
-        
+
         // Key by normalized phone number
         if (student.phoneNumber) {
           const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
@@ -908,18 +907,18 @@ export function setupSheikhRoutes(app: Express) {
             keys.push(`phone:${student.phoneNumber}`);
           }
         }
-        
+
         // Key by name + phone combination
         if (student.studentName && student.phoneNumber) {
           const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
           keys.push(`name-phone:${student.studentName}-${normalizedPhone || student.phoneNumber}`);
         }
-        
+
         // Use at least one key
         if (keys.length === 0) {
           keys.push(`id:${student.id}`);
         }
-        
+
         // Add to all matching groups
         for (const key of keys) {
           if (!studentGroups.has(key)) {
@@ -928,17 +927,17 @@ export function setupSheikhRoutes(app: Express) {
           studentGroups.get(key)!.push(student);
         }
       }
-      
+
       // Find unique students and duplicates
       const seenIds = new Set<string>();
       const studentsToKeep: string[] = [];
       const studentsToRemove: string[] = [];
-      
+
       for (const [key, group] of studentGroups.entries()) {
         if (group.length > 1) {
           // Remove duplicates from group
           const uniqueGroup = Array.from(new Map(group.map(s => [s.id, s])).values());
-          
+
           if (uniqueGroup.length > 1) {
             // Sort: prefer students with userId, then oldest
             uniqueGroup.sort((a, b) => {
@@ -946,13 +945,13 @@ export function setupSheikhRoutes(app: Express) {
               if (!a.userId && b.userId) return 1;
               return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
             });
-            
+
             // Keep the first one if not already kept
             if (!seenIds.has(uniqueGroup[0].id)) {
               studentsToKeep.push(uniqueGroup[0].id);
               seenIds.add(uniqueGroup[0].id);
             }
-            
+
             // Mark the rest for deletion
             for (let i = 1; i < uniqueGroup.length; i++) {
               if (!seenIds.has(uniqueGroup[i].id)) {
@@ -960,12 +959,12 @@ export function setupSheikhRoutes(app: Express) {
                 seenIds.add(uniqueGroup[i].id);
               }
             }
-            
+
             console.log(`🔍 Found ${uniqueGroup.length} duplicates for ${key}, keeping ${uniqueGroup[0].id}`);
           }
         }
       }
-      
+
       // Delete duplicate students
       let deletedCount = 0;
       for (const studentId of studentsToRemove) {
@@ -977,7 +976,7 @@ export function setupSheikhRoutes(app: Express) {
           console.error(`❌ Failed to delete student ${studentId}:`, err);
         }
       }
-      
+
       res.json({
         message: "تم تنظيف بيانات الطلاب بنجاح",
         removed: deletedCount,
@@ -989,4 +988,75 @@ export function setupSheikhRoutes(app: Express) {
       res.status(500).json({ message: "خطأ في تنظيف بيانات الطلاب" });
     }
   });
+
+  // Activate student subscription
+  app.post('/api/sheikh/activate-subscription', requireAuth, requireTeacherOrHigher, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId, planId } = req.body;
+
+      if (!studentId || !planId) {
+        return res.status(400).json({ message: "معرف الطالب والخطة مطلوبان" });
+      }
+
+      // Get the plan details
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ message: "الخطة غير موجودة" });
+      }
+
+      // Calculate subscription dates
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + plan.durationDays);
+
+      // Create or update subscription
+      const existingSubscription = await storage.getUserActiveSubscription(studentId);
+
+      let subscription;
+      if (existingSubscription) {
+        // Update existing subscription
+        subscription = await storage.updateSubscription(existingSubscription.id, {
+          planId,
+          status: 'active',
+          startDate,
+          endDate,
+          sessionsRemaining: plan.sessionsCount || null,
+        });
+      } else {
+        // Create new subscription
+        subscription = await storage.createSubscription({
+          userId: studentId,
+          planId,
+          status: 'active',
+          startDate,
+          endDate,
+          sessionsRemaining: plan.sessionsCount || null,
+          autoRenew: false,
+          paymentGateway: 'manual',
+        });
+      }
+
+      // Create notification for student
+      await storage.createNotification({
+        userId: studentId,
+        titleAr: "تم تفعيل اشتراكك",
+        titleEn: "Your subscription has been activated",
+        messageAr: `تم تفعيل اشتراكك في خطة ${plan.nameAr}`,
+        messageEn: `Your subscription for ${plan.nameEn || plan.nameAr} has been activated`,
+        type: "subscription",
+        actionUrl: "/student/subscription",
+      });
+
+      res.json({
+        success: true,
+        message: "تم تفعيل الاشتراك بنجاح",
+        subscription
+      });
+    } catch (error) {
+      console.error("Error activating subscription:", error);
+      res.status(500).json({ message: "فشل في تفعيل الاشتراك" });
+    }
+  });
+
+  console.log("✅ Sheikh routes setup");
 }
