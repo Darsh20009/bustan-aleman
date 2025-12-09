@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { storage } from "./storage";
-import { requireAuth, requireSupervisorOrAdmin, type AuthenticatedRequest } from "./authMiddleware";
+import { requireAuth, requireSupervisorOrAdmin, requireTeacherOrHigher, type AuthenticatedRequest } from "./authMiddleware";
 import { wsService } from "./websocket";
 import { z } from "zod";
 import { studentUpdateSchema } from "@shared/schema";
