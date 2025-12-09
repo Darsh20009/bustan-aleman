@@ -887,37 +887,68 @@ export function setupSheikhRoutes(app: Express) {
     try {
       const students = await storage.getAllStudents();
       
-      // Keep only students that have a valid userId or are marked as active with a subscription
-      const studentsToKeep: string[] = [];
-      const studentsToRemove: string[] = [];
-      const seen = new Set<string>();
+      // Group students by userId, phoneNumber, and email
+      const studentMap = new Map<string, any[]>();
       
       for (const student of students) {
-        // Create unique key based on phone number or name
-        const key = student.phoneNumber || student.studentName || student.id;
+        let key = '';
         
-        if (seen.has(key)) {
-          // Duplicate found
-          studentsToRemove.push(student.id);
+        // Prefer userId as the primary key
+        if (student.userId) {
+          key = `userId:${student.userId}`;
+        } else if (student.phoneNumber) {
+          const normalizedPhone = normalizePhoneNumber(student.phoneNumber);
+          key = `phone:${normalizedPhone || student.phoneNumber}`;
+        } else if (student.email) {
+          key = `email:${student.email}`;
+        } else if (student.studentName) {
+          key = `name:${student.studentName}`;
         } else {
-          seen.add(key);
-          // Keep students with userId (linked accounts) or with isPaid/isActive
-          if (student.userId || (student.isActive && student.isPaid)) {
-            studentsToKeep.push(student.id);
-          } else if (!student.isActive) {
-            studentsToRemove.push(student.id);
-          } else {
-            studentsToKeep.push(student.id);
+          key = `id:${student.id}`;
+        }
+        
+        if (!studentMap.has(key)) {
+          studentMap.set(key, []);
+        }
+        studentMap.get(key)!.push(student);
+      }
+      
+      const studentsToRemove: string[] = [];
+      const studentsToKeep: string[] = [];
+      
+      // For each group, keep only one student (preferring the one with userId)
+      for (const [key, group] of studentMap.entries()) {
+        if (group.length > 1) {
+          // Sort: prefer students with userId, then with email, then oldest
+          group.sort((a, b) => {
+            if (a.userId && !b.userId) return -1;
+            if (!a.userId && b.userId) return 1;
+            if (a.email && !b.email) return -1;
+            if (!a.email && b.email) return 1;
+            return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          });
+          
+          // Keep the first (best) student
+          studentsToKeep.push(group[0].id);
+          
+          // Remove the rest
+          for (let i = 1; i < group.length; i++) {
+            studentsToRemove.push(group[i].id);
           }
+          
+          console.log(`🔍 Found ${group.length} duplicates for ${key}, keeping ${group[0].id}`);
+        } else {
+          studentsToKeep.push(group[0].id);
         }
       }
       
-      // Delete duplicate/inactive students
+      // Delete duplicate students
       for (const studentId of studentsToRemove) {
         try {
           await storage.deleteStudent(studentId);
+          console.log(`🗑️ Deleted duplicate student: ${studentId}`);
         } catch (err) {
-          console.error(`Failed to delete student ${studentId}:`, err);
+          console.error(`❌ Failed to delete student ${studentId}:`, err);
         }
       }
       
@@ -925,6 +956,7 @@ export function setupSheikhRoutes(app: Express) {
         message: "تم تنظيف بيانات الطلاب بنجاح",
         removed: studentsToRemove.length,
         kept: studentsToKeep.length,
+        details: `تم حذف ${studentsToRemove.length} طالب مكرر والاحتفاظ بـ ${studentsToKeep.length} طالب`,
       });
     } catch (error) {
       console.error("Error cleaning up students:", error);

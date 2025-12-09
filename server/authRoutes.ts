@@ -244,24 +244,44 @@ export function setupAuthRoutes(app: Express) {
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
         
-        // البحث عن الطالب بطرق متعددة لتجنب التكرار
-        let student = students.find(s => 
-          s.userId === user.id || 
-          (user.phoneNumber && s.phoneNumber === user.phoneNumber) ||
-          (user.email && s.email === user.email) ||
-          (user.firstName && s.studentName === user.firstName)
-        );
+        // البحث عن الطالب بطرق متعددة مع أولوية للـ userId
+        let student = students.find(s => s.userId === user.id);
         
-        // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
+        // إذا لم نجد بالـ userId، نبحث بالبيانات الأخرى
+        if (!student) {
+          const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
+          
+          student = students.find(s => {
+            // البحث برقم الهاتف (مع التطبيع)
+            if (normalizedUserPhone && s.phoneNumber) {
+              const studentPhone = normalizePhoneNumber(s.phoneNumber);
+              if (studentPhone === normalizedUserPhone) return true;
+            }
+            
+            // البحث بالبريد الإلكتروني
+            if (user.email && s.email === user.email) return true;
+            
+            // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
+            if (!s.userId && user.firstName && s.studentName === user.firstName) return true;
+            
+            return false;
+          });
+        }
+        
+        // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه
         if (student && !student.userId) {
-          await storage.updateStudent(student.id, { userId: user.id });
+          await storage.updateStudent(student.id, { 
+            userId: user.id,
+            email: user.email || student.email,
+            phoneNumber: user.phoneNumber || student.phoneNumber,
+          });
           student.userId = user.id;
-          console.log('[auth] Linked existing student to userId:', user.id);
+          console.log('[auth] ✅ Linked existing student', student.id, 'to userId:', user.id);
         }
         
         // فقط إذا لم نجد الطالب نهائياً، نقوم بإنشاء سجل جديد
         if (!student) {
-          console.log('[auth] No student record found for userId:', user.id, 'Creating new student record...');
+          console.log('[auth] ⚠️ No student record found for user:', user.id, '- Creating new student...');
 
           const newStudentData = {
             userId: user.id,
@@ -282,7 +302,7 @@ export function setupAuthRoutes(app: Express) {
           };
 
           student = await storage.createStudent(newStudentData);
-          console.log('[auth] Created student record with id:', student.id);
+          console.log('[auth] ✅ Created new student record:', student.id);
         }
 
         if (student) {
@@ -291,7 +311,7 @@ export function setupAuthRoutes(app: Express) {
             currentLevel: student.currentLevel,
             memorizedSurahs: student.memorizedSurahs,
           };
-          console.log('[auth] Student data loaded, studentId:', student.id, 'for userId:', user.id);
+          console.log('[auth] ✅ Loaded student data - studentId:', student.id, 'userId:', user.id);
         }
       }
 
@@ -350,45 +370,45 @@ export function setupAuthRoutes(app: Express) {
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
         
-        // البحث عن الطالب بطرق متعددة لتجنب التكرار
-        let student = students.find(s => 
-          s.userId === user.id || 
-          (user.phoneNumber && s.phoneNumber === user.phoneNumber) ||
-          (user.email && s.email === user.email) ||
-          (user.firstName && s.studentName === user.firstName)
-        );
+        // البحث عن الطالب بطرق متعددة مع أولوية للـ userId
+        let student = students.find(s => s.userId === user.id);
+        
+        // إذا لم نجد بالـ userId، نبحث بالبيانات الأخرى
+        if (!student) {
+          const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
+          
+          student = students.find(s => {
+            // البحث برقم الهاتف (مع التطبيع)
+            if (normalizedUserPhone && s.phoneNumber) {
+              const studentPhone = normalizePhoneNumber(s.phoneNumber);
+              if (studentPhone === normalizedUserPhone) return true;
+            }
+            
+            // البحث بالبريد الإلكتروني
+            if (user.email && s.email === user.email) return true;
+            
+            // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
+            if (!s.userId && user.firstName && s.studentName === user.firstName) return true;
+            
+            return false;
+          });
+        }
 
         // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
         if (student && !student.userId) {
-          await storage.updateStudent(student.id, { userId: user.id });
+          await storage.updateStudent(student.id, { 
+            userId: user.id,
+            email: user.email || student.email,
+            phoneNumber: user.phoneNumber || student.phoneNumber,
+          });
           student.userId = user.id;
-          console.log('[auth/user] Linked existing student to userId:', user.id);
+          console.log('[auth/user] ✅ Linked existing student', student.id, 'to userId:', user.id);
         }
         
-        // فقط إذا لم نجد الطالب نهائياً، نقوم بإنشاء سجل جديد
+        // لا نقوم بإنشاء طالب جديد في /api/auth/user لأنه endpoint للقراءة فقط
+        // إذا لم نجد الطالب، نتجاهله ونعيد بيانات المستخدم فقط
         if (!student) {
-          console.log('[auth/user] No student record found for userId:', user.id, 'Creating new student record...');
-
-          const newStudentData = {
-            userId: user.id,
-            studentName: user.firstName || 'طالب جديد',
-            passwordHash: user.passwordHash || '',
-            phoneNumber: user.phoneNumber,
-            email: user.email,
-            dateOfBirth: null,
-            grade: null,
-            monthlySessionsCount: 0,
-            monthlyPrice: "0",
-            isPaid: false,
-            isActive: true,
-            memorizedSurahs: '[]',
-            currentLevel: 'المستوى الأول',
-            notes: null,
-            whatsappContact: user.phoneNumber || '+966532441566',
-          };
-
-          student = await storage.createStudent(newStudentData);
-          console.log('[auth/user] Created student record with id:', student.id);
+          console.log('[auth/user] ⚠️ No student record found for user:', user.id);
         }
 
         if (student) {
