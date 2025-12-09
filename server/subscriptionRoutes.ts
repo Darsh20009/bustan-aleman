@@ -10,7 +10,7 @@ import {
 
 export function setupSubscriptionRoutes(app: Express) {
   // ==================== Subscription Plans ====================
-  
+
   // Get all subscription plans (public)
   app.get('/api/subscription-plans', async (req, res) => {
     try {
@@ -25,28 +25,28 @@ export function setupSubscriptionRoutes(app: Express) {
   // Get active subscription plans (public)
   app.get('/api/subscription-plans/active', async (req, res) => {
     try {
-      let plans = await storage.getActiveSubscriptionPlans();
-      
-      // Fallback to JSON file if no plans found
+      const plans = await storage.getActiveSubscriptionPlans();
+
+      // If no plans from database, try to read from JSON file
       if (!plans || plans.length === 0) {
-        const { jsonStorage } = await import('./jsonStorage');
-        const jsonPlans = await jsonStorage.readJSON('data/subscriptionPlans.json');
-        plans = Array.isArray(jsonPlans) ? jsonPlans.filter((p: any) => p.isActive !== false) : [];
+        const fs = await import('fs/promises');
+        const path = await import('path');
+        try {
+          const plansPath = path.join(process.cwd(), 'data', 'subscriptionPlans.json');
+          const plansData = await fs.readFile(plansPath, 'utf-8');
+          const jsonPlans = JSON.parse(plansData);
+          const activePlans = jsonPlans.filter((p: any) => p.isActive);
+          console.log('📋 Loaded subscription plans from JSON:', activePlans.length);
+          return res.json(activePlans);
+        } catch (jsonError) {
+          console.error('Error reading plans from JSON:', jsonError);
+        }
       }
-      
+
       res.json(plans);
     } catch (error) {
-      console.error("Error fetching active subscription plans:", error);
-      
-      // Final fallback to JSON file
-      try {
-        const { jsonStorage } = await import('./jsonStorage');
-        const jsonPlans = await jsonStorage.readJSON('data/subscriptionPlans.json');
-        const plans = Array.isArray(jsonPlans) ? jsonPlans.filter((p: any) => p.isActive !== false) : [];
-        res.json(plans);
-      } catch (jsonError) {
-        res.status(500).json({ message: "خطأ في جلب خطط الاشتراك" });
-      }
+      console.error('Error fetching active plans:', error);
+      res.status(500).json({ message: 'خطأ في جلب الخطط' });
     }
   });
 
