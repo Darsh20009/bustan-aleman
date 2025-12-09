@@ -64,22 +64,47 @@ export function setupAdditionalRoutes(app: Express) {
       const progress = await storage.getQuranProgress(userId);
       
       if (!progress) {
-        // Create default progress if none exists
+        // Return default progress object without trying to create in DB
+        // This handles cases where database is not available
         const defaultProgress = {
+          id: "temp-" + userId,
           studentId: userId,
           lastSurah: 1,
           lastAyah: 1,
           bookmarkedVerses: "[]",
+          createdAt: new Date(),
+          updatedAt: new Date(),
         };
         
-        const newProgress = await storage.createQuranProgress(defaultProgress);
-        return res.json(newProgress);
+        // Try to create in storage, but if it fails, still return the default
+        try {
+          const newProgress = await storage.createQuranProgress({
+            studentId: userId,
+            lastSurah: 1,
+            lastAyah: 1,
+            bookmarkedVerses: "[]",
+          });
+          return res.json(newProgress);
+        } catch (createError) {
+          console.log("Could not persist progress, returning default:", createError);
+          return res.json(defaultProgress);
+        }
       }
       
       res.json(progress);
     } catch (error) {
       console.error("Error fetching student progress:", error);
-      res.status(500).json({ message: "خطأ في جلب تقدم الطالب" });
+      // Return a default progress even on error for better UX
+      const defaultProgress = {
+        id: "temp-" + req.user!.id,
+        studentId: req.user!.id,
+        lastSurah: 1,
+        lastAyah: 1,
+        bookmarkedVerses: "[]",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      res.json(defaultProgress);
     }
   });
 

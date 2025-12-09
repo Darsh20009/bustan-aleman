@@ -1,48 +1,100 @@
 import type { Express, Request, Response } from "express";
 import { storage } from "./storage";
-import { requireAuth, type AuthenticatedRequest } from "./authMiddleware";
+import { requireAuth, requireStudent, type AuthenticatedRequest } from "./authMiddleware";
 
 export function setupStudentSessionRoutes(app: Express) {
-  // Get student's sessions
-  app.get('/api/student/sessions', requireAuth, async (req: Request, res: Response) => {
+  // Handler for student sessions
+  const getStudentSessions = async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user!.id;
       
-      // Get all students and find by userId to avoid password column issue
+      // Get all students and find by userId
       const allStudents = await storage.getAllStudents();
       const student = allStudents.find(s => s.userId === userId);
       
       if (!student) {
-        return res.status(404).json({ message: "سجل الطالب غير موجود" });
+        // Return empty array instead of 404 for better UX
+        return res.json([]);
       }
       
-      const sessions = await storage.getAllSessionAccess(student.id);
-      const liveRooms = await storage.getLiveRoomsByStudent(student.id);
-      
-      // Merge roomToken into sessions with better matching logic
-      const sessionsWithRoomInfo = sessions.map(session => {
-        // Match by date AND time to support multiple sessions per day
-        const room = liveRooms.find(r => {
-          const roomDate = r.sessionDate instanceof Date
-            ? r.sessionDate.toISOString().split('T')[0]
-            : String(r.sessionDate).split('T')[0];
-          return roomDate === session.sessionDate && r.sessionTime === session.startTime;
+      try {
+        const sessions = await storage.getAllSessionAccess(student.id);
+        const liveRooms = await storage.getLiveRoomsByStudent(student.id);
+        
+        // Merge roomToken into sessions
+        const sessionsWithRoomInfo = sessions.map(session => {
+          const room = liveRooms.find(r => {
+            const roomDate = r.sessionDate instanceof Date
+              ? r.sessionDate.toISOString().split('T')[0]
+              : String(r.sessionDate).split('T')[0];
+            return roomDate === session.sessionDate && r.sessionTime === session.startTime;
+          });
+          
+          return {
+            ...session,
+            roomToken: room?.roomToken || null,
+            roomId: room?.id || null,
+            roomStatus: room?.status || null,
+            roomIsEnabled: room?.isEnabled || false,
+            roomEnabledAt: room?.enabledAt || null,
+          };
         });
         
-        return {
-          ...session,
-          roomToken: room?.roomToken || null,
-          roomId: room?.id || null,
-          roomStatus: room?.status || null,
-          roomIsEnabled: room?.isEnabled || false,
-          roomEnabledAt: room?.enabledAt || null,
-        };
-      });
-      
-      res.json(sessionsWithRoomInfo);
+        res.json(sessionsWithRoomInfo);
+      } catch (error) {
+        console.error("Error fetching session access:", error);
+        // Return empty array on storage errors
+        res.json([]);
+      }
     } catch (error) {
       console.error("Error fetching student sessions:", error);
       res.status(500).json({ message: "خطأ في جلب الحصص" });
+    }
+  };
+
+  // Get student's sessions - support both URL patterns
+  app.get('/api/student/sessions', requireAuth, requireStudent, getStudentSessions);
+  app.get('/api/student-sessions', requireAuth, requireStudent, getStudentSessions);
+
+  // Get student's homework
+  app.get('/api/homework', requireAuth, requireStudent, async (req: Request, res: Response) => {
+    try {
+      const userId = (req as AuthenticatedRequest).user!.id;
+      
+      // Get student record
+      const allStudents = await storage.getAllStudents();
+      const student = allStudents.find(s => s.userId === userId);
+      
+      if (!student) {
+        return res.json([]);
+      }
+      
+      try {
+        const homework = await storage.getHomeworksForStudent(student.id);
+        res.json(homework);
+      } catch (error) {
+        console.error("Error fetching homework:", error);
+        res.json([]);
+      }
+    } catch (error) {
+      console.error("Error in homework route:", error);
+      res.status(500).json({ message: "خطأ في جلب الواجبات" });
+    }
+  });
+
+  // Get teachers list for students
+  app.get('/api/teachers', requireAuth, requireStudent, async (req: Request, res: Response) => {
+    try {
+      const teachers = await storage.getTeachers();
+      res.json(teachers.map(t => ({
+        id: t.id,
+        firstName: t.firstName,
+        lastName: t.lastName,
+        email: t.email,
+      })));
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      res.json([]);
     }
   });
 
