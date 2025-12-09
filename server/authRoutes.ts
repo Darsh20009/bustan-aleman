@@ -389,13 +389,17 @@ export function setupAuthRoutes(app: Express) {
 
         // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
         if (student && !student.userId) {
-          await storage.updateStudent(student.id, { 
-            userId: user.id,
-            email: user.email || student.email,
-            phoneNumber: user.phoneNumber || student.phoneNumber,
-          });
-          student.userId = user.id;
-          console.log('[auth/user] ✅ Linked existing student', student.id, 'to userId:', user.id);
+          try {
+            await storage.updateStudent(student.id, { 
+              userId: user.id,
+              email: user.email || student.email,
+              phoneNumber: user.phoneNumber || student.phoneNumber,
+            });
+            student.userId = user.id;
+            console.log('[auth/user] ✅ Linked existing student', student.id, 'to userId:', user.id);
+          } catch (updateError) {
+            console.log('[auth/user] ⚠️ Could not update student record:', updateError);
+          }
         }
         
         // لا نقوم بإنشاء طالب جديد في /api/auth/user لأنه endpoint للقراءة فقط
