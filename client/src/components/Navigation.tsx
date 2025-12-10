@@ -135,6 +135,30 @@ export default function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  {user?.role === 'student' && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/student">
+                        <BookOpen className="ml-2 h-4 w-4" />
+                        لوحة الطالب
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(user?.role === 'supervisor' || user?.role === 'teacher') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/teacher">
+                        <BookOpen className="ml-2 h-4 w-4" />
+                        لوحة المعلم
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  {(user?.role === 'admin' || user?.role === 'owner') && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/admin">
+                        <BookOpen className="ml-2 h-4 w-4" />
+                        لوحة الإدارة
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link href="/profile">
                       <User className="ml-2 h-4 w-4" />

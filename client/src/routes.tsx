@@ -3,11 +3,11 @@ import SessionManagementPage from "./pages/SessionManagementPage";
 import LiveSession from "./pages/LiveSession";
 import { useAuth } from "./hooks/useAuth";
 import { AuthPage } from "./components/AuthPage";
-import AdminStatistics from "./pages/AdminStatistics";
-import AdminTeachers from "./pages/AdminTeachers";
-import AdminHalaqas from "./pages/AdminHalaqas";
-import AdminSubscriptions from "./pages/AdminSubscriptions";
-import AdminMessages from "./pages/AdminMessages";
+import { AdminStatisticsPage } from "./pages/admin/AdminStatistics";
+import { AdminTeachersPage } from "./pages/admin/AdminTeachers";
+import { AdminHalaqasPage } from "./pages/admin/AdminHalaqas";
+import { AdminSubscriptionsPage } from "./pages/admin/AdminSubscriptions";
+import { AdminMessagesPage } from "./pages/admin/AdminMessages";
 
 export function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
@@ -27,7 +27,7 @@ export function AppRoutes() {
   };
 
   const requireAdminOrOwner = (Component: React.ComponentType) => {
-    if (!isAuthenticated || !user || (user.role !== 'supervisor' && user.role !== 'admin' && user.role !== 'owner')) {
+    if (!isAuthenticated || !user || !['supervisor', 'admin', 'owner'].includes(user.role)) {
       return <AuthPage />;
     }
     return <Component />;
@@ -38,11 +38,11 @@ export function AppRoutes() {
       <Route path="/sessions" component={() => requireSheikh(SessionManagementPage)} />
       <Route path="/session/:roomToken" component={() => requireAuth(LiveSession)} />
       {/* Admin Routes - accessible by admin and owner roles */}
-      <Route path="/admin/statistics" component={() => requireAdminOrOwner(AdminStatistics)} />
-      <Route path="/admin/teachers" component={() => requireAdminOrOwner(AdminTeachers)} />
-      <Route path="/admin/halaqas" component={() => requireAdminOrOwner(AdminHalaqas)} />
-      <Route path="/admin/subscriptions" component={() => requireAdminOrOwner(AdminSubscriptions)} />
-      <Route path="/admin/messages" component={() => requireAdminOrOwner(AdminMessages)} />
+      <Route path="/admin/statistics" component={() => requireAdminOrOwner(AdminStatisticsPage)} />
+      <Route path="/admin/teachers" component={() => requireAdminOrOwner(AdminTeachersPage)} />
+      <Route path="/admin/halaqas" component={() => requireAdminOrOwner(AdminHalaqasPage)} />
+      <Route path="/admin/subscriptions" component={() => requireAdminOrOwner(AdminSubscriptionsPage)} />
+      <Route path="/admin/messages" component={() => requireAdminOrOwner(AdminMessagesPage)} />
       <Route>404: لم يتم العثور على الصفحة</Route>
     </Switch>
   );

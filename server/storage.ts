@@ -1115,14 +1115,18 @@ export class DatabaseStorage implements IStorage {
     return newMessage;
   }
 
-  async getContactMessages(): Promise<ContactMessage[]> {
+  async getContactMessages(filters?: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]> {
     if (!this.isDbAvailable()) {
       return [];
     }
-    return await db!
-      .select()
-      .from(contactMessages)
-      .orderBy(desc(contactMessages.createdAt));
+    let query = db!.select().from(contactMessages);
+    if (filters?.isRead !== undefined) {
+      query = query.where(eq(contactMessages.isRead, filters.isRead)) as any;
+    }
+    const messages = await query.orderBy(desc(contactMessages.createdAt))
+      .limit(filters?.limit || 100)
+      .offset(((filters?.page || 1) - 1) * (filters?.limit || 100));
+    return messages;
   }
 
   // Student operations
@@ -1155,6 +1159,7 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: jsonStudent.phone || null,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
+        academy: 'bustan-aliman',
         monthlySessionsCount: 0,
         monthlyPrice: "0",
         isPaid: false,
@@ -1185,6 +1190,7 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: jsonStudent.phone || null,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
+        academy: 'bustan-aliman',
         monthlySessionsCount: 0,
         monthlyPrice: "0",
         isPaid: false,
@@ -1214,6 +1220,7 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: jsonStudent.phone || null,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
+        academy: 'bustan-aliman',
         monthlySessionsCount: 0,
         monthlyPrice: "0",
         isPaid: false,
@@ -1244,6 +1251,7 @@ export class DatabaseStorage implements IStorage {
         phoneNumber: jsonStudent.phone || null,
         dateOfBirth: jsonStudent.dateOfBirth,
         grade: jsonStudent.grade || null,
+        academy: 'bustan-aliman',
         monthlySessionsCount: 0,
         monthlyPrice: "0",
         isPaid: false,
@@ -1278,22 +1286,6 @@ export class DatabaseStorage implements IStorage {
     }
     const result = await db!.delete(students);
     return 0; // Return count would require additional query
-  }
-
-  async createEnrollment(enrollment: any): Promise<any> {
-    if (!this.isDbAvailable()) {
-      return { id: `enrollment_${Date.now()}`, ...enrollment };
-    }
-    const [newEnrollment] = await db!.insert(courseEnrollments).values(enrollment).returning();
-    return newEnrollment;
-  }
-
-  async createPayment(payment: any): Promise<any> {
-    if (!this.isDbAvailable()) {
-      return { id: `payment_${Date.now()}`, ...payment };
-    }
-    const [newPayment] = await db!.insert(studentPayments).values(payment).returning();
-    return newPayment;
   }
 
   async getEnrollmentsByUser(userId: string): Promise<any[]> {
@@ -2862,24 +2854,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Subscription plan operations
+  private loadSubscriptionPlansFromJson(): SubscriptionPlan[] {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'data', 'subscriptionPlans.json');
+      if (fs.existsSync(filePath)) {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        return data as SubscriptionPlan[];
+      }
+    } catch (error) {
+      console.error('Error loading subscription plans from JSON:', error);
+    }
+    return [];
+  }
+
   async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    if (!this.isDbAvailable()) return [];
+    if (!this.isDbAvailable()) {
+      return this.loadSubscriptionPlansFromJson();
+    }
     const plans = await db!.select().from(subscriptionPlans).orderBy(subscriptionPlans.sortOrder);
-    return plans;
+    return plans.length > 0 ? plans : this.loadSubscriptionPlansFromJson();
   }
 
   async getActiveSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    if (!this.isDbAvailable()) return [];
+    if (!this.isDbAvailable()) {
+      return this.loadSubscriptionPlansFromJson().filter(p => p.isActive);
+    }
     const plans = await db!.select().from(subscriptionPlans)
       .where(eq(subscriptionPlans.isActive, true))
       .orderBy(subscriptionPlans.sortOrder);
-    return plans;
+    return plans.length > 0 ? plans : this.loadSubscriptionPlansFromJson().filter(p => p.isActive);
   }
 
   async getSubscriptionPlan(id: string): Promise<SubscriptionPlan | undefined> {
-    if (!this.isDbAvailable()) return undefined;
+    if (!this.isDbAvailable()) {
+      return this.loadSubscriptionPlansFromJson().find(p => p.id === id);
+    }
     const [plan] = await db!.select().from(subscriptionPlans).where(eq(subscriptionPlans.id, id));
-    return plan;
+    return plan || this.loadSubscriptionPlansFromJson().find(p => p.id === id);
   }
 
   async createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan> {
@@ -3126,18 +3139,6 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db!.update(users).set({ isActive, updatedAt: new Date() })
       .where(eq(users.id, id)).returning();
     return updated;
-  }
-
-  async getContactMessages(filters: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]> {
-    if (!this.isDbAvailable()) return [];
-    let query = db!.select().from(contactMessages);
-    if (filters.isRead !== undefined) {
-      query = query.where(eq(contactMessages.isRead, filters.isRead)) as any;
-    }
-    const messages = await query.orderBy(desc(contactMessages.createdAt))
-      .limit(filters.limit || 20)
-      .offset(((filters.page || 1) - 1) * (filters.limit || 20));
-    return messages;
   }
 
   async markMessageAsRead(id: string): Promise<ContactMessage> {
