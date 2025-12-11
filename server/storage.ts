@@ -343,6 +343,8 @@ export interface IStorage {
   // Session access operations
   enableSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
   upsertSessionAccess(access: InsertSessionAccess): Promise<SessionAccess>;
+  updateSessionAccess(id: string, updates: Partial<InsertSessionAccess>): Promise<SessionAccess>;
+  getLiveRoomBySession(sessionId: string): Promise<LiveRoom | undefined>;
   cleanupExpiredSessions(): Promise<number>;
   
   // Live annotation operations
@@ -2188,6 +2190,35 @@ export class DatabaseStorage implements IStorage {
       .from(sessionAccess)
       .where(eq(sessionAccess.studentId, studentId))
       .orderBy(desc(sessionAccess.sessionDate));
+  }
+
+  async updateSessionAccess(id: string, updates: Partial<InsertSessionAccess>): Promise<SessionAccess> {
+    if (!this.isDbAvailable()) {
+      throw new Error("Database not available");
+    }
+    const [updated] = await db!.update(sessionAccess)
+      .set(updates)
+      .where(eq(sessionAccess.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getLiveRoomBySession(sessionId: string): Promise<LiveRoom | undefined> {
+    if (!this.isDbAvailable()) {
+      return undefined;
+    }
+    // Get session access first to find matching live room
+    const [session] = await db!.select().from(sessionAccess).where(eq(sessionAccess.id, sessionId));
+    if (!session) return undefined;
+    
+    // Find live room matching this session
+    const rooms = await db!.select().from(liveRooms)
+      .where(and(
+        eq(liveRooms.studentId, session.studentId),
+        eq(liveRooms.sessionTime, session.startTime)
+      ));
+    
+    return rooms[0];
   }
 
   async cleanupExpiredSessions(): Promise<number> {

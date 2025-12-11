@@ -60,38 +60,91 @@ export function setupAdditionalRoutes(app: Express) {
     try {
       const userId = req.user!.id;
       
+      // Get student record from userId
+      const allStudents = await storage.getAllStudents();
+      const student = allStudents.find(s => s.userId === userId);
+      
       // Get student progress from quran_progress table
       const progress = await storage.getQuranProgress(userId);
       
-      if (!progress) {
-        // Return default progress object without trying to create in DB
-        // This handles cases where database is not available
-        const defaultProgress = {
-          id: "temp-" + userId,
-          studentId: userId,
-          lastSurah: 1,
-          lastAyah: 1,
-          bookmarkedVerses: "[]",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-        
-        // Try to create in storage, but if it fails, still return the default
+      // Calculate attendance rate from sessions
+      let attendanceRate = 0;
+      let completedSessions = 0;
+      let totalSessions = 0;
+      
+      if (student) {
         try {
-          const newProgress = await storage.createQuranProgress({
-            studentId: userId,
-            lastSurah: 1,
-            lastAyah: 1,
-            bookmarkedVerses: "[]",
+          const sessions = await storage.getStudentSessions(student.id);
+          const now = new Date();
+          const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          
+          // Filter sessions for this month, handling mixed date formats
+          const monthSessions = sessions.filter(s => {
+            let sessionDate: Date | null = null;
+            
+            // Try multiple date fields and formats
+            const possibleDateFields = [
+              (s as any).sessionDate,
+              (s as any).date,
+              (s as any).createdAt,
+              (s as any).startTime
+            ];
+            
+            for (const field of possibleDateFields) {
+              if (!field) continue;
+              
+              // Handle Date objects
+              if (field instanceof Date) {
+                sessionDate = field;
+                break;
+              }
+              
+              // Handle ISO date strings (YYYY-MM-DD or full ISO)
+              if (typeof field === 'string') {
+                const parsed = new Date(field);
+                if (!isNaN(parsed.getTime()) && parsed.getFullYear() > 2000) {
+                  sessionDate = parsed;
+                  break;
+                }
+              }
+            }
+            
+            if (!sessionDate) return false;
+            return sessionDate >= thisMonthStart && sessionDate <= now;
           });
-          return res.json(newProgress);
-        } catch (createError) {
-          console.log("Could not persist progress, returning default:", createError);
-          return res.json(defaultProgress);
+          
+          // If no sessions found this month, use all sessions for rate calculation
+          const sessionsToCount = monthSessions.length > 0 ? monthSessions : sessions.slice(0, 10);
+          
+          totalSessions = sessionsToCount.length;
+          completedSessions = sessionsToCount.filter(s => s.status !== 'absent' && s.status !== 'cancelled').length;
+          attendanceRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 100;
+        } catch (err) {
+          console.log("Could not calculate attendance:", err);
         }
       }
       
-      res.json(progress);
+      // Calculate memorized parts (estimate from lastSurah)
+      const lastSurah = progress?.lastSurah || 1;
+      // Rough estimate: each juz has about 2 surahs on average
+      const memorizedParts = Math.min(30, Math.ceil(lastSurah / 4));
+      
+      const responseData = {
+        id: progress?.id || "temp-" + userId,
+        studentId: userId,
+        lastSurah: progress?.lastSurah || 1,
+        lastAyah: progress?.lastAyah || 1,
+        bookmarkedVerses: progress?.bookmarkedVerses || "[]",
+        createdAt: progress?.createdAt || new Date(),
+        updatedAt: progress?.updatedAt || new Date(),
+        // Dashboard-specific fields
+        attendanceRate,
+        memorizedParts,
+        completedSessions,
+        totalSessions,
+      };
+      
+      res.json(responseData);
     } catch (error) {
       console.error("Error fetching student progress:", error);
       // Return a default progress even on error for better UX
@@ -103,6 +156,10 @@ export function setupAdditionalRoutes(app: Express) {
         bookmarkedVerses: "[]",
         createdAt: new Date(),
         updatedAt: new Date(),
+        attendanceRate: 0,
+        memorizedParts: 0,
+        completedSessions: 0,
+        totalSessions: 0,
       };
       res.json(defaultProgress);
     }

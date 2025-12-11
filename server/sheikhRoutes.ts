@@ -223,6 +223,162 @@ export function setupSheikhRoutes(app: Express) {
     }
   });
 
+  // Update session time
+  app.patch('/api/sheikh/sessions/:sessionId/time', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { startTime, endTime, sessionDate } = req.body;
+
+      if (!startTime || !endTime) {
+        return res.status(400).json({ message: "يجب تحديد وقت البداية والنهاية" });
+      }
+
+      // Update session access time
+      const updatedSession = await storage.updateSessionAccess(sessionId, {
+        startTime,
+        endTime,
+        sessionDate: sessionDate || undefined,
+      });
+
+      // Also update live room if exists
+      try {
+        const liveRoom = await storage.getLiveRoomBySession(sessionId);
+        if (liveRoom) {
+          await storage.updateLiveRoom(liveRoom.id, {
+            sessionTime: startTime,
+            sessionDate: sessionDate ? new Date(sessionDate) : undefined,
+          });
+        }
+      } catch (err) {
+        console.error("Note: Could not update live room:", err);
+      }
+
+      // Notify student about time change
+      if (updatedSession.studentId) {
+        wsService.notifyStudentOfAssignment(updatedSession.studentId, {
+          type: 'session_time_updated',
+          data: updatedSession
+        });
+      }
+
+      res.json(updatedSession);
+    } catch (error) {
+      console.error("Error updating session time:", error);
+      res.status(500).json({ message: "خطأ في تحديث وقت الحصة" });
+    }
+  });
+
+  // Check if student can enter session (5-minute window before start)
+  app.get('/api/session/:roomToken/can-enter', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const roomToken = req.params.roomToken;
+      const userId = req.user!.id;
+
+      const liveRoom = await storage.getLiveRoomByToken(roomToken);
+      if (!liveRoom) {
+        return res.status(404).json({ message: "الحصة غير موجودة", canEnter: false });
+      }
+
+      // Parse session time
+      const sessionDate = liveRoom.sessionDate instanceof Date
+        ? liveRoom.sessionDate
+        : new Date(liveRoom.sessionDate as string);
+      
+      const [hours, minutes] = (liveRoom.sessionTime || '00:00').split(':').map(Number);
+      const sessionStart = new Date(sessionDate);
+      sessionStart.setHours(hours, minutes, 0, 0);
+
+      const now = new Date();
+      const entryWindowStart = new Date(sessionStart.getTime() - 5 * 60 * 1000); // 5 minutes before
+      const lateThreshold = new Date(sessionStart.getTime() + 10 * 60 * 1000); // 10 minutes after
+
+      // Check if user is teacher or student
+      const user = await storage.getUser(userId);
+      const isTeacher = user?.role === 'supervisor' || user?.role === 'admin' || user?.role === 'teacher';
+
+      // Teachers can always enter
+      if (isTeacher) {
+        return res.json({ 
+          canEnter: true, 
+          isTeacher: true,
+          sessionStart: sessionStart.toISOString(),
+        });
+      }
+
+      // Students: check time window
+      if (now < entryWindowStart) {
+        const waitMinutes = Math.ceil((entryWindowStart.getTime() - now.getTime()) / 60000);
+        return res.json({
+          canEnter: false,
+          reason: 'too_early',
+          message: `يمكنك الدخول قبل ${waitMinutes > 60 ? Math.floor(waitMinutes/60) + ' ساعة و ' + (waitMinutes % 60) : waitMinutes} دقيقة من موعد الحصة`,
+          entryOpensAt: entryWindowStart.toISOString(),
+          sessionStart: sessionStart.toISOString(),
+        });
+      }
+
+      if (now > lateThreshold) {
+        return res.json({
+          canEnter: false,
+          reason: 'too_late',
+          message: 'انتهى وقت الدخول للحصة، تم تسجيل الغياب',
+          isAbsent: true,
+          sessionStart: sessionStart.toISOString(),
+        });
+      }
+
+      // Within entry window
+      const isLate = now > sessionStart;
+      res.json({ 
+        canEnter: true, 
+        isLate,
+        sessionStart: sessionStart.toISOString(),
+        message: isLate ? 'متأخر عن موعد الحصة' : undefined,
+      });
+    } catch (error) {
+      console.error("Error checking session entry:", error);
+      res.status(500).json({ message: "خطأ في التحقق من الدخول", canEnter: false });
+    }
+  });
+
+  // Mark student as absent for a session
+  app.post('/api/sheikh/sessions/:sessionId/mark-absent', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
+    try {
+      const sessionId = req.params.sessionId;
+      const { studentId, reason } = req.body;
+
+      // Record absence in student session
+      const session = await storage.createStudentSession({
+        studentId,
+        sheikhId: req.user!.id,
+        startTime: new Date().toISOString(),
+        endTime: new Date().toISOString(),
+        duration: 0,
+        sessionType: 'absence',
+        status: 'absent',
+        notes: reason || 'غياب - لم يحضر الطالب خلال 10 دقائق من بدء الحصة',
+        performanceRating: 0,
+        completedAyahs: 0,
+      });
+
+      // Update session access status
+      await storage.updateSessionAccess(sessionId, {
+        isEnabled: false,
+      });
+
+      // Notify student
+      wsService.notifyStudentOfAssignment(studentId, {
+        type: 'marked_absent',
+        data: { sessionId, reason: reason || 'غياب' }
+      });
+
+      res.json({ message: "تم تسجيل الغياب", session });
+    } catch (error) {
+      console.error("Error marking student absent:", error);
+      res.status(500).json({ message: "خطأ في تسجيل الغياب" });
+    }
+  });
+
   // Update student memorization and errors
   app.post('/api/sheikh/update-student-progress', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {

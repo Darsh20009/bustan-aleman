@@ -1125,6 +1125,31 @@ export class MongoDBStorage implements IStorage {
     return toPlainArray<SessionAccessType>(accesses);
   }
 
+  async updateSessionAccess(id: string, updates: Partial<InsertSessionAccess>): Promise<SessionAccessType> {
+    if (!this.isDbAvailable()) {
+      throw new Error("MongoDB not available");
+    }
+    const updated = await SessionAccess.findByIdAndUpdate(id, updates, { new: true });
+    if (!updated) throw new Error("Session access not found");
+    return toPlainObject<SessionAccessType>(updated);
+  }
+
+  async getLiveRoomBySession(sessionId: string): Promise<LiveRoomType | undefined> {
+    if (!this.isDbAvailable()) return undefined;
+    
+    // Get session access first to find matching live room
+    const session = await SessionAccess.findById(sessionId);
+    if (!session) return undefined;
+    
+    // Find live room matching this session
+    const room = await LiveRoom.findOne({
+      studentId: session.studentId,
+      sessionTime: session.startTime
+    });
+    
+    return room ? toPlainObject<LiveRoomType>(room) : undefined;
+  }
+
   async addToCart(item: InsertShoppingCartItem): Promise<ShoppingCartItem> {
     if (!this.isDbAvailable()) {
       throw new Error("MongoDB not available");
@@ -1408,6 +1433,32 @@ export class MongoDBStorage implements IStorage {
   async getParentReport(id: string): Promise<any> { return undefined; }
   async createParentReport(report: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
   async updateParentReport(id: string, updates: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
+
+  // Subscription plan stub methods - uses JSON fallback
+  async getSubscriptionPlans(): Promise<any[]> { return []; }
+  async getActiveSubscriptionPlans(): Promise<any[]> { return []; }
+  async getSubscriptionPlan(id: string): Promise<any> { return undefined; }
+  async createSubscriptionPlan(plan: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
+  async updateSubscriptionPlan(id: string, plan: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
+  async deleteSubscriptionPlan(id: string): Promise<void> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
+
+  // Subscription stub methods
+  async getSubscription(id: string): Promise<any> { return undefined; }
+  async getUserActiveSubscription(userId: string): Promise<any> { return undefined; }
+  async getUserSubscriptions(userId: string): Promise<any[]> { return []; }
+  async getAllSubscriptions(filters: any): Promise<any[]> { return []; }
+  async createSubscription(subscription: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL"); }
+  async cancelSubscription(id: string): Promise<any> { throw new Error("Subscription operations require PostgreSQL"); }
+
+  // Payment transaction stub methods
+  async getUserPaymentTransactions(userId: string): Promise<any[]> { return []; }
+  async getAllPaymentTransactions(filters: any): Promise<any[]> { return []; }
+  async createPaymentTransaction(transaction: any): Promise<any> { throw new Error("Payment operations require PostgreSQL"); }
+
+  // Payment gateway settings stub methods
+  async getEnabledPaymentGateways(): Promise<any[]> { return []; }
+  async getAllPaymentGatewaySettings(): Promise<any[]> { return []; }
+  async updatePaymentGatewaySettings(gateway: string, settings: any): Promise<any> { throw new Error("Payment gateway operations require PostgreSQL"); }
 }
 
 export const mongoStorage = new MongoDBStorage();

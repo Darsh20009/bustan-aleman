@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Video, Calendar, Clock, Users, Plus, Play, CheckCircle, Loader2 } from 'lucide-react';
+import { Video, Calendar, Clock, Users, Plus, Play, CheckCircle, Loader2, Edit, XCircle } from 'lucide-react';
 
 interface Student {
   id: string;
@@ -52,6 +52,11 @@ export function TeacherSessionsPage() {
   const [endTime, setEndTime] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [enablingSession, setEnablingSession] = useState<string | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [editStartTime, setEditStartTime] = useState('');
+  const [editEndTime, setEditEndTime] = useState('');
+  const [editSessionDate, setEditSessionDate] = useState('');
 
   const { data: students = [] } = useQuery<Student[]>({
     queryKey: ['/api/sheikh/students'],
@@ -109,6 +114,55 @@ export function TeacherSessionsPage() {
     },
   });
 
+  const updateSessionTimeMutation = useMutation({
+    mutationFn: async (data: { sessionId: string; startTime: string; endTime: string; sessionDate?: string }) => {
+      return apiRequest('PATCH', `/api/sheikh/sessions/${data.sessionId}/time`, {
+        startTime: data.startTime,
+        endTime: data.endTime,
+        sessionDate: data.sessionDate,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/sessions'] });
+      setEditDialogOpen(false);
+      setEditingSession(null);
+      toast({
+        title: 'تم تحديث الوقت',
+        description: 'تم تحديث وقت الحصة بنجاح',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'خطأ',
+        description: error.message || 'فشل في تحديث وقت الحصة',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const markAbsentMutation = useMutation({
+    mutationFn: async (data: { sessionId: string; studentId: string }) => {
+      return apiRequest('POST', `/api/sheikh/sessions/${data.sessionId}/mark-absent`, {
+        studentId: data.studentId,
+        reason: 'غياب - تم تسجيله من قبل المعلم',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sheikh/sessions'] });
+      toast({
+        title: 'تم تسجيل الغياب',
+        description: 'تم تسجيل غياب الطالب',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'خطأ',
+        description: error.message || 'فشل في تسجيل الغياب',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const resetForm = () => {
     setSelectedStudent('');
     setSessionDate('');
@@ -141,6 +195,40 @@ export function TeacherSessionsPage() {
       sessionDate: session.sessionDate,
       startTime: session.startTime,
     });
+  };
+
+  const handleEditSession = (session: Session) => {
+    setEditingSession(session);
+    setEditStartTime(session.startTime);
+    setEditEndTime(session.endTime);
+    setEditSessionDate(session.sessionDate);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateSessionTime = () => {
+    if (!editingSession || !editStartTime || !editEndTime) {
+      toast({
+        title: 'خطأ',
+        description: 'يرجى ملء جميع الحقول',
+        variant: 'destructive',
+      });
+      return;
+    }
+    updateSessionTimeMutation.mutate({
+      sessionId: editingSession.id,
+      startTime: editStartTime,
+      endTime: editEndTime,
+      sessionDate: editSessionDate !== editingSession.sessionDate ? editSessionDate : undefined,
+    });
+  };
+
+  const handleMarkAbsent = (session: Session) => {
+    if (confirm('هل أنت متأكد من تسجيل الغياب لهذا الطالب؟')) {
+      markAbsentMutation.mutate({
+        sessionId: session.id,
+        studentId: session.studentId,
+      });
+    }
   };
 
   const joinSession = (roomToken: string) => {
@@ -213,12 +301,22 @@ export function TeacherSessionsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">الوقت</p>
-                    <p className="font-medium">{session.startTime} - {session.endTime}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">الوقت</p>
+                      <p className="font-medium">{session.startTime} - {session.endTime}</p>
+                    </div>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleEditSession(session)}
+                    data-testid={`button-edit-session-${session.id}`}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
                 </div>
 
                 <div className="flex gap-2">
@@ -242,14 +340,25 @@ export function TeacherSessionsPage() {
                       )}
                     </Button>
                   ) : session.roomToken ? (
-                    <Button
-                      onClick={() => joinSession(session.roomToken!)}
-                      className="flex-1"
-                      data-testid={`button-join-session-${session.id}`}
-                    >
-                      <Video className="w-4 h-4 ml-2" />
-                      دخول الحصة
-                    </Button>
+                    <>
+                      <Button
+                        onClick={() => joinSession(session.roomToken!)}
+                        className="flex-1"
+                        data-testid={`button-join-session-${session.id}`}
+                      >
+                        <Video className="w-4 h-4 ml-2" />
+                        دخول الحصة
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleMarkAbsent(session)}
+                        data-testid={`button-mark-absent-${session.id}`}
+                        title="تسجيل غياب"
+                      >
+                        <XCircle className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </>
                   ) : (
                     <div className="flex-1 flex items-center justify-center text-sm text-green-600">
                       <CheckCircle className="w-4 h-4 ml-2" />
@@ -328,6 +437,64 @@ export function TeacherSessionsPage() {
               data-testid="button-confirm-create-session"
             >
               {createSessionMutation.isPending ? 'جاري الإنشاء...' : 'إنشاء الحصة'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تعديل وقت الحصة</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>تاريخ الحصة</Label>
+              <Input
+                type="date"
+                value={editSessionDate}
+                onChange={(e) => setEditSessionDate(e.target.value)}
+                data-testid="input-edit-session-date"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>وقت البداية</Label>
+                <Input
+                  type="time"
+                  value={editStartTime}
+                  onChange={(e) => setEditStartTime(e.target.value)}
+                  data-testid="input-edit-start-time"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>وقت النهاية</Label>
+                <Input
+                  type="time"
+                  value={editEndTime}
+                  onChange={(e) => setEditEndTime(e.target.value)}
+                  data-testid="input-edit-end-time"
+                />
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              ملاحظة: يمكن للطالب الدخول قبل 5 دقائق من موعد الحصة. سيتم تسجيل الغياب تلقائياً إذا لم يحضر خلال 10 دقائق من البدء.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              إلغاء
+            </Button>
+            <Button 
+              onClick={handleUpdateSessionTime}
+              disabled={updateSessionTimeMutation.isPending}
+              data-testid="button-confirm-edit-session"
+            >
+              {updateSessionTimeMutation.isPending ? 'جاري التحديث...' : 'تحديث الوقت'}
             </Button>
           </DialogFooter>
         </DialogContent>
