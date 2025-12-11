@@ -1340,6 +1340,24 @@ export class MongoDBStorage implements IStorage {
     await Notification.findOneAndDelete({ _id: id, userId });
   }
 
+  // Teacher methods
+  async getTeachers(): Promise<UserType[]> {
+    if (!this.isDbAvailable()) return [];
+    const teachers = await User.find({ 
+      role: { $in: ['teacher', 'supervisor'] },
+      isActive: true 
+    });
+    return toPlainArray<UserType>(teachers);
+  }
+
+  async getTeachersCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    return await User.countDocuments({ 
+      role: { $in: ['teacher', 'supervisor'] },
+      isActive: true 
+    });
+  }
+
   // Halaqa stub methods - MongoDB storage uses PostgreSQL for halaqat data
   async getHalaqat(): Promise<any[]> { return []; }
   async getActiveHalaqat(): Promise<any[]> { return []; }
