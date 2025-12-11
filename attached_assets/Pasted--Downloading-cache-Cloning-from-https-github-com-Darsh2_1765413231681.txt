@@ -1,0 +1,108 @@
+==> Downloading cache...
+==> Cloning from https://github.com/Darsh20009/bustan-aleman
+==> Checking out commit a6e9641398fa3d0fa7eaada697dae8c5d1322282 in branch main
+==> Downloaded 260MB in 6s. Extraction took 33s.
+==> Using Node.js version 22.16.0 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install; npm run build'...
+up to date, audited 750 packages in 2s
+134 packages are looking for funding
+  run `npm fund` for details
+13 vulnerabilities (1 low, 9 moderate, 1 high, 2 critical)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+vite v5.4.21 building for production...
+transforming...
+Browserslist: browsers data (caniuse-lite) is 14 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+node_modules/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js (2:127334): Use of eval in "node_modules/@zegocloud/zego-uikit-prebuilt/zego-uikit-prebuilt.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+✓ 2147 modules transformed.
+rendering chunks...
+computing gzip size...
+../dist/public/index.html                                                4.13 kB │ gzip:     1.51 kB
+../dist/public/assets/bustan aleman logo_1762998406195--oKRUZ4K.png  1,500.01 kB
+../dist/public/assets/index-CmduQKWb.css                               185.98 kB │ gzip:    26.76 kB
+../dist/public/assets/index-Cnx8LKEJ.js                              6,339.73 kB │ gzip: 2,070.09 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 14.46s
+  dist/index.js  681.8kb
+⚡ Done in 19ms
+==> Uploading build...
+==> Uploaded in 13.0s. Compression took 5.5s
+==> Build successful 🎉
+==> Deploying...
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+⚠️  AWS RDS CA certificate not found, SSL verification will be disabled
+⚠️ MongoDB not available, using JSON storage fallback
+🔗 Attempting to connect to MongoDB Atlas...
+✅ PayPal module loaded successfully
+(node:78) [MONGOOSE] Warning: `errors` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:78) [MONGOOSE] Warning: Duplicate schema index on {"roomToken":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+❌ Failed to connect to MongoDB: bad auth : authentication failed
+❌ Fatal error during server startup: MongoServerError: bad auth : authentication failed
+    at Connection.sendCommand (/opt/render/project/src/node_modules/mongodb/lib/cmap/connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (/opt/render/project/src/node_modules/mongodb/lib/cmap/connection.js:344:26)
+    at async continueScramConversation (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:131:15)
+    at async executeScram (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:80:5)
+    at async ScramSHA1.auth (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:39:16)
+    at async performInitialHandshake (/opt/render/project/src/node_modules/mongodb/lib/cmap/connect.js:104:13)
+    at async connect (/opt/render/project/src/node_modules/mongodb/lib/cmap/connect.js:24:9) {
+  errorLabelSet: Set(2) { 'HandshakeError', 'ResetPool' },
+  errorResponse: {
+    ok: 0,
+    errmsg: 'bad auth : authentication failed',
+    code: 8000,
+    codeName: 'AtlasError'
+  },
+  ok: 0,
+  code: 8000,
+  codeName: 'AtlasError',
+  connectionGeneration: 0
+}
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Running 'npm run start'
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+⚠️  AWS RDS CA certificate not found, SSL verification will be disabled
+⚠️ MongoDB not available, using JSON storage fallback
+🔗 Attempting to connect to MongoDB Atlas...
+✅ PayPal module loaded successfully
+(node:69) [MONGOOSE] Warning: `errors` is a reserved schema pathname and may break some functionality. You are allowed to use it, but use at your own risk. To disable this warning pass `suppressReservedKeysWarning` as a schema option.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:69) [MONGOOSE] Warning: Duplicate schema index on {"roomToken":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+❌ Failed to connect to MongoDB: bad auth : authentication failed
+❌ Fatal error during server startup: MongoServerError: bad auth : authentication failed
+    at Connection.sendCommand (/opt/render/project/src/node_modules/mongodb/lib/cmap/connection.js:320:27)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async Connection.command (/opt/render/project/src/node_modules/mongodb/lib/cmap/connection.js:344:26)
+    at async continueScramConversation (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:131:15)
+    at async executeScram (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:80:5)
+    at async ScramSHA1.auth (/opt/render/project/src/node_modules/mongodb/lib/cmap/auth/scram.js:39:16)
+    at async performInitialHandshake (/opt/render/project/src/node_modules/mongodb/lib/cmap/connect.js:104:13)
+    at async connect (/opt/render/project/src/node_modules/mongodb/lib/cmap/connect.js:24:9) {
+  errorLabelSet: Set(2) { 'HandshakeError', 'ResetPool' },
+  errorResponse: {
+    ok: 0,
+    errmsg: 'bad auth : authentication failed',
+    code: 8000,
+    codeName: 'AtlasError'
+  },
+  ok: 0,
+  code: 8000,
+  codeName: 'AtlasError',
+  connectionGeneration: 0
+}
