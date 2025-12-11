@@ -129,9 +129,40 @@ export function setupPhoneAuth(app: Express) {
       (req.session as any).userId = user.id;
       (req.session as any).userRole = user.role;
       
-      // If student, add studentId
+      // If student, find or create their student record and link it
+      let studentId = null;
       if (user.role === 'student') {
-        (req.session as any).studentId = user.id;
+        try {
+          const allStudents = await storage.getAllStudents();
+          let student = allStudents.find((s: any) => s.userId === user.id);
+          
+          // If no student record linked, try to find by phone number and link it
+          if (!student) {
+            student = allStudents.find((s: any) => s.phoneNumber === user.phoneNumber);
+            if (student) {
+              // Link the existing student to this user
+              await storage.updateStudent(student.id, { userId: user.id });
+            }
+          }
+          
+          // If still no student, create one
+          if (!student) {
+            student = await storage.createStudent({
+              studentName: user.firstName || 'طالب',
+              userId: user.id,
+              phoneNumber: user.phoneNumber,
+              passwordHash: user.passwordHash,
+              isActive: true,
+              currentLevel: 'beginner',
+            });
+          }
+          
+          studentId = student.id;
+        } catch (err) {
+          console.error('Error linking student record:', err);
+          // Continue with login even if student linking fails
+        }
+        (req.session as any).studentId = studentId || user.id;
       }
       
       // Save session explicitly

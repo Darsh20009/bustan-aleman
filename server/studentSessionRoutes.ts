@@ -7,10 +7,30 @@ export function setupStudentSessionRoutes(app: Express) {
   const getStudentSessions = async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user!.id;
+      const sessionStudentId = (req as any).session?.studentId;
       
-      // Get all students and find by userId
+      // Get all students and find by userId or by session studentId
       const allStudents = await storage.getAllStudents();
-      const student = allStudents.find(s => s.userId === userId);
+      let student = allStudents.find(s => s.userId === userId);
+      
+      // Fallback: try to find by studentId stored in session or by user ID directly
+      if (!student && sessionStudentId) {
+        student = allStudents.find(s => s.id === sessionStudentId);
+      }
+      
+      // Try to find by phone number as last resort
+      if (!student) {
+        const user = await storage.getUser(userId);
+        if (user?.phoneNumber) {
+          student = allStudents.find(s => s.phoneNumber === user.phoneNumber);
+          // Link the student to this user for future requests
+          if (student) {
+            try {
+              await storage.updateStudent(student.id, { userId: userId });
+            } catch (e) { /* ignore linking errors */ }
+          }
+        }
+      }
       
       if (!student) {
         // Return empty array instead of 404 for better UX
@@ -56,14 +76,37 @@ export function setupStudentSessionRoutes(app: Express) {
   app.get('/api/student/sessions', requireAuth, requireStudent, getStudentSessions);
   app.get('/api/student-sessions', requireAuth, requireStudent, getStudentSessions);
 
+  // Helper function to get student record from request
+  const getStudentFromRequest = async (req: Request) => {
+    const userId = (req as AuthenticatedRequest).user!.id;
+    const sessionStudentId = (req as any).session?.studentId;
+    
+    const allStudents = await storage.getAllStudents();
+    let student = allStudents.find(s => s.userId === userId);
+    
+    if (!student && sessionStudentId) {
+      student = allStudents.find(s => s.id === sessionStudentId);
+    }
+    
+    if (!student) {
+      const user = await storage.getUser(userId);
+      if (user?.phoneNumber) {
+        student = allStudents.find(s => s.phoneNumber === user.phoneNumber);
+        if (student) {
+          try {
+            await storage.updateStudent(student.id, { userId: userId });
+          } catch (e) { /* ignore */ }
+        }
+      }
+    }
+    
+    return student;
+  };
+
   // Get student's homework
   app.get('/api/homework', requireAuth, requireStudent, async (req: Request, res: Response) => {
     try {
-      const userId = (req as AuthenticatedRequest).user!.id;
-      
-      // Get student record
-      const allStudents = await storage.getAllStudents();
-      const student = allStudents.find(s => s.userId === userId);
+      const student = await getStudentFromRequest(req);
       
       if (!student) {
         return res.json([]);
@@ -101,11 +144,7 @@ export function setupStudentSessionRoutes(app: Express) {
   // Get today's assignment
   app.get('/api/student/assignment/today', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = (req as AuthenticatedRequest).user!.id;
-      
-      // Get student record from userId
-      const students = await storage.getAllStudents();
-      const student = students.find(s => s.userId === userId);
+      const student = await getStudentFromRequest(req);
       
       if (!student) {
         return res.status(404).json({ message: "سجل الطالب غير موجود" });
@@ -115,7 +154,7 @@ export function setupStudentSessionRoutes(app: Express) {
       const assignment = await storage.getDailyAssignment(student.id, today);
       
       if (!assignment) {
-        return res.status(404).json({ message: "لا يوجد تكليف اليوم" });
+        return res.json(null); // Return null instead of 404 for better UX
       }
       
       res.json(assignment);
@@ -128,14 +167,10 @@ export function setupStudentSessionRoutes(app: Express) {
   // Get all assignments
   app.get('/api/student/assignments', requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = (req as AuthenticatedRequest).user!.id;
-      
-      // Get student record from userId
-      const students = await storage.getAllStudents();
-      const student = students.find(s => s.userId === userId);
+      const student = await getStudentFromRequest(req);
       
       if (!student) {
-        return res.status(404).json({ message: "سجل الطالب غير موجود" });
+        return res.json([]);
       }
       
       const assignments = await storage.getDailyAssignments(student.id);
@@ -143,6 +178,46 @@ export function setupStudentSessionRoutes(app: Express) {
     } catch (error) {
       console.error("Error fetching assignments:", error);
       res.status(500).json({ message: "خطأ في جلب التكاليف" });
+    }
+  });
+
+  // Get student progress
+  app.get('/api/student/progress', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const student = await getStudentFromRequest(req);
+      
+      if (!student) {
+        return res.json({
+          memorizedParts: 0,
+          attendanceRate: 0,
+          totalSessions: 0,
+          completedSessions: 0,
+        });
+      }
+      
+      // Get student's session history for attendance
+      const sessions = await storage.getAllSessionAccess(student.id);
+      const totalSessions = sessions.length;
+      const completedSessions = sessions.filter(s => s.isEnabled).length;
+      const attendanceRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 100;
+      
+      // Parse memorized surahs
+      let memorizedParts = 0;
+      try {
+        const memorized = JSON.parse(student.memorizedSurahs || '[]');
+        memorizedParts = Math.floor(memorized.length / 3); // Rough estimation
+      } catch { /* ignore */ }
+      
+      res.json({
+        memorizedParts,
+        attendanceRate,
+        totalSessions,
+        completedSessions,
+        currentLevel: student.currentLevel || 'beginner',
+      });
+    } catch (error) {
+      console.error("Error fetching student progress:", error);
+      res.status(500).json({ message: "خطأ في جلب التقدم" });
     }
   });
 }
