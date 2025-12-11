@@ -1710,8 +1710,30 @@ export class DatabaseStorage implements IStorage {
     return student;
   }
 
+  // Simple mutex locks for preventing concurrent duplicate creation
+  private studentCreationLocks = new Map<string, Promise<Student | null>>();
+
   async findOrCreateStudentForUser(userId: string, userData: { firstName?: string; phoneNumber?: string; passwordHash?: string }): Promise<Student | null> {
-    // Double-check to find existing student first
+    // Check for existing lock on this userId to prevent concurrent creation
+    const existingLock = this.studentCreationLocks.get(userId);
+    if (existingLock) {
+      // Wait for the existing operation to complete
+      return existingLock;
+    }
+
+    // Create a new lock for this operation
+    const operation = this.doFindOrCreateStudent(userId, userData);
+    this.studentCreationLocks.set(userId, operation);
+    
+    try {
+      return await operation;
+    } finally {
+      this.studentCreationLocks.delete(userId);
+    }
+  }
+
+  private async doFindOrCreateStudent(userId: string, userData: { firstName?: string; phoneNumber?: string; passwordHash?: string }): Promise<Student | null> {
+    // Double-check to find existing student first (now enforced by unique index)
     let student = await this.getStudentByUserId(userId);
     if (student) return student;
     
@@ -1723,17 +1745,20 @@ export class DatabaseStorage implements IStorage {
         if (!student.userId || student.userId !== userId) {
           try {
             await this.updateStudent(student.id, { userId });
-          } catch (e) {
-            // If update fails due to constraint, re-fetch to get the linked record
-            const refetched = await this.getStudentByUserId(userId);
-            if (refetched) return refetched;
+            return { ...student, userId };
+          } catch (e: any) {
+            // If update fails due to unique constraint (another request linked first), re-fetch
+            if (e?.message?.includes('unique') || e?.code === '23505') {
+              const refetched = await this.getStudentByUserId(userId);
+              if (refetched) return refetched;
+            }
           }
         }
         return { ...student, userId };
       }
     }
     
-    // Create new student with retry logic for race conditions
+    // Create new student - unique index on user_id will prevent duplicates
     try {
       const newStudent = await this.createStudent({
         studentName: userData.firstName || 'طالب',
@@ -1745,23 +1770,20 @@ export class DatabaseStorage implements IStorage {
       });
       return newStudent;
     } catch (err: any) {
-      // If creation fails (possibly due to duplicate), re-check for existing record
-      console.error('Error creating student (may be duplicate):', err?.message);
+      // If creation fails due to unique constraint (concurrent request created first)
+      // PostgreSQL error code 23505 = unique_violation
+      if (err?.code === '23505' || err?.message?.includes('unique') || err?.message?.includes('duplicate')) {
+        // Re-fetch the student that was created by the concurrent request
+        const existing = await this.getStudentByUserId(userId);
+        if (existing) return existing;
+      }
       
-      // Re-check if a record was created by another concurrent request
-      const existing = await this.getStudentByUserId(userId);
-      if (existing) return existing;
+      console.error('Error creating student:', err?.message);
       
-      // Also try phone as fallback
+      // Final fallback: try phone lookup
       if (userData.phoneNumber) {
         const byPhone = await this.getStudentByPhone(userData.phoneNumber);
-        if (byPhone) {
-          try {
-            await this.updateStudent(byPhone.id, { userId });
-            return { ...byPhone, userId };
-          } catch (e) { /* ignore */ }
-          return byPhone;
-        }
+        if (byPhone) return byPhone;
       }
       
       return null;

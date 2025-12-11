@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   pgSchema,
@@ -152,7 +153,10 @@ export const students = bustanSchema.table("students", {
   whatsappContact: varchar("whatsapp_contact").default("+966532441566"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Unique index on user_id to prevent duplicate student records for same user
+  uniqueIndex("idx_students_user_id_unique").on(table.userId),
+]);
 
 // Student sessions/classes table
 export const studentSessions = bustanSchema.table("student_sessions", {
