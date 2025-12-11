@@ -68,6 +68,10 @@ The frontend has been completely restructured with a modern, role-based dashboar
 -   Implemented `useSpeechRecognition` hook for free voice-based Quran recitation using Web Speech API
 -   Added subscription plans (Basic, Premium, VIP) to `data/subscriptionPlans.json`
 -   Created owner account with full platform management capabilities
+-   **Critical Fix**: Race condition for student-user linking - added unique partial index on `students.user_id` (PostgreSQL constraint) plus application-level mutex to prevent duplicate student records during concurrent logins
+-   Added efficient lookup methods `getStudentByUserId()` and `getStudentByPhone()` to replace O(n) table scans
+-   Session security: Removed trust in session.studentId; all lookups validate against authenticated userId
+-   Session timing for live classes: 5-minute early entry window, 10-minute late auto-absence threshold (implemented in `sheikhRoutes.ts`)
 
 ### System Design Choices
 -   **Type Safety**: Achieved with TypeScript.
