@@ -10,6 +10,7 @@ import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { wsService } from "./websocket";
 import { connectMongoDB } from "./mongodb";
+import { initializeDatabase } from "./db";
 import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
 
@@ -60,7 +61,11 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Initialize MongoDB connection
+    // Initialize PostgreSQL database connection (primary database)
+    await initializeDatabase();
+    console.log("✅ PostgreSQL database initialized");
+
+    // Initialize MongoDB connection (optional, for legacy support)
     await connectMongoDB();
     console.log("✅ MongoDB connection initialized");
 
