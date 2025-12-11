@@ -7,22 +7,15 @@ export function setupStudentSessionRoutes(app: Express) {
   const getStudentSessions = async (req: Request, res: Response) => {
     try {
       const userId = (req as AuthenticatedRequest).user!.id;
-      const sessionStudentId = (req as any).session?.studentId;
       
-      // Get all students and find by userId or by session studentId
-      const allStudents = await storage.getAllStudents();
-      let student = allStudents.find(s => s.userId === userId);
+      // Use efficient lookup methods
+      let student = await storage.getStudentByUserId(userId);
       
-      // Fallback: try to find by studentId stored in session or by user ID directly
-      if (!student && sessionStudentId) {
-        student = allStudents.find(s => s.id === sessionStudentId);
-      }
-      
-      // Try to find by phone number as last resort
+      // Try to find by phone number if not found by userId
       if (!student) {
         const user = await storage.getUser(userId);
         if (user?.phoneNumber) {
-          student = allStudents.find(s => s.phoneNumber === user.phoneNumber);
+          student = await storage.getStudentByPhone(user.phoneNumber);
           // Link the student to this user for future requests
           if (student) {
             try {
@@ -76,31 +69,29 @@ export function setupStudentSessionRoutes(app: Express) {
   app.get('/api/student/sessions', requireAuth, requireStudent, getStudentSessions);
   app.get('/api/student-sessions', requireAuth, requireStudent, getStudentSessions);
 
-  // Helper function to get student record from request
+  // Helper function to get student record from request using efficient lookups
   const getStudentFromRequest = async (req: Request) => {
     const userId = (req as AuthenticatedRequest).user!.id;
-    const sessionStudentId = (req as any).session?.studentId;
     
-    const allStudents = await storage.getAllStudents();
-    let student = allStudents.find(s => s.userId === userId);
+    // First try to find by userId (most efficient)
+    let student = await storage.getStudentByUserId(userId);
+    if (student) return student;
     
-    if (!student && sessionStudentId) {
-      student = allStudents.find(s => s.id === sessionStudentId);
-    }
-    
-    if (!student) {
-      const user = await storage.getUser(userId);
-      if (user?.phoneNumber) {
-        student = allStudents.find(s => s.phoneNumber === user.phoneNumber);
-        if (student) {
-          try {
-            await storage.updateStudent(student.id, { userId: userId });
-          } catch (e) { /* ignore */ }
-        }
+    // Try by phone number and link if found
+    const user = await storage.getUser(userId);
+    if (user?.phoneNumber) {
+      student = await storage.getStudentByPhone(user.phoneNumber);
+      if (student) {
+        // Link to this user
+        try {
+          await storage.updateStudent(student.id, { userId });
+          return { ...student, userId };
+        } catch (e) { /* ignore linking error */ }
+        return student;
       }
     }
     
-    return student;
+    return undefined;
   };
 
   // Get student's homework

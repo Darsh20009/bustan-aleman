@@ -1647,6 +1647,127 @@ export class DatabaseStorage implements IStorage {
     return await db!.select().from(certificates).orderBy(desc(certificates.issuedAt));
   }
 
+  // Efficient student lookup methods
+  async getStudentByUserId(userId: string): Promise<Student | undefined> {
+    if (!this.isDbAvailable()) {
+      const jsonStudents = await jsonStorage.getAllStudents();
+      const student = jsonStudents.find((s: any) => s.userId === userId);
+      if (student) {
+        return {
+          id: student.id,
+          userId: student.userId || null,
+          studentName: student.studentName,
+          passwordHash: student.password,
+          phoneNumber: student.phone || null,
+          dateOfBirth: student.dateOfBirth,
+          grade: student.grade || null,
+          academy: 'bustan-aliman',
+          monthlySessionsCount: 0,
+          monthlyPrice: "0",
+          isPaid: false,
+          isActive: student.isActive,
+          memorizedSurahs: JSON.stringify(student.memorizedSurahs),
+          currentLevel: student.currentLevel || 'beginner',
+          notes: student.notes || null,
+          whatsappContact: '+966532441566',
+          sheikhId: student.sheikhId || null,
+        } as Student;
+      }
+      return undefined;
+    }
+    const [student] = await db!.select().from(students).where(eq(students.userId, userId));
+    return student;
+  }
+
+  async getStudentByPhone(phoneNumber: string): Promise<Student | undefined> {
+    if (!this.isDbAvailable()) {
+      const jsonStudents = await jsonStorage.getAllStudents();
+      const student = jsonStudents.find((s: any) => s.phone === phoneNumber || s.phoneNumber === phoneNumber);
+      if (student) {
+        return {
+          id: student.id,
+          userId: student.userId || null,
+          studentName: student.studentName,
+          passwordHash: student.password,
+          phoneNumber: student.phone || null,
+          dateOfBirth: student.dateOfBirth,
+          grade: student.grade || null,
+          academy: 'bustan-aliman',
+          monthlySessionsCount: 0,
+          monthlyPrice: "0",
+          isPaid: false,
+          isActive: student.isActive,
+          memorizedSurahs: JSON.stringify(student.memorizedSurahs),
+          currentLevel: student.currentLevel || 'beginner',
+          notes: student.notes || null,
+          whatsappContact: '+966532441566',
+          sheikhId: student.sheikhId || null,
+        } as Student;
+      }
+      return undefined;
+    }
+    const [student] = await db!.select().from(students).where(eq(students.phoneNumber, phoneNumber));
+    return student;
+  }
+
+  async findOrCreateStudentForUser(userId: string, userData: { firstName?: string; phoneNumber?: string; passwordHash?: string }): Promise<Student | null> {
+    // Double-check to find existing student first
+    let student = await this.getStudentByUserId(userId);
+    if (student) return student;
+    
+    // Then try by phone number and link
+    if (userData.phoneNumber) {
+      student = await this.getStudentByPhone(userData.phoneNumber);
+      if (student) {
+        // Link to this user if not already linked
+        if (!student.userId || student.userId !== userId) {
+          try {
+            await this.updateStudent(student.id, { userId });
+          } catch (e) {
+            // If update fails due to constraint, re-fetch to get the linked record
+            const refetched = await this.getStudentByUserId(userId);
+            if (refetched) return refetched;
+          }
+        }
+        return { ...student, userId };
+      }
+    }
+    
+    // Create new student with retry logic for race conditions
+    try {
+      const newStudent = await this.createStudent({
+        studentName: userData.firstName || 'طالب',
+        userId,
+        phoneNumber: userData.phoneNumber || null,
+        passwordHash: userData.passwordHash || null,
+        isActive: true,
+        currentLevel: 'beginner',
+      });
+      return newStudent;
+    } catch (err: any) {
+      // If creation fails (possibly due to duplicate), re-check for existing record
+      console.error('Error creating student (may be duplicate):', err?.message);
+      
+      // Re-check if a record was created by another concurrent request
+      const existing = await this.getStudentByUserId(userId);
+      if (existing) return existing;
+      
+      // Also try phone as fallback
+      if (userData.phoneNumber) {
+        const byPhone = await this.getStudentByPhone(userData.phoneNumber);
+        if (byPhone) {
+          try {
+            await this.updateStudent(byPhone.id, { userId });
+            return { ...byPhone, userId };
+          } catch (e) { /* ignore */ }
+          return byPhone;
+        }
+      }
+      
+      return null;
+    }
+  }
+
   // Additional student operations
   async updateStudent(id: string, updates: Partial<Student>): Promise<Student> {
     if (!this.isDbAvailable()) {
