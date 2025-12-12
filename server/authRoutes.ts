@@ -97,7 +97,6 @@ export function setupAuthRoutes(app: Express) {
         if (s.userId === user.id) return true;
         const studentPhone = normalizePhoneNumber(s.phoneNumber);
         if (studentPhone && normalizedInputPhone && studentPhone === normalizedInputPhone) return true;
-        if (s.email && s.email === registrationData.email) return true;
         const studentName = `${registrationData.firstName} ${registrationData.lastName}`;
         if (s.studentName === studentName) return true;
         return false;
@@ -110,7 +109,6 @@ export function setupAuthRoutes(app: Express) {
           studentName: `${registrationData.firstName} ${registrationData.lastName}`,
           passwordHash: hashedPassword,
           phoneNumber: registrationData.phoneNumber,
-          email: registrationData.email,
           dateOfBirth: null,
           grade: null,
           academy: registrationData.academy,
@@ -127,7 +125,6 @@ export function setupAuthRoutes(app: Express) {
         // Link existing student to user account if they weren't linked
         await storage.updateStudent(student.id, { 
           userId: user.id,
-          email: registrationData.email,
           phoneNumber: registrationData.phoneNumber,
         });
         student.userId = user.id;
@@ -267,10 +264,7 @@ export function setupAuthRoutes(app: Express) {
           });
         }
         
-        // ثالثاً: البحث بالبريد الإلكتروني
-        if (!student && user.email) {
-          student = students.find(s => s.email === user.email);
-        }
+        // Note: Email is on users table, not students table
         
         // رابعاً: البحث بالاسم (فقط إذا لم يكن هناك userId مرتبط)
         if (!student && user.firstName) {
@@ -285,7 +279,6 @@ export function setupAuthRoutes(app: Express) {
               console.log('[auth] Attempting to update student:', student.id);
               await storage.updateStudent(student.id, { 
                 userId: user.id,
-                email: user.email || student.email,
                 phoneNumber: user.phoneNumber || student.phoneNumber,
               });
               student.userId = user.id;
@@ -377,8 +370,7 @@ export function setupAuthRoutes(app: Express) {
               if (studentPhone === normalizedUserPhone) return true;
             }
             
-            // البحث بالبريد الإلكتروني
-            if (user.email && s.email === user.email) return true;
+            // Note: Email is on users table, not students table
             
             // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
             if (!s.userId && user.firstName && s.studentName === user.firstName) return true;
@@ -392,7 +384,6 @@ export function setupAuthRoutes(app: Express) {
           try {
             await storage.updateStudent(student.id, { 
               userId: user.id,
-              email: user.email || student.email,
               phoneNumber: user.phoneNumber || student.phoneNumber,
             });
             student.userId = user.id;
