@@ -347,18 +347,25 @@ export function setupSheikhRoutes(app: Express) {
       const sessionId = req.params.sessionId;
       const { studentId, reason } = req.body;
 
-      // Record absence in student session
+      // Get session access to derive session details
+      const sessionAccess = await storage.getSessionAccess(sessionId);
+      if (!sessionAccess) {
+        return res.status(404).json({ message: "الحصة غير موجودة" });
+      }
+
+      // Get the next session number for this student
+      const existingSessions = await storage.getStudentSessions(studentId);
+      const nextSessionNumber = existingSessions.length + 1;
+
+      // Record absence in student session using correct schema fields
       const session = await storage.createStudentSession({
         studentId,
-        sheikhId: req.user!.id,
-        startTime: new Date().toISOString(),
-        endTime: new Date().toISOString(),
-        duration: 0,
-        sessionType: 'absence',
-        status: 'absent',
+        sessionNumber: nextSessionNumber,
+        sessionDate: sessionAccess.sessionDate,
+        sessionTime: sessionAccess.startTime,
+        evaluationGrade: 'غياب',
         notes: reason || 'غياب - لم يحضر الطالب خلال 10 دقائق من بدء الحصة',
-        performanceRating: 0,
-        completedAyahs: 0,
+        attended: false,
       });
 
       // Update session access status

@@ -2304,12 +2304,21 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getSessionAccess(studentId: string, sessionDate: string): Promise<SessionAccess | undefined> {
+  async getSessionAccess(idOrStudentId: string, sessionDate?: string): Promise<SessionAccess | undefined> {
     if (!this.isDbAvailable()) {
       return undefined;
     }
+    
+    // If sessionDate is provided, lookup by studentId + sessionDate
+    if (sessionDate) {
+      const [access] = await db!.select().from(sessionAccess)
+        .where(and(eq(sessionAccess.studentId, idOrStudentId), eq(sessionAccess.sessionDate, sessionDate)));
+      return access;
+    }
+    
+    // Otherwise, lookup by session access ID
     const [access] = await db!.select().from(sessionAccess)
-      .where(and(eq(sessionAccess.studentId, studentId), eq(sessionAccess.sessionDate, sessionDate)));
+      .where(eq(sessionAccess.id, idOrStudentId));
     return access;
   }
 
