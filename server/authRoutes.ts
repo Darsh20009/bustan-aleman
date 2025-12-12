@@ -93,10 +93,17 @@ export function setupAuthRoutes(app: Express) {
 
       // Check if student record already exists for this user (check by multiple fields to prevent duplicates)
       const existingStudents = await storage.getAllStudents();
+      const allUsers = await storage.getAllUsers();
+      
+      // Build a map of userId to user email for efficient lookup
+      const userEmailMap = new Map(allUsers.map(u => [u.id, u.email]));
+      
       let student = existingStudents.find(s => {
         if (s.userId === user.id) return true;
         const studentPhone = normalizePhoneNumber(s.phoneNumber);
         if (studentPhone && normalizedInputPhone && studentPhone === normalizedInputPhone) return true;
+        // Check email via linked user (email is on users table, not students)
+        if (s.userId && userEmailMap.get(s.userId) === registrationData.email) return true;
         const studentName = `${registrationData.firstName} ${registrationData.lastName}`;
         if (s.studentName === studentName) return true;
         return false;
@@ -247,7 +254,11 @@ export function setupAuthRoutes(app: Express) {
 
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
+        const allUsers = await storage.getAllUsers();
         const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
+        
+        // Build a map of userId to user email for efficient lookup
+        const userEmailMap = new Map(allUsers.map(u => [u.id, u.email]));
         
         // البحث عن الطالب بعدة طرق مع منع التكرار
         // أولاً: البحث بالـ userId
@@ -264,7 +275,10 @@ export function setupAuthRoutes(app: Express) {
           });
         }
         
-        // Note: Email is on users table, not students table
+        // ثالثاً: البحث بالبريد الإلكتروني (via linked user)
+        if (!student && user.email) {
+          student = students.find(s => s.userId && userEmailMap.get(s.userId) === user.email);
+        }
         
         // رابعاً: البحث بالاسم (فقط إذا لم يكن هناك userId مرتبط)
         if (!student && user.firstName) {
@@ -355,6 +369,10 @@ export function setupAuthRoutes(app: Express) {
 
       if (user.role === 'student') {
         const students = await storage.getAllStudents();
+        const allUsers = await storage.getAllUsers();
+        
+        // Build a map of userId to user email for efficient lookup
+        const userEmailMap = new Map(allUsers.map(u => [u.id, u.email]));
         
         // البحث عن الطالب بطرق متعددة مع أولوية للـ userId
         let student = students.find(s => s.userId === user.id);
@@ -363,20 +381,26 @@ export function setupAuthRoutes(app: Express) {
         if (!student) {
           const normalizedUserPhone = user.phoneNumber ? normalizePhoneNumber(user.phoneNumber) : null;
           
-          student = students.find(s => {
-            // البحث برقم الهاتف (مع التطبيع)
-            if (normalizedUserPhone && s.phoneNumber) {
-              const studentPhone = normalizePhoneNumber(s.phoneNumber);
-              if (studentPhone === normalizedUserPhone) return true;
-            }
-            
-            // Note: Email is on users table, not students table
-            
-            // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
-            if (!s.userId && user.firstName && s.studentName === user.firstName) return true;
-            
-            return false;
-          });
+          // البحث برقم الهاتف (مع التطبيع)
+          if (normalizedUserPhone) {
+            student = students.find(s => {
+              if (s.phoneNumber) {
+                const studentPhone = normalizePhoneNumber(s.phoneNumber);
+                if (studentPhone === normalizedUserPhone) return true;
+              }
+              return false;
+            });
+          }
+          
+          // البحث بالبريد الإلكتروني (via linked user)
+          if (!student && user.email) {
+            student = students.find(s => s.userId && userEmailMap.get(s.userId) === user.email);
+          }
+          
+          // البحث بالاسم فقط إذا لم يكن هناك userId مرتبط بالطالب
+          if (!student && user.firstName) {
+            student = students.find(s => !s.userId && s.studentName === user.firstName);
+          }
         }
 
         // إذا وجدنا الطالب ولكن غير مربوط بـ userId، نقوم بربطه فقط
