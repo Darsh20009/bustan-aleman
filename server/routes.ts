@@ -932,6 +932,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update schedule (edit schedule time)
+  app.patch('/api/schedules/:scheduleId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+
+      const { scheduleId } = req.params;
+      const { dayOfWeek, startTime, endTime, isActive, zoomLink } = req.body;
+      
+      // Update the schedule
+      const updatedSchedule = await storage.updateClassSchedule(scheduleId, {
+        dayOfWeek,
+        startTime,
+        endTime,
+        isActive,
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'تم تحديث الجدول بنجاح',
+        schedule: updatedSchedule
+      });
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      res.status(500).json({ message: 'فشل تحديث الجدول' });
+    }
+  });
+
+  // Also add PUT route for updating schedule
+  app.put('/api/schedules/:scheduleId', isPhoneAuthenticated, async (req: any, res) => {
+    try {
+      const role = (req.session as any).userRole;
+      if (role !== 'supervisor' && role !== 'admin') {
+        return res.status(403).json({ message: 'ليس لديك الصلاحية' });
+      }
+
+      const { scheduleId } = req.params;
+      const { dayOfWeek, startTime, endTime, isActive } = req.body;
+      
+      // Update the schedule
+      const updatedSchedule = await storage.updateClassSchedule(scheduleId, {
+        dayOfWeek,
+        startTime,
+        endTime,
+        isActive,
+      });
+      
+      res.json({ 
+        success: true, 
+        message: 'تم تحديث الجدول بنجاح',
+        schedule: updatedSchedule
+      });
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      res.status(500).json({ message: 'فشل تحديث الجدول' });
+    }
+  });
+
   // Delete schedule
   app.post('/api/schedules/:scheduleId/delete', isPhoneAuthenticated, async (req: any, res) => {
     try {

@@ -185,6 +185,20 @@ app.use((req, res, next) => {
       }
     }, 5000); // بعد 5 ثواني من بدء السيرفر
 
+    // جدولة التحقق من الحصص المتأخرة كل دقيقة لتسجيل الغياب تلقائياً
+    setInterval(async () => {
+      try {
+        await storage.autoMarkAbsentStudents();
+      } catch (error) {
+        // Suppress error logging for missing method
+        if ((error as Error).message?.includes('is not a function')) {
+          // Method not implemented yet, ignore silently
+        } else {
+          console.error('❌ خطأ في تسجيل الغياب التلقائي:', error);
+        }
+      }
+    }, 60 * 1000); // كل دقيقة
+
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";

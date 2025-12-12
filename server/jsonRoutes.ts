@@ -15,23 +15,22 @@ declare module 'express-session' {
   }
 }
 
-// Helper function to get student data from either storage system
+// Helper function to get student data from database storage (unified)
 async function getCurrentStudent(req: any) {
   const { studentId, userId } = req.session || {};
 
-  // Try to get from JSON storage first (legacy method)
+  // Try to get from database by studentId first
   if (studentId) {
-    const students = await jsonStorage.getAllStudents();
-    const student = students.find(s => s.id === studentId && s.isActive);
-    if (student) return student;
+    const student = await storage.getStudent(studentId);
+    if (student && student.isActive) return student;
   }
 
-  // Try to get by userId from database (new method)
+  // Try to get by userId from database
   if (userId) {
     const user = await storage.getUser(userId);
     if (user && user.role === 'student') {
-      const students = await jsonStorage.getAllStudents();
-      const student = students.find(s => s.email === user.email && s.isActive);
+      const students = await storage.getAllStudents();
+      const student = students.find(s => s.userId === user.id && s.isActive);
       if (student) return student;
     }
   }
@@ -163,32 +162,12 @@ export function setupJSONRoutes(app: Express) {
         registrationCompleted: true,
       });
 
-      // Create new student with proper field mapping
-      const student = await jsonStorage.createStudent({
-        studentName,
-        email: registrationData.email,
-        phone: registrationData.phoneNumber,
-        dateOfBirth,
-        age: registrationData.age,
-        password: hashedPassword,
-        memorizedSurahs: [],
-        errors: [],
-        sessions: [],
-        payments: [],
-        schedules: [],
-        currentLevel: registrationData.currentLevel || 'beginner',
-        notes: registrationData.notes || registrationData.goals || 'طالب جديد',
-        zoomLink: '',
-        isActive: true,
-      });
-
-      // Also create student record in main storage linked to user
-      await storage.createStudent({
+      // Create student record in database linked to user
+      const student = await storage.createStudent({
         userId: user.id,
         studentName,
         passwordHash: hashedPassword,
         phoneNumber: registrationData.phoneNumber,
-        email: registrationData.email,
         dateOfBirth,
         grade: null,
         monthlySessionsCount: 0,
@@ -206,8 +185,7 @@ export function setupJSONRoutes(app: Express) {
 تسجيل طالب جديد في بستان الإيمان
 
 الاسم: ${student.studentName}
-الإيميل: ${student.email}
-الهاتف: ${student.phone}
+الهاتف: ${student.phoneNumber}
 العمر: ${registrationData.age} سنة
 المستوى: ${registrationData.currentLevel || 'مبتدئ'}
 الوقت المفضل: ${registrationData.preferredTime || 'غير محدد'}
@@ -228,7 +206,7 @@ export function setupJSONRoutes(app: Express) {
         student: {
           id: student.id,
           studentName: student.studentName,
-          email: student.email,
+          phoneNumber: student.phoneNumber,
         }
       });
     } catch (error) {
@@ -237,15 +215,15 @@ export function setupJSONRoutes(app: Express) {
     }
   });
 
-  // Student login - supports both student name and email
+  // Student login - supports both student name, email, or phone
   app.post('/api/student-login', async (req, res) => {
     try {
-      const { identifier, password } = req.body; // Changed from email to identifier
+      const { identifier, password } = req.body;
 
-      // Find student by name or email first
-      const students = await jsonStorage.getAllStudents();
+      // Find student by name, email, or phone from database
+      const students = await storage.getAllStudents();
       const student = students.find(s => 
-        (s.studentName === identifier || s.email === identifier) && 
+        (s.studentName === identifier || s.phoneNumber === identifier) && 
         s.isActive
       );
 
@@ -254,56 +232,44 @@ export function setupJSONRoutes(app: Express) {
       }
 
       // Verify password against stored hash
-      const isValidPassword = await verifyPassword(password, student.password);
+      const isValidPassword = await verifyPassword(password, student.passwordHash);
 
       if (!isValidPassword) {
         return res.status(401).json({ message: "بيانات الدخول غير صحيحة" });
       }
 
-      // Get or create user record for session consistency
-      const users = await storage.getAllUsers();
-      let user = users.find(u => u.email === student.email && u.isActive);
-
-      // Auto-create user record if it doesn't exist (for legacy student compatibility)
-      if (!user) {
-        // Ensure password is properly hashed (legacy passwords should already be hashed)
-        let passwordHash = student.password;
-        if (!student.password.startsWith('$2b$')) {
-          console.log('Legacy password not hashed, hashing now for student:', student.email);
-          passwordHash = await hashPassword(student.password);
-        }
-
-        user = await storage.upsertUser({
-          email: student.email,
-          firstName: student.studentName?.split(' ')[0] || student.email.split('@')[0],
-          lastName: student.studentName?.split(' ').slice(1).join(' ') || '',
-          role: 'student',
-          passwordHash: passwordHash, // Ensure hashed password
-          isActive: true,
-          registrationCompleted: true,
-        });
+      // Get user record if student has userId
+      let user = null;
+      if (student.userId) {
+        user = await storage.getUser(student.userId);
       }
 
-      // Store student session (create session object if it doesn't exist)
+      // Store student session
       if (!req.session) {
         req.session = {} as any;
       }
       req.session.studentId = student.id;
-      req.session.userId = user.id;
+      req.session.userId = user?.id || student.userId;
       req.session.userRole = 'student';
+
+      // Get related data from database
+      const schedules = await storage.getStudentSchedules(student.id);
+      const errors = await storage.getStudentErrors(student.id);
+      const sessions = await storage.getStudentSessions(student.id);
+      const payments = await storage.getStudentPayments(student.id);
 
       res.json({
         message: "تم تسجيل الدخول بنجاح",
         student: {
           id: student.id,
           studentName: student.studentName,
-          email: student.email,
-          memorizedSurahs: student.memorizedSurahs,
+          phoneNumber: student.phoneNumber,
+          memorizedSurahs: student.memorizedSurahs ? JSON.parse(student.memorizedSurahs) : [],
           currentLevel: student.currentLevel,
-          schedules: student.schedules,
-          errors: student.errors,
-          sessions: student.sessions,
-          payments: student.payments,
+          schedules: schedules,
+          errors: errors,
+          sessions: sessions,
+          payments: payments,
           notes: student.notes,
         }
       });
@@ -358,12 +324,8 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
 
-      const student = await jsonStorage.getStudent(studentId);
-      if (!student) {
-        return res.status(404).json({ message: "الطالب غير موجود" });
-      }
-
-      res.json(student.errors);
+      const errors = await storage.getStudentErrors(studentId);
+      res.json(errors);
     } catch (error) {
       console.error("Error fetching student errors:", error);
       res.status(500).json({ message: "فشل في جلب الأخطاء" });
@@ -380,15 +342,17 @@ export function setupJSONRoutes(app: Express) {
 
       const { surah, ayahNumber, errorType, errorDescription } = req.body;
 
-      const error = await jsonStorage.addStudentError(studentId, {
-        surah,
+      const newError = await storage.createStudentError({
+        studentId,
+        surahNumber: surah,
+        surahName: surah.toString(),
         ayahNumber,
         errorType,
         errorDescription,
         isResolved: false,
       });
 
-      res.status(201).json(error);
+      res.status(201).json(newError);
     } catch (error) {
       console.error("Error adding student error:", error);
       res.status(500).json({ message: "فشل في إضافة الخطأ" });
@@ -408,11 +372,11 @@ export function setupJSONRoutes(app: Express) {
   // Get all students (for admin purposes) - REQUIRES ADMIN AUTH
   app.get('/api/admin/students', requireSupervisorOrAdmin, async (req, res) => {
     try {
-      const students = await jsonStorage.getAllStudents();
+      const students = await storage.getAllStudents();
 
       // Sanitize response - never expose password hashes
       const sanitizedStudents = students.map(student => {
-        const { password, ...safeStudent } = student;
+        const { passwordHash, ...safeStudent } = student;
         return safeStudent;
       });
 
@@ -431,7 +395,7 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
 
-      const student = await jsonStorage.getStudent(studentId);
+      const student = await storage.getStudent(studentId);
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
@@ -439,19 +403,21 @@ export function setupJSONRoutes(app: Express) {
       const { sessionsRequested } = req.body;
 
       const renewalMessage = `
-🔄 طلب تجديد اشتراك 🔄
+طلب تجديد اشتراك
 
 الطالب: ${student.studentName}
-الهاتف: ${student.phone}
+الهاتف: ${student.phoneNumber}
 عدد الحصص المطلوبة: ${sessionsRequested}
 التاريخ: ${new Date().toLocaleString('ar-SA')}
 
 يرجى التواصل مع الطالب لتأكيد التجديد.
       `.trim();
 
-      await jsonStorage.sendToWhatsApp('+966549947386', renewalMessage);
+      // Create a WhatsApp link for manual sending
+      const whatsappLink = `https://wa.me/966549947386?text=${encodeURIComponent(renewalMessage)}`;
+      console.log(`Renewal request for student ${student.studentName}: ${whatsappLink}`);
 
-      res.json({ message: "تم إرسال طلب التجديد بنجاح" });
+      res.json({ message: "تم إرسال طلب التجديد بنجاح", whatsappLink });
     } catch (error) {
       console.error("Error requesting renewal:", error);
       res.status(500).json({ message: "فشل في إرسال طلب التجديد" });
@@ -735,17 +701,20 @@ export function setupJSONRoutes(app: Express) {
         return res.status(401).json({ message: "يجب تسجيل الدخول أولاً" });
       }
 
-      const student = await jsonStorage.getStudent(studentId);
+      const student = await storage.getStudent(studentId);
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
+
+      // Get schedules from database
+      const schedules = await storage.getStudentSchedules(studentId);
 
       const now = new Date();
       const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
       const currentTime = now.getHours() * 60 + now.getMinutes(); // Minutes since midnight
 
       // Find if there's a schedule for today
-      const todaySchedule = student.schedules.find(schedule => 
+      const todaySchedule = schedules.find(schedule => 
         schedule.dayOfWeek === currentDay && schedule.isActive
       );
 
@@ -753,7 +722,7 @@ export function setupJSONRoutes(app: Express) {
         return res.json({
           canAccess: false,
           reason: "لا توجد حصة مجدولة اليوم",
-          nextClass: getNextClassTime(student.schedules)
+          nextClass: getNextClassTime(schedules)
         });
       }
 
@@ -764,18 +733,23 @@ export function setupJSONRoutes(app: Express) {
       const classEnd = endHour * 60 + endMinute;
 
       // Check if current time is within class time (with 5 minute buffer before)
+      // Student can only enter 5 minutes before start time
       const canAccess = currentTime >= (classStart - 5) && currentTime <= classEnd;
+      
+      // Auto-mark absence if student is 10 minutes late
+      const isLate = currentTime > (classStart + 10);
 
       res.json({
-        canAccess,
+        canAccess: canAccess && !isLate,
+        isLate,
         reason: canAccess ? 
-          "يمكنك الدخول للحصة الآن" : 
+          (isLate ? "تأخرت عن الحصة - تم تسجيل غياب" : "يمكنك الدخول للحصة الآن") : 
           currentTime < classStart ? 
             `الحصة تبدأ في ${todaySchedule.startTime}` :
             "انتهت الحصة لهذا اليوم",
         classTime: todaySchedule,
-        nextClass: canAccess ? null : getNextClassTime(student.schedules),
-        zoomLink: canAccess ? todaySchedule.zoomLink : null
+        nextClass: canAccess ? null : getNextClassTime(schedules),
+        zoomLink: (canAccess && !isLate) ? (todaySchedule as any).zoomLink : null
       });
     } catch (error) {
       console.error("Error checking class access:", error);

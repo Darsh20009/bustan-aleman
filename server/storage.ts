@@ -346,6 +346,7 @@ export interface IStorage {
   updateSessionAccess(id: string, updates: Partial<InsertSessionAccess>): Promise<SessionAccess>;
   getLiveRoomBySession(sessionId: string): Promise<LiveRoom | undefined>;
   cleanupExpiredSessions(): Promise<number>;
+  autoMarkAbsentStudents(): Promise<number>;
   
   // Live annotation operations
   createLiveAnnotation(annotation: InsertLiveAnnotation): Promise<LiveAnnotation>;
@@ -2407,6 +2408,103 @@ export class DatabaseStorage implements IStorage {
       return totalDeleted;
     } catch (error) {
       console.error('❌ خطأ في تنظيف الحصص المنتهية:', error);
+      return 0;
+    }
+  }
+
+  async autoMarkAbsentStudents(): Promise<number> {
+    if (!this.isDbAvailable()) {
+      return 0;
+    }
+    
+    try {
+      const { gte, lte } = await import('drizzle-orm');
+      
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      // Get enabled sessions for today
+      const activeSessions = await db!.select()
+        .from(sessionAccess)
+        .where(and(
+          eq(sessionAccess.sessionDate, today),
+          eq(sessionAccess.isEnabled, true)
+        ));
+      
+      let absentCount = 0;
+      
+      for (const session of activeSessions) {
+        // Calculate session start time + 10 minutes
+        const [hours, minutes] = (session.startTime || '00:00').split(':').map(Number);
+        const sessionStart = new Date(now);
+        sessionStart.setHours(hours, minutes, 0, 0);
+        const lateThreshold = new Date(sessionStart.getTime() + 10 * 60 * 1000);
+        
+        // Only process if current time is PAST the late threshold (10 min after start)
+        if (now <= lateThreshold) {
+          continue; // Skip - not yet past the late threshold
+        }
+        
+        // Check if student already has any attendance record for today (not just absence)
+        const existingAttendance = await db!.select()
+          .from(studentSessions)
+          .where(and(
+            eq(studentSessions.studentId, session.studentId),
+            gte(studentSessions.startTime, today + 'T00:00:00'),
+            lte(studentSessions.startTime, today + 'T23:59:59')
+          ));
+        
+        // If there's any attendance record for today, skip
+        if (existingAttendance.length > 0) {
+          continue;
+        }
+        
+        // Check if student joined the live room
+        const rooms = await db!.select()
+          .from(liveRooms)
+          .where(and(
+            eq(liveRooms.studentId, session.studentId),
+            eq(liveRooms.sessionTime, session.startTime)
+          ));
+        
+        const room = rooms[0];
+        
+        // If room is in progress (student joined), skip
+        if (room && room.status === 'in_progress') {
+          continue;
+        }
+        
+        // Mark student as absent
+        await db!.insert(studentSessions).values({
+          id: crypto.randomUUID(),
+          studentId: session.studentId,
+          sheikhId: session.enabledBy || 'system',
+          startTime: now.toISOString(),
+          endTime: now.toISOString(),
+          duration: 0,
+          sessionType: 'absence',
+          status: 'absent',
+          notes: 'غياب تلقائي - لم يحضر الطالب خلال 10 دقائق من بدء الحصة',
+          performanceRating: 0,
+          completedAyahs: 0,
+        });
+        
+        // Disable the session access
+        await db!.update(sessionAccess)
+          .set({ isEnabled: false })
+          .where(eq(sessionAccess.id, session.id));
+        
+        absentCount++;
+        console.log(`⚠️ تم تسجيل غياب تلقائي للطالب: ${session.studentId}`);
+      }
+      
+      if (absentCount > 0) {
+        console.log(`📊 تم تسجيل ${absentCount} غياب تلقائي`);
+      }
+      
+      return absentCount;
+    } catch (error) {
+      console.error('❌ خطأ في تسجيل الغياب التلقائي:', error);
       return 0;
     }
   }

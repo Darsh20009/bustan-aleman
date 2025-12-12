@@ -117,14 +117,72 @@ export function StudentSessionsPage() {
     }
 
     setJoiningSession(session.id);
-    setTimeout(() => {
+    
+    try {
+      // Check if student can enter based on session timing
+      const canEnterResponse = await fetch(`/api/session/${session.roomToken}/can-enter`);
+      
+      // Handle HTTP errors
+      if (!canEnterResponse.ok) {
+        setJoiningSession(null);
+        toast({
+          title: "خطأ",
+          description: "فشل في التحقق من إمكانية الدخول. يرجى تسجيل الدخول مجدداً",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      const canEnterData = await canEnterResponse.json();
+      
+      if (!canEnterData.canEnter) {
+        setJoiningSession(null);
+        
+        if (canEnterData.reason === 'too_early') {
+          toast({
+            title: "لم يحن وقت الحصة بعد",
+            description: canEnterData.message || "يمكنك الدخول قبل 5 دقائق من موعد الحصة",
+            variant: "destructive",
+          });
+        } else if (canEnterData.reason === 'too_late') {
+          toast({
+            title: "انتهى وقت الدخول",
+            description: canEnterData.message || "تم تسجيل الغياب بسبب التأخر أكثر من 10 دقائق",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "لا يمكن الدخول",
+            description: canEnterData.message || "حدث خطأ في التحقق من وقت الحصة",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+      
+      // Show late warning if applicable
+      if (canEnterData.isLate) {
+        toast({
+          title: "تنبيه",
+          description: "أنت متأخر عن موعد الحصة",
+        });
+      }
+      
       window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
       setJoiningSession(null);
       toast({
         title: "تم فتح الحصة",
         description: "تم فتح الحصة المباشرة في نافذة جديدة",
       });
-    }, 500);
+    } catch (error) {
+      console.error('Error checking session entry:', error);
+      setJoiningSession(null);
+      toast({
+        title: "خطأ",
+        description: "فشل في التحقق من إمكانية الدخول",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatDate = (dateStr: string) => {
