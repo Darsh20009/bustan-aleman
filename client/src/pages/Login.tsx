@@ -62,7 +62,16 @@ export default function Login() {
         description: data.message || "مرحباً بك في بستان الإيمان",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/");
+      // Redirect based on user role
+      if (data.user?.role === 'admin') {
+        setLocation("/admin");
+      } else if (data.user?.role === 'supervisor') {
+        setLocation("/teacher");
+      } else if (data.user?.role === 'student') {
+        setLocation("/student");
+      } else {
+        setLocation("/");
+      }
     },
     onError: (error: any) => {
       toast({

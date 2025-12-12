@@ -1,26 +1,29 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { StudentLayout } from './StudentLayout';
 import { StatsCard } from '@/components/shared/StatsCard';
-import { DataTable } from '@/components/shared/DataTable';
-import { PageHeader } from '@/components/shared/PageHeader';
 import { LoadingCards } from '@/components/shared/LoadingState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { Link } from 'wouter';
+import QuranPageReader from '@/components/QuranPageReader';
 import { 
   BookOpen, 
   Clock, 
   CheckCircle, 
   Calendar,
   Video,
-  ArrowLeft
+  ArrowLeft,
+  LayoutDashboard
 } from 'lucide-react';
 
 export function StudentDashboardPage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery<any[]>({
     queryKey: ['/api/student-sessions'],
@@ -56,18 +59,31 @@ export function StudentDashboardPage() {
 
   return (
     <StudentLayout>
-      <PageHeader 
-        title={`مرحباً، ${user?.firstName || 'طالب'}`}
-        description="مرحباً بك في لوحة التحكم الخاصة بك"
-        actions={
-          <Button asChild>
-            <Link href="/quran">
-              <BookOpen className="ml-2 h-4 w-4" />
-              فتح المصحف
-            </Link>
-          </Button>
-        }
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">{`مرحباً، ${user?.firstName || 'طالب'}`}</h1>
+            <p className="text-muted-foreground">مرحباً بك في لوحة التحكم الخاصة بك</p>
+          </div>
+          <TabsList className="grid w-full sm:w-auto grid-cols-2 gap-1">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2" data-testid="tab-dashboard">
+              <LayoutDashboard className="h-4 w-4" />
+              لوحة التحكم
+            </TabsTrigger>
+            <TabsTrigger value="quran" className="flex items-center gap-2" data-testid="tab-quran">
+              <BookOpen className="h-4 w-4" />
+              المصحف
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="quran" className="mt-0">
+          <div className="h-[calc(100vh-12rem)] min-h-[500px]">
+            <QuranPageReader studentId={user?.studentId} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dashboard" className="mt-0">
 
       {isLoading ? (
         <LoadingCards count={4} />
@@ -217,6 +233,8 @@ export function StudentDashboardPage() {
           )}
         </>
       )}
+        </TabsContent>
+      </Tabs>
     </StudentLayout>
   );
 }

@@ -144,7 +144,7 @@ import {
 import { db } from "./db";
 import { jsonStorage } from "./jsonStorage";
 import { hashPassword, verifyPassword } from "./authUtils";
-import { eq, and, gte, lte, lt, desc, sql } from "drizzle-orm";
+import { eq, and, or, gte, lte, lt, desc, sql } from "drizzle-orm";
 import { normalizePhoneNumber, phonesMatch } from "./phoneUtils";
 
 export interface IStorage {
@@ -3404,7 +3404,10 @@ export class DatabaseStorage implements IStorage {
 
   async getTeachers(): Promise<User[]> {
     if (!this.isDbAvailable()) return [];
-    const teachers = await db!.select().from(users).where(eq(users.role, 'teacher'));
+    // Include both 'teacher' and 'supervisor' roles since teachers may use either role
+    const teachers = await db!.select().from(users).where(
+      or(eq(users.role, 'teacher'), eq(users.role, 'supervisor'))
+    );
     return teachers;
   }
 
