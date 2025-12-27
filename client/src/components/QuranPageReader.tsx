@@ -551,16 +551,18 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
-  const { isSupported, startListening, stopListening, transcript, resetTranscript } = useSpeechRecognition();
+  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript } = useSpeechRecognition();
 
   // Watch for transcript changes and track progress
   useEffect(() => {
-    if (!isListening || !transcript || !pageData?.ayahs) return;
+    if (!isListening || !pageData?.ayahs) return;
 
-    const currentTranscript = transcript.trim();
-    setRecognizedText(currentTranscript);
+    // Use both transcript and interimTranscript for more real-time feel
+    const currentTranscript = (transcript + ' ' + interimTranscript).trim();
+    if (currentTranscript) {
+      setRecognizedText(currentTranscript);
+    }
 
-    // Simplistic tracking: find the first ayah that matches the transcript
     const ayahs = pageData.ayahs;
     let bestMatchIndex = activeAyahIndex;
 
@@ -569,8 +571,11 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     // Look ahead from current position
     for (let i = Math.max(0, activeAyahIndex); i < ayahs.length; i++) {
       const ayahText = normalizeArabicForSearch(ayahs[i].text);
-      // If the spoken text contains a significant part of the ayah
-      if (normalizedSpoken.includes(ayahText.substring(0, Math.min(15, ayahText.length)))) {
+      // Use a more lenient match: check if the normalized spoken text contains 
+      // at least a significant portion of the ayah text
+      const ayahPrefix = ayahText.substring(0, Math.min(15, ayahText.length));
+      
+      if (normalizedSpoken.includes(ayahPrefix)) {
         bestMatchIndex = i;
       }
     }
@@ -578,7 +583,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     if (bestMatchIndex !== activeAyahIndex) {
       setActiveAyahIndex(bestMatchIndex);
     }
-  }, [transcript, isListening, pageData, activeAyahIndex]);
+  }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
 
   const toggleListening = () => {
     if (isListening) {
