@@ -925,17 +925,17 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             </div>
 
             {/* Left side - Actions */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 sm:gap-1">
               {isSupported && (
                 <Button
                   onClick={toggleListening}
-                  size="sm"
+                  size="icon"
                   variant="ghost"
-                  className={`${isListening ? 'text-red-500 animate-pulse' : 'text-[#D4AF37]'} hover:bg-white/10 transition-colors`}
+                  className={`${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'} hover:bg-white/20 transition-all duration-200 h-9 w-9 sm:h-8 sm:w-8`}
                   data-testid="button-voice-recitation"
                   title={isListening ? "إيقاف الاستماع" : "بدء الاستماع"}
                 >
-                  {isListening ? <MicOff className="w-4 h-4 sm:w-5 sm:h-5" /> : <Mic className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  {isListening ? <MicOff className="w-5 h-5 sm:w-5 sm:h-5" /> : <Mic className="w-5 h-5 sm:w-5 sm:h-5" />}
                 </Button>
               )}
               <Button
@@ -1404,17 +1404,17 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[90%] sm:w-[95%] max-w-2xl px-2 sm:px-4"
+            className="fixed bottom-16 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[calc(100%-16px)] sm:w-[95%] max-w-3xl px-2 sm:px-4"
           >
-            <Card className={`${isDarkTheme ? 'bg-zinc-900/95 border-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.5)]' : 'bg-white/95 border-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.1)]'} backdrop-blur-md p-3 sm:p-4 rounded-lg sm:rounded-2xl flex items-center gap-2 sm:gap-4 overflow-hidden flex-wrap sm:flex-nowrap`}>
-              <div className="bg-emerald-500/10 p-2 sm:p-3 rounded-full shrink-0 flex-shrink-0">
-                <Mic className="w-4 h-4 sm:w-6 sm:h-6 text-emerald-500 animate-pulse" />
+            <Card className={`${isDarkTheme ? 'bg-zinc-900/95 border-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.5)]' : 'bg-white/95 border-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.1)]'} backdrop-blur-md p-4 sm:p-4 rounded-lg sm:rounded-2xl flex items-center gap-3 sm:gap-4 overflow-hidden`}>
+              <div className="bg-emerald-500/20 p-3 rounded-full shrink-0 flex-shrink-0">
+                <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-500 animate-pulse" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-xs sm:text-sm font-medium mb-1 text-right`}>جاري الاستماع...</p>
-                <div className="h-6 sm:h-8 flex items-center justify-end overflow-hidden">
+                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-xs sm:text-sm font-medium text-right`}>جاري الاستماع...</p>
+                <div className="min-h-[28px] sm:min-h-[32px] flex items-center justify-end overflow-hidden">
                   <p 
-                    className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-sm sm:text-base font-medium leading-tight text-right`}
+                    className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-900'} text-base sm:text-lg font-semibold leading-tight text-right line-clamp-2`}
                     style={{ direction: 'rtl' }}
                     data-testid="text-recognized-speech"
                   >
@@ -1426,10 +1426,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 size="icon" 
                 variant="ghost" 
                 onClick={() => setRecognizedText('')}
-                className="hover:bg-zinc-500/10 shrink-0 h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0"
+                className="hover:bg-emerald-500/10 shrink-0 h-9 w-9 sm:h-10 sm:w-10 flex-shrink-0"
                 data-testid="button-clear-recognized-text"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
             </Card>
           </motion.div>

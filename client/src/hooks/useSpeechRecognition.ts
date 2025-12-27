@@ -48,7 +48,6 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isMountedRef = useRef(true);
 
   const isSupported = typeof window !== 'undefined' && 
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -63,74 +62,59 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'ar-SA';
-      recognition.maxAlternatives = 1;
 
       recognition.onresult = (event: SpeechRecognitionEvent) => {
-        if (!isMountedRef.current) return;
-        
-        let finalTranscript = '';
-        let interim = '';
-        
+        let interimText = '';
+        let finalText = '';
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const result = event.results[i];
-          const resultTranscript = result[0].transcript;
+          const transcript = event.results[i][0].transcript;
           
-          if (result.isFinal) {
-            finalTranscript += resultTranscript + ' ';
+          if (event.results[i].isFinal) {
+            finalText += transcript + ' ';
           } else {
-            interim += resultTranscript;
+            interimText += transcript;
           }
         }
-        
-        if (finalTranscript.trim()) {
-          setTranscript(prev => {
-            const newTranscript = (prev + ' ' + finalTranscript).trim().replace(/\s+/g, ' ');
-            console.log('[Speech] Final:', newTranscript);
-            return newTranscript;
-          });
+
+        if (finalText.trim()) {
+          console.log('[Speech] Final text:', finalText.trim());
+          setTranscript(prev => (prev + ' ' + finalText).trim());
         }
         
-        const trimmedInterim = interim.trim();
-        if (trimmedInterim) {
-          console.log('[Speech] Interim:', trimmedInterim);
-        }
-        setInterimTranscript(trimmedInterim);
+        console.log('[Speech] Interim text:', interimText);
+        setInterimTranscript(interimText);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        if (!isMountedRef.current) return;
         const errorMsg = getArabicErrorMessage(event.error);
-        console.error('[Speech] Error:', event.error, errorMsg);
+        console.error('[Speech] Error event:', event.error, '-', errorMsg);
         setError(errorMsg);
-        setIsListening(false);
       };
 
       recognition.onend = () => {
-        if (!isMountedRef.current) return;
         console.log('[Speech] Recognition ended');
         setIsListening(false);
       };
 
       recognition.onstart = () => {
-        if (!isMountedRef.current) return;
-        console.log('[Speech] Recognition started');
+        console.log('[Speech] Recognition started successfully');
         setIsListening(true);
         setError(null);
       };
 
       recognitionRef.current = recognition;
     } catch (e) {
-      console.error('Failed to initialize speech recognition:', e);
-      setError('فشل تهيئة التعرف على الصوت');
+      console.error('[Speech] Failed to initialize:', e);
+      setError('فشل تهيئة الميكروفون');
     }
 
     return () => {
-      isMountedRef.current = false;
       if (recognitionRef.current) {
         try {
           recognitionRef.current.abort();
         } catch (e) {
-          console.error('Error aborting recognition:', e);
+          // ignore
         }
       }
     };
@@ -155,37 +139,32 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
   const startListening = useCallback(() => {
     if (!recognitionRef.current) {
-      console.log('[Speech] Recognition not initialized');
+      console.error('[Speech] Not initialized');
+      setError('التعرف على الصوت غير متاح');
       return;
     }
-    
-    console.log('[Speech] Starting listening...');
+
+    console.log('[Speech] Starting...');
     setError(null);
     setTranscript('');
     setInterimTranscript('');
-    
-    try {
-      recognitionRef.current.abort();
-    } catch (e) {
-      console.log('[Speech] Abort error (expected):', e);
-    }
-    
+
     try {
       recognitionRef.current.start();
-      console.log('[Speech] Start called successfully');
-    } catch (e) {
-      console.error('[Speech] Error starting recognition:', e);
+    } catch (err) {
+      console.error('[Speech] Start error:', err);
+      setError('فشل بدء الاستماع');
     }
   }, []);
 
   const stopListening = useCallback(() => {
     if (!recognitionRef.current) return;
-    
-    console.log('[Speech] Stopping listening...');
+
+    console.log('[Speech] Stopping...');
     try {
       recognitionRef.current.stop();
-    } catch (e) {
-      console.error('[Speech] Error stopping recognition:', e);
+    } catch (err) {
+      console.error('[Speech] Stop error:', err);
     }
   }, []);
 
