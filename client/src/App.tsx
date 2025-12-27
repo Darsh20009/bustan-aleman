@@ -6,6 +6,7 @@ import { Route, Switch, Redirect } from "wouter";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { useAuth } from "./hooks/useAuth";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 import { MainHomepage } from "./components/MainHomepage";
 import { AuthPage } from "./components/AuthPage";
@@ -313,6 +314,7 @@ function App() {
           <TooltipProvider>
             <AppRoutes />
             <Toaster />
+            <InstallPrompt />
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>

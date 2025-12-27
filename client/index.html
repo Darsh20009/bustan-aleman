@@ -55,6 +55,35 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Register Service Worker for PWA functionality -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js', {
+            scope: '/'
+          }).then(registration => {
+            console.log('Service Worker registered:', registration);
+            
+            // Check for updates periodically
+            setInterval(() => {
+              registration.update().catch(err => {
+                console.log('Error checking for SW updates:', err);
+              });
+            }, 60000); // Check every minute
+          }).catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+
+          // Handle SW updates
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            // Reload page when new SW becomes active
+            window.location.reload();
+          });
+        });
+      }
+    </script>
+    
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
