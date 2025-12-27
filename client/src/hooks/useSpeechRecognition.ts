@@ -73,40 +73,47 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
-          const transcript = result[0].transcript;
+          const resultTranscript = result[0].transcript;
           
           if (result.isFinal) {
-            finalTranscript += transcript + ' ';
+            finalTranscript += resultTranscript + ' ';
           } else {
-            interim += transcript;
+            interim += resultTranscript;
           }
         }
         
         if (finalTranscript.trim()) {
           setTranscript(prev => {
             const newTranscript = (prev + ' ' + finalTranscript).trim().replace(/\s+/g, ' ');
+            console.log('[Speech] Final:', newTranscript);
             return newTranscript;
           });
         }
         
         const trimmedInterim = interim.trim();
+        if (trimmedInterim) {
+          console.log('[Speech] Interim:', trimmedInterim);
+        }
         setInterimTranscript(trimmedInterim);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         if (!isMountedRef.current) return;
-        console.error('Speech recognition error:', event.error);
-        setError(getArabicErrorMessage(event.error));
+        const errorMsg = getArabicErrorMessage(event.error);
+        console.error('[Speech] Error:', event.error, errorMsg);
+        setError(errorMsg);
         setIsListening(false);
       };
 
       recognition.onend = () => {
         if (!isMountedRef.current) return;
+        console.log('[Speech] Recognition ended');
         setIsListening(false);
       };
 
       recognition.onstart = () => {
         if (!isMountedRef.current) return;
+        console.log('[Speech] Recognition started');
         setIsListening(true);
         setError(null);
       };
@@ -147,42 +154,38 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   };
 
   const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListening && isMountedRef.current) {
-      setError(null);
-      setTranscript('');
-      setInterimTranscript('');
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        console.error('Error starting recognition:', e);
-        if (e instanceof Error && e.message.includes('already started')) {
-          try {
-            recognitionRef.current.abort();
-            setTimeout(() => {
-              if (recognitionRef.current && isMountedRef.current) {
-                recognitionRef.current.start();
-              }
-            }, 100);
-          } catch (abortError) {
-            console.error('Error aborting recognition:', abortError);
-          }
-        }
-      }
+    if (!recognitionRef.current) {
+      console.log('[Speech] Recognition not initialized');
+      return;
     }
-  }, [isListening]);
+    
+    console.log('[Speech] Starting listening...');
+    setError(null);
+    setTranscript('');
+    setInterimTranscript('');
+    
+    try {
+      recognitionRef.current.abort();
+    } catch (e) {
+      console.log('[Speech] Abort error (expected):', e);
+    }
+    
+    try {
+      recognitionRef.current.start();
+      console.log('[Speech] Start called successfully');
+    } catch (e) {
+      console.error('[Speech] Error starting recognition:', e);
+    }
+  }, []);
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current && isMountedRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (e) {
-        console.error('Error stopping recognition:', e);
-        try {
-          recognitionRef.current.abort();
-        } catch (abortError) {
-          console.error('Error aborting recognition:', abortError);
-        }
-      }
+    if (!recognitionRef.current) return;
+    
+    console.log('[Speech] Stopping listening...');
+    try {
+      recognitionRef.current.stop();
+    } catch (e) {
+      console.error('[Speech] Error stopping recognition:', e);
     }
   }, []);
 

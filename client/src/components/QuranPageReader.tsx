@@ -552,6 +552,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   // Watch for transcript changes and track progress
   useEffect(() => {
+    console.log('[Quran] Listening:', isListening, 'Transcript:', transcript, 'Interim:', interimTranscript);
+    
     if (!isListening) {
       if (recognizedText !== "") setRecognizedText("");
       return;
@@ -559,6 +561,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
     // Combine transcripts for real-time feedback
     const combined = ((transcript || "") + " " + (interimTranscript || "")).replace(/\s+/g, ' ').trim();
+    
+    console.log('[Quran] Combined text:', combined);
     
     // Update display text immediately with visual feedback for interim
     if (combined) {
@@ -594,11 +598,14 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
 
   const toggleListening = () => {
+    console.log('[Quran] Toggle listening, isListening:', isListening, 'isSupported:', isSupported);
+    
     if (isListening) {
       stopListening();
       setIsListening(false);
     } else {
       if (!isSupported) {
+        console.log('[Quran] Speech recognition not supported');
         toast({
           title: "المتصفح غير مدعوم",
           description: "للأسف متصفحك لا يدعم التعرف على الصوت. يرجى استخدام متصفح Google Chrome.",
@@ -606,6 +613,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         });
         return;
       }
+      console.log('[Quran] Starting listening...');
       resetTranscript();
       setActiveAyahIndex(-1);
       setRecognizedText("");
