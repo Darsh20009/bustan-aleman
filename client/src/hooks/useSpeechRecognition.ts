@@ -80,7 +80,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
           return newTranscript;
         });
       }
-      setInterimTranscript(interim.trim());
+      // Trim and ensure we handle empty strings correctly
+      const trimmedInterim = interim.trim();
+      setInterimTranscript(trimmedInterim);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -161,11 +163,14 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 }
 
 export function normalizeArabicText(text: string): string {
+  if (!text) return '';
   return text
-    .replace(/[\u064B-\u065F\u0670]/g, '')
-    .replace(/[أإآ]/g, 'ا')
-    .replace(/ة/g, 'ه')
-    .replace(/ى/g, 'ي')
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '') // Remove diacritics and Quranic marks
+    .replace(/[أإآٱ]/g, 'ا') // Normalize Alef
+    .replace(/[ؤ]/g, 'و') // Normalize Waw
+    .replace(/[ئ]/g, 'ي') // Normalize Ya
+    .replace(/ة/g, 'ه') // Normalize Ta Marbuta
+    .replace(/ى/g, 'ي') // Normalize Alef Maqsura
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -179,17 +184,30 @@ export function compareArabicTexts(spoken: string, expected: string): {
   const normalizedSpoken = normalizeArabicText(spoken);
   const normalizedExpected = normalizeArabicText(expected);
   
+  if (!normalizedSpoken || !normalizedExpected) {
+    return { similarity: 0, matchedWords: 0, totalWords: normalizedExpected.split(' ').length, isCorrect: false };
+  }
+
   const spokenWords = normalizedSpoken.split(' ').filter(w => w.length > 0);
   const expectedWords = normalizedExpected.split(' ').filter(w => w.length > 0);
   
   let matchedWords = 0;
-  
-  for (const spoken of spokenWords) {
-    if (expectedWords.some(expected => 
-      expected.includes(spoken) || spoken.includes(expected) || 
-      levenshteinSimilarity(spoken, expected) > 0.7
-    )) {
+  let lastFoundIndex = -1;
+
+  // Ordered word matching for better accuracy in Quran
+  for (const expected of expectedWords) {
+    const foundIndex = spokenWords.findIndex((spoken, idx) => 
+      idx > lastFoundIndex && (
+        spoken === expected || 
+        expected.includes(spoken) || 
+        spoken.includes(expected) || 
+        levenshteinSimilarity(spoken, expected) > 0.8
+      )
+    );
+
+    if (foundIndex !== -1) {
       matchedWords++;
+      lastFoundIndex = foundIndex;
     }
   }
   
@@ -201,7 +219,7 @@ export function compareArabicTexts(spoken: string, expected: string): {
     similarity: Math.min(100, similarity),
     matchedWords,
     totalWords: expectedWords.length,
-    isCorrect: similarity >= 70
+    isCorrect: similarity >= 80 // Increased threshold for better accuracy
   };
 }
 

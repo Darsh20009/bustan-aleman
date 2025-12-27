@@ -535,19 +535,16 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   // Page animation variants
   const pageVariants = {
     enter: (direction: 'left' | 'right' | null) => ({
-      x: direction === 'left' ? 300 : direction === 'right' ? -300 : 0,
+      x: direction === 'left' ? '100%' : direction === 'right' ? '-100%' : 0,
       opacity: 0,
-      rotateY: direction === 'left' ? -15 : direction === 'right' ? 15 : 0,
     }),
     center: {
       x: 0,
       opacity: 1,
-      rotateY: 0,
     },
     exit: (direction: 'left' | 'right' | null) => ({
-      x: direction === 'left' ? -300 : direction === 'right' ? 300 : 0,
+      x: direction === 'left' ? '-100%' : direction === 'right' ? '100%' : 0,
       opacity: 0,
-      rotateY: direction === 'left' ? 15 : direction === 'right' ? -15 : 0,
     }),
   };
 
@@ -581,7 +578,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     const searchStart = Math.max(0, activeAyahIndex);
     for (let i = searchStart; i < ayahs.length; i++) {
       const ayahText = normalizeArabicForSearch(ayahs[i].text);
-      const prefix = ayahText.substring(0, 12);
+      const prefix = ayahText.substring(0, 15); 
       
       // Lenient word matching
       const words = normalizedSpoken.split(' ').filter(w => w.length > 2);
