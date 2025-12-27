@@ -1385,28 +1385,30 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
       {/* Recitation Floating Bar */}
       <AnimatePresence>
-        {isListening && recognizedText && (
+        {isListening && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-lg"
+            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] sm:w-[90%] max-w-lg"
           >
-            <Card className={`${isDarkTheme ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-emerald-100'} backdrop-blur-md shadow-2xl p-4 rounded-2xl flex items-center gap-4`}>
-              <div className="bg-emerald-500/10 p-2 rounded-full">
-                <Mic className="w-5 h-5 text-emerald-500 animate-pulse" />
+            <Card className={`${isDarkTheme ? 'bg-zinc-900/95 border-zinc-800' : 'bg-white/95 border-emerald-100'} backdrop-blur-md shadow-2xl p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-3 sm:gap-4`}>
+              <div className="bg-emerald-500/10 p-2 rounded-full shrink-0">
+                <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 animate-pulse" />
               </div>
-              <div className="flex-1 overflow-hidden">
-                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-xs font-medium mb-0.5`}>جاري الاستماع...</p>
-                <p className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-lg font-medium truncate leading-relaxed`}>
-                  {recognizedText}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-[10px] sm:text-xs font-medium mb-0.5`}>جاري الاستماع...</p>
+                <div className="h-7 sm:h-8 flex items-center">
+                  <p className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-base sm:text-lg font-medium truncate leading-relaxed w-full`}>
+                    {recognizedText || "..."}
+                  </p>
+                </div>
               </div>
               <Button 
                 size="icon" 
                 variant="ghost" 
                 onClick={() => setRecognizedText('')}
-                className="hover:bg-zinc-500/10"
+                className="hover:bg-zinc-500/10 shrink-0 h-8 w-8 sm:h-9 sm:w-9"
               >
                 <X className="w-4 h-4" />
               </Button>
