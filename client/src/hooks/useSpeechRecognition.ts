@@ -20,6 +20,7 @@ declare global {
     continuous: boolean;
     interimResults: boolean;
     lang: string;
+    maxAlternatives?: number;
     start: () => void;
     stop: () => void;
     abort: () => void;
@@ -47,6 +48,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isMountedRef = useRef(true);
 
   const isSupported = typeof window !== 'undefined' && 
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
@@ -54,58 +56,75 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   useEffect(() => {
     if (!isSupported) return;
 
-    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognitionAPI();
-    
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'ar-SA';
-
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
-      let interim = '';
+    try {
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionAPI();
       
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        if (result.isFinal) {
-          finalTranscript += result[0].transcript;
-        } else {
-          interim += result[0].transcript;
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'ar-SA';
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        if (!isMountedRef.current) return;
+        
+        let finalTranscript = '';
+        let interim = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          
+          if (result.isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interim += transcript;
+          }
         }
-      }
-      
-      if (finalTranscript) {
-        setTranscript(prev => {
-          const newTranscript = (prev + ' ' + finalTranscript).trim().replace(/\s+/g, ' ');
-          return newTranscript;
-        });
-      }
-      // Trim and ensure we handle empty strings correctly
-      const trimmedInterim = interim.trim();
-      setInterimTranscript(trimmedInterim);
-    };
+        
+        if (finalTranscript.trim()) {
+          setTranscript(prev => {
+            const newTranscript = (prev + ' ' + finalTranscript).trim().replace(/\s+/g, ' ');
+            return newTranscript;
+          });
+        }
+        
+        const trimmedInterim = interim.trim();
+        setInterimTranscript(trimmedInterim);
+      };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error('Speech recognition error:', event.error);
-      setError(getArabicErrorMessage(event.error));
-      setIsListening(false);
-    };
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        if (!isMountedRef.current) return;
+        console.error('Speech recognition error:', event.error);
+        setError(getArabicErrorMessage(event.error));
+        setIsListening(false);
+      };
 
-    recognition.onend = () => {
-      setIsListening(false);
-      setInterimTranscript('');
-    };
+      recognition.onend = () => {
+        if (!isMountedRef.current) return;
+        setIsListening(false);
+      };
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setError(null);
-    };
+      recognition.onstart = () => {
+        if (!isMountedRef.current) return;
+        setIsListening(true);
+        setError(null);
+      };
 
-    recognitionRef.current = recognition;
+      recognitionRef.current = recognition;
+    } catch (e) {
+      console.error('Failed to initialize speech recognition:', e);
+      setError('فشل تهيئة التعرف على الصوت');
+    }
 
     return () => {
+      isMountedRef.current = false;
       if (recognitionRef.current) {
-        recognitionRef.current.abort();
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          console.error('Error aborting recognition:', e);
+        }
       }
     };
   }, [isSupported]);
@@ -128,21 +147,44 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   };
 
   const startListening = useCallback(() => {
-    if (recognitionRef.current && !isListening) {
+    if (recognitionRef.current && !isListening && isMountedRef.current) {
       setError(null);
+      setTranscript('');
+      setInterimTranscript('');
       try {
         recognitionRef.current.start();
       } catch (e) {
         console.error('Error starting recognition:', e);
+        if (e instanceof Error && e.message.includes('already started')) {
+          try {
+            recognitionRef.current.abort();
+            setTimeout(() => {
+              if (recognitionRef.current && isMountedRef.current) {
+                recognitionRef.current.start();
+              }
+            }, 100);
+          } catch (abortError) {
+            console.error('Error aborting recognition:', abortError);
+          }
+        }
       }
     }
   }, [isListening]);
 
   const stopListening = useCallback(() => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
+    if (recognitionRef.current && isMountedRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {
+        console.error('Error stopping recognition:', e);
+        try {
+          recognitionRef.current.abort();
+        } catch (abortError) {
+          console.error('Error aborting recognition:', abortError);
+        }
+      }
     }
-  }, [isListening]);
+  }, []);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
