@@ -35,9 +35,12 @@ import {
   Book,
   Navigation,
   Moon,
-  Sun
+  Sun,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 interface QuranPageProps {
   studentId?: string;
@@ -104,6 +107,9 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [ayahActionPanel, setAyahActionPanel] = useState<Ayah | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [recognizedText, setRecognizedText] = useState('');
+  const [activeAyahIndex, setActiveAyahIndex] = useState<number>(-1);
   const [quranTheme, setQuranTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('quran-theme') as 'light' | 'dark' || 'light';
@@ -545,6 +551,51 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
+  const { isSupported, startListening, stopListening, transcript, resetTranscript } = useSpeechRecognition();
+
+  // Watch for transcript changes and track progress
+  useEffect(() => {
+    if (!isListening || !transcript || !pageData?.ayahs) return;
+
+    const currentTranscript = transcript.trim();
+    setRecognizedText(currentTranscript);
+
+    // Simplistic tracking: find the first ayah that matches the transcript
+    const ayahs = pageData.ayahs;
+    let bestMatchIndex = activeAyahIndex;
+
+    const normalizedSpoken = normalizeArabicForSearch(currentTranscript);
+    
+    // Look ahead from current position
+    for (let i = Math.max(0, activeAyahIndex); i < ayahs.length; i++) {
+      const ayahText = normalizeArabicForSearch(ayahs[i].text);
+      // If the spoken text contains a significant part of the ayah
+      if (normalizedSpoken.includes(ayahText.substring(0, Math.min(15, ayahText.length)))) {
+        bestMatchIndex = i;
+      }
+    }
+
+    if (bestMatchIndex !== activeAyahIndex) {
+      setActiveAyahIndex(bestMatchIndex);
+    }
+  }, [transcript, isListening, pageData, activeAyahIndex]);
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+      setIsListening(false);
+    } else {
+      resetTranscript();
+      setActiveAyahIndex(-1);
+      startListening();
+      setIsListening(true);
+      toast({
+        title: "التسميع مفعل",
+        description: "ابدأ القراءة الآن، سيتم تتبع تلاوتك آلياً",
+      });
+    }
+  };
+
   const isDarkTheme = quranTheme === 'dark';
 
   // Helper function to get Surah metadata (name and start page)
@@ -720,46 +771,46 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             </div>
 
             {/* Center - Page number with ornamental design */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30"
+                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8 sm:h-10 sm:w-10"
                 data-testid="button-previous-page"
               >
-                <ChevronRight className="w-6 h-6" />
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
               
               <Dialog>
                 <DialogTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="relative group px-4 py-1 h-auto hover:bg-white/10"
+                    className="relative group px-2 sm:px-4 py-1 h-auto hover:bg-white/10 min-w-[60px] sm:min-w-[80px]"
                     data-testid="button-page-nav"
                   >
                     <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-4 py-1 rounded-full font-bold text-lg min-w-[80px] text-center">
+                    <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-3 sm:px-4 py-0.5 sm:py-1 rounded-full font-bold text-base sm:text-lg text-center">
                       {currentPage}
                     </div>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col" dir="rtl">
-                  <DialogHeader>
+                <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col p-4" dir="rtl">
+                  <DialogHeader className="mb-2">
                     <DialogTitle className="text-[#2D5A3D] dark:text-[#D4AF37] flex items-center gap-2">
                       <Navigation className="w-5 h-5" />
                       الانتقال السريع
                     </DialogTitle>
                   </DialogHeader>
                   <Tabs defaultValue="surahs" className="w-full flex-1 overflow-hidden flex flex-col">
-                    <TabsList className="grid w-full grid-cols-3 bg-[#F5F0E6] dark:bg-[#1A1A1A]">
-                      <TabsTrigger value="surahs">السور</TabsTrigger>
-                      <TabsTrigger value="juzs">الأجزاء</TabsTrigger>
-                      <TabsTrigger value="pages">الصفحات</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 bg-[#F5F0E6] dark:bg-[#1A1A1A] h-10">
+                      <TabsTrigger value="surahs" className="text-xs sm:text-sm">السور</TabsTrigger>
+                      <TabsTrigger value="juzs" className="text-xs sm:text-sm">الأجزاء</TabsTrigger>
+                      <TabsTrigger value="pages" className="text-xs sm:text-sm">الصفحات</TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="surahs" className="flex-1 overflow-y-auto p-2">
+                    <TabsContent value="surahs" className="flex-1 overflow-y-auto p-1 mt-2">
                       <div className="grid grid-cols-2 gap-2">
                         {Array.from({ length: 114 }, (_, i) => i + 1).map((num) => {
                           const surahInfo = getSurahInfo(num);
@@ -767,18 +818,18 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                             <Button
                               key={num}
                               variant="outline"
-                              className="justify-start gap-2 h-auto py-2 text-right border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                              className="justify-start gap-2 h-auto py-2 px-2 text-right border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
                               onClick={() => {
                                 goToPage(surahInfo.page);
                                 document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
                               }}
                             >
-                              <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center shrink-0">
+                              <Badge variant="outline" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full p-0 flex items-center justify-center shrink-0 text-[10px] sm:text-xs">
                                 {num}
                               </Badge>
                               <div className="overflow-hidden">
-                                <div className="font-bold text-sm truncate">{surahInfo.name}</div>
-                                <div className="text-[10px] text-gray-500">صفحة {surahInfo.page}</div>
+                                <div className="font-bold text-xs sm:text-sm truncate">{surahInfo.name}</div>
+                                <div className="text-[9px] sm:text-[10px] text-gray-500">ص {surahInfo.page}</div>
                               </div>
                             </Button>
                           );
@@ -786,7 +837,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="juzs" className="flex-1 overflow-y-auto p-2">
+                    <TabsContent value="juzs" className="flex-1 overflow-y-auto p-1 mt-2">
                       <div className="grid grid-cols-3 gap-2">
                         {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
                           const page = getJuzStartPage(num);
@@ -794,29 +845,29 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                             <Button
                               key={num}
                               variant="outline"
-                              className="flex flex-col gap-1 h-auto py-3 border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                              className="flex flex-col gap-0.5 sm:gap-1 h-auto py-2 sm:py-3 border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
                               onClick={() => {
                                 goToPage(page);
                                 document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
                               }}
                             >
-                              <span className="text-xs text-gray-500">الجزء</span>
-                              <span className="font-bold text-lg">{num}</span>
-                              <span className="text-[10px] text-gray-400">صفحة {page}</span>
+                              <span className="text-[10px] sm:text-xs text-gray-500">الجزء</span>
+                              <span className="font-bold text-base sm:text-lg">{num}</span>
+                              <span className="text-[9px] sm:text-[10px] text-gray-400">ص {page}</span>
                             </Button>
                           );
                         })}
                       </div>
                     </TabsContent>
                     
-                    <TabsContent value="pages" className="flex-1 overflow-y-auto p-2">
-                      <div className="grid grid-cols-5 gap-2">
+                    <TabsContent value="pages" className="flex-1 overflow-y-auto p-1 mt-2">
+                      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 sm:gap-2">
                         {Array.from({ length: 604 }, (_, i) => i + 1).map((num) => (
                           <Button
                             key={num}
                             variant={currentPage === num ? "default" : "outline"}
                             size="sm"
-                            className={`h-10 ${currentPage === num ? 'bg-[#2D5A3D]' : 'border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10'}`}
+                            className={`h-8 sm:h-10 text-xs sm:text-sm ${currentPage === num ? 'bg-[#2D5A3D]' : 'border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10'}`}
                             onClick={() => {
                               goToPage(num);
                               document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -834,17 +885,28 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               <Button
                 onClick={goToNextPage}
                 disabled={currentPage === 604}
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30"
+                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8 sm:h-10 sm:w-10"
                 data-testid="button-next-page"
               >
-                <ChevronLeft className="w-6 h-6" />
+                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
               </Button>
             </div>
 
             {/* Left side - Actions */}
             <div className="flex items-center gap-1">
+              {isSupported && (
+                <Button
+                  onClick={toggleListening}
+                  size="sm"
+                  variant="ghost"
+                  className={`${isListening ? 'text-red-500 animate-pulse' : 'text-[#D4AF37]'} hover:bg-white/10`}
+                  data-testid="button-voice-recitation"
+                >
+                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </Button>
+              )}
               <Button
                 onClick={() => setSearchOpen(true)}
                 size="sm"
@@ -969,31 +1031,33 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                           <p className={`${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#8B7355]/60'} text-sm mt-2`}>جرب كلمات بحث أخرى</p>
                         </div>
                       ) : (
-                        filteredAyahs.map((ayah, index) => {
-                          const isMemorized = hasMarker(ayah, 'memorized');
-                          const needsReview = hasMarker(ayah, 'review');
-                          const hasNote = getAyahNote(ayah);
-                          const isSelected = ayahActionPanel?.number === ayah.number;
-                          
-                          return (
-                            <span
-                              key={ayah.number}
-                              role="button"
-                              tabIndex={0}
-                              aria-label={`آية ${ayah.numberInSurah} من ${ayah.surah.name}`}
-                              aria-pressed={isSelected}
-                              className={`inline cursor-pointer transition-all duration-200 rounded-sm px-0.5 outline-none
-                                focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1
-                                ${isSelected ? 'bg-[#D4AF37]/30' : ''}
-                                ${isMemorized ? (isDarkTheme ? 'text-emerald-400' : 'text-[#2D5A3D]') : ''}
-                                ${needsReview ? (isDarkTheme ? 'text-amber-400' : 'text-amber-700') : ''}
-                                ${!isMemorized && !needsReview ? (isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]') : ''}
-                                hover:bg-[#D4AF37]/20
-                              `}
-                              onClick={() => shouldAllowClick() && handleAyahClick(ayah)}
-                              onKeyDown={(e) => handleAyahKeyDown(e, ayah)}
-                              data-testid={`ayah-${ayah.number}`}
-                            >
+                                filteredAyahs.map((ayah, index) => {
+                                  const isMemorized = hasMarker(ayah, 'memorized');
+                                  const needsReview = hasMarker(ayah, 'review');
+                                  const hasNote = getAyahNote(ayah);
+                                  const isSelected = ayahActionPanel?.number === ayah.number;
+                                  const isCurrentlyReading = activeAyahIndex === index;
+                                  
+                                  return (
+                                    <span
+                                      key={ayah.number}
+                                      role="button"
+                                      tabIndex={0}
+                                      aria-label={`آية ${ayah.numberInSurah} من ${ayah.surah.name}`}
+                                      aria-pressed={isSelected}
+                                      className={`inline cursor-pointer transition-all duration-200 rounded-sm px-0.5 outline-none
+                                        focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1
+                                        ${isSelected ? 'bg-[#D4AF37]/30' : ''}
+                                        ${isCurrentlyReading ? 'bg-emerald-500/20 ring-1 ring-emerald-500/30 font-bold' : ''}
+                                        ${isMemorized ? (isDarkTheme ? 'text-emerald-400' : 'text-[#2D5A3D]') : ''}
+                                        ${needsReview ? (isDarkTheme ? 'text-amber-400' : 'text-amber-700') : ''}
+                                        ${!isMemorized && !needsReview ? (isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]') : ''}
+                                        hover:bg-[#D4AF37]/20
+                                      `}
+                                      onClick={() => shouldAllowClick() && handleAyahClick(ayah)}
+                                      onKeyDown={(e) => handleAyahKeyDown(e, ayah)}
+                                      data-testid={`ayah-${ayah.number}`}
+                                    >
                               {/* Surah header inline */}
                               {ayah.numberInSurah === 1 && index > 0 && (
                                 <span className="block w-full text-center my-6">
