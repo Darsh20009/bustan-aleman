@@ -86,48 +86,80 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
       )}
 
       {/* Top Controls */}
-      <div className="bg-white dark:bg-gray-900 border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          {/* Page Navigation */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-              data-testid="button-prev-page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <Input
-                type="number"
-                value={currentPage}
-                onChange={(e) => handlePageJump(parseInt(e.target.value) || 1)}
-                className="w-20 text-center"
-                min={1}
-                max={totalPages}
-                data-testid="input-page-number"
-              />
-              <span className="text-sm text-muted-foreground">
-                من {totalPages}
-              </span>
+      <div className="bg-white dark:bg-gray-900 border-b shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-2 md:px-4 py-2 md:py-3 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+          <div className="flex items-center justify-between w-full md:w-auto gap-2">
+            {/* Page Navigation */}
+            <div className="flex items-center gap-1 md:gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className="h-8 w-8 md:h-10 md:w-10"
+                data-testid="button-prev-page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+              
+              <div className="flex items-center gap-1 md:gap-2">
+                <Input
+                  type="number"
+                  value={currentPage}
+                  onChange={(e) => handlePageJump(parseInt(e.target.value) || 1)}
+                  className="w-14 md:w-20 text-center h-8 md:h-10"
+                  min={1}
+                  max={totalPages}
+                  data-testid="input-page-number"
+                />
+                <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap">
+                  من {totalPages}
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8 md:h-10 md:w-10"
+                data-testid="button-next-page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
             </div>
 
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages}
-              data-testid="button-next-page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
+            {/* Mobile Actions Toggle/Menu could go here, but for now let's keep it simple */}
+            <div className="flex md:hidden items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSearch(!showSearch)}
+                className="h-8 w-8"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setFontSize(prev => Math.max(14, prev - 2))}
+                className="h-8 w-8"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setFontSize(prev => Math.min(32, prev + 2))}
+                className="h-8 w-8"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* Center Actions */}
-          <div className="flex items-center gap-2">
+          {/* Actions - Hidden on very small mobile, visible in row on larger screens */}
+          <div className="hidden md:flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
@@ -157,8 +189,8 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
             </Button>
           </div>
 
-          {/* Font Size Controls */}
-          <div className="flex items-center gap-2">
+          {/* Desktop Font Size Controls */}
+          <div className="hidden md:flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
@@ -203,7 +235,7 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
       </div>
 
       {/* Mushaf Page Display */}
-      <div className="flex-1 overflow-auto p-4 md:p-8">
+      <div className="flex-1 overflow-auto p-2 md:p-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentPage}
@@ -211,22 +243,22 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.2 }}
-            className="max-w-4xl mx-auto"
+            className="max-w-4xl mx-auto h-full"
           >
-            <Card className="overflow-hidden shadow-2xl border-4 border-amber-200 dark:border-amber-900 bg-white dark:bg-gray-900">
-              <CardContent className="p-8 md:p-12">
+            <Card className="overflow-hidden shadow-2xl border-2 md:border-4 border-amber-200 dark:border-amber-900 bg-white dark:bg-gray-900 min-h-full">
+              <CardContent className="p-4 md:p-12">
                 {/* Page Header */}
-                <div className="text-center mb-8 pb-4 border-b-2 border-amber-200 dark:border-amber-800">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="text-lg px-4 py-2">
+                <div className="text-center mb-4 md:mb-8 pb-2 md:pb-4 border-b-2 border-amber-200 dark:border-amber-800">
+                  <div className="flex justify-between items-center gap-2">
+                    <Badge variant="outline" className="text-xs md:text-lg px-2 md:px-4 py-1 md:py-2">
                       الجزء {Math.ceil(currentPage / 20)}
                     </Badge>
-                    <div className="text-center">
-                      <div className="text-3xl font-arabic-serif text-islamic-green dark:text-green-400 mb-2">
+                    <div className="text-center flex-1">
+                      <div className="text-xl md:text-3xl font-arabic-serif text-islamic-green dark:text-green-400 mb-1 md:mb-2">
                         بسم الله الرحمن الرحيم
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-lg px-4 py-2">
+                    <Badge variant="outline" className="text-xs md:text-lg px-2 md:px-4 py-1 md:py-2">
                       صفحة {currentPage}
                     </Badge>
                   </div>
@@ -234,15 +266,15 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
 
                 {/* Page Content */}
                 {isLoading ? (
-                  <div className="text-center py-20">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-islamic-green dark:border-green-400 mx-auto"></div>
-                    <p className="mt-4 text-muted-foreground">جاري تحميل الصفحة...</p>
+                  <div className="text-center py-10 md:py-20">
+                    <div className="animate-spin rounded-full h-10 w-10 md:h-12 md:w-12 border-b-2 border-islamic-green dark:border-green-400 mx-auto"></div>
+                    <p className="mt-4 text-xs md:text-sm text-muted-foreground">جاري تحميل الصفحة...</p>
                   </div>
                 ) : (
                   <div 
-                    className="quran-text font-arabic-serif leading-loose text-justify"
+                    className="quran-text font-arabic-serif leading-loose text-justify px-1 md:px-0"
                     style={{ 
-                      fontSize: `${fontSize}px`,
+                      fontSize: `calc(${fontSize}px * 0.85 + 0.15 * 100vw / 20)`, /* Dynamic scaling base */
                       lineHeight: '2.5em',
                       color: 'var(--foreground)'
                     }}
@@ -284,8 +316,8 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
                 )}
 
                 {/* Page Footer */}
-                <div className="mt-8 pt-4 border-t-2 border-amber-200 dark:border-amber-800 text-center">
-                  <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
+                <div className="mt-4 md:mt-8 pt-2 md:pt-4 border-t-2 border-amber-200 dark:border-amber-800 text-center">
+                  <div className="flex justify-center items-center gap-4 md:gap-8 text-xs md:text-sm text-muted-foreground">
                     <span>الحزب {Math.ceil(currentPage / 10)}</span>
                     <span>•</span>
                     <span>الربع {Math.ceil(currentPage / 5)}</span>
@@ -295,7 +327,7 @@ export function MushafQuranReader({ initialPage = 1 }: MushafQuranReaderProps) {
             </Card>
 
             {/* Page Navigation Hint */}
-            <div className="mt-4 text-center text-sm text-muted-foreground">
+            <div className="mt-2 md:mt-4 text-center text-[10px] md:text-sm text-muted-foreground mb-4">
               <p>استخدم الأسهم ← → أو اسحب لليمين/اليسار للتنقل بين الصفحات</p>
             </div>
           </motion.div>

@@ -84,154 +84,158 @@ const QuranNavigation = ({
   };
 
   return (
-    <Card className="p-4 mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
-      <div className="flex flex-col space-y-4">
+    <Card className="p-2 md:p-4 mb-4 md:mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200">
+      <div className="flex flex-col space-y-3 md:space-y-4">
         {/* Mode Selection */}
         <div className="flex justify-center">
-          <div className="flex rounded-lg bg-white p-1 shadow-sm border">
+          <div className="flex rounded-lg bg-white p-0.5 md:p-1 shadow-sm border scale-90 md:scale-100">
             <Button
               variant={mode === 'page' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onModeChange('page')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9"
             >
-              <BookOpen className="w-4 h-4" />
+              <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
               <span>عرض الصفحات</span>
             </Button>
             <Button
               variant={mode === 'surah' ? 'default' : 'ghost'}
               size="sm"
               onClick={() => onModeChange('surah')}
-              className="flex items-center gap-2"
+              className="flex items-center gap-1 md:gap-2 text-xs md:text-sm h-8 md:h-9"
             >
-              <List className="w-4 h-4" />
+              <List className="w-3 h-3 md:w-4 md:h-4" />
               <span>عرض السور</span>
             </Button>
           </div>
         </div>
 
         {/* Navigation Controls */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Previous/Next Buttons */}
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={previousPage}
-              disabled={mode === 'page' ? currentPage <= 1 : currentSurah <= 1}
-              className="flex items-center gap-1"
-            >
-              <ChevronRight className="w-4 h-4" />
-              <span>السابق</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={nextPage}
-              disabled={mode === 'page' ? currentPage >= 604 : currentSurah >= 114}
-              className="flex items-center gap-1"
-            >
-              <span>التالي</span>
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </div>
-
+        <div className="flex flex-col items-center justify-between gap-3 md:gap-4">
           {/* Current Position Display */}
-          <div className="text-center">
+          <div className="text-center order-1">
             {mode === 'page' ? (
-              <div className="text-lg font-bold text-amber-800">
+              <div className="text-base md:text-lg font-bold text-amber-800">
                 الصفحة {toArabicNumeral(currentPage)} من {toArabicNumeral(604)}
               </div>
             ) : (
-              <div className="text-lg font-bold text-amber-800">
+              <div className="text-base md:text-lg font-bold text-amber-800">
                 السورة {toArabicNumeral(currentSurah)} من {toArabicNumeral(114)}
               </div>
             )}
           </div>
 
-          {/* Jump Controls */}
-          <div className="flex items-center gap-2">
-            {mode === 'page' ? (
-              <>
-                <Input
-                  type="number"
-                  min="1"
-                  max="604"
-                  value={selectedPage}
-                  onChange={(e) => setSelectedPage(e.target.value)}
-                  className="w-20 text-center"
-                  placeholder="صفحة"
-                />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePageJump}
-                >
-                  انتقل
-                </Button>
-              </>
-            ) : (
-              <>
-                <Select value={selectedSurah} onValueChange={setSelectedSurah}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="اختر السورة" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {surahs?.map((surah) => (
-                      <SelectItem key={surah.number} value={surah.number.toString()}>
-                        {surah.number}. {surah.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSurahJump}
-                >
-                  انتقل
-                </Button>
-              </>
-            )}
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 order-2 w-full">
+            {/* Previous/Next Buttons */}
+            <div className="flex items-center gap-1 md:gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={previousPage}
+                disabled={mode === 'page' ? currentPage <= 1 : currentSurah <= 1}
+                className="flex items-center gap-1 h-8 md:h-9 px-2 md:px-3"
+              >
+                <ChevronRight className="w-3 h-3 md:w-4 md:h-4" />
+                <span className="text-xs md:text-sm">السابق</span>
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={nextPage}
+                disabled={mode === 'page' ? currentPage >= 604 : currentSurah >= 114}
+                className="flex items-center gap-1 h-8 md:h-9 px-2 md:px-3"
+              >
+                <span className="text-xs md:text-sm">التالي</span>
+                <ChevronLeft className="w-3 h-3 md:w-4 md:h-4" />
+              </Button>
+            </div>
+
+            {/* Jump Controls */}
+            <div className="flex items-center gap-1 md:gap-2">
+              {mode === 'page' ? (
+                <>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="604"
+                    value={selectedPage}
+                    onChange={(e) => setSelectedPage(e.target.value)}
+                    className="w-14 md:w-20 text-center h-8 md:h-9 text-xs md:text-sm"
+                    placeholder="صفحة"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePageJump}
+                    className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                  >
+                    انتقل
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Select value={selectedSurah} onValueChange={setSelectedSurah}>
+                    <SelectTrigger className="w-28 md:w-40 h-8 md:h-9 text-xs md:text-sm">
+                      <SelectValue placeholder="اختر السورة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {surahs?.map((surah) => (
+                        <SelectItem key={surah.number} value={surah.number.toString()} className="text-xs md:text-sm">
+                          {surah.number}. {surah.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSurahJump}
+                    className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+                  >
+                    انتقل
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Search Section */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 md:w-4 md:h-4" />
             <Input
               type="text"
               placeholder="ابحث في القرآن الكريم..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-8 md:pl-10 h-8 md:h-10 text-xs md:text-sm"
             />
           </div>
           
           {searchResults.length > 0 && (
             <Dialog>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="h-8 md:h-10 text-xs md:text-sm px-2 md:px-3">
                   النتائج ({searchResults.length})
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+              <DialogContent className="max-w-[95vw] md:max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>نتائج البحث عن "{searchQuery}"</DialogTitle>
+                  <DialogTitle className="text-base md:text-xl">نتائج البحث عن "{searchQuery}"</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-3">
                   {searchResults.map((result: any, index: number) => (
-                    <Card key={index} className="p-3 cursor-pointer hover:bg-gray-50"
+                    <Card key={index} className="p-2 md:p-3 cursor-pointer hover:bg-gray-50"
                           onClick={() => {
                             onSurahChange(result.surahNumber);
                             onModeChange('surah');
                           }}>
-                      <div className="text-sm text-gray-600 mb-1">
+                      <div className="text-[10px] md:text-sm text-gray-600 mb-1">
                         {result.surahName} - آية {toArabicNumeral(result.ayahNumber)}
                       </div>
-                      <div className="text-lg leading-relaxed">
+                      <div className="text-base md:text-lg leading-relaxed">
                         {result.ayahText}
                       </div>
                     </Card>
