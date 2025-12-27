@@ -559,9 +559,11 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
     // Use both transcript and interimTranscript for more real-time feel
     const currentTranscript = (transcript + ' ' + interimTranscript).trim();
-    if (currentTranscript) {
-      setRecognizedText(currentTranscript);
-    }
+    
+    // Always update recognized text if there is any input, to show user feedback
+    setRecognizedText(currentTranscript || "...");
+
+    if (!currentTranscript) return;
 
     const ayahs = pageData.ayahs;
     let bestMatchIndex = activeAyahIndex;
@@ -573,9 +575,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       const ayahText = normalizeArabicForSearch(ayahs[i].text);
       // Use a more lenient match: check if the normalized spoken text contains 
       // at least a significant portion of the ayah text
-      const ayahPrefix = ayahText.substring(0, Math.min(15, ayahText.length));
+      // We take a chunk from the beginning and middle to improve matching
+      const prefix = ayahText.substring(0, Math.min(15, ayahText.length));
       
-      if (normalizedSpoken.includes(ayahPrefix)) {
+      if (normalizedSpoken.includes(prefix)) {
         bestMatchIndex = i;
       }
     }
@@ -590,8 +593,17 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       stopListening();
       setIsListening(false);
     } else {
+      if (!isSupported) {
+        toast({
+          title: "المتصفح غير مدعوم",
+          description: "للأسف متصفحك لا يدعم التعرف على الصوت. يرجى استخدام متصفح Google Chrome.",
+          variant: "destructive"
+        });
+        return;
+      }
       resetTranscript();
       setActiveAyahIndex(-1);
+      setRecognizedText("");
       startListening();
       setIsListening(true);
       toast({
