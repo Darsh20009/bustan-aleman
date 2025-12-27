@@ -1,240 +1,113 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { StudentLayout } from './StudentLayout';
-import { StatsCard } from '@/components/shared/StatsCard';
-import { LoadingCards } from '@/components/shared/LoadingState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'wouter';
-import QuranPageReader from '@/components/QuranPageReader';
-import { 
-  BookOpen, 
-  Clock, 
-  CheckCircle, 
-  Calendar,
-  Video,
-  ArrowLeft,
-  LayoutDashboard
-} from 'lucide-react';
+import { Bell, Clock, BookOpen, CheckCircle } from 'lucide-react';
 
-export function StudentDashboardPage() {
-  const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+export interface Reminder {
+  id: string;
+  type: 'session' | 'homework' | 'review' | 'goal';
+  title: string;
+  time: Date;
+  status: 'pending' | 'completed' | 'upcoming';
+}
 
-  const { data: sessions = [], isLoading: sessionsLoading } = useQuery<any[]>({
-    queryKey: ['/api/student-sessions'],
-  });
+export function WeeklyReminders({ reminders = [] }: { reminders?: Reminder[] }) {
+  const mockReminders = reminders.length === 0 ? [
+    { id: '1', type: 'session', title: 'حصة مع الشيخ أحمد - التجويد', time: new Date(Date.now() + 2 * 60 * 60 * 1000), status: 'upcoming' as const },
+    { id: '2', type: 'homework', title: 'تسليم واجب حفظ سورة الفاتحة', time: new Date(Date.now() + 5 * 60 * 60 * 1000), status: 'pending' as const },
+    { id: '3', type: 'review', title: 'مراجعة جزء عم', time: new Date(Date.now() + 24 * 60 * 60 * 1000), status: 'pending' as const },
+  ] : reminders;
 
-  const { data: homework = [], isLoading: homeworkLoading } = useQuery<any[]>({
-    queryKey: ['/api/homework'],
-  });
-
-  const { data: progress, isLoading: progressLoading } = useQuery<any>({
-    queryKey: ['/api/student/progress'],
-  });
-
-  const upcomingSessions = sessions.filter(s => new Date(s.sessionDate) > new Date()).slice(0, 3);
-  const pendingHomework = homework.filter((h: any) => h.status === 'pending').slice(0, 3);
-
-  const sessionColumns = [
-    { key: 'sessionDate', header: 'التاريخ', render: (s: any) => new Date(s.sessionDate).toLocaleDateString('ar-SA') },
-    { key: 'startTime', header: 'الوقت' },
-    { key: 'sheikhName', header: 'المعلم' },
-    { 
-      key: 'status', 
-      header: 'الحالة',
-      render: (s: any) => (
-        <Badge variant={s.status === 'upcoming' ? 'default' : 'secondary'}>
-          {s.status === 'upcoming' ? 'قادمة' : 'منتهية'}
-        </Badge>
-      )
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'session':
+        return <Clock className="w-5 h-5" />;
+      case 'homework':
+        return <BookOpen className="w-5 h-5" />;
+      case 'review':
+        return <CheckCircle className="w-5 h-5" />;
+      default:
+        return <Bell className="w-5 h-5" />;
     }
-  ];
+  };
 
-  const isLoading = sessionsLoading || homeworkLoading || progressLoading;
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'session':
+        return 'حصة';
+      case 'homework':
+        return 'واجب';
+      case 'review':
+        return 'مراجعة';
+      default:
+        return 'تذكير';
+    }
+  };
 
   return (
-    <StudentLayout>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">{`مرحباً، ${user?.firstName || 'طالب'}`}</h1>
-            <p className="text-muted-foreground">مرحباً بك في لوحة التحكم الخاصة بك</p>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bell className="w-5 h-5" />
+          التذكيرات والمهام
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {mockReminders.map((reminder) => {
+          const timeUntil = new Date(reminder.time).getTime() - Date.now();
+          const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60));
+          const minutesUntil = Math.floor((timeUntil % (1000 * 60 * 60)) / (1000 * 60));
+
+          return (
+            <div
+              key={reminder.id}
+              className={`flex items-start gap-3 p-3 rounded-lg border-2 transition-all ${
+                reminder.status === 'completed'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-300'
+                  : reminder.status === 'upcoming'
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300'
+                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300'
+              }`}
+            >
+              <div className={`p-2 rounded-lg ${
+                reminder.status === 'completed'
+                  ? 'bg-green-200'
+                  : reminder.status === 'upcoming'
+                  ? 'bg-blue-200'
+                  : 'bg-yellow-200'
+              }`}>
+                {getIcon(reminder.type)}
+              </div>
+
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{reminder.title}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  {reminder.status === 'completed'
+                    ? '✓ مكتمل'
+                    : hoursUntil > 0
+                    ? `خلال ${hoursUntil} ساعة و ${minutesUntil} دقيقة`
+                    : `خلال ${minutesUntil} دقيقة`}
+                </p>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs"
+                data-testid={`button-reminder-${reminder.id}`}
+              >
+                {reminder.status === 'completed' ? 'تم' : 'تأكيد'}
+              </Button>
+            </div>
+          );
+        })}
+
+        {mockReminders.length === 0 && (
+          <div className="text-center py-8">
+            <Bell className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+            <p className="text-sm text-gray-600">لا توجد تذكيرات حالية</p>
           </div>
-          <TabsList className="grid w-full sm:w-auto grid-cols-2 gap-1">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2" data-testid="tab-dashboard">
-              <LayoutDashboard className="h-4 w-4" />
-              لوحة التحكم
-            </TabsTrigger>
-            <TabsTrigger value="quran" className="flex items-center gap-2" data-testid="tab-quran">
-              <BookOpen className="h-4 w-4" />
-              المصحف
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="quran" className="mt-0">
-          <div className="h-[calc(100vh-12rem)] min-h-[500px]">
-            <QuranPageReader studentId={user?.studentId} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="dashboard" className="mt-0">
-
-      {isLoading ? (
-        <LoadingCards count={4} />
-      ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-            <StatsCard
-              title="الحصص هذا الشهر"
-              value={sessions.filter(s => {
-                const d = new Date(s.sessionDate);
-                const now = new Date();
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-              }).length}
-              subtitle="حصة مكتملة"
-              icon={<Calendar className="h-4 w-4" />}
-            />
-            <StatsCard
-              title="الواجبات المعلقة"
-              value={pendingHomework.length}
-              subtitle="واجب يحتاج تسليم"
-              icon={<Clock className="h-4 w-4" />}
-            />
-            <StatsCard
-              title="نسبة الحضور"
-              value={`${progress?.attendanceRate || 0}%`}
-              subtitle="هذا الشهر"
-              icon={<CheckCircle className="h-4 w-4" />}
-            />
-            <StatsCard
-              title="مستوى الحفظ"
-              value={progress?.memorizedParts || 0}
-              subtitle="جزء محفوظ"
-              icon={<BookOpen className="h-4 w-4" />}
-            />
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-4">
-                <CardTitle className="text-lg">الحصص القادمة</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/student">
-                    عرض الكل
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {upcomingSessions.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    لا توجد حصص قادمة
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {upcomingSessions.map((session, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Video className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-medium">{session.sheikhName || 'الشيخ'}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {new Date(session.sessionDate).toLocaleDateString('ar-SA')} - {session.startTime}
-                            </p>
-                          </div>
-                        </div>
-                        <Button size="sm" data-testid={`button-join-session-${index}`}>
-                          انضمام
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between gap-4">
-                <CardTitle className="text-lg">الواجبات المعلقة</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/student/homework">
-                    عرض الكل
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {pendingHomework.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    لا توجد واجبات معلقة
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingHomework.map((hw: any, index: number) => (
-                      <div 
-                        key={index}
-                        className="p-3 rounded-lg bg-muted/50"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium">{hw.title}</p>
-                          <Badge variant="outline">
-                            {new Date(hw.dueDate).toLocaleDateString('ar-SA')}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {hw.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {progress?.memorizedSurahs && progress.memorizedSurahs.length > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg">تقدم الحفظ</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">نسبة الإنجاز الكلية</span>
-                    <span className="font-medium">{progress.overallProgress || 0}%</span>
-                  </div>
-                  <Progress value={progress.overallProgress || 0} className="h-2" />
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {progress.memorizedSurahs.slice(0, 10).map((surah: string, index: number) => (
-                      <Badge key={index} variant="secondary">
-                        {surah}
-                      </Badge>
-                    ))}
-                    {progress.memorizedSurahs.length > 10 && (
-                      <Badge variant="outline">
-                        +{progress.memorizedSurahs.length - 10} أخرى
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
-      )}
-        </TabsContent>
-      </Tabs>
-    </StudentLayout>
+        )}
+      </CardContent>
+    </Card>
   );
 }
