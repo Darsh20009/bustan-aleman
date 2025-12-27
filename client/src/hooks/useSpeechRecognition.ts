@@ -31,6 +31,23 @@ declare global {
   }
 }
 
+// Import Whisper model
+let WhisperProcessor: any = null;
+
+async function initializeWhisper() {
+  if (WhisperProcessor) return WhisperProcessor;
+  
+  try {
+    const { pipeline } = await import('@xenova/transformers');
+    const processor = await pipeline('automatic-speech-recognition', 'Xenova/whisper-small');
+    WhisperProcessor = processor;
+    return processor;
+  } catch (e) {
+    console.error('[Whisper] Failed to initialize:', e);
+    throw e;
+  }
+}
+
 interface UseSpeechRecognitionResult {
   transcript: string;
   interimTranscript: string;
@@ -48,10 +65,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const isSupported = typeof window !== 'undefined' && 
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
+  // Initialize both Web Speech API and Whisper as fallback
   useEffect(() => {
     if (!isSupported) return;
 
@@ -82,14 +102,17 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
           setTranscript(prev => (prev + ' ' + finalText).trim());
         }
         
-        console.log('[Speech] Interim text:', interimText);
-        setInterimTranscript(interimText);
+        if (interimText.trim()) {
+          console.log('[Speech] Interim text:', interimText);
+          setInterimTranscript(interimText);
+        }
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         const errorMsg = getArabicErrorMessage(event.error);
         console.error('[Speech] Error event:', event.error, '-', errorMsg);
         setError(errorMsg);
+        setIsListening(false);
       };
 
       recognition.onend = () => {
@@ -105,7 +128,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
       recognitionRef.current = recognition;
     } catch (e) {
-      console.error('[Speech] Failed to initialize:', e);
+      console.error('[Speech] Failed to initialize Web Speech:', e);
       setError('فشل تهيئة الميكروفون');
     }
 
@@ -137,34 +160,87 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     }
   };
 
-  const startListening = useCallback(() => {
-    if (!recognitionRef.current) {
-      console.error('[Speech] Not initialized');
-      setError('التعرف على الصوت غير متاح');
-      return;
-    }
-
-    console.log('[Speech] Starting...');
+  const startListening = useCallback(async () => {
+    console.log('[Speech] Starting listening...');
     setError(null);
     setTranscript('');
     setInterimTranscript('');
 
+    // Try Web Speech API first
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        console.log('[Speech] Web Speech API started');
+        return;
+      } catch (err) {
+        console.log('[Speech] Web Speech API error, trying Whisper:', err);
+      }
+    }
+
+    // Fallback to Whisper via getUserMedia
     try {
-      recognitionRef.current.start();
+      console.log('[Speech] Starting Whisper fallback...');
+      setIsListening(true);
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          
+          console.log('[Whisper] Processing audio...');
+          setInterimTranscript('جاري المعالجة...');
+          
+          const processor = await initializeWhisper();
+          const result = await processor(audioUrl);
+          
+          console.log('[Whisper] Result:', result);
+          setTranscript(result.text || '');
+          setInterimTranscript('');
+        } catch (err) {
+          console.error('[Whisper] Processing error:', err);
+          setError('فشل معالجة الصوت');
+        }
+      };
+
+      mediaRecorder.start();
+      console.log('[Whisper] Recording started');
     } catch (err) {
-      console.error('[Speech] Start error:', err);
-      setError('فشل بدء الاستماع');
+      console.error('[Speech] All methods failed:', err);
+      setError('لم نتمكن من الوصول للميكروفون');
+      setIsListening(false);
     }
   }, []);
 
   const stopListening = useCallback(() => {
-    if (!recognitionRef.current) return;
+    console.log('[Speech] Stopping listening...');
+    
+    // Stop Web Speech API
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (err) {
+        console.log('[Speech] Web Speech API stop error:', err);
+      }
+    }
 
-    console.log('[Speech] Stopping...');
-    try {
-      recognitionRef.current.stop();
-    } catch (err) {
-      console.error('[Speech] Stop error:', err);
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        console.log('[Whisper] Stopping recording...');
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        console.error('[Whisper] Stop error:', err);
+      }
     }
   }, []);
 
