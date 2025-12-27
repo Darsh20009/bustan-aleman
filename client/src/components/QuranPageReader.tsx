@@ -10,7 +10,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   ChevronLeft,
@@ -545,6 +547,137 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   const isDarkTheme = quranTheme === 'dark';
 
+  // Helper function to get Surah metadata (name and start page)
+  const getSurahInfo = (num: number) => {
+    // This is a simplified map, ideally should come from a metadata constant or API
+    const surahData: Record<number, { name: string, page: number }> = {
+      1: { name: "الفاتحة", page: 1 },
+      2: { name: "البقرة", page: 2 },
+      3: { name: "آل عمران", page: 50 },
+      4: { name: "النساء", page: 77 },
+      5: { name: "المائدة", page: 106 },
+      6: { name: "الأنعام", page: 128 },
+      7: { name: "الأعراف", page: 151 },
+      8: { name: "الأنفال", page: 177 },
+      9: { name: "التوبة", page: 187 },
+      10: { name: "يونس", page: 208 },
+      11: { name: "هود", page: 221 },
+      12: { name: "يوسف", page: 235 },
+      13: { name: "الرعد", page: 249 },
+      14: { name: "إبراهيم", page: 255 },
+      15: { name: "الحجر", page: 262 },
+      16: { name: "النحل", page: 267 },
+      17: { name: "الإسراء", page: 282 },
+      18: { name: "الكهف", page: 293 },
+      19: { name: "مريم", page: 305 },
+      20: { name: "طه", page: 312 },
+      21: { name: "الأنبياء", page: 322 },
+      22: { name: "الحج", page: 332 },
+      23: { name: "المؤمنون", page: 342 },
+      24: { name: "النور", page: 350 },
+      25: { name: "الفرقان", page: 359 },
+      26: { name: "الشعراء", page: 367 },
+      27: { name: "النمل", page: 377 },
+      28: { name: "القصص", page: 385 },
+      29: { name: "العنكبوت", page: 396 },
+      30: { name: "الروم", page: 404 },
+      31: { name: "لقمان", page: 411 },
+      32: { name: "السجدة", page: 415 },
+      33: { name: "الأحزاب", page: 418 },
+      34: { name: "سبأ", page: 428 },
+      35: { name: "فاطر", page: 434 },
+      36: { name: "يس", page: 440 },
+      37: { name: "الصافات", page: 446 },
+      38: { name: "ص", page: 453 },
+      39: { name: "الزمر", page: 458 },
+      40: { name: "غافر", page: 467 },
+      41: { name: "فصلت", page: 477 },
+      42: { name: "الشورى", page: 483 },
+      43: { name: "الزخرف", page: 489 },
+      44: { name: "الدخان", page: 496 },
+      45: { name: "الجاثية", page: 499 },
+      46: { name: "الأحقاف", page: 502 },
+      47: { name: "محمد", page: 507 },
+      48: { name: "الفتح", page: 511 },
+      49: { name: "الحجرات", page: 515 },
+      50: { name: "ق", page: 518 },
+      51: { name: "الذاريات", page: 520 },
+      52: { name: "الطور", page: 523 },
+      53: { name: "النجم", page: 526 },
+      54: { name: "القمر", page: 528 },
+      55: { name: "الرحمن", page: 531 },
+      56: { name: "الواقعة", page: 534 },
+      57: { name: "الحديد", page: 537 },
+      58: { name: "المجادلة", page: 542 },
+      59: { name: "الحشر", page: 545 },
+      60: { name: "الممتحنة", page: 549 },
+      61: { name: "الصف", page: 551 },
+      62: { name: "الجمعة", page: 553 },
+      63: { name: "المنافقون", page: 554 },
+      64: { name: "التغابن", page: 556 },
+      65: { name: "الطلاق", page: 558 },
+      66: { name: "التحريم", page: 560 },
+      67: { name: "الملك", page: 562 },
+      68: { name: "القلم", page: 564 },
+      69: { name: "الحاقة", page: 566 },
+      70: { name: "المعارج", page: 568 },
+      71: { name: "نوح", page: 570 },
+      72: { name: "الجن", page: 572 },
+      73: { name: "المزمل", page: 574 },
+      74: { name: "المدثر", page: 575 },
+      75: { name: "القيامة", page: 577 },
+      76: { name: "الإنسان", page: 578 },
+      77: { name: "المرسلات", page: 580 },
+      78: { name: "النبأ", page: 582 },
+      79: { name: "النازعات", page: 583 },
+      80: { name: "عبس", page: 585 },
+      81: { name: "التكوير", page: 586 },
+      82: { name: "الانفطار", page: 587 },
+      83: { name: "المطففين", page: 587 },
+      84: { name: "الانشقاق", page: 589 },
+      85: { name: "البروج", page: 590 },
+      86: { name: "الطارق", page: 591 },
+      87: { name: "الأعلى", page: 591 },
+      88: { name: "الغاشية", page: 592 },
+      89: { name: "الفجر", page: 593 },
+      90: { name: "البلد", page: 594 },
+      91: { name: "الشمس", page: 595 },
+      92: { name: "الليل", page: 595 },
+      93: { name: "الضحى", page: 596 },
+      94: { name: "الشرح", page: 596 },
+      95: { name: "التين", page: 597 },
+      96: { name: "العلق", page: 597 },
+      97: { name: "القدر", page: 598 },
+      98: { name: "البينة", page: 598 },
+      99: { name: "الزلزلة", page: 599 },
+      100: { name: "العاديات", page: 599 },
+      101: { name: "القارعة", page: 600 },
+      102: { name: "التكاثر", page: 600 },
+      103: { name: "العصر", page: 601 },
+      104: { name: "الهمزة", page: 601 },
+      105: { name: "الفيل", page: 601 },
+      106: { name: "قريش", page: 602 },
+      107: { name: "الماعون", page: 602 },
+      108: { name: "الكوثر", page: 602 },
+      109: { name: "الكافرون", page: 603 },
+      110: { name: "النصر", page: 603 },
+      111: { name: "المسد", page: 603 },
+      112: { name: "الإخلاص", page: 604 },
+      113: { name: "الفلق", page: 604 },
+      114: { name: "الناس", page: 604 },
+    };
+    return surahData[num] || { name: `سورة ${num}`, page: 1 };
+  };
+
+  const getJuzStartPage = (num: number) => {
+    const juzPages = [
+      1, 22, 42, 62, 82, 102, 122, 142, 162, 182, 
+      202, 222, 242, 262, 282, 302, 322, 342, 362, 382, 
+      402, 422, 442, 462, 482, 502, 522, 542, 562, 582
+    ];
+    return juzPages[num - 1] || 1;
+  };
+
   return (
     <div className={`min-h-screen ${isDarkTheme ? 'bg-[#1A1A1A]' : 'bg-[#F5F0E6]'}`} dir="rtl">
       {/* Decorative border pattern - hidden on mobile */}
@@ -599,12 +732,104 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 <ChevronRight className="w-6 h-6" />
               </Button>
               
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-full blur-md" />
-                <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-4 py-1 rounded-full font-bold text-lg min-w-[80px] text-center">
-                  {currentPage}
-                </div>
-              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative group px-4 py-1 h-auto hover:bg-white/10"
+                    data-testid="button-page-nav"
+                  >
+                    <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-4 py-1 rounded-full font-bold text-lg min-w-[80px] text-center">
+                      {currentPage}
+                    </div>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-[#2D5A3D] dark:text-[#D4AF37] flex items-center gap-2">
+                      <Navigation className="w-5 h-5" />
+                      الانتقال السريع
+                    </DialogTitle>
+                  </DialogHeader>
+                  <Tabs defaultValue="surahs" className="w-full flex-1 overflow-hidden flex flex-col">
+                    <TabsList className="grid w-full grid-cols-3 bg-[#F5F0E6] dark:bg-[#1A1A1A]">
+                      <TabsTrigger value="surahs">السور</TabsTrigger>
+                      <TabsTrigger value="juzs">الأجزاء</TabsTrigger>
+                      <TabsTrigger value="pages">الصفحات</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="surahs" className="flex-1 overflow-y-auto p-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        {Array.from({ length: 114 }, (_, i) => i + 1).map((num) => {
+                          const surahInfo = getSurahInfo(num);
+                          return (
+                            <Button
+                              key={num}
+                              variant="outline"
+                              className="justify-start gap-2 h-auto py-2 text-right border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                              onClick={() => {
+                                goToPage(surahInfo.page);
+                                document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                              }}
+                            >
+                              <Badge variant="outline" className="w-8 h-8 rounded-full p-0 flex items-center justify-center shrink-0">
+                                {num}
+                              </Badge>
+                              <div className="overflow-hidden">
+                                <div className="font-bold text-sm truncate">{surahInfo.name}</div>
+                                <div className="text-[10px] text-gray-500">صفحة {surahInfo.page}</div>
+                              </div>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="juzs" className="flex-1 overflow-y-auto p-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
+                          const page = getJuzStartPage(num);
+                          return (
+                            <Button
+                              key={num}
+                              variant="outline"
+                              className="flex flex-col gap-1 h-auto py-3 border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                              onClick={() => {
+                                goToPage(page);
+                                document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                              }}
+                            >
+                              <span className="text-xs text-gray-500">الجزء</span>
+                              <span className="font-bold text-lg">{num}</span>
+                              <span className="text-[10px] text-gray-400">صفحة {page}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="pages" className="flex-1 overflow-y-auto p-2">
+                      <div className="grid grid-cols-5 gap-2">
+                        {Array.from({ length: 604 }, (_, i) => i + 1).map((num) => (
+                          <Button
+                            key={num}
+                            variant={currentPage === num ? "default" : "outline"}
+                            size="sm"
+                            className={`h-10 ${currentPage === num ? 'bg-[#2D5A3D]' : 'border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10'}`}
+                            onClick={() => {
+                              goToPage(num);
+                              document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                            }}
+                          >
+                            {num}
+                          </Button>
+                        ))}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
 
               <Button
                 onClick={goToNextPage}
