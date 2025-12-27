@@ -774,8 +774,195 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="max-w-7xl mx-auto px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
+        <div className="w-full px-2 sm:px-3 py-1.5 sm:py-2">
+          {/* Mobile layout - stacked */}
+          <div className="sm:hidden space-y-1.5">
+            {/* Mobile Row 1 - Back button and Surah info */}
+            <div className="flex items-center justify-between min-h-[40px]">
+              <div className="flex items-center gap-1.5">
+                {onBack && (
+                  <Button
+                    onClick={onBack}
+                    size="icon"
+                    variant="ghost"
+                    className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                    data-testid="button-back-home"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                )}
+                <div className="text-[#D4AF37] min-w-0">
+                  <div className="text-xs font-bold flex items-center gap-1">
+                    <Book className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">الجزء {pageData?.juz || 1}</span>
+                  </div>
+                  {getSurahsOnPage()[0] && (
+                    <div className="text-[10px] opacity-80 truncate">{getSurahsOnPage()[0].name}</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile Row 1 Right - Page and navigation */}
+              <div className="flex items-center gap-1">
+                <Button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  size="icon"
+                  variant="ghost"
+                  className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8"
+                  data-testid="button-previous-page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+                
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="relative group px-1.5 py-0.5 h-auto hover:bg-white/10 min-w-[45px]"
+                      data-testid="button-page-nav"
+                    >
+                      <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-2 py-0.5 rounded-full font-bold text-xs text-center">
+                        {currentPage}
+                      </div>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col p-4" dir="rtl">
+                    <DialogHeader className="mb-2">
+                      <DialogTitle className="text-[#2D5A3D] dark:text-[#D4AF37] flex items-center gap-2">
+                        <Navigation className="w-5 h-5" />
+                        الانتقال السريع
+                      </DialogTitle>
+                    </DialogHeader>
+                    <Tabs defaultValue="surahs" className="w-full flex-1 overflow-hidden flex flex-col">
+                      <TabsList className="grid w-full grid-cols-3 bg-[#F5F0E6] dark:bg-[#1A1A1A] h-10">
+                        <TabsTrigger value="surahs" className="text-xs sm:text-sm">السور</TabsTrigger>
+                        <TabsTrigger value="juzs" className="text-xs sm:text-sm">الأجزاء</TabsTrigger>
+                        <TabsTrigger value="pages" className="text-xs sm:text-sm">الصفحات</TabsTrigger>
+                      </TabsList>
+                      
+                      <TabsContent value="surahs" className="flex-1 overflow-y-auto p-1 mt-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          {Array.from({ length: 114 }, (_, i) => i + 1).map((num) => {
+                            const surahInfo = getSurahInfo(num);
+                            return (
+                              <Button
+                                key={num}
+                                variant="outline"
+                                className="justify-start gap-2 h-auto py-2 px-2 text-right border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                                onClick={() => {
+                                  goToPage(surahInfo.page);
+                                  document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                                }}
+                              >
+                                <Badge variant="outline" className="w-6 h-6 sm:w-8 sm:h-8 rounded-full p-0 flex items-center justify-center shrink-0 text-[10px] sm:text-xs">
+                                  {num}
+                                </Badge>
+                                <div className="overflow-hidden">
+                                  <div className="font-bold text-xs sm:text-sm truncate">{surahInfo.name}</div>
+                                  <div className="text-[9px] sm:text-[10px] text-gray-500">ص {surahInfo.page}</div>
+                                </div>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="juzs" className="flex-1 overflow-y-auto p-1 mt-2">
+                        <div className="grid grid-cols-3 gap-2">
+                          {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => {
+                            const page = getJuzStartPage(num);
+                            return (
+                              <Button
+                                key={num}
+                                variant="outline"
+                                className="flex flex-col gap-0.5 sm:gap-1 h-auto py-2 sm:py-3 border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10"
+                                onClick={() => {
+                                  goToPage(page);
+                                  document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                                }}
+                              >
+                                <span className="text-[10px] sm:text-xs text-gray-500">الجزء</span>
+                                <span className="font-bold text-base sm:text-lg">{num}</span>
+                                <span className="text-[9px] sm:text-[10px] text-gray-400">ص {page}</span>
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="pages" className="flex-1 overflow-y-auto p-1 mt-2">
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-1 sm:gap-2">
+                          {Array.from({ length: 604 }, (_, i) => i + 1).map((num) => (
+                            <Button
+                              key={num}
+                              variant={currentPage === num ? "default" : "outline"}
+                              size="sm"
+                              className={`h-8 sm:h-10 text-xs sm:text-sm ${currentPage === num ? 'bg-[#2D5A3D]' : 'border-[#2D5A3D]/20 hover:bg-[#2D5A3D]/10'}`}
+                              onClick={() => {
+                                goToPage(num);
+                                document.querySelector('[data-state="open"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                              }}
+                            >
+                              {num}
+                            </Button>
+                          ))}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </DialogContent>
+                </Dialog>
+
+                <Button
+                  onClick={goToNextPage}
+                  disabled={currentPage === 604}
+                  size="icon"
+                  variant="ghost"
+                  className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8"
+                  data-testid="button-next-page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Mobile Row 2 - Action buttons */}
+            <div className="flex items-center justify-center gap-1.5 min-h-[40px]">
+              {isSupported && (
+                <Button
+                  onClick={toggleListening}
+                  size="icon"
+                  variant="ghost"
+                  className={`${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'} hover:bg-white/20 transition-all duration-200 h-9 w-9`}
+                  data-testid="button-voice-recitation"
+                  title={isListening ? "إيقاف الاستماع" : "بدء الاستماع"}
+                >
+                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </Button>
+              )}
+              <Button
+                onClick={() => setSearchOpen(true)}
+                size="icon"
+                variant="ghost"
+                className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                data-testid="button-search"
+              >
+                <Search className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={() => setShowSettings(true)}
+                size="icon"
+                variant="ghost"
+                className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                data-testid="button-settings"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop layout - hidden on mobile */}
+          <div className="hidden sm:flex items-center justify-between gap-2">
             {/* Right side - Back and Surah info */}
             <div className="flex items-center gap-2">
               {onBack && (
