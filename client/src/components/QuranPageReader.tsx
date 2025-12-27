@@ -555,36 +555,42 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   // Watch for transcript changes and track progress
   useEffect(() => {
-    if (!isListening || !pageData?.ayahs) return;
-
-    // Use both transcript and interimTranscript for more real-time feel
-    const currentTranscript = (transcript + ' ' + interimTranscript).trim();
-    
-    // Always update recognized text if there is any input, to show user feedback
-    setRecognizedText(currentTranscript || "...");
-
-    if (!currentTranscript) return;
-
-    const ayahs = pageData.ayahs;
-    let bestMatchIndex = activeAyahIndex;
-
-    const normalizedSpoken = normalizeArabicForSearch(currentTranscript);
-    
-    // Look ahead from current position
-    for (let i = Math.max(0, activeAyahIndex); i < ayahs.length; i++) {
-      const ayahText = normalizeArabicForSearch(ayahs[i].text);
-      // Use a more lenient match: check if the normalized spoken text contains 
-      // at least a significant portion of the ayah text
-      // We take a chunk from the beginning and middle to improve matching
-      const prefix = ayahText.substring(0, Math.min(15, ayahText.length));
-      
-      if (normalizedSpoken.includes(prefix)) {
-        bestMatchIndex = i;
-      }
+    if (!isListening) {
+      if (recognizedText !== "") setRecognizedText("");
+      return;
     }
 
-    if (bestMatchIndex !== activeAyahIndex) {
-      setActiveAyahIndex(bestMatchIndex);
+    // Combine transcripts for real-time feedback
+    const combined = ((transcript || "") + " " + (interimTranscript || "")).replace(/\s+/g, ' ').trim();
+    
+    // Update display text immediately
+    if (combined) {
+      setRecognizedText(combined);
+    } else if (recognizedText !== "...") {
+      setRecognizedText("...");
+    }
+
+    if (!combined || !pageData?.ayahs) return;
+
+    const ayahs = pageData.ayahs;
+    const normalizedSpoken = normalizeArabicForSearch(combined);
+    
+    // Look for matches in the current page
+    const searchStart = Math.max(0, activeAyahIndex);
+    for (let i = searchStart; i < ayahs.length; i++) {
+      const ayahText = normalizeArabicForSearch(ayahs[i].text);
+      const prefix = ayahText.substring(0, 12);
+      
+      // Lenient word matching
+      const words = normalizedSpoken.split(' ').filter(w => w.length > 2);
+      const wordMatch = words.some(w => ayahText.includes(w));
+      
+      if (normalizedSpoken.includes(prefix) || wordMatch) {
+        if (activeAyahIndex !== i) {
+          setActiveAyahIndex(i);
+        }
+        break;
+      }
     }
   }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
 
@@ -1390,16 +1396,19 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] sm:w-[90%] max-w-lg"
+            className="fixed bottom-24 sm:bottom-6 left-1/2 -translate-x-1/2 z-[100] w-[95%] sm:w-[90%] max-w-lg px-2"
           >
-            <Card className={`${isDarkTheme ? 'bg-zinc-900/95 border-zinc-800' : 'bg-white/95 border-emerald-100'} backdrop-blur-md shadow-2xl p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-3 sm:gap-4`}>
+            <Card className={`${isDarkTheme ? 'bg-zinc-900/95 border-zinc-800 shadow-[0_0_20px_rgba(0,0,0,0.5)]' : 'bg-white/95 border-emerald-100 shadow-[0_0_20px_rgba(16,185,129,0.1)]'} backdrop-blur-md p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center gap-3 sm:gap-4 overflow-hidden`}>
               <div className="bg-emerald-500/10 p-2 rounded-full shrink-0">
                 <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 animate-pulse" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-[10px] sm:text-xs font-medium mb-0.5`}>جاري الاستماع...</p>
-                <div className="h-7 sm:h-8 flex items-center">
-                  <p className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-base sm:text-lg font-medium truncate leading-relaxed w-full`}>
+                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-[10px] sm:text-xs font-medium mb-0.5 text-right`}>جاري الاستماع...</p>
+                <div className="h-7 sm:h-8 flex items-center justify-end overflow-hidden">
+                  <p 
+                    className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-base sm:text-lg font-medium whitespace-nowrap leading-relaxed text-right`}
+                    style={{ direction: 'rtl' }}
+                  >
                     {recognizedText || "..."}
                   </p>
                 </div>
