@@ -1366,6 +1366,38 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Recitation Floating Bar */}
+      <AnimatePresence>
+        {isListening && recognizedText && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-lg"
+          >
+            <Card className={`${isDarkTheme ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-emerald-100'} backdrop-blur-md shadow-2xl p-4 rounded-2xl flex items-center gap-4`}>
+              <div className="bg-emerald-500/10 p-2 rounded-full">
+                <Mic className="w-5 h-5 text-emerald-500 animate-pulse" />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <p className={`${isDarkTheme ? 'text-zinc-400' : 'text-zinc-500'} text-xs font-medium mb-0.5`}>جاري الاستماع...</p>
+                <p className={`${isDarkTheme ? 'text-zinc-100' : 'text-zinc-800'} text-lg font-medium truncate leading-relaxed`}>
+                  {recognizedText}
+                </p>
+              </div>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                onClick={() => setRecognizedText('')}
+                className="hover:bg-zinc-500/10"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="sm:max-w-[400px]" dir="rtl">
