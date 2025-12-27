@@ -672,39 +672,37 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             style={{ perspective: 1000 }}
           >
             {/* Mushaf Page */}
-            <div className={`relative ${isDarkTheme ? 'bg-[#2A2A2A]' : 'bg-[#FDF8F0]'} rounded-lg shadow-2xl overflow-hidden`}>
+            <div className={`relative ${isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]'} overflow-hidden`}>
               {/* Ornamental frame - hidden on mobile */}
               <div className="hidden sm:block absolute inset-0 pointer-events-none">
                 {/* Corner decorations */}
-                <div className={`absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-tr-lg`} />
-                <div className={`absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-tl-lg`} />
-                <div className={`absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-br-lg`} />
-                <div className={`absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/40' : 'border-[#8B7355]/40'} rounded-bl-lg`} />
-                {/* Inner frame */}
-                <div className={`absolute inset-4 border ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded`} />
+                <div className={`absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-tr-lg`} />
+                <div className={`absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-tl-lg`} />
+                <div className={`absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-br-lg`} />
+                <div className={`absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-bl-lg`} />
               </div>
 
               {/* Page header with Surah name */}
-              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] text-white py-2 sm:py-3 px-3 sm:px-6">
+              <div className="py-2 sm:py-3 px-3 sm:px-6 border-b border-[#D4AF37]/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getSurahsOnPage().map((surah, idx) => (
                       <Badge 
                         key={surah.number} 
-                        className="bg-[#D4AF37] text-[#2D5A3D] font-bold"
+                        className={`${isDarkTheme ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-[#2D5A3D]/10 text-[#2D5A3D]'} border-none font-bold`}
                       >
                         {surah.name}
                       </Badge>
                     ))}
                   </div>
-                  <div className="text-[#D4AF37] text-sm font-medium">
+                  <div className={`${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#8B7355]/60'} text-sm font-medium`}>
                     صفحة {currentPage} من 604
                   </div>
                 </div>
               </div>
 
               {/* Ayahs content */}
-              <div className="p-3 sm:p-6 md:p-10 min-h-[60vh]">
+              <div className="p-3 sm:p-6 md:p-8 min-h-[60vh]">
                 {isLoading ? (
                   <div className="flex items-center justify-center h-96">
                     <div className="text-center">
@@ -801,10 +799,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </div>
 
               {/* Page footer */}
-              <div className="bg-gradient-to-r from-[#2D5A3D] via-[#3D7A4D] to-[#2D5A3D] py-2 px-6">
-                <div className="flex items-center justify-center gap-4 text-[#D4AF37] text-sm">
+              <div className="py-2 px-6 border-t border-[#D4AF37]/20">
+                <div className="flex items-center justify-center gap-4 text-[#D4AF37]/60 text-sm">
                   <span>الجزء {pageData?.juz || 1}</span>
-                  <span className="opacity-50">|</span>
+                  <span className="opacity-30">|</span>
                   <span>الحزب {Math.ceil((pageData?.juz || 1) * 2)}</span>
                 </div>
               </div>
