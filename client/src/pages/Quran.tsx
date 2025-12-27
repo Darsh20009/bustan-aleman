@@ -237,22 +237,22 @@ export default function Quran() {
       <Navigation />
       
       {/* Header - Quran Section */}
-      <section className="quran-section py-16">
+      <section className="quran-section py-8 md:py-16">
         <div className="islamic-pattern-overlay"></div>
         <div className="container mx-auto px-4 text-center relative z-10">
           <h1 
-            className="text-4xl md:text-5xl font-bold font-arabic-serif mb-6"
+            className="text-3xl md:text-5xl font-bold font-arabic-serif mb-4 md:mb-6"
             data-testid="page-title"
           >
             المصحف الشريف المطور
           </h1>
-          <p className="text-xl mb-8 opacity-90">
+          <p className="text-lg md:text-xl mb-6 md:mb-8 opacity-90 px-4">
             مصحف تفاعلي شامل مع إمكانيات متقدمة للحفظ والمراجعة
           </p>
           {!isAuthenticated && (
             <Button 
               onClick={() => window.location.href = "/api/login"}
-              className="bg-btn text-btn-foreground hover:opacity-90 px-8 py-3 text-lg font-semibold"
+              className="bg-btn text-btn-foreground hover:opacity-90 px-6 md:px-8 py-2 md:py-3 text-base md:text-lg font-semibold w-full md:w-auto"
               data-testid="button-login-to-start"
             >
               سجل دخولك للبدء
@@ -264,25 +264,25 @@ export default function Quran() {
       {isAuthenticated ? (
         <>
           {/* Enhanced Controls Bar */}
-          <section className="py-6 quran-section">
-            <div className="container mx-auto px-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+          <section className="py-4 md:py-6 quran-section sticky top-0 z-30">
+            <div className="container mx-auto px-2 md:px-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 items-center">
                 {/* Search */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 text-quran-foreground" size={20} />
+                  <Search className="absolute left-3 top-2.5 md:top-3 text-quran-foreground" size={18} />
                   <Input
                     type="text"
                     placeholder="البحث في السور..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-white/20 border-white/30 text-quran-foreground placeholder:text-white/70"
+                    className="pl-10 bg-white/20 border-white/30 text-quran-foreground placeholder:text-white/70 h-9 md:h-10"
                     data-testid="search-surahs"
                   />
                 </div>
 
                 {/* Reader Selection */}
                 <Select value={selectedReader} onValueChange={setSelectedReader}>
-                  <SelectTrigger className="bg-white/20 border-white/30 text-white" data-testid="select-reader">
+                  <SelectTrigger className="bg-white/20 border-white/30 text-white h-9 md:h-10" data-testid="select-reader">
                     <SelectValue placeholder="اختر القارئ" />
                   </SelectTrigger>
                   <SelectContent>
@@ -295,107 +295,105 @@ export default function Quran() {
                 </Select>
 
                 {/* Font Size Control */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center gap-2 bg-white/10 rounded-md py-1 md:py-0">
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setFontSize(Math.max(16, fontSize - 2))}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-8 md:h-9"
                     data-testid="decrease-font"
                   >
-                    <Minus size={16} />
+                    <Minus size={14} />
                   </Button>
-                  <span className="min-w-[50px] text-center text-sm">حجم النص</span>
+                  <span className="min-w-[60px] text-center text-xs md:text-sm text-white">حجم {fontSize}</span>
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={() => setFontSize(Math.min(36, fontSize + 2))}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/20 h-8 md:h-9"
                     data-testid="increase-font"
                   >
-                    <Plus size={16} />
+                    <Plus size={14} />
                   </Button>
                 </div>
 
                 {/* Settings */}
                 <Button 
                   variant="ghost" 
-                  className="text-quran-foreground hover:bg-white/20"
+                  className="text-quran-foreground hover:bg-white/20 h-9 md:h-10 w-full"
                   onClick={() => setShowTafseer(!showTafseer)}
                   data-testid="toggle-tafseer"
                 >
                   <Settings className="mr-2" size={16} />
-                  {showTafseer ? "إخفاء التفسير" : "إظهار التفسير"}
+                  <span className="text-sm md:text-base">{showTafseer ? "إخفاء التفسير" : "إظهار التفسير"}</span>
                 </Button>
               </div>
             </div>
           </section>
 
           {/* Progress Overview */}
-          <section className="py-12 bg-muted">
+          <section className="py-8 md:py-12 bg-muted">
             <div className="container mx-auto px-4">
               {notesLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
                   {[...Array(4)].map((_, i) => (
-                    <Card key={i} className="islamic-card text-center">
-                      <CardContent className="p-6">
-                        <div className="islamic-spinner w-12 h-12 mx-auto mb-4"></div>
-                        <div className="h-8 bg-gray-200 rounded mb-2"></div>
-                        <div className="h-4 bg-gray-100 rounded"></div>
+                    <Card key={i} className="islamic-card text-center h-24 md:h-auto">
+                      <CardContent className="p-4 md:p-6">
+                        <div className="islamic-spinner w-8 h-8 md:w-12 md:h-12 mx-auto mb-2 md:mb-4"></div>
                       </CardContent>
                     </Card>
                   ))}
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
                     <Card className="islamic-card text-center">
-                      <CardContent className="p-6">
-                        <BookOpen className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                        <h3 className="text-2xl font-bold text-islamic-green mb-2">
+                      <CardContent className="p-3 md:p-6">
+                        <BookOpen className="text-xl md:text-3xl text-islamic-green mb-2 md:mb-4 mx-auto" />
+                        <h3 className="text-lg md:text-2xl font-bold text-islamic-green mb-1">
                           {memorizedVerses}
                         </h3>
-                        <p className="text-gray-600">الآيات المحفوظة</p>
+                        <p className="text-[10px] md:text-sm text-gray-600">الآيات المحفوظة</p>
                       </CardContent>
                     </Card>
                     
                     <Card className="islamic-card text-center">
-                      <CardContent className="p-6">
-                        <CheckCircle className="text-3xl text-warm-gold mb-4 mx-auto" size={48} />
-                        <h3 className="text-2xl font-bold text-warm-gold mb-2">
+                      <CardContent className="p-3 md:p-6">
+                        <CheckCircle className="text-xl md:text-3xl text-warm-gold mb-2 md:mb-4 mx-auto" />
+                        <h3 className="text-lg md:text-2xl font-bold text-warm-gold mb-1">
                           {memorizedSurahs}
                         </h3>
-                        <p className="text-gray-600">السور المحفوظة</p>
+                        <p className="text-[10px] md:text-sm text-gray-600">السور المحفوظة</p>
                       </CardContent>
                     </Card>
                     
                     <Card className="islamic-card text-center">
-                      <CardContent className="p-6">
-                        <Bookmark className="text-3xl text-earth-brown mb-4 mx-auto" size={48} />
-                        <h3 className="text-2xl font-bold text-earth-brown mb-2">
+                      <CardContent className="p-3 md:p-6">
+                        <Bookmark className="text-xl md:text-3xl text-earth-brown mb-2 md:mb-4 mx-auto" />
+                        <h3 className="text-lg md:text-2xl font-bold text-earth-brown mb-1">
                           {bookmarks.length}
                         </h3>
-                        <p className="text-gray-600">العلامات المرجعية</p>
+                        <p className="text-[10px] md:text-sm text-gray-600">العلامات</p>
                       </CardContent>
                     </Card>
 
                     <Card className="islamic-card text-center">
-                      <CardContent className="p-6">
-                        <RotateCcw className="text-3xl text-islamic-green mb-4 mx-auto" size={48} />
-                        <h3 className="text-2xl font-bold text-islamic-green mb-2">
+                      <CardContent className="p-3 md:p-6">
+                        <RotateCcw className="text-xl md:text-3xl text-islamic-green mb-2 md:mb-4 mx-auto" />
+                        <h3 className="text-lg md:text-2xl font-bold text-islamic-green mb-1">
                           {Math.round(progressPercentage)}%
                         </h3>
-                        <p className="text-gray-600">التقدم الإجمالي</p>
+                        <p className="text-[10px] md:text-sm text-gray-600">التقدم</p>
                       </CardContent>
                     </Card>
                   </div>
                   
                   <Card>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-4">تقدم الحفظ</h3>
-                      <Progress value={progressPercentage} className="mb-2" />
-                      <p className="text-sm text-gray-600">
-                        لقد حفظت {memorizedVerses} آية من أصل 6,236 آية في القرآن الكريم
+                    <CardContent className="p-4 md:p-6">
+                      <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4">تقدم الحفظ</h3>
+                      <Progress value={progressPercentage} className="h-2 md:h-3 mb-2" />
+                      <p className="text-xs md:text-sm text-gray-600">
+                        لقد حفظت {memorizedVerses} آية من أصل 6,236 آية
                       </p>
                     </CardContent>
                   </Card>
@@ -405,83 +403,87 @@ export default function Quran() {
           </section>
 
           {/* Enhanced Quran Reader */}
-          <section className="py-16 bg-card">
-            <div className="container mx-auto px-4">
+          <section className="py-8 md:py-16 bg-card">
+            <div className="container mx-auto px-2 md:px-4">
               <div className="max-w-4xl mx-auto">
-                <Card className="mb-8">
-                  <CardContent className="p-8">
-                    <div className="text-center mb-6">
-                      <h2 className="text-2xl font-bold font-arabic-serif text-islamic-green mb-2">
+                <Card className="mb-6 md:mb-8">
+                  <CardContent className="p-4 md:p-8">
+                    <div className="text-center mb-4 md:mb-6">
+                      <h2 className="text-xl md:text-2xl font-bold font-arabic-serif text-islamic-green mb-1 md:mb-2">
                         {selectedSurah.arabicName}
                       </h2>
-                      <p className="text-gray-600">
+                      <p className="text-xs md:text-sm text-gray-600">
                         {selectedSurah.name} - الآية {currentAyah} من {selectedSurah.verses} - {selectedSurah.revelation}
                       </p>
                     </div>
                     
                     {/* Enhanced Verse Display */}
-                    <div className="text-center bg-light-beige p-8 rounded-lg mb-6">
-                      <div className="mb-4">
-                        <span className="inline-block bg-islamic-green text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold mb-4">
+                    <div className="text-center bg-light-beige p-4 md:p-8 rounded-lg mb-4 md:mb-6">
+                      <div className="mb-2 md:mb-4">
+                        <span className="inline-block bg-islamic-green text-white rounded-full w-6 h-6 md:w-8 md:h-8 flex items-center justify-center text-[10px] md:text-sm font-bold mb-2 md:mb-4">
                           {currentAyah}
                         </span>
                       </div>
                       <p 
-                        className="font-arabic-serif leading-relaxed text-dark-charcoal"
-                        style={{ fontSize: `${fontSize}px` }}
+                        className="font-arabic-serif leading-relaxed text-dark-charcoal text-justify md:text-center"
+                        style={{ fontSize: `calc(${fontSize}px * 0.8 + 0.2 * 100vw / 25)` }}
                       >
                         {getVerseText(currentSurah, currentAyah)}
                       </p>
                     </div>
                     
                     {/* Enhanced Audio Controls */}
-                    <div className="flex justify-center gap-2 mb-6 flex-wrap">
+                    <div className="flex justify-center gap-2 mb-4 md:mb-6 flex-wrap">
                       <Button 
                         variant="outline" 
+                        size="sm"
                         onClick={() => {
                           setCurrentAyah(Math.max(1, currentAyah - 1));
                           updateProgress();
                         }}
                         disabled={currentAyah === 1}
-                        className="btn-islamic-secondary"
+                        className="h-8 md:h-10 text-xs md:text-sm px-2 md:px-4"
                         data-testid="button-previous-ayah"
                       >
-                        <SkipBack size={16} />
+                        <SkipBack size={14} className="ml-1" />
                         السابق
                       </Button>
                       
                       <Button 
+                        size="sm"
                         onClick={playAudio}
-                        className="btn-islamic-gradient flex items-center gap-2 px-6"
+                        className="h-8 md:h-10 text-xs md:text-sm px-4 md:px-8 btn-islamic-gradient flex items-center gap-1 md:gap-2"
                         data-testid="button-play-audio"
                       >
-                        {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                        {isPlaying ? <Pause size={14} /> : <Play size={14} />}
                         {isPlaying ? "إيقاف" : "تشغيل"}
                       </Button>
                       
                       <Button 
                         variant="outline" 
+                        size="sm"
                         onClick={() => {
                           setCurrentAyah(Math.min(selectedSurah.verses, currentAyah + 1));
                           updateProgress();
                         }}
                         disabled={currentAyah === selectedSurah.verses}
-                        className="btn-islamic-secondary"
+                        className="h-8 md:h-10 text-xs md:text-sm px-2 md:px-4"
                         data-testid="button-next-ayah"
                       >
                         التالي
-                        <SkipForward size={16} />
+                        <SkipForward size={14} className="mr-1" />
                       </Button>
                       
                       <Button 
                         variant="outline" 
+                        size="sm"
                         onClick={toggleBookmark}
                         disabled={updateProgressMutation.isPending}
-                        className={`flex items-center gap-2 ${isBookmarked ? 'bg-royal-gold text-white border-royal-gold' : 'btn-islamic-secondary'}`}
+                        className={`h-8 md:h-10 text-xs md:text-sm px-3 md:px-4 flex items-center gap-1 md:gap-2 ${isBookmarked ? 'bg-royal-gold text-white border-royal-gold' : 'btn-islamic-secondary'}`}
                         data-testid="button-bookmark"
                       >
-                        <Bookmark size={16} />
-                        {isBookmarked ? "★ محفوظة" : "🔖 حفظ"}
+                        <Bookmark size={14} />
+                        {isBookmarked ? "محفوظة" : "حفظ"}
                       </Button>
                       
                       {/* Note Button */}
@@ -489,45 +491,34 @@ export default function Quran() {
                         <DialogTrigger asChild>
                           <Button 
                             variant="outline" 
-                            className={`flex items-center gap-2 ${currentNote ? 'bg-islamic-emerald text-white border-islamic-emerald' : 'btn-islamic-secondary'}`}
+                            size="sm"
+                            className={`h-8 md:h-10 text-xs md:text-sm px-3 md:px-4 flex items-center gap-1 md:gap-2 ${currentNote ? 'bg-islamic-emerald text-white border-islamic-emerald' : 'btn-islamic-secondary'}`}
                             data-testid="button-add-note"
                           >
-                            <FileText size={16} />
+                            <FileText size={14} />
                             {currentNote ? "📝 ملاحظة" : "➕ ملاحظة"}
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="max-w-md" dir="rtl">
+                        <DialogContent className="max-w-[95vw] md:max-w-lg">
                           <DialogHeader>
-                            <DialogTitle className="font-arabic-serif text-islamic-emerald">
-                              ملاحظة على الآية {currentAyah} من {selectedSurah.arabicName}
-                            </DialogTitle>
+                            <DialogTitle>إضافة ملاحظة للآية {currentAyah} من سورة {selectedSurah.name}</DialogTitle>
                           </DialogHeader>
-                          <div className="space-y-4">
-                            {currentNote && (
-                              <div className="bg-islamic-emerald/10 p-4 rounded-lg">
-                                <h4 className="font-bold text-islamic-emerald mb-2">ملاحظة محفوظة:</h4>
-                                <p className="text-copper-bronze font-arabic-sans">{currentNote.note}</p>
-                              </div>
-                            )}
-                            <Textarea
-                              placeholder="اكتب ملاحظتك على هذه الآية..."
-                              value={noteText}
+                          <div className="py-4">
+                            <Textarea 
+                              placeholder="اكتب ملاحظاتك هنا..."
+                              value={noteText || currentNote?.note || ""}
                               onChange={(e) => setNoteText(e.target.value)}
-                              className="min-h-[100px] font-arabic-sans"
-                              data-testid="textarea-note"
+                              className="min-h-[150px] font-arabic"
+                              data-testid="note-textarea"
                             />
-                            <div className="flex gap-2">
+                            <div className="flex justify-end mt-4">
                               <Button 
                                 onClick={saveNote}
-                                disabled={!noteText.trim() || saveNoteMutation.isPending}
-                                className="btn-islamic-gradient flex-1"
-                                data-testid="button-save-note"
+                                disabled={saveNoteMutation.isPending}
+                                className="btn-islamic-gradient"
+                                data-testid="save-note-button"
                               >
-                                {saveNoteMutation.isPending ? (
-                                  <><div className="islamic-spinner w-4 h-4 mr-2"></div> جاري الحفظ...</>
-                                ) : (
-                                  <><Save size={16} className="mr-2" /> حفظ الملاحظة</>
-                                )}
+                                {saveNoteMutation.isPending ? "جاري الحفظ..." : "حفظ الملاحظة"}
                               </Button>
                             </div>
                           </div>
