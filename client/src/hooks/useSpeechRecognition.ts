@@ -75,9 +75,12 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       }
       
       if (finalTranscript) {
-        setTranscript(prev => prev + ' ' + finalTranscript);
+        setTranscript(prev => {
+          const newTranscript = (prev + ' ' + finalTranscript).trim().replace(/\s+/g, ' ');
+          return newTranscript;
+        });
       }
-      setInterimTranscript(interim);
+      setInterimTranscript(interim.trim());
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {

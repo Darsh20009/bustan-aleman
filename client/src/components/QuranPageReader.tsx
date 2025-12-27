@@ -563,11 +563,13 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     // Combine transcripts for real-time feedback
     const combined = ((transcript || "") + " " + (interimTranscript || "")).replace(/\s+/g, ' ').trim();
     
-    // Update display text immediately
+    // Update display text immediately with visual feedback for interim
     if (combined) {
       setRecognizedText(combined);
-    } else if (recognizedText !== "...") {
+    } else if (isListening) {
       setRecognizedText("...");
+    } else {
+      setRecognizedText("");
     }
 
     if (!combined || !pageData?.ayahs) return;

@@ -527,18 +527,33 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
                 </div>
 
                 {interimTranscript && (
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-600 font-semibold mb-1">جاري التعرف على الصوت:</p>
-                    <p className="text-blue-800 font-arabic">{interimTranscript}</p>
+                  <div className="mb-4 p-4 bg-blue-50/80 border-2 border-blue-200 rounded-xl shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                        <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" />
+                      </div>
+                      <p className="text-sm text-blue-600 font-bold">جاري التعرف على التلاوة:</p>
+                    </div>
+                    <p className="text-xl text-blue-900 font-arabic leading-relaxed bg-white/50 p-3 rounded-lg border border-blue-100">
+                      {interimTranscript}
+                    </p>
                   </div>
                 )}
 
                 {isListening && (
-                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                    <p className="text-sm text-red-800 font-semibold">
-                      جاري التسميع... تحدث بصوت واضح
-                    </p>
+                  <div className="mb-4 p-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl flex items-center justify-between shadow-sm animate-pulse">
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <div className="w-4 h-4 bg-emerald-500 rounded-full animate-ping absolute opacity-75" />
+                        <div className="w-4 h-4 bg-emerald-500 rounded-full relative" />
+                      </div>
+                      <p className="text-emerald-800 font-bold">
+                        تحدث الآن... جاري الاستماع لتلاوتك العطرة
+                      </p>
+                    </div>
+                    <Mic className="w-6 h-6 text-emerald-500" />
                   </div>
                 )}
 
