@@ -810,16 +810,28 @@ export function setupSheikhRoutes(app: Express) {
   // Create homework for teacher
   app.post('/api/teacher/homework', requireAuth, requireSupervisorOrAdmin, async (req: AuthenticatedRequest, res) => {
     try {
-      const assignmentData = assignmentSchema.parse(req.body);
+      const body = req.body;
       const sheikhId = req.user!.id;
 
+      if (body.title || body.titleAr || body.description) {
+        const homework = await storage.createHomework({
+          titleAr: body.titleAr || body.title || 'واجب جديد',
+          titleEn: body.titleEn || body.title || undefined,
+          descriptionAr: body.description || body.descriptionAr || '',
+          dueDate: body.dueDate ? new Date(body.dueDate) : new Date(Date.now() + 7 * 86400000),
+          type: body.type || 'general',
+          createdBy: sheikhId,
+          halaqaId: body.halaqaId || undefined,
+        } as any);
+        return res.status(201).json(homework);
+      }
+
+      const assignmentData = assignmentSchema.parse(body);
       const assignment = await storage.createDailyAssignment({
         ...assignmentData,
         assignedBy: sheikhId,
       });
-
       wsService.notifyStudentOfAssignment(assignmentData.studentId, assignment);
-
       res.status(201).json(assignment);
     } catch (error) {
       console.error("Error creating homework:", error);

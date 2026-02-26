@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { SUBSCRIPTION_PLANS, getPlanById } from "./subscriptionPlansData";
 import { setupPhoneAuth, isPhoneAuthenticated, isTeacher, initializePreregisteredUsers } from "./phoneAuth";
 import { requireSupervisor, requireSupervisorOrAdmin, requireAuth, type AuthenticatedRequest } from "./authMiddleware";
 import { quranService } from "./quranService";
@@ -3801,137 +3802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all subscription plans
   app.get("/api/subscription/plans", async (req, res) => {
     try {
-      // Return sample subscription plans
-      const plans = [
-        {
-          id: "plan_1",
-          nameAr: "خطة مجانية",
-          nameEn: "Free Plan",
-          descriptionAr: "ابدأ مجاناً",
-          descriptionEn: "Start for free",
-          duration: "monthly",
-          durationDays: 30,
-          price: "0.00",
-          currency: "SAR",
-          sessionsCount: 1,
-          features: JSON.stringify(["حصة واحدة شهرياً", "المصحف التفاعلي"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 1
-        },
-        {
-          id: "plan_2",
-          nameAr: "خطة أساسية",
-          nameEn: "Basic Plan",
-          descriptionAr: "خطة مثالية للمبتدئين",
-          descriptionEn: "Perfect for beginners",
-          duration: "monthly",
-          durationDays: 30,
-          price: "99.99",
-          currency: "SAR",
-          sessionsCount: 4,
-          features: JSON.stringify(["4 حصص شهرية", "المصحف التفاعلي", "دعم عام", "متابعة التقدم"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 2
-        },
-        {
-          id: "plan_3",
-          nameAr: "خطة احترافية",
-          nameEn: "Pro Plan",
-          descriptionAr: "الخطة الأكثر شيوعاً",
-          descriptionEn: "Most popular plan",
-          duration: "monthly",
-          durationDays: 30,
-          price: "199.99",
-          currency: "SAR",
-          sessionsCount: 8,
-          features: JSON.stringify(["8 حصص شهرية", "المصحف التفاعلي", "دعم VIP", "شهادات", "تتبع التقدم", "محتوى إضافي"]),
-          isActive: true,
-          isFeatured: true,
-          sortOrder: 3
-        },
-        {
-          id: "plan_4",
-          nameAr: "خطة متقدمة",
-          nameEn: "Advanced Plan",
-          descriptionAr: "للراغبين في التقدم السريع",
-          descriptionEn: "For fast learners",
-          duration: "monthly",
-          durationDays: 30,
-          price: "299.99",
-          currency: "SAR",
-          sessionsCount: 12,
-          features: JSON.stringify(["12 حصة شهرياً", "المصحف التفاعلي", "دعم VIP 24/7", "شهادات معتمدة", "تتبع متقدم", "محتوى حصري"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 4
-        },
-        {
-          id: "plan_5",
-          nameAr: "خطة ربع سنوية",
-          nameEn: "Quarterly Plan",
-          descriptionAr: "توفير 15%",
-          descriptionEn: "Save 15%",
-          duration: "quarterly",
-          durationDays: 90,
-          price: "499.99",
-          currency: "SAR",
-          sessionsCount: 24,
-          features: JSON.stringify(["24 حصة لمدة 3 أشهر", "المصحف التفاعلي", "دعم VIP", "شهادات", "توفير 15%"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 5
-        },
-        {
-          id: "plan_6",
-          nameAr: "خطة نصف سنوية",
-          nameEn: "Semi-Annual Plan",
-          descriptionAr: "توفير 25%",
-          descriptionEn: "Save 25%",
-          duration: "quarterly",
-          durationDays: 180,
-          price: "899.99",
-          currency: "SAR",
-          sessionsCount: 50,
-          features: JSON.stringify(["50 حصة لمدة 6 أشهر", "المصحف التفاعلي", "دعم VIP 24/7", "شهادات معتمدة", "توفير 25%"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 6
-        },
-        {
-          id: "plan_7",
-          nameAr: "خطة سنوية",
-          nameEn: "Annual Plan",
-          descriptionAr: "الأفضل - توفير 40%",
-          descriptionEn: "Best value - Save 40%",
-          duration: "yearly",
-          durationDays: 365,
-          price: "1199.99",
-          currency: "SAR",
-          sessionsCount: 120,
-          features: JSON.stringify(["120 حصة في السنة", "المصحف التفاعلي", "دعم VIP 24/7", "شهادات معتمدة", "توفير 40%", "محتوى حصري"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 7
-        },
-        {
-          id: "plan_8",
-          nameAr: "خطة علمية كاملة",
-          nameEn: "Complete Plan",
-          descriptionAr: "الخطة الشاملة الكاملة",
-          descriptionEn: "Complete premium experience",
-          duration: "yearly",
-          durationDays: 365,
-          price: "1999.99",
-          currency: "SAR",
-          sessionsCount: 250,
-          features: JSON.stringify(["حصص غير محدودة تقريباً (250 حصة)", "المصحف التفاعلي المتقدم", "دعم VIP 24/7", "شهادات معتمدة من الأزهر", "تتبع متقدم للتقدم", "محتوى حصري وكامل", "فصول خاصة"]),
-          isActive: true,
-          isFeatured: false,
-          sortOrder: 8
-        }
-      ];
+      const plans = SUBSCRIPTION_PLANS;
       res.json(plans);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
@@ -4302,15 +4173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add subscriptions from in-memory cart
       const subscriptionItems = subscriptionCarts.get(userId) ? Array.from(subscriptionCarts.get(userId)!) : [];
       const enrichedSubscriptionItems = subscriptionItems.map((sub: any) => {
-        const plans = [
-          { id: "plan_1", nameAr: "خطة مجانية", nameEn: "Free Plan", price: "0.00", currency: "SAR", sessionsCount: 1, descriptionAr: "ابدأ مجاناً" },
-          { id: "plan_2", nameAr: "خطة أساسية", nameEn: "Basic Plan", price: "99.99", currency: "SAR", sessionsCount: 4, descriptionAr: "خطة مثالية للمبتدئين" },
-          { id: "plan_3", nameAr: "خطة احترافية", nameEn: "Pro Plan", price: "199.99", currency: "SAR", sessionsCount: 8, descriptionAr: "الخطة الأكثر شيوعاً" },
-          { id: "plan_4", nameAr: "خطة متقدمة", nameEn: "Advanced Plan", price: "299.99", currency: "SAR", sessionsCount: 12, descriptionAr: "للراغبين في التقدم السريع" },
-          { id: "plan_5", nameAr: "خطة ربع سنوية", nameEn: "Quarterly Plan", price: "499.99", currency: "SAR", sessionsCount: 24, descriptionAr: "توفير 15%" },
-          { id: "plan_6", nameAr: "خطة نصف سنوية", nameEn: "Semi-Annual Plan", price: "699.99", currency: "SAR", sessionsCount: 48, descriptionAr: "توفير 25%" }
-        ];
-        const plan = plans.find(p => p.id === sub.planId);
+        const plan = getPlanById(sub.planId);
         return {
           ...sub,
           subscriptionPlanId: sub.planId,

@@ -49,10 +49,16 @@ export function setupHomeworkRoutes(app: Express) {
   // Create homework (teachers only)
   app.post('/api/homeworks', requireAuth, requireTeacherOrHigher, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const parsed = insertHomeworkSchema.safeParse({
-        ...req.body,
+      const body = req.body;
+      const normalized = {
+        ...body,
+        titleAr: body.titleAr || body.title || body.titleEn || '',
+        titleEn: body.titleEn || body.title || undefined,
+        dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
         createdBy: req.user!.id,
-      });
+      };
+
+      const parsed = insertHomeworkSchema.safeParse(normalized);
 
       if (!parsed.success) {
         return res.status(400).json({ message: "بيانات غير صحيحة", errors: parsed.error.errors });

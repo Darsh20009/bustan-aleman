@@ -49,9 +49,11 @@ import {
   BankTransferRequest,
   LessonReminder,
   AcademySettings,
+  Quiz,
 } from "./models";
 import { hashPassword, verifyPassword } from "./authUtils";
 import { isMongoConnected } from "./mongodb";
+import { SUBSCRIPTION_PLANS, getPlanById } from "./subscriptionPlansData";
 import type {
   User as UserType,
   UpsertUser,
@@ -521,9 +523,13 @@ export class MongoDBStorage implements IStorage {
     return toPlainObject<ContactMessageType>(newMessage);
   }
 
-  async getContactMessages(): Promise<ContactMessageType[]> {
+  async getContactMessages(filters?: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessageType[]> {
     if (!this.isDbAvailable()) return [];
-    const messages = await ContactMessage.find().sort({ createdAt: -1 });
+    const query: any = {};
+    if (filters?.isRead !== undefined) query.isRead = filters.isRead;
+    const skip = filters?.page && filters?.limit ? (filters.page - 1) * filters.limit : 0;
+    const limitVal = filters?.limit || 100;
+    const messages = await ContactMessage.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitVal);
     return toPlainArray<ContactMessageType>(messages);
   }
 
@@ -1628,18 +1634,33 @@ export class MongoDBStorage implements IStorage {
   }
 
   // ─── Subscription Plan Operations ────────────────────────────────────────────
+  private isObjectId(id: string): boolean {
+    return /^[a-f\d]{24}$/i.test(id);
+  }
+
   async getSubscriptionPlans(): Promise<any[]> {
-    if (!this.isDbAvailable()) return [];
-    return toPlainArray(await SubscriptionPlan.find().sort({ sortOrder: 1 }));
+    if (!this.isDbAvailable()) return SUBSCRIPTION_PLANS;
+    const docs = await SubscriptionPlan.find().sort({ sortOrder: 1 });
+    if (docs.length === 0) return SUBSCRIPTION_PLANS;
+    return toPlainArray(docs);
   }
   async getActiveSubscriptionPlans(): Promise<any[]> {
-    if (!this.isDbAvailable()) return [];
-    return toPlainArray(await SubscriptionPlan.find({ isActive: true }).sort({ sortOrder: 1 }));
+    if (!this.isDbAvailable()) return SUBSCRIPTION_PLANS.filter(p => p.isActive);
+    const docs = await SubscriptionPlan.find({ isActive: true }).sort({ sortOrder: 1 });
+    if (docs.length === 0) return SUBSCRIPTION_PLANS.filter(p => p.isActive);
+    return toPlainArray(docs);
   }
   async getSubscriptionPlan(id: string): Promise<any> {
-    if (!this.isDbAvailable()) return undefined;
-    const doc = await SubscriptionPlan.findById(id);
-    return doc ? toPlainObject(doc) : undefined;
+    if (!this.isDbAvailable()) return getPlanById(id);
+    try {
+      if (this.isObjectId(id)) {
+        const doc = await SubscriptionPlan.findById(id);
+        if (doc) return toPlainObject(doc);
+      }
+    } catch {}
+    const byStringId = await SubscriptionPlan.findOne({ planId: id } as any);
+    if (byStringId) return toPlainObject(byStringId);
+    return getPlanById(id) || undefined;
   }
   async createSubscriptionPlan(plan: any): Promise<any> {
     if (!this.isDbAvailable()) throw new Error("MongoDB not available");
@@ -1647,13 +1668,15 @@ export class MongoDBStorage implements IStorage {
   }
   async updateSubscriptionPlan(id: string, updates: any): Promise<any> {
     if (!this.isDbAvailable()) throw new Error("MongoDB not available");
-    const doc = await SubscriptionPlan.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
-    if (!doc) throw new Error("Subscription plan not found");
-    return toPlainObject(doc);
+    if (this.isObjectId(id)) {
+      const doc = await SubscriptionPlan.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+      if (doc) return toPlainObject(doc);
+    }
+    throw new Error("Subscription plan not found");
   }
   async deleteSubscriptionPlan(id: string): Promise<void> {
     if (!this.isDbAvailable()) throw new Error("MongoDB not available");
-    await SubscriptionPlan.findByIdAndDelete(id);
+    if (this.isObjectId(id)) await SubscriptionPlan.findByIdAndDelete(id);
   }
 
   // ─── Subscription Operations ──────────────────────────────────────────────────
@@ -1846,6 +1869,197 @@ export class MongoDBStorage implements IStorage {
       { upsert: true, new: true }
     );
     return (doc as any).settings;
+  }
+
+  // ─── Dashboard & Statistics ───────────────────────────────────────────────────
+  async getStudentsCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    return await Student.countDocuments();
+  }
+
+  async getGroupsCount(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    return await Halaqa.countDocuments();
+  }
+
+  async getSubscriptionStats(): Promise<{ active: number; expired: number; pending: number; cancelled: number }> {
+    if (!this.isDbAvailable()) return { active: 0, expired: 0, pending: 0, cancelled: 0 };
+    const [active, expired, pending, cancelled] = await Promise.all([
+      Subscription.countDocuments({ status: 'active' }),
+      Subscription.countDocuments({ status: 'expired' }),
+      Subscription.countDocuments({ status: 'pending' }),
+      Subscription.countDocuments({ status: 'cancelled' }),
+    ]);
+    return { active, expired, pending, cancelled };
+  }
+
+  async getDashboardStats(): Promise<{
+    totalStudents: number;
+    totalTeachers: number;
+    totalGroups: number;
+    activeSubscriptions: number;
+    monthlyRevenue: number;
+    pendingPayments: number;
+  }> {
+    const [totalStudents, totalTeachers, totalGroups, subStats] = await Promise.all([
+      this.getStudentsCount(),
+      this.getTeachersCount(),
+      this.getGroupsCount(),
+      this.getSubscriptionStats(),
+    ]);
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const revenue = await PaymentTransaction.aggregate([
+      { $match: { status: 'completed', createdAt: { $gte: startOfMonth } } },
+      { $group: { _id: null, total: { $sum: { $toDouble: '$amount' } } } },
+    ]);
+    return {
+      totalStudents,
+      totalTeachers,
+      totalGroups,
+      activeSubscriptions: subStats.active,
+      monthlyRevenue: revenue[0]?.total || 0,
+      pendingPayments: subStats.pending,
+    };
+  }
+
+  async getAttendanceReport(filters: { date?: string; startDate?: string; endDate?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { sessions: [], summary: { total: 0, attended: 0, absent: 0 } };
+    const query: any = {};
+    if (filters.date) {
+      const d = new Date(filters.date);
+      query.scheduledDate = { $gte: d, $lt: new Date(d.getTime() + 86400000) };
+    } else if (filters.startDate || filters.endDate) {
+      query.scheduledDate = {};
+      if (filters.startDate) query.scheduledDate.$gte = new Date(filters.startDate);
+      if (filters.endDate) query.scheduledDate.$lte = new Date(filters.endDate);
+    }
+    const sessions = await HalaqaAttendance.find(query).lean();
+    const total = sessions.length;
+    const attended = sessions.filter((s: any) => s.status === 'present').length;
+    return {
+      sessions: sessions.map(toPlainObject),
+      summary: { total, attended, absent: total - attended },
+    };
+  }
+
+  async getRevenueReport(filters: { period: string; startDate?: string; endDate?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { total: 0, transactions: [] };
+    const query: any = { status: 'completed' };
+    if (filters.startDate || filters.endDate) {
+      query.createdAt = {};
+      if (filters.startDate) query.createdAt.$gte = new Date(filters.startDate);
+      if (filters.endDate) query.createdAt.$lte = new Date(filters.endDate);
+    } else if (filters.period === 'monthly') {
+      const now = new Date();
+      query.createdAt = { $gte: new Date(now.getFullYear(), now.getMonth(), 1) };
+    } else if (filters.period === 'yearly') {
+      const now = new Date();
+      query.createdAt = { $gte: new Date(now.getFullYear(), 0, 1) };
+    }
+    const transactions = await PaymentTransaction.find(query).lean();
+    const total = transactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount || '0'), 0);
+    return { total, transactions: transactions.map(toPlainObject) };
+  }
+
+  async getOverduePayments(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const overdue = await Subscription.find({ status: 'payment_overdue' }).lean();
+    return overdue.map(toPlainObject);
+  }
+
+  async getStudentProgressReport(filters: { studentId?: string; teacherId?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return { students: [], summary: {} };
+    const query: any = {};
+    if (filters.studentId) query._id = filters.studentId;
+    if (filters.teacherId) query.sheikhId = filters.teacherId;
+    const studentsData = await Student.find(query).lean();
+    return {
+      students: studentsData.map(toPlainObject),
+      summary: { totalStudents: studentsData.length },
+    };
+  }
+
+  // ─── User Management ──────────────────────────────────────────────────────────
+  async updateUserRole(id: string, role: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const user = await User.findByIdAndUpdate(id, { role, updatedAt: new Date() }, { new: true }).lean();
+    if (!user) throw new Error("User not found");
+    return toPlainObject(user);
+  }
+
+  async updateUserStatus(id: string, isActive: boolean): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const user = await User.findByIdAndUpdate(id, { isActive, updatedAt: new Date() }, { new: true }).lean();
+    if (!user) throw new Error("User not found");
+    return toPlainObject(user);
+  }
+
+  // ─── Contact Messages ─────────────────────────────────────────────────────────
+  async markMessageAsRead(id: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const msg = await ContactMessage.findByIdAndUpdate(id, { isRead: true }, { new: true }).lean();
+    if (!msg) throw new Error("Message not found");
+    return toPlainObject(msg);
+  }
+
+  // ─── Teacher Management ───────────────────────────────────────────────────────
+  async assignStudentToTeacher(teacherId: string, studentId: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const student = await Student.findByIdAndUpdate(
+      studentId,
+      { sheikhId: teacherId, updatedAt: new Date() },
+      { new: true }
+    ).lean();
+    if (!student) throw new Error("Student not found");
+    return toPlainObject(student);
+  }
+
+  // ─── Quizzes ──────────────────────────────────────────────────────────────────
+  async getAllQuizzes(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const quizzes = await Quiz.find().lean();
+    return quizzes.map(toPlainObject);
+  }
+
+  // ─── Student Creation ─────────────────────────────────────────────────────────
+  async findOrCreateStudentForUser(userId: string, userData: { firstName?: string; phoneNumber?: string; passwordHash?: string }): Promise<any> {
+    if (!this.isDbAvailable()) return null;
+    let student = await Student.findOne({ userId }).lean();
+    if (student) return toPlainObject(student);
+    if (userData.phoneNumber) {
+      student = await Student.findOne({ phoneNumber: userData.phoneNumber }).lean();
+      if (student) {
+        const updated = await Student.findByIdAndUpdate(
+          (student as any)._id,
+          { userId, updatedAt: new Date() },
+          { new: true }
+        ).lean();
+        return toPlainObject(updated);
+      }
+    }
+    const name = userData.firstName || 'طالب';
+    const hashedPassword = userData.passwordHash
+      ? (userData.passwordHash.startsWith('$2') ? userData.passwordHash : await hashPassword(userData.passwordHash))
+      : await hashPassword('password123');
+    const created = await Student.create({
+      userId,
+      studentName: name,
+      phoneNumber: userData.phoneNumber || '',
+      passwordHash: hashedPassword,
+    });
+    return toPlainObject(created);
+  }
+
+  // ─── Auto Mark Absent ─────────────────────────────────────────────────────────
+  async autoMarkAbsentStudents(): Promise<number> {
+    if (!this.isDbAvailable()) return 0;
+    const cutoff = new Date(Date.now() - 30 * 60 * 1000);
+    const result = await HalaqaAttendance.updateMany(
+      { status: 'pending', scheduledDate: { $lt: cutoff } },
+      { $set: { status: 'absent', updatedAt: new Date() } }
+    );
+    return result.modifiedCount || 0;
   }
 }
 
