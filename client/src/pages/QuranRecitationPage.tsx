@@ -154,14 +154,22 @@ function levenshteinSimilarity(s1: string, s2: string): number {
 
 export default function QuranRecitationPage({ onBack }: { onBack?: () => void }) {
   const { toast } = useToast();
-  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript } = useSpeechRecognition();
+  const {
+    isSupported,
+    startListening,
+    stopListening,
+    transcript,
+    interimTranscript,
+    resetTranscript,
+    isListening,
+    error: speechError,
+  } = useSpeechRecognition();
 
   const [selectedSurah, setSelectedSurah] = useState<number>(1);
   const [selectedReciter, setSelectedReciter] = useState<string>('ar.alafasy');
   const [currentAyahIndex, setCurrentAyahIndex] = useState<number>(0);
   const [mode, setMode] = useState<'select' | 'listen' | 'practice' | 'results'>('select');
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [wordResults, setWordResults] = useState<WordResult[]>([]);
   const [sessionResults, setSessionResults] = useState<AyahResult[]>([]);
   const [hasRecited, setHasRecited] = useState(false);
@@ -221,39 +229,55 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
     setIsPlaying(false);
   };
 
+  const RECITER_EVERYAYAH: Record<string, string> = {
+    'ar.alafasy': 'Alafasy_64kbps',
+    'ar.minshawi': 'Mohammad_al_Minshawi_128kbps',
+    'ar.husary': 'Husary_128kbps',
+    'ar.abdulbasitmurattal': 'Abdul_Basit_Murattal_192kbps',
+  };
+
   const playAudio = async (ayahNumber: number) => {
     stopAudio();
-    const paddedNumber = String(ayahNumber).padStart(3, '0');
     const surahPadded = String(selectedSurah).padStart(3, '0');
-    const audioUrl = `https://cdn.islamic.network/quran/audio/128/${selectedReciter}/${ayahNumber}.mp3`;
+    const ayah = ayahs.find(a => a.number === ayahNumber);
+    const ayahInSurah = ayah?.numberInSurah ?? 1;
+    const ayahInSurahPadded = String(ayahInSurah).padStart(3, '0');
 
-    const audio = new Audio(audioUrl);
-    audioRef.current = audio;
-    audio.onplay = () => setIsPlaying(true);
-    audio.onended = () => {
-      setIsPlaying(false);
-      if (autoAdvance && mode === 'listen') {
-        setTimeout(() => {
-          if (currentAyahIndex < ayahs.length - 1) {
-            setCurrentAyahIndex(prev => {
-              const next = prev + 1;
-              setTimeout(() => playAudio(ayahs[next].number), 500);
-              return next;
-            });
-          }
-        }, 1000);
-      }
+    const primaryUrl = `https://cdn.islamic.network/quran/audio/128/${selectedReciter}/${ayahNumber}.mp3`;
+    const everyayahDir = RECITER_EVERYAYAH[selectedReciter] || 'Alafasy_64kbps';
+    const fallbackUrl = `https://everyayah.com/data/${everyayahDir}/${surahPadded}${ayahInSurahPadded}.mp3`;
+
+    const tryPlay = (url: string, onFail?: () => void) => {
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onplay = () => setIsPlaying(true);
+      audio.onended = () => {
+        setIsPlaying(false);
+        if (autoAdvance && mode === 'listen') {
+          setTimeout(() => {
+            if (currentAyahIndex < ayahs.length - 1) {
+              setCurrentAyahIndex(prev => {
+                const next = prev + 1;
+                setTimeout(() => playAudio(ayahs[next].number), 500);
+                return next;
+              });
+            }
+          }, 1000);
+        }
+      };
+      audio.onerror = () => {
+        setIsPlaying(false);
+        if (onFail) onFail();
+      };
+      audio.play().catch(() => {
+        if (onFail) onFail();
+      });
+      return audio;
     };
-    audio.onerror = () => {
-      setIsPlaying(false);
-      const fallbackUrl = `https://everyayah.com/data/${selectedReciter.replace('ar.', '')}/${surahPadded}${paddedNumber}.mp3`;
-      const fallback = new Audio(fallbackUrl);
-      audioRef.current = fallback;
-      fallback.onplay = () => setIsPlaying(true);
-      fallback.onended = () => setIsPlaying(false);
-      fallback.play().catch(() => {});
-    };
-    await audio.play().catch(() => {});
+
+    tryPlay(primaryUrl, () => {
+      tryPlay(fallbackUrl);
+    });
   };
 
   const togglePlayPause = () => {
@@ -282,19 +306,17 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
     setHasRecited(false);
     setLiveTranscript('');
     startListening();
-    setIsListening(true);
   };
 
   const stopPractice = () => {
     stopListening();
-    setIsListening(false);
     hasProcessedRef.current = true;
 
     if (!currentAyah) return;
-    const combined = liveTranscript.trim();
+    const combined = ((transcript || '') + ' ' + (interimTranscript || '')).trim() || liveTranscript.trim();
 
     if (!combined) {
-      toast({ title: 'لم يتم التعرف على صوت', description: 'حاول مرة أخرى', variant: 'destructive' });
+      toast({ title: 'لم يتم التعرف على صوت', description: 'حاول مرة أخرى وتأكد من منح إذن الميكروفون', variant: 'destructive' });
       return;
     }
 
@@ -315,10 +337,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
 
   const nextAyah = () => {
     stopAudio();
-    if (isListening) {
-      stopListening();
-      setIsListening(false);
-    }
+    if (isListening) stopListening();
     if (currentAyahIndex >= ayahs.length - 1) {
       setMode('results');
       return;
@@ -333,7 +352,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
 
   const previousAyah = () => {
     stopAudio();
-    if (isListening) { stopListening(); setIsListening(false); }
+    if (isListening) stopListening();
     if (currentAyahIndex > 0) {
       setCurrentAyahIndex(prev => prev - 1);
       setWordResults([]);
@@ -346,7 +365,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
 
   const retryAyah = () => {
     stopAudio();
-    if (isListening) { stopListening(); setIsListening(false); }
+    if (isListening) stopListening();
     setWordResults(currentAyah ? currentAyah.text.split(/\s+/).map(w => ({ word: w, status: 'pending' })) : []);
     setHasRecited(false);
     setLiveTranscript('');
@@ -559,7 +578,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
           <Button
             variant="ghost"
             className="text-white/70 hover:text-white hover:bg-white/10"
-            onClick={() => { stopAudio(); if (isListening) { stopListening(); setIsListening(false); } setMode('select'); }}
+            onClick={() => { stopAudio(); if (isListening) stopListening(); setMode('select'); }}
             data-testid="button-back"
           >
             <ArrowLeft className="w-5 h-5 ml-2" />
@@ -574,7 +593,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
             className={`text-sm ${mode === 'listen' ? 'text-blue-300' : 'text-emerald-300'}`}
             onClick={() => {
               stopAudio();
-              if (isListening) { stopListening(); setIsListening(false); }
+              if (isListening) stopListening();
               setMode(mode === 'listen' ? 'practice' : 'listen');
               setWordResults([]);
               setHasRecited(false);
@@ -809,6 +828,13 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
                 ? 'اضغط مجدداً لإعادة القراءة أو انتقل للآية التالية'
                 : 'اضغط على المايكروفون وابدأ القراءة'}
             </p>
+
+            {/* Speech error */}
+            {speechError && (
+              <div className="bg-red-900/40 border border-red-500/40 rounded-lg p-3 text-center" data-testid="div-speech-error">
+                <p className="text-red-300 text-sm">{speechError}</p>
+              </div>
+            )}
 
             {/* Bottom actions */}
             <div className="flex items-center justify-center gap-3 mt-2">
