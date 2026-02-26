@@ -146,6 +146,10 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     }
 
     // Check microphone permission first
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setError('لا يمكن الوصول إلى الميكروفون في هذه البيئة. يرجى فتح التطبيق في نافذة مستقلة في متصفح Chrome.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
@@ -158,6 +162,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         setError('لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون وإعادة المحاولة.');
         return;
       }
+      if (e.name === 'SecurityError' || e.name === 'NotSupportedError') {
+        setError('لا يمكن الوصول إلى الميكروفون من داخل الإطار المضمّن. افتح التطبيق في نافذة متصفح مستقلة.');
+        return;
+      }
+      // Any other error
+      setError('تعذر الوصول إلى الميكروفون: ' + (e.message || e.name));
+      return;
     }
 
     if (!recognitionRef.current) {

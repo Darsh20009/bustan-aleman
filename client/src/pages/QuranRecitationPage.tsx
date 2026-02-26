@@ -177,6 +177,7 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle');
   const [micError, setMicError] = useState<string>('');
+  const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasProcessedRef = useRef(false);
@@ -495,6 +496,33 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
                 </CardContent>
               </Card>
             </div>
+
+            {/* Iframe Warning Banner */}
+            {isInIframe && (
+              <Card className="border-2 border-orange-300 bg-orange-50 dark:bg-orange-950/30">
+                <CardContent className="pt-4 pb-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl shrink-0">⚠️</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-orange-800 dark:text-orange-300 text-sm mb-1">
+                        الميكروفون محجوب داخل الإطار المضمّن
+                      </p>
+                      <p className="text-orange-700 dark:text-orange-400 text-xs mb-3">
+                        لاستخدام ميزة التسميع يجب فتح التطبيق في نافذة متصفح مستقلة (ليس داخل Replit).
+                      </p>
+                      <Button
+                        size="sm"
+                        className="bg-orange-600 hover:bg-orange-700 text-white"
+                        onClick={() => window.open(window.location.href, '_blank')}
+                        data-testid="button-open-new-tab"
+                      >
+                        🔗 افتح في نافذة جديدة
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Mic Test Card */}
             <Card className={`border-2 transition-colors ${
