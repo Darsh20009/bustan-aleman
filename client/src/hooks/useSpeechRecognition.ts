@@ -22,15 +22,15 @@ declare global {
 
 function getArabicErrorMessage(error: string): string {
   const messages: Record<string, string> = {
-    'not-allowed': 'لم يتم السماح باستخدام الميكروفون. يرجى السماح للمتصفح بالوصول.',
-    'no-speech': 'لم يتم اكتشاف أي كلام. حاول مرة أخرى.',
-    'audio-capture': 'تعذر التقاط الصوت. تحقق من اتصال الميكروفون.',
-    'network': 'خطأ في الشبكة. تحقق من اتصالك.',
-    'service-not-allowed': 'الخدمة غير متاحة في هذا المتصفح.',
-    'aborted': 'تم إلغاء التعرف.',
-    'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.',
+    'not-allowed': 'لم يتم السماح باستخدام الميكروفون. افتح الإعدادات وامنح إذن الميكروفون للمتصفح.',
+    'no-speech': 'لم يتم اكتشاف أي كلام. تأكد من أن الميكروفون يعمل وحاول مرة أخرى.',
+    'audio-capture': 'تعذر التقاط الصوت. تحقق من توصيل الميكروفون.',
+    'network': 'خطأ في الشبكة أثناء التعرف على الصوت. تحقق من اتصالك بالإنترنت.',
+    'service-not-allowed': 'خدمة التعرف على الصوت غير متاحة. استخدم متصفح Chrome أو Edge.',
+    'aborted': 'تم إيقاف التسجيل.',
+    'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح. حاول تغيير لغة المتصفح.',
   };
-  return messages[error] || `خطأ: ${error}`;
+  return messages[error] || `حدث خطأ: ${error}`;
 }
 
 interface UseSpeechRecognitionResult {
@@ -51,14 +51,14 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isListeningRef = useRef(false);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isSupported =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
-  useEffect(() => {
-    if (!isSupported) return;
-
+  const createRecognition = useCallback(() => {
+    if (!isSupported) return null;
     try {
       const SpeechRecognitionAPI =
         window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -95,22 +95,33 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       };
 
       recognition.onerror = (event: any) => {
+        if (event.error === 'no-speech') {
+          return;
+        }
+        if (event.error === 'aborted') {
+          return;
+        }
         const msg = getArabicErrorMessage(event.error);
         setError(msg);
-        if (event.error !== 'no-speech') {
-          setIsListening(false);
-          isListeningRef.current = false;
-        }
+        setIsListening(false);
+        isListeningRef.current = false;
       };
 
       recognition.onend = () => {
         if (isListeningRef.current) {
-          try {
-            recognition.start();
-          } catch {
-            setIsListening(false);
-            isListeningRef.current = false;
+          if (restartTimerRef.current) {
+            clearTimeout(restartTimerRef.current);
           }
+          restartTimerRef.current = setTimeout(() => {
+            if (isListeningRef.current && recognitionRef.current) {
+              try {
+                recognitionRef.current.start();
+              } catch {
+                setIsListening(false);
+                isListeningRef.current = false;
+              }
+            }
+          }, 200);
         } else {
           setIsListening(false);
         }
@@ -121,12 +132,21 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         setError(null);
       };
 
-      recognitionRef.current = recognition;
+      return recognition;
     } catch (e) {
       console.error('[Speech] Failed to initialize:', e);
+      return null;
     }
+  }, [isSupported]);
+
+  useEffect(() => {
+    if (!isSupported) return;
+    recognitionRef.current = createRecognition();
 
     return () => {
+      if (restartTimerRef.current) {
+        clearTimeout(restartTimerRef.current);
+      }
       if (recognitionRef.current) {
         isListeningRef.current = false;
         try {
@@ -134,13 +154,37 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         } catch {}
       }
     };
-  }, [isSupported]);
+  }, [isSupported, createRecognition]);
 
-  const startListening = useCallback(() => {
-    if (!recognitionRef.current) {
-      setError('التعرف على الصوت غير مدعوم في هذا المتصفح');
+  const startListening = useCallback(async () => {
+    if (!isSupported) {
+      setError('التعرف على الصوت غير مدعوم في هذا المتصفح. يرجى استخدام Google Chrome أو Microsoft Edge.');
       return;
     }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+    } catch (e: any) {
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        setError('لم يتم السماح باستخدام الميكروفون. يرجى الضغط على أيقونة القفل في شريط العنوان ومنح إذن الميكروفون.');
+        return;
+      }
+      if (e.name === 'NotFoundError') {
+        setError('لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون وإعادة المحاولة.');
+        return;
+      }
+    }
+
+    if (!recognitionRef.current) {
+      recognitionRef.current = createRecognition();
+    }
+
+    if (!recognitionRef.current) {
+      setError('تعذر تهيئة نظام التعرف على الصوت.');
+      return;
+    }
+
     setError(null);
     setTranscript('');
     setInterimTranscript('');
@@ -149,17 +193,19 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       recognitionRef.current.start();
     } catch (e: any) {
       if (e.name === 'InvalidStateError') {
-        // Already started, fine
         setIsListening(true);
       } else {
         setError('تعذر بدء التعرف على الصوت: ' + e.message);
         isListeningRef.current = false;
       }
     }
-  }, []);
+  }, [isSupported, createRecognition]);
 
   const stopListening = useCallback(() => {
     isListeningRef.current = false;
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+    }
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();

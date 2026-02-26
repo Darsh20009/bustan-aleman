@@ -41,6 +41,7 @@
   ],
   "lang": "ar",
   "dir": "rtl",
+  "permissions": ["microphone"],
   "categories": ["education", "religion"],
   "screenshots": [
     {

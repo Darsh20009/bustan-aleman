@@ -481,6 +481,14 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
                       <li>• الكلمات الصحيحة <span className="text-green-600 font-bold">بالأخضر</span> والخطأ <span className="text-red-600 font-bold">بالأحمر</span></li>
                       <li>• يعمل بتقنية التعرف على الصوت المدمجة في المتصفح</li>
                     </ul>
+                    <div className="mt-2 pt-2 border-t border-amber-200 dark:border-amber-700">
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">⚡ متطلبات التسميع:</p>
+                      <ul className="text-xs mt-1 space-y-0.5 text-amber-700 dark:text-amber-400">
+                        <li>✅ متصفح Google Chrome أو Microsoft Edge</li>
+                        <li>✅ السماح للمتصفح باستخدام الميكروفون</li>
+                        <li>✅ اتصال بالإنترنت</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -831,8 +839,13 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
 
             {/* Speech error */}
             {speechError && (
-              <div className="bg-red-900/40 border border-red-500/40 rounded-lg p-3 text-center" data-testid="div-speech-error">
-                <p className="text-red-300 text-sm">{speechError}</p>
+              <div className="bg-red-900/40 border border-red-500/40 rounded-xl p-4 text-center space-y-2" data-testid="div-speech-error">
+                <p className="text-red-300 text-sm font-medium">⚠️ {speechError}</p>
+                {speechError.includes('إذن') || speechError.includes('السماح') ? (
+                  <p className="text-red-200/70 text-xs">
+                    اضغط على أيقونة 🔒 في شريط العنوان ← الإذونات ← الميكروفون ← السماح
+                  </p>
+                ) : null}
               </div>
             )}
 
@@ -880,10 +893,19 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
             </div>
 
             {!isSupported && (
-              <div className="bg-yellow-900/30 border border-yellow-500/30 rounded-lg p-3 text-center">
-                <p className="text-yellow-300 text-sm">
-                  متصفحك لا يدعم التعرف على الصوت. يرجى استخدام Google Chrome.
+              <div className="bg-yellow-900/30 border border-yellow-500/30 rounded-xl p-4 text-center space-y-2">
+                <p className="text-yellow-300 text-sm font-semibold">⚠️ متصفحك لا يدعم ميزة التسميع</p>
+                <p className="text-yellow-200/80 text-xs">
+                  يرجى استخدام <strong>Google Chrome</strong> أو <strong>Microsoft Edge</strong> للاستفادة من هذه الميزة.
                 </p>
+                <a
+                  href="https://www.google.com/chrome/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block text-xs bg-yellow-500/30 hover:bg-yellow-500/50 text-yellow-200 px-3 py-1 rounded-full mt-1 transition-colors"
+                >
+                  تحميل Chrome
+                </a>
               </div>
             )}
           </div>
