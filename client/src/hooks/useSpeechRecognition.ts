@@ -22,15 +22,15 @@ declare global {
 
 function getArabicErrorMessage(error: string): string {
   const messages: Record<string, string> = {
-    'not-allowed': 'لم يتم السماح باستخدام الميكروفون. افتح الإعدادات وامنح إذن الميكروفون للمتصفح.',
-    'no-speech': 'لم يتم اكتشاف أي كلام. تأكد من أن الميكروفون يعمل وحاول مرة أخرى.',
+    'not-allowed': 'لم يتم السماح باستخدام الميكروفون. اضغط على 🔒 في شريط العنوان ← الميكروفون ← السماح.',
+    'no-speech': 'لم يُكتشف كلام. تأكد أن الميكروفون يعمل وحاول مرة أخرى.',
     'audio-capture': 'تعذر التقاط الصوت. تحقق من توصيل الميكروفون.',
-    'network': 'خطأ في الشبكة أثناء التعرف على الصوت. تحقق من اتصالك بالإنترنت.',
-    'service-not-allowed': 'خدمة التعرف على الصوت غير متاحة. استخدم متصفح Chrome أو Edge.',
+    'network': 'خطأ في الشبكة. تحقق من اتصالك بالإنترنت.',
+    'service-not-allowed': 'الخدمة غير متاحة. استخدم متصفح Chrome أو Edge.',
     'aborted': 'تم إيقاف التسجيل.',
-    'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح. حاول تغيير لغة المتصفح.',
+    'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.',
   };
-  return messages[error] || `حدث خطأ: ${error}`;
+  return messages[error] || `خطأ في التعرف على الصوت: ${error}`;
 }
 
 interface UseSpeechRecognitionResult {
@@ -49,6 +49,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const [interimTranscript, setInterimTranscript] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isListeningRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -57,8 +58,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
-  const createRecognition = useCallback(() => {
-    if (!isSupported) return null;
+  useEffect(() => {
+    if (!isSupported) return;
+
     try {
       const SpeechRecognitionAPI =
         window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -76,7 +78,6 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           const text = result[0].transcript;
-
           if (result.isFinal) {
             finalText += text + ' ';
           } else {
@@ -88,30 +89,21 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
           setTranscript((prev) => (prev + ' ' + finalText).trim());
           setInterimTranscript('');
         }
-
         if (interimText) {
           setInterimTranscript(interimText);
         }
       };
 
       recognition.onerror = (event: any) => {
-        if (event.error === 'no-speech') {
-          return;
-        }
-        if (event.error === 'aborted') {
-          return;
-        }
-        const msg = getArabicErrorMessage(event.error);
-        setError(msg);
+        if (event.error === 'no-speech' || event.error === 'aborted') return;
+        setError(getArabicErrorMessage(event.error));
         setIsListening(false);
         isListeningRef.current = false;
       };
 
       recognition.onend = () => {
         if (isListeningRef.current) {
-          if (restartTimerRef.current) {
-            clearTimeout(restartTimerRef.current);
-          }
+          if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
           restartTimerRef.current = setTimeout(() => {
             if (isListeningRef.current && recognitionRef.current) {
               try {
@@ -121,7 +113,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
                 isListeningRef.current = false;
               }
             }
-          }, 200);
+          }, 300);
         } else {
           setIsListening(false);
         }
@@ -132,29 +124,20 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         setError(null);
       };
 
-      return recognition;
+      recognitionRef.current = recognition;
     } catch (e) {
       console.error('[Speech] Failed to initialize:', e);
-      return null;
     }
-  }, [isSupported]);
-
-  useEffect(() => {
-    if (!isSupported) return;
-    recognitionRef.current = createRecognition();
 
     return () => {
-      if (restartTimerRef.current) {
-        clearTimeout(restartTimerRef.current);
-      }
+      if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+      isListeningRef.current = false;
       if (recognitionRef.current) {
-        isListeningRef.current = false;
-        try {
-          recognitionRef.current.abort();
-        } catch {}
+        try { recognitionRef.current.abort(); } catch {}
+        recognitionRef.current = null;
       }
     };
-  }, [isSupported, createRecognition]);
+  }, []); // run only once on mount
 
   const startListening = useCallback(async () => {
     if (!isSupported) {
@@ -162,26 +145,23 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       return;
     }
 
+    // Check microphone permission first
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
     } catch (e: any) {
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-        setError('لم يتم السماح باستخدام الميكروفون. يرجى الضغط على أيقونة القفل في شريط العنوان ومنح إذن الميكروفون.');
+        setError('لم يتم السماح باستخدام الميكروفون. اضغط على 🔒 في شريط العنوان ← الإذونات ← الميكروفون ← السماح.');
         return;
       }
-      if (e.name === 'NotFoundError') {
+      if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
         setError('لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون وإعادة المحاولة.');
         return;
       }
     }
 
     if (!recognitionRef.current) {
-      recognitionRef.current = createRecognition();
-    }
-
-    if (!recognitionRef.current) {
-      setError('تعذر تهيئة نظام التعرف على الصوت.');
+      setError('تعذر تهيئة نظام التعرف على الصوت. يرجى تحديث الصفحة.');
       return;
     }
 
@@ -189,6 +169,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     setTranscript('');
     setInterimTranscript('');
     isListeningRef.current = true;
+
     try {
       recognitionRef.current.start();
     } catch (e: any) {
@@ -199,17 +180,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         isListeningRef.current = false;
       }
     }
-  }, [isSupported, createRecognition]);
+  }, [isSupported]);
 
   const stopListening = useCallback(() => {
     isListeningRef.current = false;
-    if (restartTimerRef.current) {
-      clearTimeout(restartTimerRef.current);
-    }
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
     if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
+      try { recognitionRef.current.stop(); } catch {}
     }
     setIsListening(false);
     setInterimTranscript('');

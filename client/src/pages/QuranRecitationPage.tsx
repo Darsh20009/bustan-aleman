@@ -175,6 +175,8 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
   const [hasRecited, setHasRecited] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState('');
   const [autoAdvance, setAutoAdvance] = useState(true);
+  const [micStatus, setMicStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle');
+  const [micError, setMicError] = useState<string>('');
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hasProcessedRef = useRef(false);
@@ -197,6 +199,32 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
       return apiRequest('/api/quran/recitation-attempts', 'POST', data);
     },
   });
+
+  const testMicrophone = async () => {
+    setMicStatus('testing');
+    setMicError('');
+    if (!isSupported) {
+      setMicStatus('error');
+      setMicError('متصفحك لا يدعم ميزة التسميع. يرجى استخدام Google Chrome أو Microsoft Edge.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+      setMicStatus('ok');
+    } catch (e: any) {
+      setMicStatus('error');
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        setMicError('تم رفض إذن الميكروفون. اضغط على أيقونة 🔒 في شريط العنوان ← الإذونات ← الميكروفون ← السماح، ثم أعد تحميل الصفحة.');
+      } else if (e.name === 'NotFoundError') {
+        setMicError('لم يُعثر على ميكروفون. يرجى توصيل ميكروفون بجهازك.');
+      } else if (e.name === 'NotReadableError') {
+        setMicError('الميكروفون مستخدم من تطبيق آخر. أغلق التطبيق الآخر وحاول مرة ثانية.');
+      } else {
+        setMicError('خطأ في الميكروفون: ' + (e.message || e.name));
+      }
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -467,6 +495,60 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
                 </CardContent>
               </Card>
             </div>
+
+            {/* Mic Test Card */}
+            <Card className={`border-2 transition-colors ${
+              micStatus === 'ok' ? 'border-green-300 bg-green-50 dark:bg-green-950/20' :
+              micStatus === 'error' ? 'border-red-300 bg-red-50 dark:bg-red-950/20' :
+              'border-gray-200 bg-gray-50 dark:bg-gray-950/20'
+            }`}>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    {micStatus === 'ok' ? (
+                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                    ) : micStatus === 'error' ? (
+                      <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+                    ) : (
+                      <Mic className="w-5 h-5 text-gray-500 shrink-0" />
+                    )}
+                    <span className={`text-sm font-medium ${
+                      micStatus === 'ok' ? 'text-green-700 dark:text-green-300' :
+                      micStatus === 'error' ? 'text-red-700 dark:text-red-300' :
+                      'text-gray-700 dark:text-gray-300'
+                    }`}>
+                      {micStatus === 'ok' ? '✅ الميكروفون يعمل بشكل صحيح' :
+                       micStatus === 'error' ? '❌ مشكلة في الميكروفون' :
+                       micStatus === 'testing' ? '⏳ جاري الاختبار...' :
+                       'اختبر الميكروفون قبل البدء'}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={testMicrophone}
+                    disabled={micStatus === 'testing'}
+                    data-testid="button-test-mic"
+                    className="shrink-0"
+                  >
+                    {micStatus === 'testing' ? (
+                      <span className="flex items-center gap-1">
+                        <div className="w-3 h-3 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                        جاري...
+                      </span>
+                    ) : (
+                      <>
+                        <Mic className="w-3.5 h-3.5 ml-1" />
+                        اختبار
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {micError && (
+                  <p className="text-red-600 dark:text-red-400 text-xs mt-2 leading-relaxed">{micError}</p>
+                )}
+              </CardContent>
+            </Card>
 
             <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
               <CardContent className="pt-4 pb-4">

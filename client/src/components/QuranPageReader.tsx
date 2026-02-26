@@ -107,7 +107,6 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [ayahActionPanel, setAyahActionPanel] = useState<Ayah | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [activeAyahIndex, setActiveAyahIndex] = useState<number>(-1);
   const [quranTheme, setQuranTheme] = useState<'light' | 'dark'>(() => {
@@ -548,7 +547,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
-  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript } = useSpeechRecognition();
+  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript, isListening } = useSpeechRecognition();
 
   // Watch for transcript changes and track progress
   useEffect(() => {
@@ -597,32 +596,28 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }
   }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
 
-  const toggleListening = () => {
-    console.log('[Quran] Toggle listening, isListening:', isListening, 'isSupported:', isSupported);
-    
+  const toggleListening = async () => {
     if (isListening) {
       stopListening();
-      setIsListening(false);
     } else {
       if (!isSupported) {
-        console.log('[Quran] Speech recognition not supported');
         toast({
           title: "المتصفح غير مدعوم",
-          description: "للأسف متصفحك لا يدعم التعرف على الصوت. يرجى استخدام متصفح Google Chrome.",
+          description: "للأسف متصفحك لا يدعم التعرف على الصوت. يرجى استخدام متصفح Google Chrome أو Microsoft Edge.",
           variant: "destructive"
         });
         return;
       }
-      console.log('[Quran] Starting listening...');
       resetTranscript();
       setActiveAyahIndex(-1);
       setRecognizedText("");
-      startListening();
-      setIsListening(true);
-      toast({
-        title: "التسميع مفعل",
-        description: "ابدأ القراءة الآن، سيتم تتبع تلاوتك آلياً",
-      });
+      await startListening();
+      if (isListening) {
+        toast({
+          title: "التسميع مفعل",
+          description: "ابدأ القراءة الآن، سيتم تتبع تلاوتك آلياً",
+        });
+      }
     }
   };
 
