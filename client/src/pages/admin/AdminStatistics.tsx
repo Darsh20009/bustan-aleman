@@ -18,11 +18,11 @@ import {
 
 export function AdminStatisticsPage() {
   const { data: stats, isLoading } = useQuery<any>({
-    queryKey: ['/api/admin/statistics'],
+    queryKey: ['/api/admin/stats'],
   });
 
   const { data: recentActivities = [] } = useQuery<any[]>({
-    queryKey: ['/api/admin/recent-activities'],
+    queryKey: ['/api/admin/reports/attendance'],
   });
 
   return (
@@ -62,7 +62,7 @@ export function AdminStatisticsPage() {
             />
             <StatsCard
               title="الحلقات"
-              value={stats?.totalHalaqas || 0}
+              value={stats?.totalGroups || stats?.totalHalaqas || 0}
               subtitle="حلقة نشطة"
               icon={<Calendar className="h-4 w-4" />}
             />

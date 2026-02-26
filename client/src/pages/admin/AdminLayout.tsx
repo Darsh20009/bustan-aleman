@@ -54,7 +54,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     <DashboardLayout 
       navItems={adminNavItems} 
       title="لوحة المدير"
-      userRole={user?.role}
+      userRole={user?.role as any}
     >
       {children}
     </DashboardLayout>

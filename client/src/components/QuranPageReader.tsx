@@ -958,6 +958,16 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               >
                 <Settings className="w-5 h-5" />
               </Button>
+              <Button
+                onClick={() => window.location.href = '/quran/recitation'}
+                size="icon"
+                variant="ghost"
+                className="text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-white/20 h-9 w-9"
+                data-testid="button-recitation-practice"
+                title="وضع التسميع"
+              >
+                <Book className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
@@ -1142,6 +1152,16 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 data-testid="button-settings"
               >
                 <Settings className="w-5 h-5" />
+              </Button>
+              <Button
+                onClick={() => window.location.href = '/quran/recitation'}
+                size="sm"
+                variant="ghost"
+                className="text-[#D4AF37] hover:bg-white/10 px-3 flex items-center gap-1"
+                data-testid="button-recitation-practice"
+              >
+                <Book className="w-4 h-4" />
+                <span className="text-xs">تسميع</span>
               </Button>
             </div>
           </div>

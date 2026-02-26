@@ -8,7 +8,8 @@ import {
   CreditCard, 
   MessageCircle,
   Video,
-  BookMarked
+  BookMarked,
+  Mic
 } from 'lucide-react';
 
 const studentNavItems = [
@@ -36,6 +37,11 @@ const studentNavItems = [
     title: 'متابعة القرآن',
     href: '/student/quran-tracking',
     icon: <BookMarked className="h-4 w-4" />
+  },
+  {
+    title: 'تسميع القرآن',
+    href: '/quran/recitation',
+    icon: <Mic className="h-4 w-4" />
   },
   {
     title: 'الحضور',

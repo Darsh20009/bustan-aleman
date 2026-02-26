@@ -13,6 +13,7 @@ import { AuthPage } from "./components/AuthPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import QuranPageReader from "./components/QuranPageReader";
+import QuranRecitationPage from "./pages/QuranRecitationPage";
 import { AboutUsPage } from "./components/AboutUsPage";
 import { CoursesPage } from "./components/CoursesPage";
 import LiveSession from "./pages/LiveSession";
@@ -126,6 +127,10 @@ function AppRoutes() {
 
       <Route path="/quran">
         <QuranPageReader onBack={() => window.history.back()} />
+      </Route>
+
+      <Route path="/quran/recitation">
+        <QuranRecitationPage onBack={() => window.history.back()} />
       </Route>
 
       <Route path="/about">

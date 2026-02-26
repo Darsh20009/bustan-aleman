@@ -62,6 +62,16 @@ The frontend has been completely restructured with a modern, role-based dashboar
 -   **Owner Account**: Phone 0500000000, Password admin123456 - Full platform access, can manage academies and all users
 -   **Pre-registered Users**: Defined in `server/preregistered-users.json`, auto-initialized on server start
 
+### Recent Changes (February 2026)
+-   **Quran Recitation Page** (`/quran/recitation`): Created comprehensive `QuranRecitationPage.tsx` with surah/reciter selection, audio playback, Web Speech API recitation practice (Arabic `ar-SA`), word-by-word comparison with green/red highlighting, scoring, and session results
+-   **Quran Reader Recitation Button**: Added "تسميع" button to both desktop and mobile QuranPageReader toolbars linking to the recitation page
+-   **Student Navigation**: Added "تسميع القرآن" entry to student dashboard navigation
+-   **apiRequest Fix**: Updated `client/src/lib/queryClient.ts` to support all 3 calling conventions: `apiRequest('METHOD', url, data)`, `apiRequest(url, 'METHOD', data)`, `apiRequest(url, { method, body })`
+-   **Admin Statistics Endpoint**: Fixed `/api/admin/statistics` → `/api/admin/stats` mismatch
+-   **Type Safety**: Fixed all frontend TypeScript errors — added `owner` and `teacher` to User role type in `useAuth.ts`, updated roleTitle objects in navigation components, fixed Set iteration issues, fixed type assertions
+-   **WebSocket**: Made `sendToStudent` method public in WebSocket service
+-   **Bug Fixes**: Fixed `AnnouncementsPage` unknown type, missing `StudentDashboardPage` export, created shared `WeeklyReminders` component
+
 ### Recent Changes (December 2024)
 -   Fixed Quran data sync: Routes now correctly map `userId` to `studentId` for memorization, reading stats, and reviews
 -   Added `/api/quran/reviews/due` and `/api/quran/reading-stats` endpoints for student Quran tracking

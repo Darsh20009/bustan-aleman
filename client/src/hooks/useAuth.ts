@@ -5,7 +5,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'student' | 'supervisor' | 'admin';
+  role: 'student' | 'supervisor' | 'admin' | 'owner' | 'teacher';
   phoneNumber?: string;
   registrationCompleted: boolean;
   studentId?: string;

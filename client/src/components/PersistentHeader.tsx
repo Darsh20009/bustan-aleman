@@ -245,12 +245,14 @@ export function PersistentHeader({ onNavigate }: PersistentHeaderProps) {
     await logout();
   };
 
-  const navigation = roleNavigation[user.role] || [];
-  const roleTitle = {
+  const navigation = (roleNavigation as Record<string, any[]>)[user.role] || [];
+  const roleTitle = ({
     student: 'طالب',
     supervisor: 'مشرف',
-    admin: 'مدير'
-  }[user.role];
+    admin: 'مدير',
+    owner: 'مالك',
+    teacher: 'معلم'
+  } as Record<string, string>)[user.role];
 
   // Fetch cart items to show count
   const { data: cartItems = [] } = useQuery<any[]>({

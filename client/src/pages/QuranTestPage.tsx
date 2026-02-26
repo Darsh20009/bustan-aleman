@@ -167,7 +167,7 @@ export default function QuranTestPage({ onBack }: QuranTestPageProps) {
           options.push(words.slice(0, Math.min(words.length, 3)).join(' '));
         }
 
-        const uniqueOptions = [...new Set(options)].slice(0, 4);
+        const uniqueOptions = Array.from(new Set(options)).slice(0, 4);
         const shuffledOptions = uniqueOptions.sort(() => Math.random() - 0.5);
         const correctAnswer = shuffledOptions.indexOf(correctCompletion);
 

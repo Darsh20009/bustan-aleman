@@ -271,7 +271,7 @@ export default function MemorizationPage() {
                     من الآية {mem.fromAyah} إلى الآية {mem.toAyah}
                   </p>
                   <div className="mt-2">
-                    {getStatusBadge(mem.status)}
+                    {getStatusBadge(mem.status || "")}
                   </div>
                 </div>
                 <Button

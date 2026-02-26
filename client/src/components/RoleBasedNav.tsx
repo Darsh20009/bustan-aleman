@@ -489,12 +489,14 @@ export function RoleBasedNav({ onNavigate }: { onNavigate?: (path: string) => vo
     );
   }
 
-  const navigation = roleNavigation[user.role] || [];
-  const roleTitle = {
+  const navigation = (roleNavigation as Record<string, any[]>)[user.role] || [];
+  const roleTitle = ({
     student: 'طالب',
     supervisor: 'مشرف',
-    admin: 'مدير'
-  }[user.role];
+    admin: 'مدير',
+    owner: 'مالك',
+    teacher: 'معلم'
+  } as Record<string, string>)[user.role];
 
   // إذا كانت هناك حصة نشطة، لا نعرض القائمة
   if (activeRoomId) {

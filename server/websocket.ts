@@ -256,7 +256,7 @@ class WebSocketService {
     });
   }
 
-  private sendToStudent(studentId: string, payload: any) {
+  public sendToStudent(studentId: string, payload: any) {
     this.clients.forEach((client) => {
       if (client.studentId === studentId || client.userId === studentId) {
         client.ws.send(JSON.stringify(payload));

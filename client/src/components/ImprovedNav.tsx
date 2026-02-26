@@ -71,11 +71,13 @@ export function ImprovedNav({ onNavigate }: ImprovedNavProps) {
     ? supervisorMenuItems 
     : adminMenuItems;
 
-  const roleTitle = {
+  const roleTitle = ({
     student: 'طالب',
     supervisor: 'مشرف',
-    admin: 'مدير'
-  }[user.role];
+    admin: 'مدير',
+    owner: 'مالك',
+    teacher: 'معلم'
+  } as Record<string, string>)[user.role];
 
   return (
     <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">

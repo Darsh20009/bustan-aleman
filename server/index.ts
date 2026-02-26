@@ -188,7 +188,7 @@ app.use((req, res, next) => {
     // جدولة التحقق من الحصص المتأخرة كل دقيقة لتسجيل الغياب تلقائياً
     setInterval(async () => {
       try {
-        await storage.autoMarkAbsentStudents();
+        await (storage as any).autoMarkAbsentStudents();
       } catch (error) {
         // Suppress error logging for missing method
         if ((error as Error).message?.includes('is not a function')) {

@@ -20,7 +20,7 @@ interface Announcement {
 export function AnnouncementsPage() {
   const [selectedType, setSelectedType] = useState<string>('all');
 
-  const { data: announcements = [], isLoading } = useQuery({
+  const { data: announcements = [], isLoading } = useQuery<Announcement[]>({
     queryKey: ['/api/announcements'],
   });
 

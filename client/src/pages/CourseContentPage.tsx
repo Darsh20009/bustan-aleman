@@ -82,7 +82,7 @@ export default function CourseContentPage({ courseId: propCourseId, onBack }: Co
     : 0;
 
   const markAsCompleted = (moduleId: string) => {
-    setCompletedModules(prev => new Set([...prev, moduleId]));
+    setCompletedModules(prev => new Set([...Array.from(prev), moduleId]));
   };
 
   const handleBackFromCourse = () => {
