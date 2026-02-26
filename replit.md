@@ -19,7 +19,7 @@ The platform uses a unified design with a core palette of Green (#10B981), White
 -   **Real-time Communication**: WebSocket server (`ws`) for teacher-student chat.
 -   **Authentication**: Custom phone-based system with pre-registered users, bcrypt hashing, and in-memory Express sessions with role-based authorization (teacher/student/admin). Includes password recovery.
 -   **Quran Integration**: Comprehensive integration with AlQuran.Cloud API for Arabic text, English translations, Arabic Tafsir, and audio recitations. Features dynamic audio loading and playback controls.
--   **Database**: MongoDB Atlas with Mongoose ODM, utilizing `MONGODB_URI`.
+-   **Database**: MongoDB Atlas (primary) with Mongoose ODM via `MONGODB_URI`, PostgreSQL (fallback). Dynamic proxy switches storage automatically based on connection state.
 -   **SEO & Performance**: Enhanced meta tags, dns-prefetch, optimized font loading, and PWA-ready meta tags.
 
 ### Frontend Architecture (December 2024 Restructure)

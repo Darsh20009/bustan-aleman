@@ -65,9 +65,17 @@ app.use((req, res, next) => {
     await initializeDatabase();
     console.log("✅ PostgreSQL database initialized");
 
-    // Initialize MongoDB connection (optional, for legacy support)
+    // Initialize MongoDB connection (primary database when available)
     await connectMongoDB();
     console.log("✅ MongoDB connection initialized");
+    
+    // Log which storage is now active
+    const { isMongoConnected: checkMongo } = await import("./mongodb");
+    if (checkMongo()) {
+      console.log("🍃 Active storage: MongoDB Atlas (primary)");
+    } else {
+      console.log("📦 Active storage: PostgreSQL (fallback)");
+    }
 
     // Configure sessions with MongoDB store if available
     const sessionConfig: any = {

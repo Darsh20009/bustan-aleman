@@ -4005,15 +4005,19 @@ export class DatabaseStorage implements IStorage {
 import { MongoDBStorage } from "./mongoStorage";
 import { isMongoConnected } from "./mongodb";
 
-// Use MongoDB if available, otherwise use DatabaseStorage with PostgreSQL
-export const storage: IStorage = (() => {
-  // Try to use MongoDB if connected
-  if (isMongoConnected()) {
-    console.log("✅ Using MongoDB storage");
-    return new MongoDBStorage() as unknown as IStorage;
-  }
-  
-  // Use DatabaseStorage with PostgreSQL (initialized via initializeDatabase)
-  console.log("📦 Using PostgreSQL storage via DatabaseStorage");
-  return new DatabaseStorage();
-})();
+// Create both storage instances
+const _mongoStorage = new MongoDBStorage();
+const _pgStorage = new DatabaseStorage();
+
+// Dynamic proxy: checks MongoDB connection status on every call
+// This ensures we use MongoDB once it connects, without requiring a restart
+const _handler: ProxyHandler<IStorage> = {
+  get(_, prop: string) {
+    const active: any = isMongoConnected() ? _mongoStorage : _pgStorage;
+    if (prop === '__isMongoActive') return isMongoConnected();
+    const value = active[prop];
+    return typeof value === 'function' ? value.bind(active) : value;
+  },
+};
+
+export const storage = new Proxy(_pgStorage as IStorage, _handler);

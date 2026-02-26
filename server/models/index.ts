@@ -604,3 +604,286 @@ const quizAttemptSchema = new Schema({
   antiCheatLog: String,
 }, { timestamps: true });
 export const QuizAttempt = mongoose.model('QuizAttempt', quizAttemptSchema);
+
+// Halaqa (Group/Circle) Schema
+const halaqaSchema = new Schema({
+  nameAr: { type: String, required: true },
+  nameEn: String,
+  descriptionAr: String,
+  descriptionEn: String,
+  teacherId: { type: String, required: true },
+  supervisorId: String,
+  level: { type: String, default: 'beginner' },
+  category: { type: String, default: 'quran' },
+  maxStudents: { type: Number, default: 20 },
+  currentStudents: { type: Number, default: 0 },
+  startTime: String,
+  endTime: String,
+  daysOfWeek: String,
+  meetingLink: String,
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
+halaqaSchema.index({ teacherId: 1 });
+export const Halaqa = mongoose.model('Halaqa', halaqaSchema);
+
+// Halaqa Member Schema
+const halaqaMemberSchema = new Schema({
+  halaqaId: { type: String, required: true },
+  studentId: { type: String, required: true },
+  joinDate: { type: Date, default: Date.now },
+  status: { type: String, default: 'active' },
+  notes: String,
+}, { timestamps: true });
+halaqaMemberSchema.index({ halaqaId: 1 });
+halaqaMemberSchema.index({ studentId: 1 });
+halaqaMemberSchema.index({ halaqaId: 1, studentId: 1 }, { unique: true });
+export const HalaqaMember = mongoose.model('HalaqaMember', halaqaMemberSchema);
+
+// Halaqa Schedule Schema
+const halaqaScheduleSchema = new Schema({
+  halaqaId: { type: String, required: true },
+  dayOfWeek: { type: Number, required: true },
+  startTime: { type: String, required: true },
+  endTime: { type: String, required: true },
+  isActive: { type: Boolean, default: true },
+}, { timestamps: true });
+halaqaScheduleSchema.index({ halaqaId: 1 });
+export const HalaqaSchedule = mongoose.model('HalaqaSchedule', halaqaScheduleSchema);
+
+// Halaqa Attendance Schema
+const halaqaAttendanceSchema = new Schema({
+  halaqaId: { type: String, required: true },
+  studentId: { type: String, required: true },
+  sessionDate: { type: String, required: true },
+  attended: { type: Boolean, default: false },
+  excuseReason: String,
+  notes: String,
+  recordedBy: String,
+}, { timestamps: true });
+halaqaAttendanceSchema.index({ halaqaId: 1 });
+halaqaAttendanceSchema.index({ studentId: 1 });
+halaqaAttendanceSchema.index({ halaqaId: 1, studentId: 1, sessionDate: 1 }, { unique: true });
+export const HalaqaAttendance = mongoose.model('HalaqaAttendance', halaqaAttendanceSchema);
+
+// Homework Schema
+const homeworkSchema = new Schema({
+  titleAr: { type: String, required: true },
+  titleEn: String,
+  descriptionAr: String,
+  descriptionEn: String,
+  type: { type: String, default: 'memorization' },
+  halaqaId: String,
+  courseId: String,
+  assignedTo: [String],
+  surahNumber: Number,
+  startAyah: Number,
+  endAyah: Number,
+  dueDate: { type: Date, required: true },
+  points: { type: Number, default: 100 },
+  instructions: String,
+  attachmentUrl: String,
+  isActive: { type: Boolean, default: true },
+  createdBy: { type: String, required: true },
+}, { timestamps: true });
+homeworkSchema.index({ halaqaId: 1 });
+homeworkSchema.index({ createdBy: 1 });
+export const Homework = mongoose.model('Homework', homeworkSchema);
+
+// Homework Submission Schema
+const homeworkSubmissionSchema = new Schema({
+  homeworkId: { type: String, required: true },
+  studentId: { type: String, required: true },
+  submissionText: String,
+  audioUrl: String,
+  attachmentUrl: String,
+  status: { type: String, default: 'pending' },
+  submittedAt: Date,
+  grade: Number,
+  teacherFeedbackAr: String,
+  teacherFeedbackEn: String,
+  gradedBy: String,
+  gradedAt: Date,
+}, { timestamps: true });
+homeworkSubmissionSchema.index({ homeworkId: 1 });
+homeworkSubmissionSchema.index({ studentId: 1 });
+homeworkSubmissionSchema.index({ homeworkId: 1, studentId: 1 }, { unique: true });
+export const HomeworkSubmission = mongoose.model('HomeworkSubmission', homeworkSubmissionSchema);
+
+// Student Evaluation Schema
+const studentEvaluationSchema = new Schema({
+  studentId: { type: String, required: true },
+  teacherId: { type: String, required: true },
+  halaqaId: String,
+  evaluationDate: { type: String, required: true },
+  type: { type: String, default: 'weekly' },
+  memorizationScore: Number,
+  tajweedScore: Number,
+  attendanceScore: Number,
+  participationScore: Number,
+  homeworkScore: Number,
+  overallScore: Number,
+  strengthsAr: String,
+  strengthsEn: String,
+  areasForImprovementAr: String,
+  areasForImprovementEn: String,
+  teacherNotesAr: String,
+  teacherNotesEn: String,
+  isVisible: { type: Boolean, default: true },
+}, { timestamps: true });
+studentEvaluationSchema.index({ studentId: 1 });
+studentEvaluationSchema.index({ teacherId: 1 });
+export const StudentEvaluation = mongoose.model('StudentEvaluation', studentEvaluationSchema);
+
+// Parent Report Schema
+const parentReportSchema = new Schema({
+  studentId: { type: String, required: true },
+  parentPhone: String,
+  parentEmail: String,
+  reportWeek: { type: String, required: true },
+  attendancePercentage: Number,
+  homeworkCompletionRate: Number,
+  memorizationProgress: String,
+  reviewProgress: String,
+  overallGrade: String,
+  teacherCommentsAr: String,
+  teacherCommentsEn: String,
+  sentVia: [String],
+  sentAt: Date,
+  generatedBy: String,
+}, { timestamps: true });
+parentReportSchema.index({ studentId: 1 });
+export const ParentReport = mongoose.model('ParentReport', parentReportSchema);
+
+// Subscription Plan Schema
+const subscriptionPlanSchema = new Schema({
+  nameAr: { type: String, required: true },
+  nameEn: String,
+  descriptionAr: String,
+  descriptionEn: String,
+  duration: { type: String, required: true },
+  durationDays: { type: Number, required: true },
+  price: { type: Number, required: true },
+  currency: { type: String, default: 'SAR' },
+  sessionsCount: Number,
+  features: String,
+  isActive: { type: Boolean, default: true },
+  isFeatured: { type: Boolean, default: false },
+  sortOrder: { type: Number, default: 0 },
+}, { timestamps: true });
+export const SubscriptionPlan = mongoose.model('SubscriptionPlan', subscriptionPlanSchema);
+
+// Subscription Schema
+const subscriptionSchema = new Schema({
+  userId: { type: String, required: true },
+  planId: { type: String, required: true },
+  status: { type: String, default: 'pending' },
+  startDate: Date,
+  endDate: Date,
+  sessionsRemaining: Number,
+  autoRenew: { type: Boolean, default: false },
+  paymentGateway: String,
+  stripeSubscriptionId: String,
+  stripeCustomerId: String,
+  lastPaymentDate: Date,
+  nextPaymentDate: Date,
+  cancellationReason: String,
+  cancelledAt: Date,
+}, { timestamps: true });
+subscriptionSchema.index({ userId: 1 });
+subscriptionSchema.index({ status: 1 });
+export const Subscription = mongoose.model('Subscription', subscriptionSchema);
+
+// Payment Transaction Schema
+const paymentTransactionSchema = new Schema({
+  userId: { type: String, required: true },
+  subscriptionId: String,
+  amount: { type: Number, required: true },
+  currency: { type: String, default: 'SAR' },
+  paymentGateway: { type: String, required: true },
+  gatewayTransactionId: String,
+  gatewayResponse: String,
+  status: { type: String, default: 'pending' },
+  paymentMethod: String,
+  cardLast4: String,
+  cardBrand: String,
+  receiptUrl: String,
+  invoiceNumber: String,
+  description: String,
+  metadata: String,
+  errorMessage: String,
+  refundedAmount: Number,
+  refundedAt: Date,
+  completedAt: Date,
+}, { timestamps: true });
+paymentTransactionSchema.index({ userId: 1 });
+paymentTransactionSchema.index({ status: 1 });
+export const PaymentTransaction = mongoose.model('PaymentTransaction', paymentTransactionSchema);
+
+// Payment Gateway Settings Schema
+const paymentGatewaySettingsSchema = new Schema({
+  gateway: { type: String, required: true, unique: true },
+  displayNameAr: { type: String, required: true },
+  displayNameEn: String,
+  isEnabled: { type: Boolean, default: false },
+  isTestMode: { type: Boolean, default: true },
+  supportedCurrencies: String,
+  minimumAmount: Number,
+  maximumAmount: Number,
+  feePercentage: Number,
+  fixedFee: Number,
+  iconUrl: String,
+  sortOrder: { type: Number, default: 0 },
+}, { timestamps: true });
+export const PaymentGatewaySettings = mongoose.model('PaymentGatewaySettings', paymentGatewaySettingsSchema);
+
+// Bank Transfer Request Schema
+const bankTransferRequestSchema = new Schema({
+  userId: { type: String, required: true },
+  subscriptionId: String,
+  paymentTransactionId: String,
+  amount: { type: Number, required: true },
+  currency: { type: String, default: 'SAR' },
+  bankName: String,
+  accountHolderName: String,
+  transferReference: String,
+  transferDate: Date,
+  receiptUrl: String,
+  receiptFileName: String,
+  notes: String,
+  status: { type: String, default: 'pending' },
+  reviewedBy: String,
+  reviewedAt: Date,
+  reviewNotes: String,
+  rejectionReason: String,
+}, { timestamps: true });
+bankTransferRequestSchema.index({ userId: 1 });
+bankTransferRequestSchema.index({ status: 1 });
+export const BankTransferRequest = mongoose.model('BankTransferRequest', bankTransferRequestSchema);
+
+// Lesson Reminder Schema
+const lessonReminderSchema = new Schema({
+  userId: { type: String, required: true },
+  studentId: String,
+  liveRoomId: String,
+  reminderType: { type: String, default: 'lesson' },
+  scheduledFor: { type: Date, required: true },
+  sentAt: Date,
+  channels: String,
+  messageAr: String,
+  messageEn: String,
+  status: { type: String, default: 'pending' },
+  retryCount: { type: Number, default: 0 },
+  errorMessage: String,
+  metadata: String,
+}, { timestamps: true });
+lessonReminderSchema.index({ userId: 1 });
+lessonReminderSchema.index({ scheduledFor: 1 });
+lessonReminderSchema.index({ status: 1 });
+export const LessonReminder = mongoose.model('LessonReminder', lessonReminderSchema);
+
+// Academy Settings Schema (singleton)
+const academySettingsSchema = new Schema({
+  key: { type: String, unique: true, default: 'global' },
+  settings: { type: Schema.Types.Mixed, default: {} },
+}, { timestamps: true });
+export const AcademySettings = mongoose.model('AcademySettings', academySettingsSchema);

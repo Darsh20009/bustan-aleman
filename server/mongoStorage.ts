@@ -34,6 +34,21 @@ import {
   Message,
   Notification,
   ShoppingCart,
+  Halaqa,
+  HalaqaMember,
+  HalaqaSchedule,
+  HalaqaAttendance,
+  Homework,
+  HomeworkSubmission,
+  StudentEvaluation,
+  ParentReport,
+  SubscriptionPlan,
+  Subscription,
+  PaymentTransaction,
+  PaymentGatewaySettings,
+  BankTransferRequest,
+  LessonReminder,
+  AcademySettings,
 } from "./models";
 import { hashPassword, verifyPassword } from "./authUtils";
 import { isMongoConnected } from "./mongodb";
@@ -1384,82 +1399,454 @@ export class MongoDBStorage implements IStorage {
     });
   }
 
-  // Halaqa stub methods - MongoDB storage uses PostgreSQL for halaqat data
-  async getHalaqat(): Promise<any[]> { return []; }
-  async getActiveHalaqat(): Promise<any[]> { return []; }
-  async getHalaqa(id: string): Promise<any> { return undefined; }
-  async getTeacherHalaqat(teacherId: string): Promise<any[]> { return []; }
-  async createHalaqa(halaqa: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async updateHalaqa(id: string, halaqa: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async deleteHalaqa(id: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async getHalaqaMembers(halaqaId: string): Promise<any[]> { return []; }
-  async getStudentHalaqat(studentId: string): Promise<any[]> { return []; }
-  async addHalaqaMember(member: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async removeHalaqaMember(halaqaId: string, studentId: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async updateHalaqaMember(halaqaId: string, studentId: string, updates: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async getHalaqaSchedules(halaqaId: string): Promise<any[]> { return []; }
-  async createHalaqaSchedule(schedule: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async updateHalaqaSchedule(id: string, schedule: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async deleteHalaqaSchedule(id: string): Promise<void> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async getHalaqaAttendance(halaqaId: string, date?: string): Promise<any[]> { return []; }
-  async getStudentHalaqaAttendance(studentId: string): Promise<any[]> { return []; }
-  async recordHalaqaAttendance(attendance: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
-  async updateHalaqaAttendance(id: string, updates: any): Promise<any> { throw new Error("Halaqat operations require PostgreSQL"); }
+  // ─── Halaqa Operations ───────────────────────────────────────────────────────
+  async getHalaqat(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Halaqa.find().sort({ createdAt: -1 }));
+  }
+  async getActiveHalaqat(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Halaqa.find({ isActive: true }).sort({ createdAt: -1 }));
+  }
+  async getHalaqa(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await Halaqa.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getTeacherHalaqat(teacherId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Halaqa.find({ teacherId }).sort({ createdAt: -1 }));
+  }
+  async createHalaqa(halaqa: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await Halaqa.create(cleanData(halaqa));
+    return toPlainObject(doc);
+  }
+  async updateHalaqa(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await Halaqa.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Halaqa not found");
+    return toPlainObject(doc);
+  }
+  async deleteHalaqa(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    await Halaqa.findByIdAndDelete(id);
+  }
+  async getHalaqaMembers(halaqaId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HalaqaMember.find({ halaqaId }));
+  }
+  async getStudentHalaqat(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HalaqaMember.find({ studentId }));
+  }
+  async addHalaqaMember(member: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const existing = await HalaqaMember.findOneAndUpdate(
+      { halaqaId: member.halaqaId, studentId: member.studentId },
+      { $set: cleanData(member) },
+      { upsert: true, new: true }
+    );
+    await Halaqa.findByIdAndUpdate(member.halaqaId, { $inc: { currentStudents: 1 } });
+    return toPlainObject(existing);
+  }
+  async removeHalaqaMember(halaqaId: string, studentId: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    await HalaqaMember.deleteOne({ halaqaId, studentId });
+    await Halaqa.findByIdAndUpdate(halaqaId, { $inc: { currentStudents: -1 } });
+  }
+  async updateHalaqaMember(halaqaId: string, studentId: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HalaqaMember.findOneAndUpdate({ halaqaId, studentId }, cleanData(updates), { new: true });
+    if (!doc) throw new Error("Halaqa member not found");
+    return toPlainObject(doc);
+  }
+  async getHalaqaSchedules(halaqaId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HalaqaSchedule.find({ halaqaId }));
+  }
+  async createHalaqaSchedule(schedule: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await HalaqaSchedule.create(cleanData(schedule)));
+  }
+  async updateHalaqaSchedule(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HalaqaSchedule.findByIdAndUpdate(id, cleanData(updates), { new: true });
+    if (!doc) throw new Error("Halaqa schedule not found");
+    return toPlainObject(doc);
+  }
+  async deleteHalaqaSchedule(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    await HalaqaSchedule.findByIdAndDelete(id);
+  }
+  async getHalaqaAttendance(halaqaId: string, date?: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const query: any = { halaqaId };
+    if (date) query.sessionDate = date;
+    return toPlainArray(await HalaqaAttendance.find(query));
+  }
+  async getStudentHalaqaAttendance(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HalaqaAttendance.find({ studentId }).sort({ sessionDate: -1 }));
+  }
+  async recordHalaqaAttendance(attendance: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HalaqaAttendance.findOneAndUpdate(
+      { halaqaId: attendance.halaqaId, studentId: attendance.studentId, sessionDate: attendance.sessionDate },
+      { $set: cleanData(attendance) },
+      { upsert: true, new: true }
+    );
+    return toPlainObject(doc);
+  }
+  async updateHalaqaAttendance(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HalaqaAttendance.findByIdAndUpdate(id, cleanData(updates), { new: true });
+    if (!doc) throw new Error("Attendance record not found");
+    return toPlainObject(doc);
+  }
 
-  // Homework stub methods - MongoDB storage uses PostgreSQL for homework data
-  async getHomework(id: string): Promise<any> { return undefined; }
-  async getHomeworksByTeacher(teacherId: string): Promise<any[]> { return []; }
-  async getHomeworksForStudent(studentId: string): Promise<any[]> { return []; }
-  async getHomeworksByHalaqa(halaqaId: string): Promise<any[]> { return []; }
-  async createHomework(homework: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
-  async updateHomework(id: string, updates: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
-  async deleteHomework(id: string): Promise<void> { throw new Error("Homework operations require PostgreSQL"); }
-  
-  // Homework submission stub methods
-  async getHomeworkSubmissions(homeworkId: string): Promise<any[]> { return []; }
-  async getStudentSubmission(homeworkId: string, studentId: string): Promise<any> { return undefined; }
-  async getStudentSubmissions(studentId: string): Promise<any[]> { return []; }
-  async createHomeworkSubmission(submission: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
-  async updateHomeworkSubmission(id: string, updates: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
-  async gradeHomeworkSubmission(id: string, grading: any): Promise<any> { throw new Error("Homework operations require PostgreSQL"); }
-  
-  // Student evaluation stub methods
-  async getStudentEvaluations(studentId: string): Promise<any[]> { return []; }
-  async getStudentEvaluation(id: string): Promise<any> { return undefined; }
-  async createStudentEvaluation(evaluation: any): Promise<any> { throw new Error("Evaluation operations require PostgreSQL"); }
-  async updateStudentEvaluation(id: string, updates: any): Promise<any> { throw new Error("Evaluation operations require PostgreSQL"); }
-  
-  // Parent report stub methods
-  async getParentReports(studentId: string): Promise<any[]> { return []; }
-  async getParentReport(id: string): Promise<any> { return undefined; }
-  async createParentReport(report: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
-  async updateParentReport(id: string, updates: any): Promise<any> { throw new Error("Parent report operations require PostgreSQL"); }
+  // ─── Homework Operations ─────────────────────────────────────────────────────
+  async getHomework(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await Homework.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getHomeworksByTeacher(teacherId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Homework.find({ createdBy: teacherId }).sort({ createdAt: -1 }));
+  }
+  async getHomeworksForStudent(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const memberships = await HalaqaMember.find({ studentId });
+    const halaqaIds = memberships.map(m => (m as any).halaqaId);
+    return toPlainArray(await Homework.find({
+      isActive: true,
+      $or: [{ assignedTo: studentId }, { halaqaId: { $in: halaqaIds } }]
+    }).sort({ dueDate: 1 }));
+  }
+  async getHomeworksByHalaqa(halaqaId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Homework.find({ halaqaId, isActive: true }).sort({ dueDate: 1 }));
+  }
+  async createHomework(homework: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await Homework.create(cleanData(homework)));
+  }
+  async updateHomework(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await Homework.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Homework not found");
+    return toPlainObject(doc);
+  }
+  async deleteHomework(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    await Homework.findByIdAndDelete(id);
+  }
+  async getHomeworkSubmissions(homeworkId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HomeworkSubmission.find({ homeworkId }));
+  }
+  async getStudentSubmission(homeworkId: string, studentId: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await HomeworkSubmission.findOne({ homeworkId, studentId });
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getStudentSubmissions(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await HomeworkSubmission.find({ studentId }).sort({ createdAt: -1 }));
+  }
+  async createHomeworkSubmission(submission: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HomeworkSubmission.findOneAndUpdate(
+      { homeworkId: submission.homeworkId, studentId: submission.studentId },
+      { $set: { ...cleanData(submission), submittedAt: new Date(), status: 'submitted', updatedAt: new Date() } },
+      { upsert: true, new: true }
+    );
+    return toPlainObject(doc);
+  }
+  async updateHomeworkSubmission(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HomeworkSubmission.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Submission not found");
+    return toPlainObject(doc);
+  }
+  async gradeHomeworkSubmission(id: string, grading: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await HomeworkSubmission.findByIdAndUpdate(id, {
+      grade: grading.grade,
+      teacherFeedbackAr: grading.teacherFeedbackAr,
+      teacherFeedbackEn: grading.teacherFeedbackEn,
+      gradedBy: grading.gradedBy,
+      gradedAt: grading.gradedAt || new Date(),
+      status: grading.status || 'graded',
+      updatedAt: new Date(),
+    }, { new: true });
+    if (!doc) throw new Error("Submission not found");
+    return toPlainObject(doc);
+  }
 
-  // Subscription plan stub methods - uses JSON fallback
-  async getSubscriptionPlans(): Promise<any[]> { return []; }
-  async getActiveSubscriptionPlans(): Promise<any[]> { return []; }
-  async getSubscriptionPlan(id: string): Promise<any> { return undefined; }
-  async createSubscriptionPlan(plan: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
-  async updateSubscriptionPlan(id: string, plan: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
-  async deleteSubscriptionPlan(id: string): Promise<void> { throw new Error("Subscription operations require PostgreSQL or JSON fallback"); }
+  // ─── Student Evaluation Operations ──────────────────────────────────────────
+  async getStudentEvaluations(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await StudentEvaluation.find({ studentId }).sort({ evaluationDate: -1 }));
+  }
+  async getStudentEvaluation(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await StudentEvaluation.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async createStudentEvaluation(evaluation: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await StudentEvaluation.create(cleanData(evaluation)));
+  }
+  async updateStudentEvaluation(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await StudentEvaluation.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Evaluation not found");
+    return toPlainObject(doc);
+  }
 
-  // Subscription stub methods
-  async getSubscription(id: string): Promise<any> { return undefined; }
-  async getUserActiveSubscription(userId: string): Promise<any> { return undefined; }
-  async getUserSubscriptions(userId: string): Promise<any[]> { return []; }
-  async getAllSubscriptions(filters: any): Promise<any[]> { return []; }
-  async createSubscription(subscription: any): Promise<any> { throw new Error("Subscription operations require PostgreSQL"); }
-  async cancelSubscription(id: string): Promise<any> { throw new Error("Subscription operations require PostgreSQL"); }
+  // ─── Parent Report Operations ────────────────────────────────────────────────
+  async getParentReports(studentId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await ParentReport.find({ studentId }).sort({ reportWeek: -1 }));
+  }
+  async getParentReport(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await ParentReport.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async createParentReport(report: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await ParentReport.create(cleanData(report)));
+  }
+  async updateParentReport(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await ParentReport.findByIdAndUpdate(id, cleanData(updates), { new: true });
+    if (!doc) throw new Error("Parent report not found");
+    return toPlainObject(doc);
+  }
 
-  // Payment transaction stub methods
-  async getUserPaymentTransactions(userId: string): Promise<any[]> { return []; }
-  async getAllPaymentTransactions(filters: any): Promise<any[]> { return []; }
-  async createPaymentTransaction(transaction: any): Promise<any> { throw new Error("Payment operations require PostgreSQL"); }
+  // ─── Subscription Plan Operations ────────────────────────────────────────────
+  async getSubscriptionPlans(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await SubscriptionPlan.find().sort({ sortOrder: 1 }));
+  }
+  async getActiveSubscriptionPlans(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await SubscriptionPlan.find({ isActive: true }).sort({ sortOrder: 1 }));
+  }
+  async getSubscriptionPlan(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await SubscriptionPlan.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async createSubscriptionPlan(plan: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await SubscriptionPlan.create(cleanData(plan)));
+  }
+  async updateSubscriptionPlan(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await SubscriptionPlan.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Subscription plan not found");
+    return toPlainObject(doc);
+  }
+  async deleteSubscriptionPlan(id: string): Promise<void> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    await SubscriptionPlan.findByIdAndDelete(id);
+  }
 
-  // Payment gateway settings stub methods
-  async getEnabledPaymentGateways(): Promise<any[]> { return []; }
-  async getAllPaymentGatewaySettings(): Promise<any[]> { return []; }
-  async updatePaymentGatewaySettings(gateway: string, settings: any): Promise<any> { throw new Error("Payment gateway operations require PostgreSQL"); }
+  // ─── Subscription Operations ──────────────────────────────────────────────────
+  async getSubscription(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await Subscription.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getUserActiveSubscription(userId: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await Subscription.findOne({ userId, status: 'active' }).sort({ createdAt: -1 });
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getUserSubscriptions(userId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await Subscription.find({ userId }).sort({ createdAt: -1 }));
+  }
+  async getAllSubscriptions(filters: any): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const query: any = {};
+    if (filters?.status) query.status = filters.status;
+    const limit = filters?.limit || 50;
+    const skip = filters?.page ? (filters.page - 1) * limit : 0;
+    return toPlainArray(await Subscription.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit));
+  }
+  async createSubscription(subscription: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await Subscription.create(cleanData(subscription)));
+  }
+  async updateSubscription(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await Subscription.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Subscription not found");
+    return toPlainObject(doc);
+  }
+  async cancelSubscription(id: string, reason?: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await Subscription.findByIdAndUpdate(id, {
+      status: 'cancelled',
+      cancellationReason: reason,
+      cancelledAt: new Date(),
+      updatedAt: new Date(),
+    }, { new: true });
+    if (!doc) throw new Error("Subscription not found");
+    return toPlainObject(doc);
+  }
+
+  // ─── Payment Transaction Operations ──────────────────────────────────────────
+  async getUserPaymentTransactions(userId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await PaymentTransaction.find({ userId }).sort({ createdAt: -1 }));
+  }
+  async getAllPaymentTransactions(filters: any): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const query: any = {};
+    if (filters?.status) query.status = filters.status;
+    if (filters?.gateway) query.paymentGateway = filters.gateway;
+    const limit = filters?.limit || 50;
+    const skip = filters?.page ? (filters.page - 1) * limit : 0;
+    return toPlainArray(await PaymentTransaction.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit));
+  }
+  async createPaymentTransaction(transaction: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await PaymentTransaction.create(cleanData(transaction)));
+  }
+  async updatePaymentTransaction(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await PaymentTransaction.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Payment transaction not found");
+    return toPlainObject(doc);
+  }
+
+  // ─── Payment Gateway Settings Operations ─────────────────────────────────────
+  async getEnabledPaymentGateways(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await PaymentGatewaySettings.find({ isEnabled: true }).sort({ sortOrder: 1 }));
+  }
+  async getAllPaymentGatewaySettings(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await PaymentGatewaySettings.find().sort({ sortOrder: 1 }));
+  }
+  async updatePaymentGatewaySettings(gateway: string, settings: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await PaymentGatewaySettings.findOneAndUpdate(
+      { gateway },
+      { $set: { ...cleanData(settings), updatedAt: new Date() } },
+      { upsert: true, new: true }
+    );
+    return toPlainObject(doc);
+  }
+
+  // ─── Bank Transfer Request Operations ────────────────────────────────────────
+  async createBankTransferRequest(request: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await BankTransferRequest.create(cleanData(request)));
+  }
+  async getBankTransferRequest(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await BankTransferRequest.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getUserBankTransferRequests(userId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await BankTransferRequest.find({ userId }).sort({ createdAt: -1 }));
+  }
+  async getAllBankTransferRequests(filters?: any): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    const query: any = {};
+    if (filters?.status) query.status = filters.status;
+    return toPlainArray(await BankTransferRequest.find(query).sort({ createdAt: -1 }));
+  }
+  async updateBankTransferRequest(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await BankTransferRequest.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Bank transfer request not found");
+    return toPlainObject(doc);
+  }
+  async approveBankTransferRequest(id: string, reviewedBy: string, notes?: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await BankTransferRequest.findByIdAndUpdate(id, {
+      status: 'approved', reviewedBy, reviewNotes: notes, reviewedAt: new Date(), updatedAt: new Date()
+    }, { new: true });
+    if (!doc) throw new Error("Bank transfer request not found");
+    return toPlainObject(doc);
+  }
+  async rejectBankTransferRequest(id: string, reviewedBy: string, reason: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await BankTransferRequest.findByIdAndUpdate(id, {
+      status: 'rejected', reviewedBy, rejectionReason: reason, reviewedAt: new Date(), updatedAt: new Date()
+    }, { new: true });
+    if (!doc) throw new Error("Bank transfer request not found");
+    return toPlainObject(doc);
+  }
+
+  // ─── Lesson Reminder Operations ───────────────────────────────────────────────
+  async createLessonReminder(reminder: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    return toPlainObject(await LessonReminder.create(cleanData(reminder)));
+  }
+  async getLessonReminder(id: string): Promise<any> {
+    if (!this.isDbAvailable()) return undefined;
+    const doc = await LessonReminder.findById(id);
+    return doc ? toPlainObject(doc) : undefined;
+  }
+  async getUserLessonReminders(userId: string): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await LessonReminder.find({ userId }).sort({ scheduledFor: 1 }));
+  }
+  async getPendingReminders(beforeTime: Date): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await LessonReminder.find({ status: 'pending', scheduledFor: { $lte: beforeTime } }));
+  }
+  async updateLessonReminder(id: string, updates: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await LessonReminder.findByIdAndUpdate(id, { ...cleanData(updates), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Reminder not found");
+    return toPlainObject(doc);
+  }
+  async markReminderSent(id: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await LessonReminder.findByIdAndUpdate(id, { status: 'sent', sentAt: new Date(), updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Reminder not found");
+    return toPlainObject(doc);
+  }
+  async cancelReminder(id: string): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await LessonReminder.findByIdAndUpdate(id, { status: 'cancelled', updatedAt: new Date() }, { new: true });
+    if (!doc) throw new Error("Reminder not found");
+    return toPlainObject(doc);
+  }
+  async getPendingRemindersToSend(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return toPlainArray(await LessonReminder.find({
+      status: 'pending',
+      scheduledFor: { $lte: new Date() }
+    }).limit(50));
+  }
+
+  // ─── Academy Settings ─────────────────────────────────────────────────────────
+  async getAcademySettings(): Promise<any> {
+    if (!this.isDbAvailable()) return {};
+    const doc = await AcademySettings.findOne({ key: 'global' });
+    return doc ? (doc as any).settings || {} : {};
+  }
+  async updateAcademySettings(settings: any): Promise<any> {
+    if (!this.isDbAvailable()) throw new Error("MongoDB not available");
+    const doc = await AcademySettings.findOneAndUpdate(
+      { key: 'global' },
+      { $set: { settings, updatedAt: new Date() } },
+      { upsert: true, new: true }
+    );
+    return (doc as any).settings;
+  }
 }
 
 export const mongoStorage = new MongoDBStorage();
