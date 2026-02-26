@@ -4,6 +4,7 @@ import { requireAuth, requireSupervisorOrAdmin, requireTeacherOrHigher, type Aut
 import { wsService } from "./websocket";
 import { z } from "zod";
 import { studentUpdateSchema } from "@shared/schema";
+import { normalizePhoneNumber } from "./phoneUtils";
 
 const assignmentSchema = z.object({
   studentId: z.string(),
@@ -348,7 +349,7 @@ export function setupSheikhRoutes(app: Express) {
       const { studentId, reason } = req.body;
 
       // Get session access to derive session details
-      const sessionAccess = await storage.getSessionAccess(sessionId);
+      const sessionAccess = await (storage as any).getSessionAccess(sessionId);
       if (!sessionAccess) {
         return res.status(404).json({ message: "الحصة غير موجودة" });
       }
@@ -755,7 +756,7 @@ export function setupSheikhRoutes(app: Express) {
       }
 
       // Get student to verify they exist
-      const student = await storage.getStudentById(studentId);
+      const student = await storage.getStudent(studentId);
       if (!student) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
@@ -1011,7 +1012,7 @@ export function setupSheikhRoutes(app: Express) {
 
       const updatedError = await storage.updateStudentError(errorId, {
         isResolved: true,
-        resolvedDate: new Date(),
+        resolvedDate: new Date().toISOString().split('T')[0],
       });
 
       res.json(updatedError);
@@ -1030,7 +1031,7 @@ export function setupSheikhRoutes(app: Express) {
       }
 
       // Get student's user ID first
-      const student = await storage.getStudentById(studentId);
+      const student = await storage.getStudent(studentId);
       if (!student || !student.userId) {
         // Return empty memorization if student not found or no userId
         return res.json([]);

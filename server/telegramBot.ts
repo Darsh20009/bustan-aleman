@@ -21,9 +21,6 @@ export class BustanTelegramBot {
           timeout: 10
         }
       },
-      request: {
-        timeout: 60000
-      }
     });
     
     this.setupHandlers();

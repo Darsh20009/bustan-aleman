@@ -113,7 +113,7 @@ export function setupSubscriptionRoutes(app: Express) {
         const plan = await storage.getSubscriptionPlan(subscription.planId);
         res.json({
           ...subscription,
-          planName: plan?.name || 'غير معروف',
+          planName: plan?.nameAr || plan?.nameEn || 'غير معروف',
           remainingSessions: subscription.sessionsRemaining || 0,
         });
       } else {

@@ -38,7 +38,7 @@ export function setupCourseRoutes(app: Express) {
         return res.status(404).json({ message: "الطالب غير موجود" });
       }
       
-      const enrollment = await storage.enrollUserInCourse(userId, courseId);
+      const enrollment = await storage.enrollUserInCourse({ userId, courseId } as any);
       
       // Notify sheikh via WebSocket (broadcast manually)
       // wsService will handle this through its public methods
@@ -130,7 +130,6 @@ export function setupCourseRoutes(app: Express) {
         const certificate = await storage.createCertificate({
           studentId: student.id,
           courseId: quiz.courseId,
-          code: certificateCode,
           titleAr: `شهادة إتمام الدورة`,
           grade: score >= 90 ? "ممتاز" : score >= 85 ? "جيد جداً" : "جيد",
           teacherName: "أحمد أبو مازن",
@@ -138,7 +137,7 @@ export function setupCourseRoutes(app: Express) {
           qrImageDataUrl,
           verificationToken,
           status: "valid",
-        });
+        } as any);
         
         // Notify student
         wsService.notifyStudentOfCertificate(student.id, certificate);

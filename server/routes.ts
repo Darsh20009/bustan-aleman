@@ -591,7 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const plan = await storage.getSubscriptionPlan(effectivePlanId);
         if (plan) {
-          planName = plan.name;
+          planName = plan.nameAr || plan.nameEn;
         }
       } catch (e) {
         // Fallback to hardcoded validation if storage method not available
@@ -697,12 +697,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const item of cartItems) {
         // Skip if already enrolled
-        if (enrolledCourseIds.has(item.courseId)) {
+        if (enrolledCourseIds.has(item.courseId || '')) {
           continue;
         }
         
         // Get course to check if it's free or paid
-        const course = await storage.getCourse(item.courseId);
+        const course = await storage.getCourse(item.courseId || '');
         
         const enrollmentData = insertEnrollmentSchema.parse({
           userId,
@@ -723,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId,
           planId: sub.planId,
           status: 'active' as const,
-          startDate: new Date().toISOString(),
+          startDate: new Date(),
         };
         
         try {
@@ -2674,8 +2674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { errorId } = req.params;
       const updatedError = await storage.updateStudentError(errorId, { 
         isResolved: true,
-        resolvedAt: new Date(),
-        resolvedBy: req.session?.userId,
+        resolvedDate: new Date().toISOString().split('T')[0],
       });
       
       res.json(updatedError);
@@ -4355,7 +4354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } else if (item.courseId) {
           const course = await storage.getCourse(item.courseId);
           if (course && course.price) {
-            totalAmount += parseFloat(course.price);
+            totalAmount += Number(course.price);
             return { type: "course", course };
           }
         }

@@ -24,6 +24,7 @@ import {
   quranAyahMarkers,
   quranRecitationAttempts,
   quranNotes,
+  quizzes,
   sessionAccess,
   dailyAssignments,
   liveAnnotations,
@@ -307,6 +308,12 @@ export interface IStorage {
   deleteWordHighlight(id: string): Promise<void>;
   deleteWordHighlightByLocation(studentId: string, surahNumber: number, ayahNumber: number, wordIndex: number): Promise<void>;
   
+  // Quran notes operations
+  createQuranNote(note: InsertQuranNote): Promise<QuranNote>;
+  getStudentQuranNotes(studentId: string, surahNumber?: number, ayahNumber?: number): Promise<QuranNote[]>;
+  updateQuranNote(id: string, updates: Partial<InsertQuranNote>): Promise<QuranNote>;
+  deleteQuranNote(id: string): Promise<void>;
+
   // Quran memorization operations
   createMemorization(memorization: InsertQuranMemorization): Promise<QuranMemorization>;
   getStudentMemorization(studentId: string): Promise<QuranMemorization[]>;
@@ -367,7 +374,7 @@ export interface IStorage {
   getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<import('@shared/schema').SheikhSessionView[]>;
   
   // Live room operations
-  createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
+  createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date | string, sessionTime: string): Promise<LiveRoom>;
   createOrActivateLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom>;
   getLiveRoomByToken(roomToken: string): Promise<LiveRoom | undefined>;
   getLiveRoomsByStudent(studentId: string): Promise<LiveRoom[]>;
@@ -436,6 +443,10 @@ export interface IStorage {
   getContactMessages(filters: { isRead?: boolean; page?: number; limit?: number }): Promise<ContactMessage[]>;
   markMessageAsRead(id: string): Promise<ContactMessage>;
   assignStudentToTeacher(teacherId: string, studentId: string): Promise<any>;
+  findOrCreateStudentForUser(userId: string, userData: { firstName?: string; phoneNumber?: string; passwordHash?: string }): Promise<Student | null>;
+  getAcademySettings(): Promise<any>;
+  updateAcademySettings(settings: any): Promise<any>;
+  getAllQuizzes(): Promise<any[]>;
   
   // Bank transfer request operations
   createBankTransferRequest(request: InsertBankTransferRequest): Promise<BankTransferRequest>;
@@ -653,7 +664,7 @@ export class DatabaseStorage implements IStorage {
       
       if (normalizedInput) {
         const allUsers = await db!.select().from(users);
-        return allUsers.find(u => phonesMatch(u.phoneNumber, phoneNumber));
+        return allUsers.find((u: User) => phonesMatch(u.phoneNumber, phoneNumber));
       }
       return undefined;
     }
@@ -703,6 +714,7 @@ export class DatabaseStorage implements IStorage {
     const newUser: User = {
       id: `user_${Date.now()}`,
       firstName: data.firstName,
+      lastName: null,
       phoneNumber: normalizedPhone,
       passwordHash: data.passwordHash,
       role: data.role as any,
@@ -710,6 +722,18 @@ export class DatabaseStorage implements IStorage {
       isActive: true,
       registrationCompleted: true,
       emailVerified: false,
+      age: null,
+      educationLevel: null,
+      quranExperience: null,
+      memorization_level: null,
+      learningGoals: null,
+      preferredTime: null,
+      whatsappNumber: null,
+      profileImageUrl: null,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
     
     const allUsers = await this.getAllUsers();
@@ -1671,7 +1695,7 @@ export class DatabaseStorage implements IStorage {
   async getStudentByUserId(userId: string): Promise<Student | undefined> {
     if (!this.isDbAvailable()) {
       const jsonStudents = await jsonStorage.getAllStudents();
-      const student = jsonStudents.find((s: any) => s.userId === userId);
+      const student = jsonStudents.find((s: any) => s.userId === userId) as any;
       if (student) {
         return {
           id: student.id,
@@ -1702,7 +1726,7 @@ export class DatabaseStorage implements IStorage {
   async getStudentByPhone(phoneNumber: string): Promise<Student | undefined> {
     if (!this.isDbAvailable()) {
       const jsonStudents = await jsonStorage.getAllStudents();
-      const student = jsonStudents.find((s: any) => s.phone === phoneNumber || s.phoneNumber === phoneNumber);
+      const student = jsonStudents.find((s: any) => s.phone === phoneNumber || s.phoneNumber === phoneNumber) as any;
       if (student) {
         return {
           id: student.id,
@@ -1784,7 +1808,7 @@ export class DatabaseStorage implements IStorage {
         studentName: userData.firstName || 'طالب',
         userId,
         phoneNumber: userData.phoneNumber || null,
-        passwordHash: userData.passwordHash || null,
+        passwordHash: userData.passwordHash || '',
         isActive: true,
         currentLevel: 'beginner',
       });
@@ -2478,8 +2502,7 @@ export class DatabaseStorage implements IStorage {
           .from(studentSessions)
           .where(and(
             eq(studentSessions.studentId, session.studentId),
-            gte(studentSessions.startTime, today + 'T00:00:00'),
-            lte(studentSessions.startTime, today + 'T23:59:59')
+            eq(studentSessions.sessionDate, today)
           ));
         
         // If there's any attendance record for today, skip
@@ -2746,7 +2769,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Live room operations
-  async createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoom> {
+  async createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date | string, sessionTime: string): Promise<LiveRoom> {
     if (!this.isDbAvailable()) {
       throw new Error("Database not available");
     }
@@ -2769,7 +2792,7 @@ export class DatabaseStorage implements IStorage {
       );
     
     // Filter by date in JavaScript to avoid SQL date comparison issues
-    const matchingRoom = existingRooms.find(room => {
+    const matchingRoom = existingRooms.find((room: LiveRoom) => {
       const roomDate = room.sessionDate instanceof Date 
         ? room.sessionDate.toISOString().split('T')[0]
         : String(room.sessionDate).split('T')[0];
@@ -3024,7 +3047,9 @@ export class DatabaseStorage implements IStorage {
       const mockCartItem: ShoppingCartItem = {
         id: `cart_${Date.now()}`,
         userId: item.userId,
-        courseId: item.courseId,
+        courseId: item.courseId ?? null,
+        subscriptionPlanId: item.subscriptionPlanId ?? null,
+        itemType: item.itemType ?? null,
         addedAt: new Date(),
         createdAt: new Date(),
       };
@@ -3037,7 +3062,7 @@ export class DatabaseStorage implements IStorage {
       .from(shoppingCart)
       .where(and(
         eq(shoppingCart.userId, item.userId),
-        eq(shoppingCart.courseId, item.courseId)
+        item.courseId ? eq(shoppingCart.courseId, item.courseId) : sql`1=1`
       ))
       .limit(1);
     
@@ -3374,10 +3399,10 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) return { active: 0, expired: 0, pending: 0, cancelled: 0 };
     const allSubs = await db!.select().from(subscriptions);
     return {
-      active: allSubs.filter(s => s.status === 'active').length,
-      expired: allSubs.filter(s => s.status === 'expired').length,
-      pending: allSubs.filter(s => s.status === 'pending').length,
-      cancelled: allSubs.filter(s => s.status === 'cancelled').length,
+      active: allSubs.filter((s: any) => s.status === 'active').length,
+      expired: allSubs.filter((s: any) => s.status === 'expired').length,
+      pending: allSubs.filter((s: any) => s.status === 'pending').length,
+      cancelled: allSubs.filter((s: any) => s.status === 'cancelled').length,
     };
   }
 
@@ -3388,8 +3413,8 @@ export class DatabaseStorage implements IStorage {
       sessions,
       summary: {
         total: sessions.length,
-        attended: sessions.filter(s => s.attended).length,
-        absent: sessions.filter(s => !s.attended).length,
+        attended: sessions.filter((s: any) => s.attended).length,
+        absent: sessions.filter((s: any) => !s.attended).length,
       },
     };
   }
@@ -3398,7 +3423,7 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) return { total: 0, transactions: [] };
     const transactions = await db!.select().from(paymentTransactions)
       .where(eq(paymentTransactions.status, 'completed'));
-    const total = transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+    const total = transactions.reduce((sum: number, t: any) => sum + parseFloat(t.amount), 0);
     return { total, transactions };
   }
 
@@ -3413,10 +3438,10 @@ export class DatabaseStorage implements IStorage {
     if (!this.isDbAvailable()) return { students: [], summary: {} };
     let studentsData = await db!.select().from(students);
     if (filters.studentId) {
-      studentsData = studentsData.filter(s => s.id === filters.studentId);
+      studentsData = studentsData.filter((s: any) => s.id === filters.studentId);
     }
     if (filters.teacherId) {
-      studentsData = studentsData.filter(s => s.sheikhId === filters.teacherId);
+      studentsData = studentsData.filter((s: any) => s.sheikhId === filters.teacherId);
     }
     return { students: studentsData, summary: { totalStudents: studentsData.length } };
   }
@@ -3456,6 +3481,19 @@ export class DatabaseStorage implements IStorage {
     const [updated] = await db!.update(students).set({ sheikhId: teacherId, updatedAt: new Date() })
       .where(eq(students.id, studentId)).returning();
     return updated;
+  }
+
+  async getAllQuizzes(): Promise<any[]> {
+    if (!this.isDbAvailable()) return [];
+    return await db!.select().from(quizzes);
+  }
+
+  async getAcademySettings(): Promise<any> {
+    return null;
+  }
+
+  async updateAcademySettings(settings: any): Promise<any> {
+    return settings;
   }
 
   // Bank transfer request operations

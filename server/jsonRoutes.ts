@@ -6,14 +6,6 @@ import { requireAuth, requireAdmin, requireSupervisorOrAdmin } from "./authMiddl
 import { storage } from "./storage";
 import { z } from "zod";
 
-// Extend session data
-declare module 'express-session' {
-  interface SessionData {
-    studentId: string;
-    userId?: string;
-    userRole?: 'student' | 'supervisor' | 'admin';
-  }
-}
 
 // Helper function to get student data from database storage (unified)
 async function getCurrentStudent(req: any) {
@@ -107,7 +99,6 @@ export function setupJSONRoutes(app: Express) {
             memorizedSurahs: JSON.stringify(jsonStudent.memorizedSurahs || []),
             currentLevel: jsonStudent.currentLevel || 'beginner',
             notes: jsonStudent.notes || null,
-            zoomLink: jsonStudent.zoomLink || null,
             whatsappContact: jsonStudent.phone || '+966532441566',
           });
           syncedCount++;
@@ -249,7 +240,7 @@ export function setupJSONRoutes(app: Express) {
         req.session = {} as any;
       }
       req.session.studentId = student.id;
-      req.session.userId = user?.id || student.userId;
+      req.session.userId = user?.id || student.userId || undefined;
       req.session.userRole = 'student';
 
       // Get related data from database
@@ -288,7 +279,7 @@ export function setupJSONRoutes(app: Express) {
       }
 
       // Sanitize response - never expose password hash to client
-      const { password, ...safeStudent } = student;
+      const { passwordHash, ...safeStudent } = student;
       res.json(safeStudent);
     } catch (error) {
       console.error("Error fetching student profile:", error);
@@ -570,8 +561,8 @@ export function setupJSONRoutes(app: Express) {
         const enrollmentMessage = `
 📚 تسجيل جديد في الدورة 📚
 
-الدورة: ${course.title}
-الطالب: ${user.fullName}
+الدورة: ${course.titleAr}
+الطالب: ${user.firstName}
 تاريخ التسجيل: ${new Date().toLocaleString('ar-SA')}
 
 مرحباً بالطالب الجديد! 🎉

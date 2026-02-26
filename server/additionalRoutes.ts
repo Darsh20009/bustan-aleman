@@ -44,7 +44,6 @@ const studentUpdateSchema = z.object({
 
 const certificateCreateSchema = insertCertificateSchema.omit({
   issuedBy: true,
-  verificationToken: true,
   qrImageDataUrl: true,
   status: true,
 });
@@ -117,7 +116,7 @@ export function setupAdditionalRoutes(app: Express) {
           const sessionsToCount = monthSessions.length > 0 ? monthSessions : sessions.slice(0, 10);
           
           totalSessions = sessionsToCount.length;
-          completedSessions = sessionsToCount.filter(s => s.status !== 'absent' && s.status !== 'cancelled').length;
+          completedSessions = sessionsToCount.filter(s => s.attended !== false && s.attended !== null).length;
           attendanceRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 100;
         } catch (err) {
           console.log("Could not calculate attendance:", err);
@@ -135,7 +134,7 @@ export function setupAdditionalRoutes(app: Express) {
         lastSurah: progress?.lastSurah || 1,
         lastAyah: progress?.lastAyah || 1,
         bookmarkedVerses: progress?.bookmarkedVerses || "[]",
-        createdAt: progress?.createdAt || new Date(),
+        createdAt: new Date(),
         updatedAt: progress?.updatedAt || new Date(),
         // Dashboard-specific fields
         attendanceRate,
@@ -291,8 +290,6 @@ export function setupAdditionalRoutes(app: Express) {
       // Generate QR code as data URL
       const qrDataUrl = await QRCode.toDataURL(verificationUrl, {
         errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
         margin: 1,
         color: {
           dark: '#1a472a',
@@ -307,7 +304,7 @@ export function setupAdditionalRoutes(app: Express) {
         verificationToken,
         qrImageDataUrl: qrDataUrl,
         status: 'valid',
-      });
+      } as any);
       
       res.status(201).json(certificate);
     } catch (error) {
