@@ -62,7 +62,16 @@ The frontend has been completely restructured with a modern, role-based dashboar
 -   **Owner Account**: Phone 0500000000, Password admin123456 - Full platform access, can manage academies and all users
 -   **Pre-registered Users**: Defined in `server/preregistered-users.json`, auto-initialized on server start
 
-### Recent Changes (February 2026)
+### Recent Changes (February 2026 - Session 2)
+-   **Admin Users Page** (`/admin/users`): Created full CRUD user management page for admins. Features: user list with search/filter by role & status, role change dialog (student/supervisor/teacher/admin), toggle activate/deactivate with confirmation dialog. Route added to AdminLayout nav and App.tsx.
+-   **Teacher Dashboard** (`/teacher/dashboard`): Created comprehensive teacher dashboard page with Islamic greeting, motivational Quran verse, 4 stats cards (students, sessions, homework, attendance rate), upcoming sessions list, recent students list, and quick action buttons.
+-   **Teacher Navigation**: Added "لوحة التحكم" as first nav item in TeacherLayout leading to `/teacher/dashboard`.
+-   **Profile Link in Sidebar**: Added "الملف الشخصي" link to DashboardLayout sidebar footer for all roles.
+-   **Profile Route**: Added `/profile` route to App.tsx accessible by all roles (student/supervisor/admin/owner/teacher).
+-   **Storage Interface Updates**: Updated `IStorage.getAllUsers` to accept optional filters `{ role, isActive, page, limit }`. Added `getStudentByUserId` and `getStudentByPhone` to IStorage interface. Updated `DatabaseStorage.getAllUsers` to properly filter results using Drizzle ORM conditions.
+-   **TypeScript Fix**: Exported `storage` as `IStorage` type to fix `adminDashboardRoutes.ts` TypeScript errors. All admin dashboard route errors resolved.
+
+### Recent Changes (February 2026 - Session 1)
 -   **Quran Recitation Page** (`/quran/recitation`): Created comprehensive `QuranRecitationPage.tsx` with surah/reciter selection, audio playback, Web Speech API recitation practice (Arabic `ar-SA`), word-by-word comparison with green/red highlighting, scoring, and session results
 -   **Quran Reader Recitation Button**: Added "تسميع" button to both desktop and mobile QuranPageReader toolbars linking to the recitation page
 -   **Student Navigation**: Added "تسميع القرآن" entry to student dashboard navigation

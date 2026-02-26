@@ -400,4 +400,264 @@ export function setupAdditionalRoutes(app: Express) {
       res.status(500).json({ message: "خطأ في جلب الشهادات" });
     }
   });
+
+  // ==================== Student Dashboard Stats (aggregated) ====================
+  app.get('/api/student/dashboard', requireAuth, requireStudent, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+
+      // Get student record
+      let student = await storage.getStudentByUserId(userId);
+      if (!student) {
+        const user = await storage.getUser(userId);
+        if (user?.phoneNumber) {
+          student = await storage.getStudentByPhone(user.phoneNumber);
+        }
+      }
+
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+
+      // Sessions stats
+      let upcomingSessions: any[] = [];
+      let completedSessions = 0;
+      let totalSessions = 0;
+      let attendanceRate = 0;
+      let nextSession: any = null;
+
+      if (student) {
+        try {
+          const sessions = await storage.getAllSessionAccess(student.id);
+          totalSessions = sessions.length;
+          const attended = sessions.filter((s: any) => s.attendanceStatus === 'present');
+          completedSessions = attended.length;
+          attendanceRate = totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+
+          upcomingSessions = sessions
+            .filter((s: any) => {
+              const d = s.sessionDate || s.date;
+              return d && String(d) >= todayStr;
+            })
+            .sort((a: any, b: any) => {
+              const da = String(a.sessionDate || a.date || '');
+              const db = String(b.sessionDate || b.date || '');
+              return da.localeCompare(db);
+            })
+            .slice(0, 3);
+
+          nextSession = upcomingSessions[0] || null;
+        } catch (_) {}
+      }
+
+      // Homework stats
+      let pendingHomework = 0;
+      let completedHomework = 0;
+      let recentHomework: any[] = [];
+      if (student) {
+        try {
+          const hw = await storage.getHomeworksForStudent(student.id);
+          pendingHomework = hw.filter((h: any) => {
+            const due = h.dueDate ? new Date(h.dueDate) : null;
+            return h.status !== 'submitted' && h.status !== 'graded' && (!due || due >= now);
+          }).length;
+          completedHomework = hw.filter((h: any) => h.status === 'graded' || h.status === 'submitted').length;
+          recentHomework = hw
+            .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+            .slice(0, 3);
+        } catch (_) {}
+      }
+
+      // Quran progress
+      let quranProgress: any = null;
+      let memorizedCount = 0;
+      try {
+        quranProgress = await storage.getQuranProgress(userId);
+        if (quranProgress) {
+          const memorized = student?.memorizedSurahs || quranProgress.memorizedSurahs;
+          if (memorized) {
+            try {
+              const parsed = typeof memorized === 'string' ? JSON.parse(memorized) : memorized;
+              memorizedCount = Array.isArray(parsed) ? parsed.length : 0;
+            } catch (_) {}
+          }
+        }
+      } catch (_) {}
+
+      // Subscription status
+      let subscriptionStatus = 'inactive';
+      let subscriptionPlan = null;
+      if (student) {
+        try {
+          subscriptionStatus = student.isPaid ? 'active' : 'inactive';
+        } catch (_) {}
+      }
+
+      res.json({
+        student: student ? {
+          id: student.id,
+          name: student.studentName,
+          level: student.currentLevel,
+          isPaid: student.isPaid,
+          isActive: student.isActive,
+        } : null,
+        sessions: {
+          total: totalSessions,
+          completed: completedSessions,
+          upcoming: upcomingSessions.length,
+          attendanceRate,
+          nextSession,
+          recentUpcoming: upcomingSessions,
+        },
+        homework: {
+          pending: pendingHomework,
+          completed: completedHomework,
+          recent: recentHomework,
+        },
+        quran: {
+          lastSurah: quranProgress?.lastSurah || 1,
+          lastAyah: quranProgress?.lastAyah || 1,
+          memorizedSurahs: memorizedCount,
+        },
+        subscription: {
+          status: subscriptionStatus,
+          plan: subscriptionPlan,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching student dashboard:", error);
+      res.status(500).json({ message: "خطأ في جلب بيانات لوحة الطالب" });
+    }
+  });
+
+  // ==================== Teacher Dashboard Stats (aggregated) ====================
+  app.get('/api/teacher/dashboard', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+
+      // Get students assigned to this teacher
+      let students: any[] = [];
+      try {
+        const allStudents = await storage.getAllStudents();
+        students = allStudents.filter((s: any) => s.supervisorId === userId || s.teacherId === userId);
+        if (students.length === 0) students = allStudents.slice(0, 20);
+      } catch (_) {}
+
+      const activeStudents = students.filter((s: any) => s.isActive);
+      const paidStudents = students.filter((s: any) => s.isPaid);
+
+      // Today's sessions
+      let todaySessions = 0;
+      let upcomingSessions: any[] = [];
+      try {
+        const liveRooms = await storage.getAllLiveRooms();
+        const now = new Date();
+        const todayStr = now.toISOString().split('T')[0];
+        todaySessions = liveRooms.filter((r: any) => {
+          const d = r.sessionDate instanceof Date ? r.sessionDate.toISOString().split('T')[0] : String(r.sessionDate || '').split('T')[0];
+          return d === todayStr;
+        }).length;
+        upcomingSessions = liveRooms
+          .filter((r: any) => {
+            const d = r.sessionDate instanceof Date ? r.sessionDate.toISOString().split('T')[0] : String(r.sessionDate || '').split('T')[0];
+            return d >= todayStr;
+          })
+          .slice(0, 5);
+      } catch (_) {}
+
+      // Pending homework count
+      let pendingHomework = 0;
+      try {
+        const hw = await storage.getHomeworksByTeacher(userId);
+        pendingHomework = hw.filter((h: any) => {
+          const due = h.dueDate ? new Date(h.dueDate) : null;
+          return !due || due >= new Date();
+        }).length;
+      } catch (_) {}
+
+      res.json({
+        students: {
+          total: students.length,
+          active: activeStudents.length,
+          paid: paidStudents.length,
+        },
+        sessions: {
+          today: todaySessions,
+          upcoming: upcomingSessions,
+        },
+        homework: {
+          pending: pendingHomework,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching teacher dashboard:", error);
+      res.status(500).json({ message: "خطأ في جلب بيانات لوحة المعلم" });
+    }
+  });
+
+  // ==================== User Profile ====================
+  app.get('/api/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'المستخدم غير موجود' });
+
+      let studentData = null;
+      if (user.role === 'student') {
+        let student = await storage.getStudentByUserId(userId);
+        if (!student && user.phoneNumber) {
+          student = await storage.getStudentByPhone(user.phoneNumber);
+        }
+        if (student) {
+          studentData = {
+            id: student.id,
+            name: student.studentName,
+            level: student.currentLevel,
+            isPaid: student.isPaid,
+            isActive: student.isActive,
+            memorizedSurahs: student.memorizedSurahs,
+            phoneNumber: student.phoneNumber,
+          };
+        }
+      }
+
+      res.json({
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        age: (user as any).age,
+        preferredTime: (user as any).preferredTime,
+        registrationCompleted: user.registrationCompleted,
+        student: studentData,
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      res.status(500).json({ message: 'خطأ في جلب الملف الشخصي' });
+    }
+  });
+
+  const profileUpdateSchema = z.object({
+    firstName: z.string().min(2).optional(),
+    lastName: z.string().min(2).optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    age: z.number().min(5).max(100).optional(),
+    preferredTime: z.string().optional(),
+  });
+
+  app.patch('/api/profile', requireAuth, async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user!.id;
+      const data = profileUpdateSchema.parse(req.body);
+      const updated = await storage.updateUserProfile(userId, data as any);
+      res.json({ message: 'تم تحديث الملف الشخصي', user: updated });
+    } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ message: 'بيانات غير صالحة', errors: error.errors });
+      }
+      console.error("Error updating profile:", error);
+      res.status(500).json({ message: 'خطأ في تحديث الملف الشخصي' });
+    }
+  });
 }

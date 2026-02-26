@@ -150,7 +150,9 @@ import { normalizePhoneNumber, phonesMatch } from "./phoneUtils";
 export interface IStorage {
   // User operations (required for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  getAllUsers(): Promise<User[]>;
+  getAllUsers(filters?: { role?: string; isActive?: boolean; page?: number; limit?: number }): Promise<User[]>;
+  getStudentByUserId(userId: string): Promise<Student | undefined>;
+  getStudentByPhone(phoneNumber: string): Promise<Student | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserProfile(id: string, data: Partial<User>): Promise<User>;
   getUserByPhone(phoneNumber: string): Promise<User | undefined>;
@@ -587,15 +589,32 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllUsers(): Promise<User[]> {
+  async getAllUsers(filters?: { role?: string; isActive?: boolean; page?: number; limit?: number }): Promise<User[]> {
     if (this.isDbAvailable()) {
-      return await db!.select().from(users).where(eq(users.isActive, true));
+      let query = db!.select().from(users).$dynamic();
+      const conditions = [];
+      if (filters?.isActive !== undefined) {
+        conditions.push(eq(users.isActive, filters.isActive));
+      }
+      if (filters?.role) {
+        conditions.push(eq(users.role, filters.role));
+      }
+      if (conditions.length > 0) {
+        query = query.where(and(...conditions));
+      }
+      const limit = filters?.limit ?? 100;
+      const offset = filters?.page ? (filters.page - 1) * limit : 0;
+      query = query.limit(limit).offset(offset);
+      return await query;
     }
 
     // JSON fallback - try to read from users.json
     try {
       const usersData = await jsonStorage.readJSON('users.json');
-      return Array.isArray(usersData) ? usersData.filter(u => u.isActive !== false) : [];
+      let result = Array.isArray(usersData) ? usersData : [];
+      if (filters?.isActive !== undefined) result = result.filter((u: any) => u.isActive === filters.isActive);
+      if (filters?.role) result = result.filter((u: any) => u.role === filters.role);
+      return result;
     } catch {
       return [];
     }
@@ -3949,11 +3968,11 @@ import { MongoDBStorage } from "./mongoStorage";
 import { isMongoConnected } from "./mongodb";
 
 // Use MongoDB if available, otherwise use DatabaseStorage with PostgreSQL
-export const storage = (() => {
+export const storage: IStorage = (() => {
   // Try to use MongoDB if connected
   if (isMongoConnected()) {
     console.log("✅ Using MongoDB storage");
-    return new MongoDBStorage();
+    return new MongoDBStorage() as unknown as IStorage;
   }
   
   // Use DatabaseStorage with PostgreSQL (initialized via initializeDatabase)

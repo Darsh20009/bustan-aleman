@@ -29,6 +29,7 @@ import { StudentContactPage } from "./pages/student/StudentContact";
 import { StudentSessionsPage } from "./pages/student/StudentSessions";
 import { StudentQuranTrackingPage } from "./pages/student/StudentQuranTracking";
 
+import { TeacherDashboardPage } from "./pages/teacher/TeacherDashboard";
 import { TeacherStudentsPage } from "./pages/teacher/TeacherStudents";
 import { TeacherAttendancePage } from "./pages/teacher/TeacherAttendance";
 import { TeacherMemorizationPage } from "./pages/teacher/TeacherMemorization";
@@ -41,8 +42,10 @@ import { TeacherMessagesPage } from "./pages/teacher/TeacherMessages";
 import { TeacherQuranTrackingPage } from "./pages/teacher/TeacherQuranTracking";
 
 import CartPage from "./pages/CartPage";
+import { ProfilePage } from "./pages/ProfilePage";
 
 import { AdminStatisticsPage } from "./pages/admin/AdminStatistics";
+import { AdminUsersPage } from "./pages/admin/AdminUsers";
 import { AdminTeachersPage } from "./pages/admin/AdminTeachers";
 import { AdminHalaqasPage } from "./pages/admin/AdminHalaqas";
 import { AdminSubscriptionsPage } from "./pages/admin/AdminSubscriptions";
@@ -214,6 +217,18 @@ function AppRoutes() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/profile">
+        <ProtectedRoute allowedRoles={['student', 'supervisor', 'admin', 'owner', 'teacher']}>
+          <ProfilePage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/teacher/dashboard">
+        <ProtectedRoute allowedRoles={['supervisor']}>
+          <TeacherDashboardPage />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/teacher">
         <ProtectedRoute allowedRoles={['supervisor']}>
           <TeacherStudentsPage />
@@ -277,6 +292,12 @@ function AppRoutes() {
       <Route path="/admin">
         <ProtectedRoute allowedRoles={['admin']}>
           <AdminStatisticsPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/admin/users">
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminUsersPage />
         </ProtectedRoute>
       </Route>
 

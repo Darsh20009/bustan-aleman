@@ -9,12 +9,18 @@ import {
   Video,
   CreditCard,
   MessageCircle,
-  BookMarked
+  BookMarked,
+  LayoutDashboard
 } from 'lucide-react';
 
 const teacherNavItems = [
   {
-    title: 'عرض الطلاب',
+    title: 'لوحة التحكم',
+    href: '/teacher/dashboard',
+    icon: <LayoutDashboard className="h-4 w-4" />
+  },
+  {
+    title: 'إدارة الطلاب',
     href: '/teacher',
     icon: <Users className="h-4 w-4" />
   },

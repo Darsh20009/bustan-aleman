@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, Home } from 'lucide-react';
+import { LogOut, Home, User } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -124,6 +124,14 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
                   <Link href="/">
                     <Home className="h-4 w-4" />
                     <span>الرئيسية</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/profile">
+                    <User className="h-4 w-4" />
+                    <span>الملف الشخصي</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -5,7 +5,8 @@ import {
   Users, 
   BookOpen, 
   CreditCard, 
-  MessageSquare 
+  MessageSquare,
+  UserCog
 } from 'lucide-react';
 import { Redirect } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,6 +16,11 @@ const adminNavItems = [
     title: 'الإحصائيات',
     href: '/admin',
     icon: <BarChart3 className="h-4 w-4" />
+  },
+  {
+    title: 'إدارة المستخدمين',
+    href: '/admin/users',
+    icon: <UserCog className="h-4 w-4" />
   },
   {
     title: 'إدارة المعلمين',
