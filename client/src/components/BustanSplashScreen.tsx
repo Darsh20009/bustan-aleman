@@ -11,14 +11,16 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const timer1 = setTimeout(() => setProgress(50), 200);
-    const timer2 = setTimeout(() => setProgress(100), 400);
-    const timer3 = setTimeout(() => onComplete(), 800);
+    const timer1 = setTimeout(() => setProgress(40), 300);
+    const timer2 = setTimeout(() => setProgress(75), 700);
+    const timer3 = setTimeout(() => setProgress(100), 1200);
+    const timer4 = setTimeout(() => onComplete(), 1800);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
+      clearTimeout(timer4);
     };
   }, [onComplete]);
 

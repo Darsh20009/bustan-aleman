@@ -1,11 +1,12 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X } from 'lucide-react';
 import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { BustanSplashScreen } from './BustanSplashScreen';
 
 interface MainHomepageProps {
   onLoginClick: () => void;
@@ -18,6 +19,19 @@ interface MainHomepageProps {
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showSplash, setShowSplash] = useState(() => {
+    const seen = sessionStorage.getItem('splash-seen');
+    return !seen;
+  });
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+    sessionStorage.setItem('splash-seen', 'true');
+  }, []);
+
+  if (showSplash) {
+    return <BustanSplashScreen onComplete={handleSplashComplete} />;
+  }
 
   const navLinks = [
     { label: 'من نحن', onClick: onAboutUs },
