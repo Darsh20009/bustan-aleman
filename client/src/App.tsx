@@ -43,6 +43,10 @@ import { TeacherQuranTrackingPage } from "./pages/teacher/TeacherQuranTracking";
 
 import CartPage from "./pages/CartPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { CertificatesPage } from "./pages/CertificatesPage";
+import MyNotesPage from "./pages/MyNotesPage";
+import { PostSessionPage } from "./pages/teacher/PostSession";
+import { AILevelTestPage } from "./pages/AILevelTestPage";
 
 import { AdminStatisticsPage } from "./pages/admin/AdminStatistics";
 import { AdminUsersPage } from "./pages/admin/AdminUsers";
@@ -50,8 +54,17 @@ import { AdminTeachersPage } from "./pages/admin/AdminTeachers";
 import { AdminHalaqasPage } from "./pages/admin/AdminHalaqas";
 import { AdminSubscriptionsPage } from "./pages/admin/AdminSubscriptions";
 import { AdminMessagesPage } from "./pages/admin/AdminMessages";
+import { AdminSettingsPage } from "./pages/admin/AdminSettings";
 
 import NotFound from "./pages/not-found";
+
+function getRoleRedirect(role: string): string {
+  if (role === 'student') return '/student';
+  if (['supervisor', 'teacher', 'sheikh'].includes(role)) return '/teacher';
+  if (['director', 'owner'].includes(role)) return '/admin';
+  if (role === 'admin') return '/admin';
+  return '/';
+}
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -69,9 +82,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
   }
 
   if (user && !allowedRoles.includes(user.role)) {
-    if (user.role === 'student') return <Redirect to="/student" />;
-    if (user.role === 'supervisor') return <Redirect to="/teacher" />;
-    if (user.role === 'admin') return <Redirect to="/admin" />;
+    return <Redirect to={getRoleRedirect(user.role)} />;
   }
 
   return <>{children}</>;
@@ -89,9 +100,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated && user) {
-    if (user.role === 'student') return <Redirect to="/student" />;
-    if (user.role === 'supervisor') return <Redirect to="/teacher" />;
-    if (user.role === 'admin') return <Redirect to="/admin" />;
+    return <Redirect to={getRoleRedirect(user.role)} />;
   }
 
   return <>{children}</>;
@@ -157,8 +166,12 @@ function AppRoutes() {
         <BankTransferCheckoutPage />
       </Route>
 
+      <Route path="/level-test">
+        <AILevelTestPage />
+      </Route>
+
       <Route path="/admin/bank-transfers">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <BankTransferAdminPage />
         </ProtectedRoute>
       </Route>
@@ -211,6 +224,18 @@ function AppRoutes() {
         </ProtectedRoute>
       </Route>
 
+      <Route path="/student/certificates">
+        <ProtectedRoute allowedRoles={['student']}>
+          <CertificatesPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/student/notes">
+        <ProtectedRoute allowedRoles={['student']}>
+          <MyNotesPage />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/cart">
         <ProtectedRoute allowedRoles={['student']}>
           <CartPage onBack={() => window.history.back()} />
@@ -218,110 +243,122 @@ function AppRoutes() {
       </Route>
 
       <Route path="/profile">
-        <ProtectedRoute allowedRoles={['student', 'supervisor', 'admin', 'owner', 'teacher']}>
+        <ProtectedRoute allowedRoles={['student', 'supervisor', 'sheikh', 'teacher', 'director', 'admin', 'owner']}>
           <ProfilePage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/dashboard">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherDashboardPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherStudentsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/attendance">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherAttendancePage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/memorization">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherMemorizationPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/homework">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherHomeworkPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/reports">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherReportsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/sessions">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherSessionsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/schedule">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherSchedulePage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/subscriptions">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherSubscriptionsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/messages">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherMessagesPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/teacher/quran-tracking">
-        <ProtectedRoute allowedRoles={['supervisor']}>
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
           <TeacherQuranTrackingPage />
         </ProtectedRoute>
       </Route>
 
+      <Route path="/teacher/post-session/:studentId">
+        <ProtectedRoute allowedRoles={['supervisor', 'sheikh', 'teacher']}>
+          <PostSessionPage />
+        </ProtectedRoute>
+      </Route>
+
       <Route path="/admin">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminStatisticsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/users">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminUsersPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/teachers">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminTeachersPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/halaqas">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminHalaqasPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/subscriptions">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminSubscriptionsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/messages">
-        <ProtectedRoute allowedRoles={['admin']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
           <AdminMessagesPage />
+        </ProtectedRoute>
+      </Route>
+
+      <Route path="/admin/settings">
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+          <AdminSettingsPage />
         </ProtectedRoute>
       </Route>
 

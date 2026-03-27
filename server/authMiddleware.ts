@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction, RequestHandler } from "express";
 
-// Define user roles type
-export type UserRole = 'student' | 'teacher' | 'supervisor' | 'admin' | 'owner';
+// Define user roles type - 4 main roles: student, sheikh, director, admin
+export type UserRole = 'student' | 'teacher' | 'supervisor' | 'sheikh' | 'director' | 'admin' | 'owner';
 
 // Extend session interface
 declare module 'express-session' {
@@ -81,14 +81,17 @@ export const requireRole = (roles: UserRole[]) => {
 export const requireStudent = requireRole(['student']);
 
 /**
- * Middleware to check if user is a teacher
+ * Middleware to check if user is a sheikh (teacher/supervisor)
  */
-export const requireTeacher = requireRole(['teacher']);
+export const requireSheikh = requireRole(['teacher', 'supervisor', 'sheikh']);
+export const requireSupervisor = requireSheikh;
+export const requireTeacher = requireSheikh;
+export const requireOwner = requireRole(['owner', 'admin', 'director']);
 
 /**
- * Middleware to check if user is a supervisor
+ * Middleware to check if user is a director
  */
-export const requireSupervisor = requireRole(['supervisor']);
+export const requireDirector = requireRole(['director', 'owner']);
 
 /**
  * Middleware to check if user is an admin
@@ -96,19 +99,19 @@ export const requireSupervisor = requireRole(['supervisor']);
 export const requireAdmin = requireRole(['admin']);
 
 /**
- * Middleware to check if user is the academy owner
+ * Middleware to check if user is sheikh or admin (supervisor or admin)
  */
-export const requireOwner = requireRole(['owner']);
+export const requireSupervisorOrAdmin = requireRole(['teacher', 'supervisor', 'sheikh', 'director', 'admin', 'owner']);
 
 /**
- * Middleware to check if user is supervisor or admin
+ * Middleware to check if user is teacher/sheikh or higher
  */
-export const requireSupervisorOrAdmin = requireRole(['supervisor', 'admin']);
+export const requireTeacherOrHigher = requireRole(['teacher', 'supervisor', 'sheikh', 'director', 'admin', 'owner']);
 
 /**
- * Middleware to check if user is teacher, supervisor or admin
+ * Middleware to check if user is director or admin
  */
-export const requireTeacherOrHigher = requireRole(['teacher', 'supervisor', 'admin', 'owner']);
+export const requireDirectorOrAdmin = requireRole(['director', 'admin', 'owner']);
 
 /**
  * Middleware to check if user is admin or owner

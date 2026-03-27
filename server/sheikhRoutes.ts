@@ -1249,5 +1249,158 @@ export function setupSheikhRoutes(app: Express) {
     }
   });
 
+  app.post('/api/sheikh/post-session', requireTeacherOrHigher, async (req: AuthenticatedRequest, res) => {
+    try {
+      const {
+        studentId,
+        attendance,
+        reviewRating,
+        newMemorizationRating,
+        errors: sessionErrors,
+        teacherNotes,
+        newAssignment,
+        aiEvaluation,
+        sendEmailToStudent
+      } = req.body;
+
+      if (!studentId) {
+        return res.status(400).json({ message: 'معرف الطالب مطلوب' });
+      }
+
+      const student = await storage.getUser(studentId);
+      if (!student) {
+        return res.status(404).json({ message: 'الطالب غير موجود' });
+      }
+
+      try {
+        await storage.createStudentSession({
+          studentId,
+          sheikhId: req.user!.id,
+          sessionDate: new Date().toISOString().split('T')[0],
+          startTime: new Date().toISOString(),
+          endTime: new Date().toISOString(),
+          status: attendance === 'present' ? 'completed' : attendance,
+          attended: attendance === 'present' || attendance === 'late',
+          notes: teacherNotes || undefined,
+        } as any);
+      } catch (attErr) {
+        console.log('Attendance record creation skipped:', attErr);
+      }
+
+      if (sessionErrors && sessionErrors.length > 0) {
+        for (const error of sessionErrors) {
+          try {
+            await storage.createStudentError({
+              studentId,
+              sheikhId: req.user!.id,
+              surah: error.surah,
+              ayah: error.ayah,
+              errorType: error.errorType,
+              description: error.description,
+              date: new Date().toISOString()
+            } as any);
+          } catch (errErr) {
+            console.log('Error record creation skipped:', errErr);
+          }
+        }
+      }
+
+      if (newAssignment) {
+        try {
+          await storage.createHomework({
+            teacherId: req.user!.id,
+            studentId,
+            title: 'واجب بعد الحصة',
+            description: `حفظ: سورة ${newAssignment.newMemorization.surah} (${newAssignment.newMemorization.fromAyah}-${newAssignment.newMemorization.toAyah})\nمراجعة قريبة: سورة ${newAssignment.nearReview.surah} (${newAssignment.nearReview.fromAyah}-${newAssignment.nearReview.toAyah})\nمراجعة بعيدة: سورة ${newAssignment.farReview.surah} (${newAssignment.farReview.fromAyah}-${newAssignment.farReview.toAyah})`,
+            dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+            type: 'memorization',
+            status: 'assigned',
+          } as any);
+        } catch (hwErr) {
+          console.log('Homework creation skipped:', hwErr);
+        }
+      }
+
+      const sessionReport = {
+        studentId,
+        sheikhId: req.user!.id,
+        date: new Date().toISOString(),
+        attendance,
+        reviewRating,
+        newMemorizationRating,
+        errorsCount: sessionErrors?.length || 0,
+        teacherNotes,
+        newAssignment,
+        aiEvaluation,
+        memorizationType: newAssignment?.memorizationType
+      };
+
+      await storage.createNotification({
+        userId: studentId,
+        titleAr: 'تقرير حصتك جاهز',
+        titleEn: 'Your session report is ready',
+        messageAr: `تم تقييم حصتك - التقييم: ${reviewRating}/10 | الحفظ: ${newMemorizationRating}/10`,
+        messageEn: `Your session has been evaluated - Review: ${reviewRating}/10 | Memorization: ${newMemorizationRating}/10`,
+        type: 'session',
+        actionUrl: '/student',
+      });
+
+      if (sendEmailToStudent) {
+        try {
+          const mod = await import('./emailService');
+          await mod.emailService.sendSessionSummaryEmail(student, sessionReport);
+        } catch (emailError) {
+          console.log('Email sending skipped:', emailError);
+        }
+      }
+
+      wsService.broadcastToUser(studentId, {
+        type: 'session_report',
+        data: sessionReport
+      });
+
+      res.json({ success: true, message: 'تم حفظ تقرير الحصة بنجاح', report: sessionReport });
+    } catch (error) {
+      console.error('Error saving post-session report:', error);
+      res.status(500).json({ message: 'فشل في حفظ التقرير' });
+    }
+  });
+
+  app.get('/api/sheikh/students/:studentId', requireTeacherOrHigher, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { studentId } = req.params;
+      const student = await storage.getUser(studentId);
+      if (!student) {
+        return res.status(404).json({ message: 'الطالب غير موجود' });
+      }
+
+      let lastAssignment = null;
+      try {
+        const homeworks = await storage.getHomeworksForStudent(studentId);
+        if (homeworks && homeworks.length > 0) {
+          const latest = homeworks[0];
+          lastAssignment = {
+            memorization: latest.description,
+            review: '',
+            date: latest.dueDate
+          };
+        }
+      } catch (e) {
+        console.log('No assignments found for student');
+      }
+
+      res.json({
+        id: student.id || student._id,
+        name: student.name,
+        level: student.currentLevel,
+        memorizedPages: student.memorizedPages,
+        lastAssignment
+      });
+    } catch (error) {
+      console.error('Error fetching student info:', error);
+      res.status(500).json({ message: 'فشل في جلب بيانات الطالب' });
+    }
+  });
+
   console.log("✅ Sheikh routes setup");
 }

@@ -9,7 +9,9 @@ import {
   MessageCircle,
   Video,
   BookMarked,
-  Mic
+  Mic,
+  Award,
+  StickyNote
 } from 'lucide-react';
 
 const studentNavItems = [
@@ -47,6 +49,16 @@ const studentNavItems = [
     title: 'الحضور',
     href: '/student/attendance',
     icon: <Calendar className="h-4 w-4" />
+  },
+  {
+    title: 'شهاداتي',
+    href: '/student/certificates',
+    icon: <Award className="h-4 w-4" />
+  },
+  {
+    title: 'ملاحظاتي',
+    href: '/student/notes',
+    icon: <StickyNote className="h-4 w-4" />
   },
   {
     title: 'الاشتراك والدفع',

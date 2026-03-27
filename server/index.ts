@@ -165,6 +165,18 @@ app.use((req, res, next) => {
     setupHomeworkRoutes(app);
     console.log("✅ Homework routes setup");
 
+    // Setup AI routes (evaluation, recitation, level test, smart assistant)
+    const { setupAIRoutes } = await import("./aiRoutes");
+    setupAIRoutes(app);
+
+    // Setup Kirox routes (video session management)
+    const { setupKiroxRoutes } = await import("./kiroxRoutes");
+    setupKiroxRoutes(app);
+
+    // Setup Settings routes (system settings, timezone, payment config)
+    const { setupSettingsRoutes } = await import("./settingsRoutes");
+    setupSettingsRoutes(app);
+
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
     console.log("✅ Routes registered");

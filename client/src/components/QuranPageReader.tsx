@@ -187,14 +187,14 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   const goToNextPage = useCallback(() => {
     if (currentPage < 604) {
-      setSwipeDirection('left');
+      setSwipeDirection('right');
       setCurrentPage(prev => prev + 1);
     }
   }, [currentPage]);
 
   const goToPreviousPage = useCallback(() => {
     if (currentPage > 1) {
-      setSwipeDirection('right');
+      setSwipeDirection('left');
       setCurrentPage(prev => prev - 1);
     }
   }, [currentPage]);
@@ -208,9 +208,9 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowRight') {
         goToNextPage();
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowLeft') {
         goToPreviousPage();
       } else if (e.key === 'Escape') {
         setAyahActionPanel(null);
@@ -242,9 +242,9 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     // Only trigger page change if drag exceeded threshold
     if (Math.abs(info.offset.x) > threshold || Math.abs(info.velocity.x) > velocity) {
       if (info.offset.x > threshold || info.velocity.x > velocity) {
-        goToPreviousPage();
-      } else if (info.offset.x < -threshold || info.velocity.x < -velocity) {
         goToNextPage();
+      } else if (info.offset.x < -threshold || info.velocity.x < -velocity) {
+        goToPreviousPage();
       }
     }
     
@@ -1344,22 +1344,22 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation arrows for desktop */}
+        {/* Navigation arrows for desktop - RTL Quran: next page on right, prev on left */}
         <Button
-          onClick={goToPreviousPage}
-          disabled={currentPage === 1}
+          onClick={goToNextPage}
+          disabled={currentPage === 604}
           className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
           size="icon"
-          data-testid="button-nav-prev"
+          data-testid="button-nav-next"
         >
           <ChevronRight className="w-6 h-6" />
         </Button>
         <Button
-          onClick={goToNextPage}
-          disabled={currentPage === 604}
+          onClick={goToPreviousPage}
+          disabled={currentPage === 1}
           className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
           size="icon"
-          data-testid="button-nav-next"
+          data-testid="button-nav-prev"
         >
           <ChevronLeft className="w-6 h-6" />
         </Button>

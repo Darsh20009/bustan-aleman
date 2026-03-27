@@ -6,7 +6,9 @@ import {
   BookOpen, 
   CreditCard, 
   MessageSquare,
-  UserCog
+  UserCog,
+  Settings,
+  Landmark
 } from 'lucide-react';
 import { Redirect } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
@@ -38,9 +40,19 @@ const adminNavItems = [
     icon: <CreditCard className="h-4 w-4" />
   },
   {
+    title: 'التحويلات البنكية',
+    href: '/admin/bank-transfers',
+    icon: <Landmark className="h-4 w-4" />
+  },
+  {
     title: 'الرسائل',
     href: '/admin/messages',
     icon: <MessageSquare className="h-4 w-4" />
+  },
+  {
+    title: 'إعدادات النظام',
+    href: '/admin/settings',
+    icon: <Settings className="h-4 w-4" />
   }
 ];
 
@@ -51,8 +63,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, isLoading } = useAuth();
 
-  // Redirect if not admin or owner
-  if (!isLoading && user?.role !== 'admin' && user?.role !== 'owner') {
+  if (!isLoading && !['admin', 'owner', 'director'].includes(user?.role || '')) {
     return <Redirect to="/" />;
   }
 

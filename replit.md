@@ -62,6 +62,22 @@ The frontend has been completely restructured with a modern, role-based dashboar
 -   **Owner Account**: Phone 0500000000, Password admin123456 - Full platform access, can manage academies and all users
 -   **Pre-registered Users**: Defined in `server/preregistered-users.json`, auto-initialized on server start
 
+### Recent Changes (March 2026 - Major Overhaul)
+-   **4-Role System**: Implemented student, sheikh (teacher/supervisor), director (مدير), admin roles. Updated authMiddleware.ts with role-based middleware exports. Updated App.tsx ProtectedRoute handling for all roles.
+-   **AI Integration (OpenAI)**: Created `server/aiService.ts` with GPT-4o-mini for student evaluation, recitation assessment, level testing, sheikh assistant, and memorization plan generation. Added `server/aiRoutes.ts` with endpoints for all AI features.
+-   **AI Level Test** (`/level-test`): 7-question questionnaire about Quran memorization experience. AI analyzes answers and assigns level (مبتدئ to حافظ), with rule-based fallback when AI unavailable.
+-   **Post-Session Workflow** (`/teacher/post-session/:studentId`): 4-step wizard for teachers after sessions - attendance/rating, error recording, new assignment (new memorization + near/far review), AI evaluation + email notification. Creates homework, attendance records, and sends notifications via WebSocket.
+-   **SMTP2Go Email Service**: Created `server/emailService.ts` with templates for welcome, session summary, subscription, and password reset emails. Placeholder until SMTP2Go credentials configured.
+-   **Kirox Video Sessions**: Created `server/kiroxService.ts` for Kirox QMeet API integration (create/list/delete meetings). Replaces ZegoCloud for video conferencing.
+-   **System Settings Page** (`/admin/settings`): Full admin settings with tabs for general, timezone (Saudi default), payment (bank transfer + gateway), sessions (Kirox/Zego), AI toggles, and email settings. Status indicators for all services.
+-   **Student Certificates** (`/student/certificates`): Page for viewing earned certificates (memorization, course, attendance, achievement types).
+-   **Student Notes** (`/student/notes`): Quran notes page with surah/ayah-based note management.
+-   **Bank Transfer Admin**: Admin page for reviewing/approving/rejecting bank transfer payment requests.
+-   **Navigation Updates**: Added certificates, notes to student nav. Added settings, bank transfers to admin nav. Added post-session to teacher workflow.
+-   **Light Mode Default**: Set light mode as default theme (removed dark mode OS detection).
+-   **Quran RTL Fix**: Fixed page flip direction for RTL reading (swipe right = next page).
+-   **Saudi Timezone**: Default timezone set to Asia/Riyadh in system settings.
+
 ### Recent Changes (February 2026 - Session 2)
 -   **Admin Users Page** (`/admin/users`): Created full CRUD user management page for admins. Features: user list with search/filter by role & status, role change dialog (student/supervisor/teacher/admin), toggle activate/deactivate with confirmation dialog. Route added to AdminLayout nav and App.tsx.
 -   **Teacher Dashboard** (`/teacher/dashboard`): Created comprehensive teacher dashboard page with Islamic greeting, motivational Quran verse, 4 stats cards (students, sessions, homework, attendance rate), upcoming sessions list, recent students list, and quick action buttons.
