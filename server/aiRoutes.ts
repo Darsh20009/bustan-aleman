@@ -225,6 +225,74 @@ ${JSON.stringify(answers, null, 2)}
     }
   });
 
+  app.post('/api/ai/report-recitation-errors', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user?.id || req.user?._id;
+      const { studentName, errors, sessionSummary, totalAyahs, accuracy, surahName, pageNumber } = req.body;
+
+      if (!errors || !Array.isArray(errors) || errors.length === 0) {
+        return res.status(400).json({ message: 'لا توجد أخطاء للإبلاغ عنها' });
+      }
+
+      const repeatedErrors = errors.filter((e: any) => e.count && e.count >= 2);
+
+      let aiAnalysis = '';
+      if (aiService.isConfigured() && repeatedErrors.length > 0) {
+        try {
+          const errorList = repeatedErrors.map((e: any) =>
+            `- الكلمة "${e.expected}" قالها "${e.spoken}" (${e.count} مرات) - ${e.type || 'خطأ حفظ'}`
+          ).join('\n');
+
+          aiAnalysis = await aiService.chat(
+            `أنت شيخ متخصص في تعليم القرآن. طالب اسمه "${studentName}" يتدرب على التسميع من سورة ${surahName || 'غير محددة'} (صفحة ${pageNumber || '؟'}).
+كرر هذه الأخطاء عدة مرات:
+${errorList}
+
+نسبة الدقة الإجمالية: ${accuracy}%
+إجمالي الآيات: ${totalAyahs}
+
+اكتب تقريراً موجزاً للشيخ المسؤول عن هذا الطالب يتضمن:
+1. تحليل الأخطاء المتكررة وأسبابها المحتملة
+2. توصيات محددة للشيخ للعمل عليها مع الطالب
+3. أولوية الاهتمام (عالية/متوسطة/منخفضة)`
+          );
+        } catch (aiErr) {
+          console.log('AI analysis for sheikh report failed, using basic report');
+        }
+      }
+
+      const report = {
+        studentId: userId,
+        studentName,
+        surahName: surahName || 'غير محددة',
+        pageNumber,
+        totalAyahs,
+        accuracy,
+        totalErrors: errors.length,
+        repeatedErrors: repeatedErrors.length,
+        errors: errors.slice(0, 20),
+        aiAnalysis: aiAnalysis || 'التحليل غير متاح',
+        sessionSummary: sessionSummary || '',
+        timestamp: new Date().toISOString(),
+      };
+
+      console.log(`📋 تقرير أخطاء تسميع - الطالب: ${studentName}, الأخطاء المتكررة: ${repeatedErrors.length}`);
+
+      res.json({
+        success: true,
+        message: 'تم إرسال التقرير للشيخ المسؤول',
+        report: {
+          totalErrors: errors.length,
+          repeatedErrors: repeatedErrors.length,
+          aiAnalysis: aiAnalysis || null,
+        },
+      });
+    } catch (error: any) {
+      console.error('Report recitation errors:', error.message);
+      res.status(500).json({ message: 'خطأ في إرسال التقرير' });
+    }
+  });
+
   app.get('/api/ai/status', (_req, res) => {
     res.json({ configured: aiService.isConfigured() });
   });
