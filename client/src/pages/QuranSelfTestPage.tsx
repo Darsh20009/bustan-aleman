@@ -221,8 +221,14 @@ export default function QuranSelfTestPage({ onBack }: { onBack: () => void }) {
   }, [transcript, voiceMode, resetTranscript]);
 
   useEffect(() => {
-    if (speechError) {
+    if (speechError && speechError !== 'IFRAME_BLOCKED') {
       toast({ title: 'خطأ في التسميع', description: speechError });
+    }
+    if (speechError === 'IFRAME_BLOCKED') {
+      toast({ 
+        title: 'يجب فتح نافذة مستقلة', 
+        description: 'لاستخدام الميكروفون، افتح التطبيق في نافذة متصفح جديدة',
+      });
     }
   }, [speechError, toast]);
 

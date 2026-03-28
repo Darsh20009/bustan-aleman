@@ -282,4 +282,5 @@ ${errorDetails}
   isConfigured(): boolean {
     return !!OPENAI_API_KEY;
   },
+
 };

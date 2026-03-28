@@ -39,7 +39,8 @@ import {
   Mic,
   MicOff,
   Eye,
-  EyeOff
+  EyeOff,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -641,10 +642,15 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
-  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript, isListening, error: speechError } = useSpeechRecognition();
+  const { isSupported, isInIframe, startListening, stopListening, transcript, interimTranscript, resetTranscript, isListening, error: speechError } = useSpeechRecognition();
+  const [showIframeWarning, setShowIframeWarning] = useState(false);
 
   useEffect(() => {
     if (speechError) {
+      if (speechError === 'IFRAME_BLOCKED') {
+        setShowIframeWarning(true);
+        return;
+      }
       toast({
         title: "خطأ في الميكروفون",
         description: speechError,
@@ -720,23 +726,15 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         });
         return;
       }
+      if (isInIframe) {
+        setShowIframeWarning(true);
+        return;
+      }
       resetTranscript();
       setActiveAyahIndex(0);
       setRecognizedText("");
       setWordTrackMap(new Map());
-      try {
-        await startListening();
-        toast({
-          title: "التسميع مفعل",
-          description: "ابدأ بقراءة الآية الأولى في الصفحة",
-        });
-      } catch {
-        toast({
-          title: "تعذر تشغيل الميكروفون",
-          description: "يرجى فتح الموقع في نافذة متصفح مستقلة (ليس داخل إطار مضمّن)",
-          variant: "destructive"
-        });
-      }
+      await startListening();
     }
   };
 
@@ -1814,6 +1812,37 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Iframe Warning Dialog */}
+      <Dialog open={showIframeWarning} onOpenChange={setShowIframeWarning}>
+        <DialogContent className="sm:max-w-[420px]" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-[#2D5A3D] dark:text-[#D4AF37]">
+              <Mic className="w-5 h-5" />
+              نظام التسميع
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              لاستخدام نظام التسميع (التعرف على الصوت)، يجب فتح التطبيق في نافذة متصفح مستقلة. هذه الخطوة مطلوبة لأن المتصفح لا يسمح بالوصول إلى الميكروفون من داخل الإطار المضمّن.
+            </p>
+            <Button
+              onClick={() => {
+                window.open(window.location.href, '_blank');
+                setShowIframeWarning(false);
+              }}
+              className="w-full bg-[#2D5A3D] hover:bg-[#1e3d29] text-white gap-2"
+              data-testid="button-open-new-window"
+            >
+              <ExternalLink className="w-4 h-4" />
+              فتح في نافذة جديدة
+            </Button>
+            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+              بعد الفتح في نافذة جديدة، اضغط على زر الميكروفون واسمح بالوصول
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>

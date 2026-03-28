@@ -981,9 +981,15 @@ export default function QuranRecitationPage({ onBack }: { onBack?: () => void })
         ) : null}
 
         {/* Speech error */}
-        {speechError && (
+        {speechError && speechError !== 'IFRAME_BLOCKED' && (
           <div className="bg-red-900/30 border border-red-500/30 rounded-xl p-3 mt-3 text-center">
             <p className="text-red-300 text-xs">{speechError}</p>
+          </div>
+        )}
+        {speechError === 'IFRAME_BLOCKED' && (
+          <div className="bg-amber-900/30 border border-amber-500/30 rounded-xl p-3 mt-3 text-center space-y-2">
+            <p className="text-amber-200 text-xs">لاستخدام الميكروفون، يجب فتح التطبيق في نافذة مستقلة</p>
+            <button onClick={() => window.open(window.location.href, '_blank')} className="text-amber-300 underline text-xs">فتح في نافذة جديدة</button>
           </div>
         )}
       </div>

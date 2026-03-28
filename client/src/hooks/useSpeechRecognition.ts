@@ -20,28 +20,24 @@ declare global {
   }
 }
 
-function getArabicErrorMessage(error: string): string {
-  const messages: Record<string, string> = {
-    'not-allowed': 'لم يتم السماح باستخدام الميكروفون. اضغط على 🔒 في شريط العنوان ← الميكروفون ← السماح.',
-    'no-speech': 'لم يُكتشف كلام. تأكد أن الميكروفون يعمل وحاول مرة أخرى.',
-    'audio-capture': 'تعذر التقاط الصوت. تحقق من توصيل الميكروفون.',
-    'network': 'خطأ في الشبكة. تحقق من اتصالك بالإنترنت.',
-    'service-not-allowed': 'الخدمة غير متاحة. استخدم متصفح Chrome أو Edge.',
-    'aborted': 'تم إيقاف التسجيل.',
-    'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.',
-  };
-  return messages[error] || `خطأ في التعرف على الصوت: ${error}`;
-}
-
 interface UseSpeechRecognitionResult {
   transcript: string;
   interimTranscript: string;
   isListening: boolean;
   isSupported: boolean;
+  isInIframe: boolean;
   error: string | null;
-  startListening: () => void;
+  startListening: () => Promise<void>;
   stopListening: () => void;
   resetTranscript: () => void;
+}
+
+function isInsideIframe(): boolean {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
 }
 
 export function useSpeechRecognition(): UseSpeechRecognitionResult {
@@ -54,12 +50,16 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
   const isListeningRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isSupported =
+  const inIframe = isInsideIframe();
+
+  const hasSpeechAPI =
     typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
+  const isSupported = hasSpeechAPI;
+
   useEffect(() => {
-    if (!isSupported) return;
+    if (!hasSpeechAPI) return;
 
     try {
       const SpeechRecognitionAPI =
@@ -96,7 +96,15 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
 
       recognition.onerror = (event: any) => {
         if (event.error === 'no-speech' || event.error === 'aborted') return;
-        setError(getArabicErrorMessage(event.error));
+        
+        const messages: Record<string, string> = {
+          'not-allowed': 'لم يتم السماح باستخدام الميكروفون. اضغط على رمز القفل في شريط العنوان ← الميكروفون ← السماح.',
+          'audio-capture': 'تعذر التقاط الصوت. تحقق من توصيل الميكروفون.',
+          'network': 'خطأ في الشبكة. تحقق من اتصالك بالإنترنت.',
+          'service-not-allowed': 'الخدمة غير متاحة. استخدم متصفح Chrome أو Edge.',
+          'language-not-supported': 'اللغة العربية غير مدعومة في هذا المتصفح.',
+        };
+        setError(messages[event.error] || `خطأ في التعرف على الصوت: ${event.error}`);
         setIsListening(false);
         isListeningRef.current = false;
       };
@@ -137,17 +145,21 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         recognitionRef.current = null;
       }
     };
-  }, []); // run only once on mount
+  }, []);
 
   const startListening = useCallback(async () => {
-    if (!isSupported) {
+    if (!hasSpeechAPI) {
       setError('التعرف على الصوت غير مدعوم في هذا المتصفح. يرجى استخدام Google Chrome أو Microsoft Edge.');
       return;
     }
 
-    // Check microphone permission first
+    if (inIframe) {
+      setError('IFRAME_BLOCKED');
+      return;
+    }
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setError('لا يمكن الوصول إلى الميكروفون في هذه البيئة. يرجى فتح التطبيق في نافذة مستقلة في متصفح Chrome.');
+      setError('لا يمكن الوصول إلى الميكروفون في هذه البيئة.');
       return;
     }
     try {
@@ -155,7 +167,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
       stream.getTracks().forEach(track => track.stop());
     } catch (e: any) {
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-        setError('لم يتم السماح باستخدام الميكروفون. اضغط على 🔒 في شريط العنوان ← الإذونات ← الميكروفون ← السماح.');
+        setError('لم يتم السماح باستخدام الميكروفون. اضغط على رمز القفل في شريط العنوان ← الإذونات ← الميكروفون ← السماح.');
         return;
       }
       if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
@@ -163,10 +175,9 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         return;
       }
       if (e.name === 'SecurityError' || e.name === 'NotSupportedError') {
-        setError('لا يمكن الوصول إلى الميكروفون من داخل الإطار المضمّن. افتح التطبيق في نافذة متصفح مستقلة.');
+        setError('IFRAME_BLOCKED');
         return;
       }
-      // Any other error
       setError('تعذر الوصول إلى الميكروفون: ' + (e.message || e.name));
       return;
     }
@@ -191,7 +202,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
         isListeningRef.current = false;
       }
     }
-  }, [isSupported]);
+  }, [hasSpeechAPI, inIframe]);
 
   const stopListening = useCallback(() => {
     isListeningRef.current = false;
@@ -214,6 +225,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionResult {
     interimTranscript,
     isListening,
     isSupported,
+    isInIframe: inIframe,
     error,
     startListening,
     stopListening,
