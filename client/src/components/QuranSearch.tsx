@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, X, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, X, Loader2, Mic, MicOff } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,6 +31,8 @@ export function QuranSearch({ onResultClick }: QuranSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,6 +41,51 @@ export function QuranSearch({ onResultClick }: QuranSearchProps) {
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  const startVoiceSearch = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ar-SA';
+    recognition.continuous = false;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event: any) => {
+      let finalText = '';
+      let interimText = '';
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalText += event.results[i][0].transcript;
+        } else {
+          interimText += event.results[i][0].transcript;
+        }
+      }
+      setSearchTerm(finalText || interimText);
+    };
+
+    recognition.onend = () => {
+      setIsVoiceListening(false);
+    };
+
+    recognition.onerror = () => {
+      setIsVoiceListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsVoiceListening(true);
+  };
+
+  const stopVoiceSearch = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsVoiceListening(false);
+  };
+
+  const hasVoiceSupport = typeof window !== 'undefined' && 
+    ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
   const { data: results, isLoading } = useQuery<SearchResult[]>({
     queryKey: [`/api/search?q=${encodeURIComponent(debouncedSearch)}`],
@@ -92,28 +139,47 @@ export function QuranSearch({ onResultClick }: QuranSearchProps) {
 
         <div className="space-y-4">
           {/* Search Input */}
-          <div className="relative">
-            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="اكتب كلمة أو جملة للبحث..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pr-10 text-lg"
-              autoFocus
-              data-testid="input-search-quran"
-            />
-            {searchTerm && (
+          <div className="relative flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="اكتب كلمة أو جملة للبحث..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10 text-lg"
+                autoFocus
+                data-testid="input-search-quran"
+              />
+              {searchTerm && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-2 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setSearchTerm('')}
+                  data-testid="button-clear-search"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {hasVoiceSupport && (
               <Button
-                variant="ghost"
-                size="sm"
-                className="absolute left-2 top-1/2 transform -translate-y-1/2"
-                onClick={() => setSearchTerm('')}
-                data-testid="button-clear-search"
+                onClick={isVoiceListening ? stopVoiceSearch : startVoiceSearch}
+                variant={isVoiceListening ? "destructive" : "outline"}
+                size="icon"
+                className={`flex-shrink-0 h-10 w-10 ${isVoiceListening ? 'animate-pulse' : ''}`}
+                data-testid="button-voice-search"
+                title={isVoiceListening ? 'إيقاف البحث الصوتي' : 'البحث بالصوت'}
               >
-                <X className="h-4 w-4" />
+                {isVoiceListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
               </Button>
             )}
           </div>
+          {isVoiceListening && (
+            <p className="text-sm text-emerald-600 dark:text-emerald-400 animate-pulse">
+              🎙️ تحدث الآن... اقرأ جزءاً من الآية للبحث عنها
+            </p>
+          )}
 
           {/* Search Results */}
           <ScrollArea className="h-[400px]">
@@ -173,7 +239,8 @@ export function QuranSearch({ onResultClick }: QuranSearchProps) {
               <p className="font-medium mb-1">نصائح للبحث:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>ابحث بكلمة واحدة أو عدة كلمات</li>
-                <li>البحث يدعم اللغة العربية</li>
+                <li>استخدم زر المايكروفون للبحث بالصوت</li>
+                <li>اقرأ جزءاً من الآية ليبحث عنها تلقائياً</li>
                 <li>النتائج محدودة بـ 10 آيات لسرعة البحث</li>
               </ul>
             </div>

@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from './ui/button';
-import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X, ChevronDown, Mic, BookMarked, Video } from 'lucide-react';
+import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X, ChevronDown, Mic, BookMarked, Video, EyeOff, Search } from 'lucide-react';
 import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BustanSplashScreen } from './BustanSplashScreen';
@@ -312,37 +312,114 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
 
       <section className="py-16 md:py-24 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-14">
             <span className="inline-block bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-4">
               لماذا بستان الإيمان؟
             </span>
             <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Amiri, serif' }}>
               مميزات المنصة
             </h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+              نظام متكامل يجمع بين أحدث تقنيات الذكاء الاصطناعي والتعليم التفاعلي
+            </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {[
-              { icon: BookOpen, title: 'مصحف تفاعلي', desc: 'قراءة وحفظ مع تلوين التجويد' },
-              { icon: Video, title: 'حصص مباشرة', desc: 'بث مباشر مع المشايخ' },
-              { icon: Mic, title: 'تسميع بالذكاء الاصطناعي', desc: 'تقييم فوري للتلاوة' },
-              { icon: Award, title: 'شهادات معتمدة', desc: 'إثبات إتمام المسار' },
-              { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة لبياناتك' },
-              { icon: Clock, title: 'متاح دائماً', desc: 'تعلم في أي وقت' },
-              { icon: TrendingUp, title: 'تتبع التقدم', desc: 'إحصائيات مفصلة' },
-              { icon: MessageCircle, title: 'دعم فوري', desc: 'مساعدة على مدار الساعة' }
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-              >
-                <div className="w-12 h-12 mx-auto bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-3">
-                  <feature.icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{feature.title}</h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{feature.desc}</p>
+          {[
+            {
+              category: 'التلاوة والتفاعل مع القرآن',
+              color: 'emerald',
+              items: [
+                { icon: BookOpen, title: 'المصحف الإلكتروني', desc: 'عرض المصحف كاملاً بخط عثماني واضح مع تنقل سلس بين الصفحات' },
+                { icon: Mic, title: 'التلاوة المباشرة', desc: 'اقرأ بصوتك والتطبيق يتابعك لحظياً مع تمييز الكلمات' },
+                { icon: Star, title: 'الذكاء الاصطناعي', desc: 'يتعرف على صوتك ويعرض الآيات تلقائياً أثناء القراءة' },
+                { icon: PlayCircle, title: 'ابدأ من أي آية', desc: 'لا حاجة لتحديد مسبق - ابدأ القراءة من أي مكان في المصحف' },
+              ]
+            },
+            {
+              category: 'الحفظ والمراجعة',
+              color: 'amber',
+              items: [
+                { icon: EyeOff, title: 'وضع الحفظ', desc: 'إخفاء النص لاختبار نفسك والكشف بالضغط على كل آية' },
+                { icon: TrendingUp, title: 'متابعة مستمرة', desc: 'تتبع تقدمك في الحفظ والمراجعة بإحصائيات مفصلة' },
+                { icon: BookMarked, title: 'خطة حفظ ذكية', desc: 'خطة حفظ تدريجية مخصصة بالذكاء الاصطناعي حسب مستواك' },
+                { icon: CheckCircle, title: 'استكمال الحفظ', desc: 'يحفظ آخر موضع توقفت عنده ويستكمل من حيث توقفت' },
+              ]
+            },
+            {
+              category: 'تصحيح الأخطاء',
+              color: 'red',
+              items: [
+                { icon: Shield, title: 'اكتشاف الأخطاء', desc: 'يكتشف أخطاء التلاوة والتجويد والترتيب مباشرة أثناء القراءة' },
+                { icon: CheckCircle, title: 'تصحيح النطق', desc: 'يصحح النطق ويحدد الكلمات التي تحتاج تحسين' },
+                { icon: Search, title: 'تحديد مكان الخطأ', desc: 'يحدد مكان كل خطأ بالضبط مع تصنيف نوعه' },
+                { icon: Award, title: 'تحسين التجويد', desc: 'تقارير مفصلة تساعد على تحسين أدائك في التجويد عملياً' },
+              ]
+            },
+            {
+              category: 'البحث الذكي في القرآن',
+              color: 'blue',
+              items: [
+                { icon: Mic, title: 'البحث بالصوت', desc: 'اقرأ جزءاً من آية ويبحث عنها تلقائياً في القرآن' },
+                { icon: Search, title: 'البحث النصي', desc: 'ابحث بكلمة أو جزء من آية وسيعرض جميع النتائج' },
+                { icon: BookOpen, title: 'التفسير والمعاني', desc: 'عرض تفسير ميسر لكل آية مع شرح المعاني' },
+                { icon: Globe, title: 'مواضع التكرار', desc: 'معرفة أماكن تكرار الآيات والكلمات في القرآن' },
+              ]
+            },
+          ].map((section, sIndex) => (
+            <div key={sIndex} className="mb-12 last:mb-0">
+              <div className="flex items-center gap-3 mb-6">
+                <div className={`w-1.5 h-8 rounded-full ${
+                  section.color === 'emerald' ? 'bg-emerald-500' :
+                  section.color === 'amber' ? 'bg-amber-500' :
+                  section.color === 'red' ? 'bg-red-500' : 'bg-blue-500'
+                }`} />
+                <h4 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{section.category}</h4>
               </div>
-            ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {section.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+                  >
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${
+                      section.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/30' :
+                      section.color === 'amber' ? 'bg-amber-50 dark:bg-amber-900/30' :
+                      section.color === 'red' ? 'bg-red-50 dark:bg-red-900/30' : 'bg-blue-50 dark:bg-blue-900/30'
+                    }`}>
+                      <item.icon className={`w-5 h-5 ${
+                        section.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
+                        section.color === 'amber' ? 'text-amber-600 dark:text-amber-400' :
+                        section.color === 'red' ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
+                      }`} />
+                    </div>
+                    <h5 className="font-bold text-gray-900 dark:text-white text-sm mb-1.5">{item.title}</h5>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="mt-12 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 md:p-8">
+            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">مميزات إضافية</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { icon: Globe, title: 'متعدد اللغات', desc: 'واجهة عربية كاملة' },
+                { icon: Users, title: 'تعلم من المشايخ', desc: 'حصص مباشرة مع معلمين معتمدين' },
+                { icon: Video, title: 'حصص فيديو', desc: 'بث مباشر عالي الجودة' },
+                { icon: MessageCircle, title: 'تواصل ودعم', desc: 'تفاعل مع المعلمين والطلاب' },
+                { icon: GraduationCap, title: 'مناسب للجميع', desc: 'مبتدئين ومتقدمين' },
+                { icon: Clock, title: 'متاح 24/7', desc: 'تعلم في أي وقت ومكان' },
+                { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة لخصوصيتك' },
+                { icon: Star, title: 'تجربة مخصصة', desc: 'محتوى حسب مستواك وأهدافك' },
+              ].map((item, index) => (
+                <div key={index} className="text-center p-3">
+                  <item.icon className="w-6 h-6 mx-auto mb-2 text-emerald-600 dark:text-emerald-400" />
+                  <h5 className="font-bold text-gray-900 dark:text-white text-sm">{item.title}</h5>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

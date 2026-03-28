@@ -37,7 +37,9 @@ import {
   Moon,
   Sun,
   Mic,
-  MicOff
+  MicOff,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
@@ -109,6 +111,8 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [recognizedText, setRecognizedText] = useState('');
   const [activeAyahIndex, setActiveAyahIndex] = useState<number>(-1);
+  const [memorizationMode, setMemorizationMode] = useState(false);
+  const [revealedAyahs, setRevealedAyahs] = useState<Set<number>>(new Set());
   const [quranTheme, setQuranTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('quran-theme') as 'light' | 'dark' || 'light';
@@ -149,6 +153,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
 
   useEffect(() => {
     localStorage.setItem('quran-current-page', currentPage.toString());
+    setRevealedAyahs(new Set());
   }, [currentPage]);
 
   const saveNotes = (newNotes: AyahNote[]) => {
@@ -936,6 +941,19 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 </Button>
               )}
               <Button
+                onClick={() => {
+                  setMemorizationMode(!memorizationMode);
+                  setRevealedAyahs(new Set());
+                }}
+                size="icon"
+                variant="ghost"
+                className={`h-9 w-9 ${memorizationMode ? 'text-amber-400 bg-amber-400/20' : 'text-[#D4AF37] hover:bg-white/10'}`}
+                data-testid="button-memorization-mode"
+                title={memorizationMode ? 'إلغاء وضع الحفظ' : 'وضع الحفظ (إخفاء النص)'}
+              >
+                {memorizationMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+              </Button>
+              <Button
                 onClick={() => setSearchOpen(true)}
                 size="icon"
                 variant="ghost"
@@ -1131,6 +1149,20 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 </Button>
               )}
               <Button
+                onClick={() => {
+                  setMemorizationMode(!memorizationMode);
+                  setRevealedAyahs(new Set());
+                }}
+                size="sm"
+                variant="ghost"
+                className={`px-3 flex items-center gap-1 ${memorizationMode ? 'text-amber-400 bg-amber-400/20' : 'text-[#D4AF37] hover:bg-white/10'}`}
+                data-testid="button-memorization-mode-desktop"
+                title={memorizationMode ? 'إلغاء وضع الحفظ' : 'وضع الحفظ'}
+              >
+                {memorizationMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                <span className="text-xs">{memorizationMode ? 'إظهار' : 'حفظ'}</span>
+              </Button>
+              <Button
                 onClick={() => setSearchOpen(true)}
                 size="sm"
                 variant="ghost"
@@ -1221,6 +1253,24 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 </div>
               </div>
 
+              {memorizationMode && (
+                <div className="mx-3 sm:mx-6 md:mx-8 mt-3 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+                    <EyeOff className="w-4 h-4" />
+                    <span className="font-medium">وضع الحفظ - اضغط على النص المخفي لإظهاره</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-amber-600 hover:bg-amber-500/10 text-xs h-7 px-2"
+                    onClick={() => setRevealedAyahs(new Set())}
+                    data-testid="button-hide-all-ayahs"
+                  >
+                    إخفاء الكل
+                  </Button>
+                </div>
+              )}
+
               {/* Ayahs content */}
               <div className="p-3 sm:p-6 md:p-8 min-h-[60vh]">
                 {isLoading ? (
@@ -1299,7 +1349,21 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                   </span>
                                 </span>
                               )}
-                              {ayah.text}
+                              {memorizationMode && !revealedAyahs.has(ayah.number) ? (
+                                <span
+                                  className="inline cursor-pointer select-none"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setRevealedAyahs(prev => new Set(prev).add(ayah.number));
+                                  }}
+                                >
+                                  <span className={`inline-block rounded px-2 py-0.5 ${isDarkTheme ? 'bg-[#E8E8E8]/10' : 'bg-[#1A1A1A]/10'} backdrop-blur-sm`}>
+                                    {'█'.repeat(Math.min(ayah.text.split(' ').length, 12))}
+                                  </span>
+                                </span>
+                              ) : (
+                                ayah.text
+                              )}
                               <span className="inline-flex items-center justify-center w-8 h-8 mx-1 text-[#D4AF37] text-sm font-bold align-middle">
                                 ﴿{ayah.numberInSurah.toLocaleString('ar-EG')}﴾
                               </span>
