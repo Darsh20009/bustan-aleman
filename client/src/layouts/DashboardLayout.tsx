@@ -73,7 +73,7 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
   return (
     <SidebarProvider defaultOpen={false} style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
-        <Sidebar collapsible="offcanvas">
+        <Sidebar collapsible="offcanvas" side="right">
           <SidebarHeader className="p-4 border-b border-sidebar-border">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -146,12 +146,14 @@ export function DashboardLayout({ children, navItems, title, userRole }: Dashboa
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <header className="flex items-center justify-between gap-4 p-3 border-b bg-background">
+          <header className="flex items-center justify-between gap-4 p-3 border-b bg-background" dir="rtl">
             <div className="flex items-center gap-2">
-              <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">{title}</h1>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <ThemeToggle />
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+            </div>
           </header>
           
           <main className="flex-1 overflow-auto p-4 md:p-6">

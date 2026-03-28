@@ -17,10 +17,10 @@ const assignmentSchema = z.object({
 
 const sessionEnableSchema = z.object({
   studentId: z.string(),
-  scheduleId: z.string(),
+  scheduleId: z.string().optional(),
   sessionDate: z.string(),
   startTime: z.string(),
-  endTime: z.string(),
+  endTime: z.string().optional(),
 });
 
 const createStudentSchema = z.object({
@@ -1259,13 +1259,10 @@ export function setupSheikhRoutes(app: Express) {
         });
       }
 
-      // Create notification for student
       await storage.createNotification({
         userId: studentId,
-        titleAr: "تم تفعيل اشتراكك",
-        titleEn: "Your subscription has been activated",
-        messageAr: `تم تفعيل اشتراكك في خطة ${plan.nameAr}`,
-        messageEn: `Your subscription for ${plan.nameEn || plan.nameAr} has been activated`,
+        title: "تم تفعيل اشتراكك",
+        message: `تم تفعيل اشتراكك في خطة ${plan.nameAr}`,
         type: "subscription",
         actionUrl: "/student/subscription",
       });

@@ -909,13 +909,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Class schedules routes
-  app.post('/api/students/:id/schedules', async (req, res) => {
+  app.post('/api/students/:id/schedules', isPhoneAuthenticated, async (req: any, res) => {
     try {
       const scheduleData = insertClassScheduleSchema.parse({
         ...req.body,
         studentId: req.params.id,
       });
       const schedule = await storage.createClassSchedule(scheduleData);
+
+      // Auto-assign sheikhId to student when teacher creates a schedule
+      const teacherId = (req.session as any)?.userId;
+      if (teacherId) {
+        try {
+          await storage.updateStudent(req.params.id, { sheikhId: teacherId });
+          console.log(`[schedule] Auto-assigned sheikhId=${teacherId} to student=${req.params.id}`);
+        } catch (e: any) {
+          console.log(`[schedule] Failed to assign sheikhId: ${e.message}`);
+        }
+      }
+
+      // Auto-generate session access for the next occurrence of this day
+      try {
+        const now = new Date();
+        const targetDay = scheduleData.dayOfWeek;
+        const currentDay = now.getDay();
+        let daysUntil = targetDay - currentDay;
+        if (daysUntil < 0) daysUntil += 7;
+        if (daysUntil === 0) daysUntil = 0;
+        const sessionDate = new Date(now);
+        sessionDate.setDate(now.getDate() + daysUntil);
+        const dateStr = sessionDate.toISOString().split('T')[0];
+
+        await storage.upsertSessionAccess({
+          studentId: req.params.id,
+          scheduleId: schedule.id,
+          sessionDate: dateStr,
+          startTime: scheduleData.startTime,
+          endTime: scheduleData.endTime,
+          isEnabled: false,
+        });
+      } catch (e) {
+        console.error("Auto-create session access error:", e);
+      }
+
       res.status(201).json(schedule);
     } catch (error) {
       console.error("Error creating schedule:", error);

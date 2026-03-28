@@ -1085,9 +1085,10 @@ export class MongoDBStorage implements IStorage {
 
   async cleanupExpiredSessions(): Promise<number> {
     if (!this.isDbAvailable()) return 0;
-    const now = new Date();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const result = await SessionAccess.deleteMany({
-      sessionDate: { $lt: now },
+      sessionDate: { $lt: today },
       isEnabled: false
     });
     return result.deletedCount || 0;
@@ -1203,8 +1204,25 @@ export class MongoDBStorage implements IStorage {
   async getSheikhSessions(sheikhId: string, range?: 'upcoming' | 'past' | 'today'): Promise<SheikhSessionView[]> {
     if (!this.isDbAvailable()) return [];
     
-    const students = await Student.find({ sheikhId, isActive: true });
+    // Get all active students - include both assigned and unassigned students
+    const assignedStudents = await Student.find({ sheikhId, isActive: true });
+    // Also include students with no sheikhId (unassigned) so their schedules show up
+    const unassignedStudents = await Student.find({ 
+      $or: [{ sheikhId: null }, { sheikhId: { $exists: false } }],
+      isActive: true 
+    });
+    const studentIdSet = new Set<string>();
+    const students: any[] = [];
+    for (const s of [...assignedStudents, ...unassignedStudents]) {
+      const sid = s._id.toString();
+      if (!studentIdSet.has(sid)) {
+        studentIdSet.add(sid);
+        students.push(s);
+      }
+    }
+    
     const studentIds = students.map(s => s._id);
+    const studentMap = new Map(students.map(s => [s._id.toString(), s]));
     
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1220,19 +1238,66 @@ export class MongoDBStorage implements IStorage {
       dateQuery.sessionDate = { $gte: today, $lt: tomorrow };
     }
     
+    // Get session access records
     const accesses = await SessionAccess.find({
       studentId: { $in: studentIds },
       ...dateQuery
-    }).populate('studentId');
+    });
     
-    return accesses.map(access => {
-      const student = access.studentId as any;
+    const results: SheikhSessionView[] = accesses.map(access => {
+      const sid = access.studentId?.toString();
+      const student = studentMap.get(sid || '');
       return {
         ...toPlainObject<SessionAccessType>(access),
         studentName: student?.studentName || 'Unknown',
         studentPhone: student?.phoneNumber || null,
       } as SheikhSessionView;
     });
+
+    // Also generate sessions from class schedules for today/upcoming if no session access exists
+    if (!range || range === 'today' || range === 'upcoming') {
+      const todayDow = now.getDay();
+      const schedules = await ClassSchedule.find({
+        studentId: { $in: studentIds },
+        isActive: true,
+      });
+      
+
+      for (const sched of schedules) {
+        const sid = sched.studentId?.toString();
+        const student = studentMap.get(sid || '');
+        
+        // Calculate next occurrence
+        let daysUntil = sched.dayOfWeek - todayDow;
+        if (daysUntil < 0) daysUntil += 7;
+        
+        const sessionDate = new Date(today);
+        sessionDate.setDate(today.getDate() + daysUntil);
+        const dateStr = sessionDate.toISOString().split('T')[0];
+
+        // Skip if session access already exists for this date + student
+        const exists = results.some(r => {
+          const rDate = typeof r.sessionDate === 'string' ? r.sessionDate : new Date(r.sessionDate).toISOString().split('T')[0];
+          return r.studentId?.toString() === sid && rDate === dateStr;
+        });
+        
+        if (!exists) {
+          results.push({
+            id: `sched_${sched._id}_${dateStr}`,
+            studentId: sid || '',
+            scheduleId: sched._id.toString(),
+            sessionDate: dateStr,
+            startTime: sched.startTime,
+            endTime: sched.endTime,
+            isEnabled: false,
+            studentName: student?.studentName || 'Unknown',
+            studentPhone: student?.phoneNumber || null,
+          } as any);
+        }
+      }
+    }
+
+    return results;
   }
 
   async createOrGetLiveRoom(studentId: string, sheikhId: string, sessionDate: Date, sessionTime: string): Promise<LiveRoomType> {
@@ -1356,7 +1421,10 @@ export class MongoDBStorage implements IStorage {
     if (!this.isDbAvailable()) {
       throw new Error("MongoDB not available");
     }
-    const newNotification = await Notification.create(cleanData(notification) as any);
+    const data: any = cleanData(notification);
+    if (!data.title && data.titleAr) data.title = data.titleAr;
+    if (!data.message && data.messageAr) data.message = data.messageAr;
+    const newNotification = await Notification.create(data);
     return toPlainObject<NotificationType>(newNotification);
   }
 
