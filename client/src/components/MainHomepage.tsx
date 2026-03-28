@@ -1,9 +1,8 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
-import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X } from 'lucide-react';
+import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X, ChevronDown, Mic, BookMarked, Video } from 'lucide-react';
 import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BustanSplashScreen } from './BustanSplashScreen';
@@ -19,6 +18,7 @@ interface MainHomepageProps {
 export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onAboutUs, onCourses }: MainHomepageProps) {
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
   const [showSplash, setShowSplash] = useState(() => {
     const seen = sessionStorage.getItem('splash-seen');
     return !seen;
@@ -27,6 +27,14 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
     sessionStorage.setItem('splash-seen', 'true');
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setNavScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   if (showSplash) {
@@ -40,79 +48,82 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
   ];
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      {/* Header */}
-      <header className="bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))] sticky top-0 z-50 shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            {/* Logo */}
+    <div className="min-h-screen bg-white dark:bg-gray-950" dir="rtl">
+      <nav
+        className={`fixed z-50 w-full transition-all duration-300 ${
+          navScrolled
+            ? 'bg-black/80 backdrop-blur-md shadow-lg'
+            : 'bg-black/30 backdrop-blur-sm'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="flex justify-between items-center h-[60px] md:h-[68px]">
             <div className="flex items-center gap-3">
-              <img 
-                src={logoImage} 
-                alt="بستان الإيمان" 
-                className="w-12 h-12 object-contain"
+              <img
+                src={logoImage}
+                alt="بستان الإيمان"
+                className="w-10 h-10 md:w-11 md:h-11 object-contain drop-shadow-lg"
               />
               <div>
-                <h1 className="text-xl md:text-2xl font-bold">بستان الإيمان</h1>
-                <p className="text-[hsl(var(--sidebar-foreground))]/70 text-xs md:text-sm hidden sm:block">منصة تحفيظ القرآن الكريم</p>
+                <h1 className="text-lg md:text-xl font-bold text-white leading-tight">بستان الإيمان</h1>
+                <p className="text-white/75 text-[11px] md:text-xs hidden sm:block">منصة تحفيظ القرآن الكريم</p>
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link, index) => (
                 <button
                   key={index}
                   onClick={link.onClick}
-                  className="text-[hsl(var(--sidebar-foreground))]/90 hover:text-[hsl(var(--sidebar-foreground))] transition-colors text-sm"
+                  className="text-white/80 hover:text-white transition-colors text-sm font-medium"
                   data-testid={`link-nav-${index}`}
                 >
                   {link.label}
                 </button>
               ))}
-            </nav>
+            </div>
 
-            {/* Auth Buttons */}
             <div className="flex items-center gap-2">
               <ThemeToggle />
               <Button
                 onClick={onLoginClick}
                 variant="ghost"
                 size="sm"
-                className="text-[hsl(var(--sidebar-foreground))] hover:bg-white/20 hidden sm:flex"
+                className="text-white hover:bg-white/15 hidden sm:flex gap-1.5"
                 data-testid="button-login-header"
               >
-                <User className="w-4 h-4 ml-1" />
+                <User className="w-4 h-4" />
                 دخول
               </Button>
               <Button
                 onClick={onRegisterClick}
                 size="sm"
-                className="bg-btn text-btn-foreground hover:opacity-90"
+                className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 gap-1.5 shadow-lg shadow-emerald-500/25"
                 data-testid="button-register-header"
               >
-                <Sparkles className="w-4 h-4 ml-1" />
+                <Sparkles className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">سجل الآن</span>
                 <span className="sm:hidden">سجل</span>
               </Button>
 
-              {/* Mobile Menu Button */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-[hsl(var(--sidebar-foreground))] hover:bg-white/20"
+                className="md:hidden text-white hover:bg-white/15"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 data-testid="button-mobile-menu"
+                aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-nav-menu"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
             </div>
           </div>
 
-          {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <nav className="md:hidden pt-4 pb-2 border-t border-[hsl(var(--sidebar-foreground))]/20 mt-3">
-              <div className="flex flex-col gap-2">
+            <div id="mobile-nav-menu" role="navigation" aria-label="القائمة الرئيسية" className="md:hidden pb-4 border-t border-white/10 mt-1 animate-in slide-in-from-top-2 duration-200">
+              <div className="flex flex-col gap-1 pt-3">
                 {navLinks.map((link, index) => (
                   <button
                     key={index}
@@ -120,7 +131,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                       link.onClick();
                       setMobileMenuOpen(false);
                     }}
-                    className="text-[hsl(var(--sidebar-foreground))]/90 hover:text-[hsl(var(--sidebar-foreground))] py-2 text-right"
+                    className="text-white/80 hover:text-white hover:bg-white/10 py-2.5 px-3 text-right rounded-lg transition-colors"
                     data-testid={`link-nav-mobile-${index}`}
                   >
                     {link.label}
@@ -131,195 +142,246 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                     onLoginClick();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-[hsl(var(--sidebar-foreground))]/90 hover:text-[hsl(var(--sidebar-foreground))] py-2 text-right sm:hidden"
+                  className="text-white/80 hover:text-white hover:bg-white/10 py-2.5 px-3 text-right rounded-lg transition-colors sm:hidden"
                   data-testid="link-login-mobile"
                 >
                   تسجيل الدخول
                 </button>
               </div>
-            </nav>
+            </div>
           )}
         </div>
-      </header>
+      </nav>
 
-      {/* Hero Section */}
-      <section className="py-12 md:py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-primary mb-4 leading-tight">
-            منصة تعليمية إسلامية متكاملة
+      <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a2e1a] via-[#0d3d22] to-[#051a0e]" />
+        <div className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+
+        <div className="absolute top-[15%] right-[10%] w-32 h-32 md:w-48 md:h-48 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute bottom-[20%] left-[5%] w-40 h-40 md:w-56 md:h-56 rounded-full bg-emerald-400/8 blur-3xl" />
+
+        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 pt-20">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-white/10">
+            <Star className="w-4 h-4 text-amber-400" />
+            <span className="text-white/80 text-sm">منصة تعليمية إسلامية شاملة</span>
+          </div>
+
+          <h2
+            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.3]"
+            style={{ fontFamily: 'Amiri, serif' }}
+          >
+            رحلتك مع القرآن
+            <br />
+            <span className="text-emerald-400">تبدأ من هنا</span>
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
-            حفظ القرآن الكريم والدورات الشرعية مع متابعة مباشرة من المشرفين
+
+          <p className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+            حفظ القرآن الكريم والدورات الشرعية مع متابعة مباشرة من المشايخ والمشرفين المعتمدين
           </p>
-          
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mb-12">
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-btn text-btn-foreground hover:opacity-90 px-8 py-6 text-lg"
+              className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 px-8 py-6 text-lg rounded-xl shadow-xl shadow-emerald-500/20 gap-2"
               data-testid="button-register-hero"
             >
-              <Sparkles className="ml-2 h-5 w-5" />
+              <Sparkles className="h-5 w-5" />
               ابدأ رحلتك مجاناً
             </Button>
             <Button
               onClick={onQuranReader}
               size="lg"
               variant="outline"
-              className="border-2 border-primary text-primary hover:bg-primary/10 px-8 py-6 text-lg"
+              className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl backdrop-blur-sm gap-2"
               data-testid="button-quran-hero"
             >
-              <BookOpen className="ml-2 h-5 w-5" />
+              <BookOpen className="h-5 w-5" />
               المصحف الإلكتروني
             </Button>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-3xl mx-auto">
             {[
-              { icon: Users, count: '500+', label: 'طالب' },
-              { icon: BookOpen, count: '20+', label: 'دورة' },
-              { icon: Award, count: '300+', label: 'شهادة' },
-              { icon: Globe, count: '24/7', label: 'متاح' }
+              { count: '500+', label: 'طالب', icon: Users },
+              { count: '20+', label: 'دورة', icon: BookMarked },
+              { count: '300+', label: 'شهادة', icon: Award },
+              { count: '24/7', label: 'متاح', icon: Globe }
             ].map((stat, index) => (
-              <Card key={index} className="border border-border">
-                <CardContent className="p-4 text-center">
-                  <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary" />
-                  <p className="text-2xl font-bold text-primary">{stat.count}</p>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                </CardContent>
-              </Card>
+              <div key={index} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
+                <stat.icon className="w-6 h-6 mx-auto mb-2 text-emerald-400" />
+                <p className="text-2xl md:text-3xl font-bold text-white">{stat.count}</p>
+                <p className="text-sm text-white/70">{stat.label}</p>
+              </div>
             ))}
           </div>
         </div>
+
+        <button
+          onClick={() => {
+            document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 hover:text-white/70 transition-colors animate-bounce"
+          aria-label="انتقل للأسفل"
+        >
+          <ChevronDown className="w-8 h-8" />
+        </button>
       </section>
 
-      {/* Educational Programs */}
-      <section className="py-12 bg-card px-4">
+      <section id="programs" className="py-16 md:py-24 px-4 bg-white dark:bg-gray-950 scroll-mt-20">
         <div className="max-w-6xl mx-auto">
-          <h3 className="text-2xl md:text-3xl font-bold text-primary text-center mb-8">
-            رحلات تعليمية متنوعة
-          </h3>
-          
+          <div className="text-center mb-12">
+            <span className="inline-block bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-4">
+              برامجنا التعليمية
+            </span>
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Amiri, serif' }}>
+              رحلات تعليمية متنوعة
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+              اختر البرنامج المناسب لمستواك وابدأ رحلتك مع القرآن الكريم
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               {
                 title: 'إتقان التجويد',
                 description: 'تعلم أحكام التجويد مع تطبيق عملي ومتابعة من المشرف',
                 icon: BookOpen,
-                color: 'primary',
+                gradient: 'from-emerald-500 to-emerald-600',
+                bgLight: 'bg-emerald-50 dark:bg-emerald-900/20',
+                iconColor: 'text-emerald-600 dark:text-emerald-400',
                 features: ['دروس مباشرة', 'تصحيح التلاوة', 'شهادة معتمدة']
               },
               {
-                title: 'حفظ جزء عم',
-                description: 'برنامج مخصص للأطفال والمبتدئين بأساليب ممتعة',
+                title: 'حفظ القرآن',
+                description: 'برنامج متكامل لحفظ القرآن الكريم بأساليب تفاعلية',
                 icon: Heart,
-                color: 'secondary',
+                gradient: 'from-amber-500 to-orange-500',
+                bgLight: 'bg-amber-50 dark:bg-amber-900/20',
+                iconColor: 'text-amber-600 dark:text-amber-400',
                 features: ['أساليب تحفيزية', 'متابعة يومية', 'جوائز وشهادات']
               },
               {
                 title: 'المتون العلمية',
                 description: 'دورات متقدمة لحفظ ودراسة المتون الشرعية',
                 icon: GraduationCap,
-                color: 'accent',
+                gradient: 'from-blue-500 to-indigo-500',
+                bgLight: 'bg-blue-50 dark:bg-blue-900/20',
+                iconColor: 'text-blue-600 dark:text-blue-400',
                 features: ['محتوى متقدم', 'إجازة علمية', 'مسار أكاديمي']
               }
             ].map((program, index) => (
-              <Card key={index} className="border-0 shadow-md hover:shadow-lg transition-shadow">
-                <div className={`h-1 ${program.color === 'primary' ? 'bg-primary' : program.color === 'secondary' ? 'bg-secondary' : 'bg-accent'}`} />
-                <CardContent className="p-6">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 ${
-                    program.color === 'primary' ? 'bg-primary/10' : 
-                    program.color === 'secondary' ? 'bg-secondary/10' : 
-                    'bg-accent/10'
-                  }`}>
-                    <program.icon className={`w-7 h-7 ${
-                      program.color === 'primary' ? 'text-primary' : 
-                      program.color === 'secondary' ? 'text-secondary' : 
-                      'text-accent'
-                    }`} />
+              <div
+                key={index}
+                className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+              >
+                <div className={`h-1.5 bg-gradient-to-l ${program.gradient}`} />
+                <div className="p-6">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-5 ${program.bgLight}`}>
+                    <program.icon className={`w-7 h-7 ${program.iconColor}`} />
                   </div>
-                  <h4 className="text-xl font-bold text-foreground mb-2">{program.title}</h4>
-                  <p className="text-muted-foreground mb-4 text-sm">{program.description}</p>
-                  <ul className="space-y-2">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{program.title}</h4>
+                  <p className="text-gray-500 dark:text-gray-400 mb-5 text-sm leading-relaxed">{program.description}</p>
+                  <ul className="space-y-2.5 mb-6">
                     {program.features.map((feature, i) => (
-                      <li key={i} className="flex items-center text-sm text-muted-foreground">
-                        <CheckCircle className="w-4 h-4 ml-2 text-primary" />
+                      <li key={i} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                        <CheckCircle className="w-4 h-4 ml-2 text-emerald-500 flex-shrink-0" />
                         {feature}
                       </li>
                     ))}
                   </ul>
-                  <Button 
+                  <Button
                     onClick={onCourses}
-                    className="w-full mt-4 bg-btn text-btn-foreground hover:opacity-90"
+                    className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl"
                     data-testid={`button-program-${index}`}
                   >
                     تفاصيل البرنامج
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-12 bg-muted px-4">
+      <section className="py-16 md:py-24 px-4 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-6xl mx-auto">
-          <h3 className="text-2xl md:text-3xl font-bold text-primary text-center mb-8">
-            مميزات المنصة
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="text-center mb-12">
+            <span className="inline-block bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-4">
+              لماذا بستان الإيمان؟
+            </span>
+            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Amiri, serif' }}>
+              مميزات المنصة
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {[
-              { icon: BookOpen, title: 'مصحف تفاعلي', desc: 'قراءة وحفظ' },
-              { icon: PlayCircle, title: 'بث مباشر', desc: 'حصص حية' },
-              { icon: Users, title: 'نظام متكامل', desc: 'إدارة سهلة' },
-              { icon: Award, title: 'شهادات', desc: 'معتمدة' },
-              { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة' },
-              { icon: Clock, title: 'متاح دائماً', desc: '24/7' },
-              { icon: TrendingUp, title: 'تتبع التقدم', desc: 'إحصائيات' },
-              { icon: MessageCircle, title: 'دعم فوري', desc: 'مساعدة' }
+              { icon: BookOpen, title: 'مصحف تفاعلي', desc: 'قراءة وحفظ مع تلوين التجويد' },
+              { icon: Video, title: 'حصص مباشرة', desc: 'بث مباشر مع المشايخ' },
+              { icon: Mic, title: 'تسميع بالذكاء الاصطناعي', desc: 'تقييم فوري للتلاوة' },
+              { icon: Award, title: 'شهادات معتمدة', desc: 'إثبات إتمام المسار' },
+              { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة لبياناتك' },
+              { icon: Clock, title: 'متاح دائماً', desc: 'تعلم في أي وقت' },
+              { icon: TrendingUp, title: 'تتبع التقدم', desc: 'إحصائيات مفصلة' },
+              { icon: MessageCircle, title: 'دعم فوري', desc: 'مساعدة على مدار الساعة' }
             ].map((feature, index) => (
-              <Card key={index} className="border border-border bg-card">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 mx-auto bg-primary/10 rounded-xl flex items-center justify-center mb-3">
-                    <feature.icon className="w-6 h-6 text-primary" />
-                  </div>
-                  <h4 className="font-bold text-foreground text-sm mb-1">{feature.title}</h4>
-                  <p className="text-xs text-muted-foreground">{feature.desc}</p>
-                </CardContent>
-              </Card>
+              <div
+                key={index}
+                className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 text-center hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <div className="w-12 h-12 mx-auto bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-3">
+                  <feature.icon className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{feature.title}</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{feature.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-12 quran-section px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h3 className="text-2xl md:text-3xl font-bold mb-4">
+      <section className="relative py-20 md:py-28 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a2e1a] via-[#0d3d22] to-[#051a0e]" />
+        <div className="absolute inset-0 opacity-[0.05]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-emerald-400/8 blur-3xl" />
+
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <h3
+            className="text-3xl md:text-4xl font-bold text-white mb-5"
+            style={{ fontFamily: 'Amiri, serif' }}
+          >
             ابدأ رحلتك التعليمية اليوم
           </h3>
-          <p className="opacity-90 mb-6">
-            انضم إلى مئات الطلاب الذين يتعلمون القرآن الكريم معنا
+          <p className="text-white/70 mb-10 text-lg leading-relaxed max-w-xl mx-auto">
+            انضم إلى مئات الطلاب الذين يحفظون القرآن الكريم ويتعلمون العلوم الشرعية معنا
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button
               onClick={onRegisterClick}
               size="lg"
-              className="bg-btn text-btn-foreground hover:opacity-90 px-8"
+              className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 px-10 py-6 text-lg rounded-xl shadow-xl shadow-emerald-500/20 gap-2"
               data-testid="button-register-cta"
             >
-              <Sparkles className="ml-2 h-5 w-5" />
+              <Sparkles className="h-5 w-5" />
               سجل الآن مجاناً
             </Button>
             <Button
               onClick={onAboutUs}
               size="lg"
               variant="outline"
-              className="border-2 border-quran-foreground text-quran-foreground hover:bg-white/10 px-8"
+              className="border-2 border-white/30 text-white hover:bg-white/10 px-10 py-6 text-lg rounded-xl gap-2"
               data-testid="button-about-cta"
             >
               اعرف المزيد
@@ -328,19 +390,34 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 bg-card px-4 border-t border-border">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <img src={logoImage} alt="بستان الإيمان" className="w-8 h-8" />
-            <span className="font-bold text-primary">بستان الإيمان</span>
+      <footer className="py-10 bg-white dark:bg-gray-950 px-4 border-t border-gray-100 dark:border-gray-800">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3">
+              <img src={logoImage} alt="بستان الإيمان" className="w-10 h-10" />
+              <div>
+                <span className="font-bold text-gray-900 dark:text-white text-lg">بستان الإيمان</span>
+                <p className="text-xs text-gray-500 dark:text-gray-400">منصة تحفيظ القرآن الكريم</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              {navLinks.map((link, index) => (
+                <button
+                  key={index}
+                  onClick={link.onClick}
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  data-testid={`link-footer-${index}`}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            منصة تحفيظ القرآن الكريم والعلوم الشرعية
-          </p>
-          <p className="text-xs text-muted-foreground">
-            جميع الحقوق محفوظة © {new Date().getFullYear()}
-          </p>
+          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              جميع الحقوق محفوظة &copy; {new Date().getFullYear()} بستان الإيمان
+            </p>
+          </div>
         </div>
       </footer>
     </div>

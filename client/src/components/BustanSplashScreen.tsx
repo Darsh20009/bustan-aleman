@@ -60,7 +60,7 @@ export function BustanSplashScreen({ onComplete }: BustanSplashScreenProps) {
 
         <button
           onClick={onComplete}
-          className="absolute bottom-6 left-6 text-emerald-200 text-sm hover:text-white transition-colors"
+          className="absolute bottom-6 start-6 text-emerald-200 text-sm hover:text-white transition-colors"
           data-testid="button-skip-splash"
         >
           تخطي
