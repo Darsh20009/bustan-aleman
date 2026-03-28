@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { jsonStorage } from "./jsonStorage";
-// courseManager removed - using storage for all course operations
 import { hashPassword, verifyPassword } from "./authUtils";
 import { requireAuth, requireAdmin, requireSupervisorOrAdmin } from "./authMiddleware";
 import { storage } from "./storage";
+import { normalizePhoneNumber } from "./phoneUtils";
 import { z } from "zod";
 
 
@@ -131,14 +131,20 @@ export function setupJSONRoutes(app: Express) {
       // Hash password before storing
       const hashedPassword = await hashPassword(registrationData.password);
 
-      // Check if user already exists with this email or phone
       const existingUsers = await storage.getAllUsers();
-      const existingUser = existingUsers.find((u: any) => 
-        u.email === registrationData.email || u.phoneNumber === registrationData.phoneNumber
-      );
+      const normalizedInputPhone = normalizePhoneNumber(registrationData.phoneNumber);
+      const existingByEmail = existingUsers.find((u: any) => u.email === registrationData.email);
+      const existingByPhone = existingUsers.find((u: any) => {
+        if (!u.phoneNumber) return false;
+        const userPhone = normalizePhoneNumber(u.phoneNumber);
+        return userPhone && normalizedInputPhone && userPhone === normalizedInputPhone;
+      });
       
-      if (existingUser) {
-        return res.status(400).json({ message: "هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً" });
+      if (existingByEmail) {
+        return res.status(400).json({ message: "هذا البريد الإلكتروني مسجل مسبقاً" });
+      }
+      if (existingByPhone) {
+        return res.status(400).json({ message: "رقم الهاتف مسجل مسبقاً" });
       }
 
       // Create user record first (for login)

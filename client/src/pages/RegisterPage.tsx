@@ -105,10 +105,10 @@ export function RegisterPage() {
         description: 'سيتم التواصل معك قريباً',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'خطأ في التسجيل',
-        description: 'حدث خطأ أثناء التسجيل، يرجى المحاولة مرة أخرى',
+        description: error.message || 'حدث خطأ أثناء التسجيل، يرجى المحاولة مرة أخرى',
         variant: 'destructive',
       });
     },

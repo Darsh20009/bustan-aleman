@@ -37,7 +37,19 @@ export async function initializePreregisteredUsers() {
         const existingUser = await storage.getUserByPhone(user.phoneNumber);
         
         if (existingUser) {
-          console.log(`  ✓ User exists (ID: ${existingUser.id})`);
+          let passwordOk = false;
+          if (existingUser.passwordHash) {
+            try {
+              passwordOk = await bcrypt.compare(user.password, existingUser.passwordHash);
+            } catch {}
+          }
+          if (!passwordOk) {
+            const newHash = await bcrypt.hash(user.password, 10);
+            await storage.upsertUser({ ...existingUser, passwordHash: newHash });
+            console.log(`  🔄 Password re-synced for: ${user.name} (${user.phoneNumber})`);
+          } else {
+            console.log(`  ✓ User exists (ID: ${existingUser.id})`);
+          }
           existingUsers.push(user.phoneNumber);
         } else {
           console.log(`  ✗ User not found, creating...`);

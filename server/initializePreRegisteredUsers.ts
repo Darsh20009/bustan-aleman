@@ -77,8 +77,9 @@ export async function initializePreRegisteredUsers() {
     console.log(`🔐 Initializing ${preRegisteredUsers.length} pre-registered users...`);
     
     const allUsers = await storage.getAllUsers();
+    let createdCount = 0;
+    let existingCount = 0;
 
-    // First pass: create all users
     for (const preUser of preRegisteredUsers) {
       try {
         // Check if user exists by email or phone
@@ -88,7 +89,6 @@ export async function initializePreRegisteredUsers() {
         );
 
         if (!existingUser) {
-          // Hash password before storing
           const hashedPassword = await hashPassword(preUser.password);
           
           const userData = {
@@ -104,7 +104,6 @@ export async function initializePreRegisteredUsers() {
 
           const user = await storage.upsertUser(userData);
 
-          // Create supervisor record for supervisor users
           if (preUser.role === 'supervisor') {
             await storage.createSupervisor({
               userId: user.id,
@@ -118,8 +117,21 @@ export async function initializePreRegisteredUsers() {
           }
 
           console.log(`✅ Pre-registered user initialized: ${preUser.name} (${preUser.email || preUser.phoneNumber})`);
+          createdCount++;
         } else {
-          console.log(`ℹ️  User already exists: ${preUser.name} (${preUser.email || preUser.phoneNumber})`);
+          const { verifyPassword } = await import("./authUtils");
+          const passwordValid = existingUser.passwordHash 
+            ? await verifyPassword(preUser.password, existingUser.passwordHash)
+            : false;
+          
+          if (!passwordValid) {
+            const hashedPassword = await hashPassword(preUser.password);
+            await storage.upsertUser({ ...existingUser, passwordHash: hashedPassword });
+            console.log(`🔄 Password re-synced for: ${preUser.name} (${preUser.email || preUser.phoneNumber})`);
+          } else {
+            console.log(`  ✓ User exists (ID: ${existingUser.id})`);
+          }
+          existingCount++;
         }
       } catch (userError) {
         console.error(`Error initializing user ${preUser.name}:`, userError);
