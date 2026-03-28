@@ -85,6 +85,94 @@ interface AyahMarker {
   type: 'memorized' | 'review';
 }
 
+interface WordTrackStatus {
+  word: string;
+  normalized: string;
+  status: 'correct' | 'incorrect' | 'pending';
+}
+
+function normalizeArabicWord(text: string): string {
+  return text
+    .replace(/[\u064B-\u065F\u0610-\u061A\u06D6-\u06ED\u0670]/g, '')
+    .replace(/[أإآٱا]/g, 'ا')
+    .replace(/[ىئي]/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .replace(/\u0640/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function levenshteinSim(s1: string, s2: string): number {
+  const longer = s1.length > s2.length ? s1 : s2;
+  const shorter = s1.length > s2.length ? s2 : s1;
+  if (longer.length === 0) return 1.0;
+  const costs: number[] = [];
+  for (let i = 0; i <= shorter.length; i++) {
+    let lastVal = i;
+    for (let j = 0; j <= longer.length; j++) {
+      if (i === 0) costs[j] = j;
+      else if (j > 0) {
+        let newVal = costs[j - 1];
+        if (shorter[i - 1] !== longer[j - 1])
+          newVal = Math.min(Math.min(newVal, lastVal), costs[j]) + 1;
+        costs[j - 1] = lastVal;
+        lastVal = newVal;
+      }
+    }
+    if (i > 0) costs[longer.length] = lastVal;
+  }
+  const distance = costs[longer.length] ?? 0;
+  return (longer.length - distance) / longer.length;
+}
+
+function compareWords(spoken: string, expectedWords: string[]): WordTrackStatus[] {
+  const spokenNorm = normalizeArabicWord(spoken);
+  const spokenWords = spokenNorm.split(/\s+/).filter(w => w.trim());
+  const spokenCount = spokenWords.length;
+  let spokenIdx = 0;
+
+  return expectedWords.map((expectedWord) => {
+    const expectedNorm = normalizeArabicWord(expectedWord);
+    if (!expectedNorm) return { word: expectedWord, normalized: expectedNorm, status: 'correct' as const };
+
+    if (spokenIdx >= spokenCount) {
+      return { word: expectedWord, normalized: expectedNorm, status: 'pending' as const };
+    }
+
+    let bestMatch = -1;
+    let bestSim = 0;
+    const searchWindow = Math.min(spokenCount, spokenIdx + 5);
+
+    for (let i = spokenIdx; i < searchWindow; i++) {
+      const sim = levenshteinSim(spokenWords[i], expectedNorm);
+      if (sim > bestSim) {
+        bestSim = sim;
+        bestMatch = i;
+      }
+      if (spokenWords[i] === expectedNorm) {
+        bestSim = 1;
+        bestMatch = i;
+        break;
+      }
+    }
+
+    if (bestSim >= 0.65 && bestMatch >= 0) {
+      spokenIdx = bestMatch + 1;
+      return { word: expectedWord, normalized: expectedNorm, status: bestSim >= 0.85 ? 'correct' as const : 'incorrect' as const };
+    }
+
+    if (spokenIdx < spokenCount) {
+      const directSim = levenshteinSim(spokenWords[spokenIdx], expectedNorm);
+      if (directSim >= 0.45) {
+        spokenIdx++;
+        return { word: expectedWord, normalized: expectedNorm, status: 'incorrect' as const };
+      }
+    }
+
+    return { word: expectedWord, normalized: expectedNorm, status: 'pending' as const };
+  });
+}
+
 export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [fontSize, setFontSize] = useState([32]);
@@ -113,6 +201,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const [activeAyahIndex, setActiveAyahIndex] = useState<number>(-1);
   const [memorizationMode, setMemorizationMode] = useState(false);
   const [revealedAyahs, setRevealedAyahs] = useState<Set<number>>(new Set());
+  const [wordTrackMap, setWordTrackMap] = useState<Map<number, WordTrackStatus[]>>(new Map());
   const [quranTheme, setQuranTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('quran-theme') as 'light' | 'dark' || 'light';
@@ -582,21 +671,39 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     const ayahs = pageData.ayahs;
     const normalizedSpoken = normalizeArabicForSearch(combined);
     
-    // Look for matches in the current page
+    let matchedIdx = activeAyahIndex;
     const searchStart = Math.max(0, activeAyahIndex);
     for (let i = searchStart; i < ayahs.length; i++) {
       const ayahText = normalizeArabicForSearch(ayahs[i].text);
       const prefix = ayahText.substring(0, 15); 
       
-      // Lenient word matching
       const words = normalizedSpoken.split(' ').filter(w => w.length > 2);
       const wordMatch = words.some(w => ayahText.includes(w));
       
       if (normalizedSpoken.includes(prefix) || wordMatch) {
-        if (activeAyahIndex !== i) {
+        if (matchedIdx !== i) {
+          matchedIdx = i;
           setActiveAyahIndex(i);
         }
         break;
+      }
+    }
+
+    if (matchedIdx >= 0 && matchedIdx < ayahs.length) {
+      const ayah = ayahs[matchedIdx];
+      const ayahWords = ayah.text.split(/\s+/).filter(w => w.trim());
+      const wordResults = compareWords(combined, ayahWords);
+      setWordTrackMap(prev => {
+        const newMap = new Map(prev);
+        newMap.set(ayah.number, wordResults);
+        return newMap;
+      });
+
+      const correctCount = wordResults.filter(w => w.status === 'correct').length;
+      const totalWords = wordResults.length;
+      if (correctCount >= Math.floor(totalWords * 0.8) && matchedIdx < ayahs.length - 1) {
+        setActiveAyahIndex(matchedIdx + 1);
+        setWordTrackMap(new Map());
       }
     }
   }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
@@ -604,6 +711,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   const toggleListening = async () => {
     if (isListening) {
       stopListening();
+      setWordTrackMap(new Map());
     } else {
       if (!isSupported) {
         toast({
@@ -616,6 +724,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       resetTranscript();
       setActiveAyahIndex(-1);
       setRecognizedText("");
+      setWordTrackMap(new Map());
       await startListening();
       if (isListening) {
         toast({
@@ -1254,10 +1363,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
               </div>
 
               {memorizationMode && (
-                <div className="mx-3 sm:mx-6 md:mx-8 mt-3 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm">
+                <div className={`mx-3 sm:mx-6 md:mx-8 mt-3 px-4 py-2 ${isDarkTheme ? 'bg-amber-500/10 border-amber-500/30' : 'bg-amber-50 border-amber-200'} border rounded-lg flex items-center justify-between`}>
+                  <div className={`flex items-center gap-2 ${isDarkTheme ? 'text-amber-400' : 'text-amber-700'} text-sm`}>
                     <EyeOff className="w-4 h-4" />
-                    <span className="font-medium">وضع الحفظ - اضغط على النص المخفي لإظهاره</span>
+                    <span className="font-medium">وضع الحفظ - اضغط على مكان الآية لإظهارها</span>
                   </div>
                   <Button
                     variant="ghost"
@@ -1321,6 +1430,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                   const isSelected = ayahActionPanel?.number === ayah.number;
                                   const isCurrentlyReading = activeAyahIndex === index;
                                   
+                                  const isHiddenInMemMode = memorizationMode && !revealedAyahs.has(ayah.number);
                                   return (
                                     <span
                                       key={ayah.number}
@@ -1329,13 +1439,13 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                       aria-label={`آية ${ayah.numberInSurah} من ${ayah.surah.name}`}
                                       aria-pressed={isSelected}
                                       className={`inline cursor-pointer transition-all duration-200 rounded-sm px-0.5 outline-none
-                                        focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1
-                                        ${isSelected ? 'bg-[#D4AF37]/30' : ''}
-                                        ${isCurrentlyReading ? 'bg-emerald-500/20 ring-1 ring-emerald-500/30 font-bold' : ''}
-                                        ${isMemorized ? (isDarkTheme ? 'text-emerald-400' : 'text-[#2D5A3D]') : ''}
-                                        ${needsReview ? (isDarkTheme ? 'text-amber-400' : 'text-amber-700') : ''}
-                                        ${!isMemorized && !needsReview ? (isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]') : ''}
-                                        hover:bg-[#D4AF37]/20
+                                        ${isHiddenInMemMode ? '' : 'focus:ring-2 focus:ring-[#D4AF37] focus:ring-offset-1'}
+                                        ${isSelected && !isHiddenInMemMode ? 'bg-[#D4AF37]/30' : ''}
+                                        ${isCurrentlyReading && !isHiddenInMemMode ? 'bg-emerald-500/20 ring-1 ring-emerald-500/30 font-bold' : ''}
+                                        ${!isHiddenInMemMode && isMemorized ? (isDarkTheme ? 'text-emerald-400' : 'text-[#2D5A3D]') : ''}
+                                        ${!isHiddenInMemMode && needsReview ? (isDarkTheme ? 'text-amber-400' : 'text-amber-700') : ''}
+                                        ${!isHiddenInMemMode && !isMemorized && !needsReview ? (isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]') : ''}
+                                        ${isHiddenInMemMode ? '' : 'hover:bg-[#D4AF37]/20'}
                                       `}
                                       onClick={() => shouldAllowClick() && handleAyahClick(ayah)}
                                       onKeyDown={(e) => handleAyahKeyDown(e, ayah)}
@@ -1357,10 +1467,25 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                     setRevealedAyahs(prev => new Set(prev).add(ayah.number));
                                   }}
                                 >
-                                  <span className={`inline-block rounded px-2 py-0.5 ${isDarkTheme ? 'bg-[#E8E8E8]/10' : 'bg-[#1A1A1A]/10'} backdrop-blur-sm`}>
-                                    {'█'.repeat(Math.min(ayah.text.split(' ').length, 12))}
+                                  <span className={`${isDarkTheme ? 'text-[#1A1A1A]' : 'text-[#F5F0E6]'} transition-colors duration-300`} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+                                    {ayah.text}
                                   </span>
                                 </span>
+                              ) : isListening && isCurrentlyReading && wordTrackMap.has(ayah.number) ? (
+                                wordTrackMap.get(ayah.number)!.map((ws, wIdx) => (
+                                  <span
+                                    key={wIdx}
+                                    className={`inline transition-colors duration-150 ${
+                                      ws.status === 'correct'
+                                        ? 'text-emerald-500 font-bold'
+                                        : ws.status === 'incorrect'
+                                        ? 'text-red-500 font-bold'
+                                        : ''
+                                    }`}
+                                  >
+                                    {ws.word}{' '}
+                                  </span>
+                                ))
                               ) : (
                                 ayah.text
                               )}
