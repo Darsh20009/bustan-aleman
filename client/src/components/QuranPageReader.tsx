@@ -669,50 +669,31 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     if (!combined || !pageData?.ayahs) return;
 
     const ayahs = pageData.ayahs;
-    const normalizedSpoken = normalizeArabicForSearch(combined);
     
-    const spokenWords = normalizedSpoken.split(' ').filter(w => w.length > 2);
-    
-    let matchedIdx = activeAyahIndex;
-    const searchStart = Math.max(0, activeAyahIndex);
-    for (let i = searchStart; i < ayahs.length; i++) {
-      const ayahText = normalizeArabicForSearch(ayahs[i].text);
-      const ayahWordList = ayahText.split(' ').filter(w => w.length > 2);
-      
-      let matchCount = 0;
-      for (const sw of spokenWords) {
-        if (ayahWordList.some(aw => levenshteinSim(sw, aw) >= 0.7)) {
-          matchCount++;
-        }
-      }
-      
-      const minWordsNeeded = Math.max(3, Math.ceil(ayahWordList.length * 0.3));
-      
-      if (matchCount >= minWordsNeeded) {
-        if (matchedIdx !== i) {
-          matchedIdx = i;
-          setActiveAyahIndex(i);
-        }
-        break;
-      }
+    if (activeAyahIndex < 0) {
+      setActiveAyahIndex(0);
+      return;
     }
 
-    if (matchedIdx >= 0 && matchedIdx < ayahs.length) {
-      const ayah = ayahs[matchedIdx];
-      const ayahWords = ayah.text.split(/\s+/).filter(w => w.trim());
-      const wordResults = compareWords(combined, ayahWords);
-      setWordTrackMap(prev => {
-        const newMap = new Map(prev);
-        newMap.set(ayah.number, wordResults);
-        return newMap;
-      });
+    if (activeAyahIndex >= ayahs.length) return;
 
-      const correctCount = wordResults.filter(w => w.status === 'correct').length;
-      const totalWords = wordResults.length;
-      if (correctCount >= Math.floor(totalWords * 0.8) && matchedIdx < ayahs.length - 1) {
-        setActiveAyahIndex(matchedIdx + 1);
-        setWordTrackMap(new Map());
-      }
+    const currentAyah = ayahs[activeAyahIndex];
+    const ayahWords = currentAyah.text.split(/\s+/).filter(w => w.trim());
+    const wordResults = compareWords(combined, ayahWords);
+    
+    setWordTrackMap(prev => {
+      const newMap = new Map(prev);
+      newMap.set(currentAyah.number, wordResults);
+      return newMap;
+    });
+
+    const correctCount = wordResults.filter(w => w.status === 'correct').length;
+    const totalWords = wordResults.filter(w => normalizeArabicWord(w.word).length > 0).length;
+    
+    if (totalWords > 0 && correctCount >= Math.ceil(totalWords * 0.7) && activeAyahIndex < ayahs.length - 1) {
+      resetTranscript();
+      setActiveAyahIndex(activeAyahIndex + 1);
+      setWordTrackMap(new Map());
     }
   }, [transcript, interimTranscript, isListening, pageData, activeAyahIndex]);
 
@@ -730,16 +711,14 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
         return;
       }
       resetTranscript();
-      setActiveAyahIndex(-1);
+      setActiveAyahIndex(0);
       setRecognizedText("");
       setWordTrackMap(new Map());
       await startListening();
-      if (isListening) {
-        toast({
-          title: "التسميع مفعل",
-          description: "ابدأ القراءة الآن، سيتم تتبع تلاوتك آلياً",
-        });
-      }
+      toast({
+        title: "التسميع مفعل",
+        description: "ابدأ بقراءة الآية الأولى في الصفحة",
+      });
     }
   };
 
