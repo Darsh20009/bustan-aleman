@@ -181,10 +181,41 @@ export function setupSheikhRoutes(app: Express) {
         sessionData.startTime
       );
 
-      // Upsert session access (prevents duplicates)
+      let kiroxJoinUrl = '';
+      try {
+        const existingAccess = await storage.getSessionAccess(sessionData.studentId, sessionData.sessionDate);
+        const existingKiroxUrl = existingAccess?.zoomLink;
+        
+        if (existingKiroxUrl && existingKiroxUrl.startsWith('http')) {
+          kiroxJoinUrl = existingKiroxUrl;
+          console.log('♻️ Reusing existing Kirox URL:', kiroxJoinUrl);
+        } else {
+          const { kiroxService } = await import('./kiroxService');
+          if (kiroxService.isConfigured()) {
+            const student = await storage.getStudent(sessionData.studentId);
+            const studentName = student?.studentName || 'طالب';
+            const meeting = await kiroxService.createMeeting({
+              title: `حصة ${studentName} - ${sessionData.sessionDate}`,
+              scheduledAt: new Date(`${sessionData.sessionDate}T${sessionData.startTime}`).toISOString(),
+              durationMinutes: 60,
+            });
+            kiroxJoinUrl = meeting.joinUrl || kiroxService.getJoinUrl(meeting.roomName);
+            console.log('✅ Kirox session created:', kiroxJoinUrl);
+          }
+        }
+      } catch (kiroxError: any) {
+        console.error('⚠️ Kirox meeting creation failed, using fallback:', kiroxError.message);
+      }
+
+      if (kiroxJoinUrl) {
+        try {
+          await storage.updateLiveRoom(liveRoom.id, { zoomLink: kiroxJoinUrl });
+        } catch (e) { /* ignore if column doesn't exist yet */ }
+      }
+
       const sessionAccess = await storage.upsertSessionAccess({
         ...sessionData,
-        zoomLink: "", // Default zoom link (will be added later if needed)
+        zoomLink: kiroxJoinUrl || "",
         isEnabled: true,
         enabledBy: sheikhId,
       });
@@ -198,6 +229,7 @@ export function setupSheikhRoutes(app: Express) {
         status: liveRoom.status,
         isEnabled: liveRoom.isEnabled,
         enabledAt: liveRoom.enabledAt,
+        kiroxJoinUrl,
       };
 
       // Notify student via WebSocket with full room context

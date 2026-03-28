@@ -18,6 +18,8 @@ interface SessionAccess {
   roomToken?: string;
   roomId?: string;
   sheikhName?: string;
+  zoomLink?: string;
+  kiroxJoinUrl?: string;
 }
 
 export function StudentSessionsPage() {
@@ -46,7 +48,7 @@ export function StudentSessionsPage() {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'session_enabled') {
-        if (data.data.roomToken && data.data.id) {
+        if (data.data.id) {
           setSessions(prevSessions => {
             const updatedSessions = prevSessions.map(session => {
               if (session.id === data.data.id) {
@@ -55,6 +57,8 @@ export function StudentSessionsPage() {
                   isEnabled: true,
                   roomToken: data.data.roomToken,
                   roomId: data.data.roomId,
+                  zoomLink: data.data.zoomLink || data.data.kiroxJoinUrl || session.zoomLink,
+                  kiroxJoinUrl: data.data.kiroxJoinUrl || session.kiroxJoinUrl,
                 };
               }
               return session;
@@ -107,7 +111,8 @@ export function StudentSessionsPage() {
       return;
     }
 
-    if (!session.roomToken) {
+    const hasKiroxUrl = session.kiroxJoinUrl || (session.zoomLink && session.zoomLink.startsWith('http'));
+    if (!session.roomToken && !hasKiroxUrl) {
       toast({
         title: "خطأ",
         description: "لم يتم إنشاء غرفة الحصة بعد، الرجاء المحاولة مرة أخرى",
@@ -119,56 +124,60 @@ export function StudentSessionsPage() {
     setJoiningSession(session.id);
     
     try {
-      // Check if student can enter based on session timing
-      const canEnterResponse = await fetch(`/api/session/${session.roomToken}/can-enter`);
-      
-      // Handle HTTP errors
-      if (!canEnterResponse.ok) {
-        setJoiningSession(null);
-        toast({
-          title: "خطأ",
-          description: "فشل في التحقق من إمكانية الدخول. يرجى تسجيل الدخول مجدداً",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const canEnterData = await canEnterResponse.json();
-      
-      if (!canEnterData.canEnter) {
-        setJoiningSession(null);
+      if (session.roomToken) {
+        const canEnterResponse = await fetch(`/api/session/${session.roomToken}/can-enter`);
         
-        if (canEnterData.reason === 'too_early') {
+        if (!canEnterResponse.ok) {
+          setJoiningSession(null);
           toast({
-            title: "لم يحن وقت الحصة بعد",
-            description: canEnterData.message || "يمكنك الدخول قبل 5 دقائق من موعد الحصة",
+            title: "خطأ",
+            description: "فشل في التحقق من إمكانية الدخول. يرجى تسجيل الدخول مجدداً",
             variant: "destructive",
           });
-        } else if (canEnterData.reason === 'too_late') {
+          return;
+        }
+        
+        const canEnterData = await canEnterResponse.json();
+        
+        if (!canEnterData.canEnter) {
+          setJoiningSession(null);
+          
+          if (canEnterData.reason === 'too_early') {
+            toast({
+              title: "لم يحن وقت الحصة بعد",
+              description: canEnterData.message || "يمكنك الدخول قبل 5 دقائق من موعد الحصة",
+              variant: "destructive",
+            });
+          } else if (canEnterData.reason === 'too_late') {
+            toast({
+              title: "انتهى وقت الدخول",
+              description: canEnterData.message || "تم تسجيل الغياب بسبب التأخر أكثر من 10 دقائق",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "لا يمكن الدخول",
+              description: canEnterData.message || "حدث خطأ في التحقق من وقت الحصة",
+              variant: "destructive",
+            });
+          }
+          return;
+        }
+        
+        if (canEnterData.isLate) {
           toast({
-            title: "انتهى وقت الدخول",
-            description: canEnterData.message || "تم تسجيل الغياب بسبب التأخر أكثر من 10 دقائق",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "لا يمكن الدخول",
-            description: canEnterData.message || "حدث خطأ في التحقق من وقت الحصة",
-            variant: "destructive",
+            title: "تنبيه",
+            description: "أنت متأخر عن موعد الحصة",
           });
         }
-        return;
       }
       
-      // Show late warning if applicable
-      if (canEnterData.isLate) {
-        toast({
-          title: "تنبيه",
-          description: "أنت متأخر عن موعد الحصة",
-        });
+      const kiroxUrl = session.kiroxJoinUrl || session.zoomLink;
+      if (kiroxUrl && kiroxUrl.startsWith('http')) {
+        window.open(kiroxUrl, '_blank', 'noopener,noreferrer');
+      } else if (session.roomToken) {
+        window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
       }
-      
-      window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
       setJoiningSession(null);
       toast({
         title: "تم فتح الحصة",
@@ -253,7 +262,7 @@ export function StudentSessionsPage() {
                   </div>
                 )}
 
-                {session.isEnabled && session.roomToken && (
+                {session.isEnabled && (session.roomToken || session.zoomLink || session.kiroxJoinUrl) && (
                   <Button
                     onClick={() => joinSession(session)}
                     disabled={joiningSession === session.id}

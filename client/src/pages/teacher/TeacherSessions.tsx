@@ -42,6 +42,8 @@ interface Session {
   isEnabled: boolean;
   roomToken?: string;
   status?: string;
+  zoomLink?: string;
+  kiroxJoinUrl?: string;
 }
 
 export function TeacherSessionsPage() {
@@ -231,8 +233,13 @@ export function TeacherSessionsPage() {
     }
   };
 
-  const joinSession = (roomToken: string) => {
-    window.open(`/session/${roomToken}`, '_blank', 'noopener,noreferrer');
+  const joinSession = (session: Session) => {
+    const kiroxUrl = session.kiroxJoinUrl || session.zoomLink;
+    if (kiroxUrl && kiroxUrl.startsWith('http')) {
+      window.open(kiroxUrl, '_blank', 'noopener,noreferrer');
+    } else if (session.roomToken) {
+      window.open(`/session/${session.roomToken}`, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -339,10 +346,10 @@ export function TeacherSessionsPage() {
                         </>
                       )}
                     </Button>
-                  ) : session.roomToken ? (
+                  ) : (session.roomToken || session.zoomLink || session.kiroxJoinUrl) ? (
                     <>
                       <Button
-                        onClick={() => joinSession(session.roomToken!)}
+                        onClick={() => joinSession(session)}
                         className="flex-1"
                         data-testid={`button-join-session-${session.id}`}
                       >

@@ -50,6 +50,7 @@ export function setupStudentSessionRoutes(app: Express) {
             roomStatus: room?.status || null,
             roomIsEnabled: room?.isEnabled || false,
             roomEnabledAt: room?.enabledAt || null,
+            zoomLink: session.zoomLink || null,
           };
         });
         
