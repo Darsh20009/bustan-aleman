@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from './ui/form';
@@ -9,8 +8,9 @@ import { useAuth } from '../hooks/useAuth';
 import { useLocation, Link } from "wouter";
 import { useToast } from '../hooks/use-toast';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, LogIn, Sparkles, Eye, EyeOff, Mail, Phone } from 'lucide-react';
+import { LogIn, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { z } from "zod";
+import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 
 const loginSchema = z.object({
   emailOrPhone: z.string().min(5, "البريد الإلكتروني أو رقم الجوال مطلوب"),
@@ -115,173 +115,134 @@ export function AuthPage({ onForgotPasswordClick, onLoginSuccess }: AuthPageProp
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
-      <div className="w-full max-w-md">
-        <Card className="border shadow-2xl bg-card/95 backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                <BookOpen className="text-primary-foreground" size={40} />
-              </div>
-            </div>
-            <CardTitle className="text-3xl font-bold text-foreground mb-2 font-amiri">
-              تسجيل الدخول
-            </CardTitle>
-            <p className="text-muted-foreground mt-2 text-lg">
-              مرحباً بك في بستان الإيمان
-            </p>
-            <div className="flex justify-center my-4">
-              <Sparkles className="text-secondary w-6 h-6" />
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            <Form {...loginForm}>
-              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                <FormField
-                  control={loginForm.control}
-                  name="emailOrPhone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 ml-1" />
-                        <Phone className="w-4 h-4" />
-                        البريد الإلكتروني أو رقم الجوال
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="أدخل البريد الإلكتروني أو رقم الجوال"
-                          {...field} 
-                          data-testid="input-email-or-phone"
-                          dir="ltr"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={loginForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>كلمة المرور</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="••••••••"
-                            {...field} 
-                            data-testid="input-password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute left-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                            data-testid="button-toggle-password"
-                          >
-                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={loginForm.control}
-                  name="rememberMe"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center space-x-reverse space-x-2 pt-2">
-                      <FormControl>
-                        <input
-                          type="checkbox"
-                          checked={field.value}
-                          onChange={(e) => field.onChange(e.target.checked)}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
-                          className="w-4 h-4 cursor-pointer"
-                          data-testid="checkbox-remember-me"
-                        />
-                      </FormControl>
-                      <FormLabel className="font-arabic-sans mb-0 cursor-pointer">
-                        تذكرني لمدة 30 يوم
-                      </FormLabel>
-                    </FormItem>
-                  )}
-                />
-
-                <Button 
-                  type="submit"
-                  className="w-full py-3 text-lg font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={loginMutation.isPending}
-                  data-testid="button-login"
-                >
-                  <LogIn className="ml-2" size={20} />
-                  {loginMutation.isPending ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full text-primary hover:bg-accent/10"
-                  onClick={() => onForgotPasswordClick ? onForgotPasswordClick() : setLocation('/forgot-password')}
-                  data-testid="button-forgot-password"
-                >
-                  هل نسيت كلمة المرور؟
-                </Button>
-              </form>
-            </Form>
-
-            <div className="border-t border-border pt-6">
-              <div className="text-center space-y-3">
-                <p className="text-muted-foreground">
-                  ليس لديك حساب؟{' '}
-                  <Link href="/register" className="text-primary hover:text-primary/80 font-semibold underline" data-testid="link-register">
-                    إنشاء حساب جديد
-                  </Link>
-                </p>
-                <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors block w-full" data-testid="link-back-home">
-                  العودة للصفحة الرئيسية
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="mt-8 grid grid-cols-1 gap-4">
-          <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-reverse space-x-3">
-                <BookOpen className="text-primary flex-shrink-0" size={24} />
-                <div>
-                  <h3 className="font-semibold text-foreground">حفظ القرآن الكريم</h3>
-                  <p className="text-sm text-muted-foreground">تتبع تقدمك في الحفظ مع مصحف تفاعلي</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border shadow-xl bg-card/80 backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-reverse space-x-3">
-                <Sparkles className="text-secondary flex-shrink-0" size={24} />
-                <div>
-                  <h3 className="font-semibold text-foreground">الدورات التعليمية</h3>
-                  <p className="text-sm text-muted-foreground">التسجيل في الرحلات التعليمية الإسلامية</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-[#FAFAF7] dark:bg-[#111111] flex items-center justify-center p-4" dir="rtl">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <img src={logoImage} alt="بستان الإيمان" className="w-12 h-12 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white mb-1">تسجيل الدخول</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500">أدخل بياناتك للمتابعة</p>
         </div>
-        
-        <div className="text-center mt-6 text-sm text-muted-foreground">
-          بستان الإيمان - منصة تعليمية إسلامية شاملة
+
+        <div className="bg-white dark:bg-[#161616] rounded-2xl border border-gray-200/60 dark:border-white/5 p-6 md:p-8">
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-5">
+              <FormField
+                control={loginForm.control}
+                name="emailOrPhone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm text-gray-600 dark:text-gray-400">
+                      رقم الجوال أو البريد الإلكتروني
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="05XXXXXXXX"
+                        className="h-11 bg-[#FAFAF7] dark:bg-[#111111] border-gray-200 dark:border-white/10 rounded-xl text-sm"
+                        {...field} 
+                        data-testid="input-email-or-phone"
+                        dir="ltr"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm text-gray-600 dark:text-gray-400">كلمة المرور</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          className="h-11 bg-[#FAFAF7] dark:bg-[#111111] border-gray-200 dark:border-white/10 rounded-xl text-sm"
+                          {...field} 
+                          data-testid="input-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute left-0 top-0 h-full px-3 hover:bg-transparent text-gray-400"
+                          onClick={() => setShowPassword(!showPassword)}
+                          data-testid="button-toggle-password"
+                        >
+                          {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={loginForm.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex items-center gap-2">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                        className="w-4 h-4 cursor-pointer rounded accent-[#2D5A3D]"
+                        data-testid="checkbox-remember-me"
+                      />
+                    </FormControl>
+                    <FormLabel className="mb-0 cursor-pointer text-sm text-gray-500 dark:text-gray-400">
+                      تذكرني لمدة 30 يوم
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
+
+              <Button 
+                type="submit"
+                className="w-full h-11 text-sm font-semibold bg-[#2D5A3D] hover:bg-[#234A31] text-white rounded-xl"
+                disabled={loginMutation.isPending}
+                data-testid="button-login"
+              >
+                {loginMutation.isPending ? (
+                  "جاري تسجيل الدخول..."
+                ) : (
+                  <>
+                    تسجيل الدخول
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                  </>
+                )}
+              </Button>
+            </form>
+          </Form>
+
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => onForgotPasswordClick ? onForgotPasswordClick() : setLocation('/forgot-password')}
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-[#2D5A3D] dark:hover:text-emerald-400 transition-colors"
+              data-testid="button-forgot-password"
+            >
+              نسيت كلمة المرور؟
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center space-y-3">
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            ليس لديك حساب؟{' '}
+            <Link href="/register" className="text-[#2D5A3D] dark:text-emerald-400 font-medium hover:underline" data-testid="link-register">
+              إنشاء حساب
+            </Link>
+          </p>
+          <Link href="/" className="text-xs text-gray-300 dark:text-gray-600 hover:text-gray-500 transition-colors block" data-testid="link-back-home">
+            العودة للرئيسية
+          </Link>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from './ui/button';
-import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, Sparkles, CheckCircle, TrendingUp, Shield, Clock, Globe, MessageCircle, PlayCircle, Menu, X, ChevronDown, Mic, BookMarked, Video, EyeOff, Search } from 'lucide-react';
+import { BookOpen, User, Users, Star, GraduationCap, Award, Heart, CheckCircle, Shield, Clock, Globe, Mic, BookMarked, Video, EyeOff, Search, ArrowLeft, Menu, X, ChevronLeft } from 'lucide-react';
 import logoImage from '@assets/bustan aleman logo_1763041603537.png';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { BustanSplashScreen } from './BustanSplashScreen';
@@ -23,6 +23,8 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
     const seen = sessionStorage.getItem('splash-seen');
     return !seen;
   });
+  const [activeFeature, setActiveFeature] = useState(0);
+  const featuresRef = useRef<HTMLDivElement>(null);
 
   const handleSplashComplete = useCallback(() => {
     setShowSplash(false);
@@ -37,6 +39,13 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveFeature(prev => (prev + 1) % 4);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (showSplash) {
     return <BustanSplashScreen onComplete={handleSplashComplete} />;
   }
@@ -44,29 +53,58 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
   const navLinks = [
     { label: 'من نحن', onClick: onAboutUs },
     { label: 'الدورات', onClick: onCourses },
-    { label: 'المصحف الإلكتروني', onClick: onQuranReader }
+    { label: 'المصحف', onClick: onQuranReader }
+  ];
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: 'مصحف إلكتروني تفاعلي',
+      desc: 'تصفح المصحف الشريف بخط عثماني واضح مع إمكانية التلاوة المباشرة والتتبع الذكي',
+      color: '#2D5A3D',
+    },
+    {
+      icon: Mic,
+      title: 'تسميع بالذكاء الاصطناعي',
+      desc: 'اقرأ بصوتك ويتابعك النظام كلمة بكلمة مع تصحيح فوري وتقييم دقيق',
+      color: '#8B6914',
+    },
+    {
+      icon: EyeOff,
+      title: 'وضع الحفظ والاختبار',
+      desc: 'إخفاء الآيات لاختبار حفظك مع كشف تدريجي وتتبع مستوى التقدم',
+      color: '#4A6FA5',
+    },
+    {
+      icon: Video,
+      title: 'حصص مباشرة مع المشايخ',
+      desc: 'تواصل مباشر بالفيديو مع معلمين مؤهلين لتصحيح التلاوة والمتابعة الشخصية',
+      color: '#7B4B94',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950" dir="rtl">
+    <div className="min-h-screen bg-[#FAFAF7] dark:bg-[#111111]" dir="rtl">
+      {/* Navbar */}
       <nav
-        className={`fixed z-50 w-full transition-all duration-300 ${
+        className={`fixed z-50 w-full transition-all duration-500 ${
           navScrolled
-            ? 'bg-black/80 backdrop-blur-md shadow-lg'
-            : 'bg-black/30 backdrop-blur-sm'
+            ? 'bg-white/90 dark:bg-[#111111]/90 backdrop-blur-xl shadow-sm border-b border-gray-200/50 dark:border-white/5'
+            : 'bg-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex justify-between items-center h-[60px] md:h-[68px]">
+        <div className="max-w-6xl mx-auto px-5 md:px-8">
+          <div className="flex justify-between items-center h-16 md:h-[72px]">
             <div className="flex items-center gap-3">
               <img
                 src={logoImage}
                 alt="بستان الإيمان"
-                className="w-10 h-10 md:w-11 md:h-11 object-contain drop-shadow-lg"
+                className="w-9 h-9 md:w-10 md:h-10 object-contain"
               />
               <div>
-                <h1 className="text-lg md:text-xl font-bold text-white leading-tight">بستان الإيمان</h1>
-                <p className="text-white/75 text-[11px] md:text-xs hidden sm:block">منصة تحفيظ القرآن الكريم</p>
+                <h1 className={`text-base md:text-lg font-bold leading-tight transition-colors ${navScrolled ? 'text-[#1a1a1a] dark:text-white' : 'text-[#1a1a1a] dark:text-white'}`}>
+                  بستان الإيمان
+                </h1>
               </div>
             </div>
 
@@ -75,7 +113,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 <button
                   key={index}
                   onClick={link.onClick}
-                  className="text-white/80 hover:text-white transition-colors text-sm font-medium"
+                  className={`transition-colors text-sm font-medium ${navScrolled ? 'text-gray-600 dark:text-gray-400 hover:text-[#1a1a1a] dark:hover:text-white' : 'text-gray-600 dark:text-gray-400 hover:text-[#1a1a1a] dark:hover:text-white'}`}
                   data-testid={`link-nav-${index}`}
                 >
                   {link.label}
@@ -89,7 +127,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                 onClick={onLoginClick}
                 variant="ghost"
                 size="sm"
-                className="text-white hover:bg-white/15 hidden sm:flex gap-1.5"
+                className="text-gray-600 dark:text-gray-400 hover:text-[#1a1a1a] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 hidden sm:flex gap-1.5 text-sm"
                 data-testid="button-login-header"
               >
                 <User className="w-4 h-4" />
@@ -98,18 +136,16 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               <Button
                 onClick={onRegisterClick}
                 size="sm"
-                className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 gap-1.5 shadow-lg shadow-emerald-500/25"
+                className="bg-[#2D5A3D] hover:bg-[#234A31] text-white border-0 gap-1.5 rounded-lg text-sm px-4"
                 data-testid="button-register-header"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">سجل الآن</span>
-                <span className="sm:hidden">سجل</span>
+                <span>سجّل الآن</span>
               </Button>
 
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:bg-white/15"
+                className="md:hidden text-gray-600 dark:text-gray-400"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 data-testid="button-mobile-menu"
                 aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
@@ -122,7 +158,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
           </div>
 
           {mobileMenuOpen && (
-            <div id="mobile-nav-menu" role="navigation" aria-label="القائمة الرئيسية" className="md:hidden pb-4 border-t border-white/10 mt-1 animate-in slide-in-from-top-2 duration-200">
+            <div id="mobile-nav-menu" role="navigation" aria-label="القائمة الرئيسية" className="md:hidden pb-4 border-t border-gray-200 dark:border-white/10 mt-1">
               <div className="flex flex-col gap-1 pt-3">
                 {navLinks.map((link, index) => (
                   <button
@@ -131,7 +167,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                       link.onClick();
                       setMobileMenuOpen(false);
                     }}
-                    className="text-white/80 hover:text-white hover:bg-white/10 py-2.5 px-3 text-right rounded-lg transition-colors"
+                    className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 py-2.5 px-3 text-right rounded-lg transition-colors"
                     data-testid={`link-nav-mobile-${index}`}
                   >
                     {link.label}
@@ -142,7 +178,7 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
                     onLoginClick();
                     setMobileMenuOpen(false);
                   }}
-                  className="text-white/80 hover:text-white hover:bg-white/10 py-2.5 px-3 text-right rounded-lg transition-colors sm:hidden"
+                  className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 py-2.5 px-3 text-right rounded-lg transition-colors sm:hidden"
                   data-testid="link-login-mobile"
                 >
                   تسجيل الدخول
@@ -153,336 +189,284 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
         </div>
       </nav>
 
-      <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a2e1a] via-[#0d3d22] to-[#051a0e]" />
-        <div className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+      {/* Hero */}
+      <section className="relative pt-32 md:pt-40 pb-20 md:pb-28 px-5 md:px-8">
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute top-20 right-[10%] w-[500px] h-[500px] rounded-full bg-[#2D5A3D]/[0.04] dark:bg-[#2D5A3D]/[0.08] blur-3xl" />
+          <div className="absolute bottom-0 left-[5%] w-[400px] h-[400px] rounded-full bg-[#D4AF37]/[0.04] dark:bg-[#D4AF37]/[0.06] blur-3xl" />
+        </div>
 
-        <div className="absolute top-[15%] right-[10%] w-32 h-32 md:w-48 md:h-48 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute bottom-[20%] left-[5%] w-40 h-40 md:w-56 md:h-56 rounded-full bg-emerald-400/8 blur-3xl" />
+        <div className="relative z-10 max-w-5xl mx-auto">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 bg-[#2D5A3D]/[0.08] dark:bg-[#2D5A3D]/20 rounded-full px-4 py-1.5 mb-8">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#2D5A3D] dark:bg-emerald-400" />
+              <span className="text-[#2D5A3D] dark:text-emerald-400 text-xs font-medium">منصة تعليمية إسلامية متكاملة</span>
+            </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto text-center px-4 pt-20">
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-8 border border-white/10">
-            <Star className="w-4 h-4 text-amber-400" />
-            <span className="text-white/80 text-sm">منصة تعليمية إسلامية شاملة</span>
+            <h2 className="text-[2.5rem] md:text-[3.5rem] lg:text-[4rem] font-bold text-[#1a1a1a] dark:text-white leading-[1.15] mb-6 tracking-tight">
+              احفظ القرآن الكريم
+              <br />
+              <span className="text-[#2D5A3D] dark:text-emerald-400">بأسلوب تفاعلي حديث</span>
+            </h2>
+
+            <p className="text-base md:text-lg text-gray-500 dark:text-gray-400 mb-10 max-w-xl leading-relaxed">
+              تعلّم وراجع مع متابعة مباشرة من مشايخ مؤهلين، ومصحف إلكتروني ذكي يتتبع تلاوتك ويصحح أخطاءك.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-3 mb-16">
+              <Button
+                onClick={onRegisterClick}
+                size="lg"
+                className="bg-[#2D5A3D] hover:bg-[#234A31] text-white border-0 px-8 h-12 text-base rounded-xl gap-2"
+                data-testid="button-register-hero"
+              >
+                ابدأ مجاناً
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                onClick={onQuranReader}
+                size="lg"
+                variant="outline"
+                className="border border-gray-300 dark:border-gray-700 text-[#1a1a1a] dark:text-white hover:bg-gray-100 dark:hover:bg-white/5 px-8 h-12 text-base rounded-xl gap-2"
+                data-testid="button-quran-hero"
+              >
+                <BookOpen className="w-4 h-4" />
+                تصفح المصحف
+              </Button>
+            </div>
           </div>
 
-          <h2
-            className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-[1.3]"
-            style={{ fontFamily: 'Amiri, serif' }}
-          >
-            رحلتك مع القرآن
-            <br />
-            <span className="text-emerald-400">تبدأ من هنا</span>
-          </h2>
-
-          <p className="text-lg md:text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
-            حفظ القرآن الكريم والدورات الشرعية مع متابعة مباشرة من المشايخ والمشرفين المعتمدين
-          </p>
-
-          <div className="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-            <Button
-              onClick={onRegisterClick}
-              size="lg"
-              className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 px-8 py-6 text-lg rounded-xl shadow-xl shadow-emerald-500/20 gap-2"
-              data-testid="button-register-hero"
-            >
-              <Sparkles className="h-5 w-5" />
-              ابدأ رحلتك مجاناً
-            </Button>
-            <Button
-              onClick={onQuranReader}
-              size="lg"
-              variant="outline"
-              className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-6 text-lg rounded-xl backdrop-blur-sm gap-2"
-              data-testid="button-quran-hero"
-            >
-              <BookOpen className="h-5 w-5" />
-              المصحف الإلكتروني
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 max-w-3xl mx-auto">
+          {/* Stats Row */}
+          <div className="flex flex-wrap gap-8 md:gap-14">
             {[
-              { count: '500+', label: 'طالب', icon: Users },
-              { count: '20+', label: 'دورة', icon: BookMarked },
-              { count: '300+', label: 'شهادة', icon: Award },
-              { count: '24/7', label: 'متاح', icon: Globe }
-            ].map((stat, index) => (
-              <div key={index} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 text-center">
-                <stat.icon className="w-6 h-6 mx-auto mb-2 text-emerald-400" />
-                <p className="text-2xl md:text-3xl font-bold text-white">{stat.count}</p>
-                <p className="text-sm text-white/70">{stat.label}</p>
+              { value: '+٥٠٠', label: 'طالب وطالبة' },
+              { value: '+٢٠', label: 'دورة تعليمية' },
+              { value: '+٣٠٠', label: 'شهادة ممنوحة' },
+            ].map((stat, i) => (
+              <div key={i} className="flex items-baseline gap-2">
+                <span className="text-2xl md:text-3xl font-bold text-[#1a1a1a] dark:text-white">{stat.value}</span>
+                <span className="text-sm text-gray-400 dark:text-gray-500">{stat.label}</span>
               </div>
             ))}
           </div>
         </div>
-
-        <button
-          onClick={() => {
-            document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' });
-          }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/40 hover:text-white/70 transition-colors animate-bounce"
-          aria-label="انتقل للأسفل"
-        >
-          <ChevronDown className="w-8 h-8" />
-        </button>
       </section>
 
-      <section id="programs" className="py-16 md:py-24 px-4 bg-white dark:bg-gray-950 scroll-mt-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <span className="inline-block bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-4">
-              برامجنا التعليمية
-            </span>
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Amiri, serif' }}>
-              رحلات تعليمية متنوعة
+      {/* Features Showcase */}
+      <section ref={featuresRef} className="py-20 md:py-28 px-5 md:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-14">
+            <p className="text-xs font-semibold text-[#2D5A3D] dark:text-emerald-400 uppercase tracking-widest mb-3">المميزات</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-[#1a1a1a] dark:text-white">
+              كل ما تحتاجه في مكان واحد
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              اختر البرنامج المناسب لمستواك وابدأ رحلتك مع القرآن الكريم
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              const isActive = activeFeature === index;
+              return (
+                <button
+                  key={index}
+                  onClick={() => setActiveFeature(index)}
+                  className={`text-right p-6 md:p-8 rounded-2xl border transition-all duration-500 ${
+                    isActive
+                      ? 'bg-white dark:bg-white/[0.04] border-gray-200 dark:border-white/10 shadow-lg dark:shadow-none'
+                      : 'bg-transparent border-transparent hover:bg-white/50 dark:hover:bg-white/[0.02]'
+                  }`}
+                >
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                    style={{
+                      backgroundColor: isActive ? `${feature.color}12` : 'transparent',
+                    }}
+                  >
+                    <Icon
+                      className="w-5 h-5 transition-colors"
+                      style={{ color: isActive ? feature.color : '#999' }}
+                    />
+                  </div>
+                  <h4 className={`text-base font-bold mb-2 transition-colors ${isActive ? 'text-[#1a1a1a] dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+                    {feature.title}
+                  </h4>
+                  <p className={`text-sm leading-relaxed transition-colors ${isActive ? 'text-gray-500 dark:text-gray-400' : 'text-gray-300 dark:text-gray-600'}`}>
+                    {feature.desc}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Programs */}
+      <section id="programs" className="py-20 md:py-28 px-5 md:px-8 bg-white dark:bg-[#161616] scroll-mt-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-14">
+            <p className="text-xs font-semibold text-[#2D5A3D] dark:text-emerald-400 uppercase tracking-widest mb-3">البرامج</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-[#1a1a1a] dark:text-white mb-3">
+              برامج تعليمية متخصصة
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 max-w-lg text-sm">
+              اختر المسار المناسب لمستواك وأهدافك
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               {
                 title: 'إتقان التجويد',
-                description: 'تعلم أحكام التجويد مع تطبيق عملي ومتابعة من المشرف',
+                description: 'تعلم أحكام التجويد مع تطبيق عملي على آيات القرآن الكريم',
                 icon: BookOpen,
-                gradient: 'from-emerald-500 to-emerald-600',
-                bgLight: 'bg-emerald-50 dark:bg-emerald-900/20',
-                iconColor: 'text-emerald-600 dark:text-emerald-400',
-                features: ['دروس مباشرة', 'تصحيح التلاوة', 'شهادة معتمدة']
+                accent: '#2D5A3D',
+                features: ['دروس مباشرة أسبوعية', 'تصحيح التلاوة بالذكاء الاصطناعي', 'شهادة إتمام معتمدة']
               },
               {
-                title: 'حفظ القرآن',
-                description: 'برنامج متكامل لحفظ القرآن الكريم بأساليب تفاعلية',
+                title: 'حفظ القرآن الكريم',
+                description: 'برنامج حفظ متدرج مع خطة مخصصة ومتابعة يومية من المشرف',
                 icon: Heart,
-                gradient: 'from-amber-500 to-orange-500',
-                bgLight: 'bg-amber-50 dark:bg-amber-900/20',
-                iconColor: 'text-amber-600 dark:text-amber-400',
-                features: ['أساليب تحفيزية', 'متابعة يومية', 'جوائز وشهادات']
+                accent: '#8B6914',
+                features: ['خطة حفظ شخصية', 'تسميع يومي مع المشرف', 'مراجعة دورية وتثبيت']
               },
               {
-                title: 'المتون العلمية',
-                description: 'دورات متقدمة لحفظ ودراسة المتون الشرعية',
+                title: 'العلوم الشرعية',
+                description: 'دورات في التفسير والعقيدة والفقه مع أساتذة متخصصين',
                 icon: GraduationCap,
-                gradient: 'from-blue-500 to-indigo-500',
-                bgLight: 'bg-blue-50 dark:bg-blue-900/20',
-                iconColor: 'text-blue-600 dark:text-blue-400',
-                features: ['محتوى متقدم', 'إجازة علمية', 'مسار أكاديمي']
+                accent: '#4A6FA5',
+                features: ['محتوى أكاديمي متميز', 'اختبارات تقييمية', 'مسار تعليمي متكامل']
               }
-            ].map((program, index) => (
-              <div
-                key={index}
-                className="group relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className={`h-1.5 bg-gradient-to-l ${program.gradient}`} />
-                <div className="p-6">
-                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-5 ${program.bgLight}`}>
-                    <program.icon className={`w-7 h-7 ${program.iconColor}`} />
+            ].map((program, index) => {
+              const Icon = program.icon;
+              return (
+                <div
+                  key={index}
+                  className="group bg-[#FAFAF7] dark:bg-[#111111] border border-gray-200/60 dark:border-white/5 rounded-2xl p-6 hover:border-gray-300 dark:hover:border-white/10 transition-all duration-300"
+                >
+                  <div
+                    className="w-10 h-10 rounded-lg flex items-center justify-center mb-5"
+                    style={{ backgroundColor: `${program.accent}10` }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: program.accent }} />
                   </div>
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{program.title}</h4>
-                  <p className="text-gray-500 dark:text-gray-400 mb-5 text-sm leading-relaxed">{program.description}</p>
+                  <h4 className="text-lg font-bold text-[#1a1a1a] dark:text-white mb-2">{program.title}</h4>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-5 leading-relaxed">{program.description}</p>
                   <ul className="space-y-2.5 mb-6">
                     {program.features.map((feature, i) => (
-                      <li key={i} className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                        <CheckCircle className="w-4 h-4 ml-2 text-emerald-500 flex-shrink-0" />
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+                        <CheckCircle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: program.accent }} />
                         {feature}
                       </li>
                     ))}
                   </ul>
                   <Button
                     onClick={onCourses}
-                    className="w-full bg-gray-900 dark:bg-white dark:text-gray-900 text-white hover:bg-gray-800 dark:hover:bg-gray-100 rounded-xl"
+                    variant="ghost"
+                    className="w-full justify-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#1a1a1a] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl"
                     data-testid={`button-program-${index}`}
                   >
                     تفاصيل البرنامج
+                    <ChevronLeft className="w-4 h-4" />
                   </Button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <span className="inline-block bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium px-4 py-1.5 rounded-full mb-4">
+      {/* Detailed Features Grid */}
+      <section className="py-20 md:py-28 px-5 md:px-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="mb-14">
+            <p className="text-xs font-semibold text-[#2D5A3D] dark:text-emerald-400 uppercase tracking-widest mb-3">التفاصيل</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-[#1a1a1a] dark:text-white">
               لماذا بستان الإيمان؟
-            </span>
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4" style={{ fontFamily: 'Amiri, serif' }}>
-              مميزات المنصة
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              نظام متكامل يجمع بين أحدث تقنيات الذكاء الاصطناعي والتعليم التفاعلي
-            </p>
           </div>
 
-          {[
-            {
-              category: 'التلاوة والتفاعل مع القرآن',
-              color: 'emerald',
-              items: [
-                { icon: BookOpen, title: 'المصحف الإلكتروني', desc: 'عرض المصحف كاملاً بخط عثماني واضح مع تنقل سلس بين الصفحات' },
-                { icon: Mic, title: 'التلاوة المباشرة', desc: 'اقرأ بصوتك والتطبيق يتابعك لحظياً مع تمييز الكلمات' },
-                { icon: Star, title: 'الذكاء الاصطناعي', desc: 'يتعرف على صوتك ويعرض الآيات تلقائياً أثناء القراءة' },
-                { icon: PlayCircle, title: 'ابدأ من أي آية', desc: 'لا حاجة لتحديد مسبق - ابدأ القراءة من أي مكان في المصحف' },
-              ]
-            },
-            {
-              category: 'الحفظ والمراجعة',
-              color: 'amber',
-              items: [
-                { icon: EyeOff, title: 'وضع الحفظ', desc: 'إخفاء النص لاختبار نفسك والكشف بالضغط على كل آية' },
-                { icon: TrendingUp, title: 'متابعة مستمرة', desc: 'تتبع تقدمك في الحفظ والمراجعة بإحصائيات مفصلة' },
-                { icon: BookMarked, title: 'خطة حفظ ذكية', desc: 'خطة حفظ تدريجية مخصصة بالذكاء الاصطناعي حسب مستواك' },
-                { icon: CheckCircle, title: 'استكمال الحفظ', desc: 'يحفظ آخر موضع توقفت عنده ويستكمل من حيث توقفت' },
-              ]
-            },
-            {
-              category: 'تصحيح الأخطاء',
-              color: 'red',
-              items: [
-                { icon: Shield, title: 'اكتشاف الأخطاء', desc: 'يكتشف أخطاء التلاوة والتجويد والترتيب مباشرة أثناء القراءة' },
-                { icon: CheckCircle, title: 'تصحيح النطق', desc: 'يصحح النطق ويحدد الكلمات التي تحتاج تحسين' },
-                { icon: Search, title: 'تحديد مكان الخطأ', desc: 'يحدد مكان كل خطأ بالضبط مع تصنيف نوعه' },
-                { icon: Award, title: 'تحسين التجويد', desc: 'تقارير مفصلة تساعد على تحسين أدائك في التجويد عملياً' },
-              ]
-            },
-            {
-              category: 'البحث الذكي في القرآن',
-              color: 'blue',
-              items: [
-                { icon: Mic, title: 'البحث بالصوت', desc: 'اقرأ جزءاً من آية ويبحث عنها تلقائياً في القرآن' },
-                { icon: Search, title: 'البحث النصي', desc: 'ابحث بكلمة أو جزء من آية وسيعرض جميع النتائج' },
-                { icon: BookOpen, title: 'التفسير والمعاني', desc: 'عرض تفسير ميسر لكل آية مع شرح المعاني' },
-                { icon: Globe, title: 'مواضع التكرار', desc: 'معرفة أماكن تكرار الآيات والكلمات في القرآن' },
-              ]
-            },
-          ].map((section, sIndex) => (
-            <div key={sIndex} className="mb-12 last:mb-0">
-              <div className="flex items-center gap-3 mb-6">
-                <div className={`w-1.5 h-8 rounded-full ${
-                  section.color === 'emerald' ? 'bg-emerald-500' :
-                  section.color === 'amber' ? 'bg-amber-500' :
-                  section.color === 'red' ? 'bg-red-500' : 'bg-blue-500'
-                }`} />
-                <h4 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">{section.category}</h4>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {section.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300"
-                  >
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 ${
-                      section.color === 'emerald' ? 'bg-emerald-50 dark:bg-emerald-900/30' :
-                      section.color === 'amber' ? 'bg-amber-50 dark:bg-amber-900/30' :
-                      section.color === 'red' ? 'bg-red-50 dark:bg-red-900/30' : 'bg-blue-50 dark:bg-blue-900/30'
-                    }`}>
-                      <item.icon className={`w-5 h-5 ${
-                        section.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' :
-                        section.color === 'amber' ? 'text-amber-600 dark:text-amber-400' :
-                        section.color === 'red' ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'
-                      }`} />
-                    </div>
-                    <h5 className="font-bold text-gray-900 dark:text-white text-sm mb-1.5">{item.title}</h5>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
+            {[
+              { icon: Mic, title: 'تلاوة مباشرة', desc: 'يتابع صوتك كلمة بكلمة' },
+              { icon: Search, title: 'بحث ذكي', desc: 'بالنص أو بالصوت' },
+              { icon: EyeOff, title: 'وضع الحفظ', desc: 'إخفاء وكشف تدريجي' },
+              { icon: Shield, title: 'تصحيح الأخطاء', desc: 'اكتشاف فوري ودقيق' },
+              { icon: Video, title: 'حصص فيديو', desc: 'بث مباشر مع المشايخ' },
+              { icon: BookMarked, title: 'خطة مخصصة', desc: 'حسب مستواك وأهدافك' },
+              { icon: Users, title: 'متابعة شخصية', desc: 'من معلمين معتمدين' },
+              { icon: Globe, title: 'متاح دائماً', desc: 'تعلم في أي وقت' },
+            ].map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={index} className="group">
+                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-3 group-hover:bg-[#2D5A3D]/10 dark:group-hover:bg-[#2D5A3D]/20 transition-colors">
+                    <Icon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-[#2D5A3D] dark:group-hover:text-emerald-400 transition-colors" />
                   </div>
-                ))}
+                  <h5 className="font-semibold text-sm text-[#1a1a1a] dark:text-white mb-1">{item.title}</h5>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed">{item.desc}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 md:py-28 px-5 md:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-[#2D5A3D] dark:bg-[#1E3D2B] rounded-3xl p-8 md:p-14 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full opacity-[0.06]"
+              style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, white 1px, transparent 0)`,
+                backgroundSize: '24px 24px',
+              }}
+            />
+            <div className="relative z-10">
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                ابدأ رحلتك مع القرآن اليوم
+              </h3>
+              <p className="text-white/60 mb-8 text-sm md:text-base max-w-md mx-auto leading-relaxed">
+                انضم إلى مئات الطلاب واحفظ القرآن الكريم مع متابعة شخصية
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Button
+                  onClick={onRegisterClick}
+                  size="lg"
+                  className="bg-white text-[#2D5A3D] hover:bg-gray-100 border-0 px-8 h-12 text-base rounded-xl gap-2 font-semibold"
+                  data-testid="button-register-cta"
+                >
+                  سجّل الآن مجاناً
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  onClick={onQuranReader}
+                  size="lg"
+                  variant="outline"
+                  className="border border-white/20 text-white hover:bg-white/10 px-8 h-12 text-base rounded-xl gap-2"
+                  data-testid="button-quran-cta"
+                >
+                  تصفح المصحف
+                </Button>
               </div>
             </div>
-          ))}
-
-          <div className="mt-12 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl p-6 md:p-8">
-            <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">مميزات إضافية</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { icon: Globe, title: 'متعدد اللغات', desc: 'واجهة عربية كاملة' },
-                { icon: Users, title: 'تعلم من المشايخ', desc: 'حصص مباشرة مع معلمين معتمدين' },
-                { icon: Video, title: 'حصص فيديو', desc: 'بث مباشر عالي الجودة' },
-                { icon: MessageCircle, title: 'تواصل ودعم', desc: 'تفاعل مع المعلمين والطلاب' },
-                { icon: GraduationCap, title: 'مناسب للجميع', desc: 'مبتدئين ومتقدمين' },
-                { icon: Clock, title: 'متاح 24/7', desc: 'تعلم في أي وقت ومكان' },
-                { icon: Shield, title: 'بيانات آمنة', desc: 'حماية كاملة لخصوصيتك' },
-                { icon: Star, title: 'تجربة مخصصة', desc: 'محتوى حسب مستواك وأهدافك' },
-              ].map((item, index) => (
-                <div key={index} className="text-center p-3">
-                  <item.icon className="w-6 h-6 mx-auto mb-2 text-emerald-600 dark:text-emerald-400" />
-                  <h5 className="font-bold text-gray-900 dark:text-white text-sm">{item.title}</h5>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.desc}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
-      <section className="relative py-20 md:py-28 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0a2e1a] via-[#0d3d22] to-[#051a0e]" />
-        <div className="absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-emerald-400/8 blur-3xl" />
-
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <h3
-            className="text-3xl md:text-4xl font-bold text-white mb-5"
-            style={{ fontFamily: 'Amiri, serif' }}
-          >
-            ابدأ رحلتك التعليمية اليوم
-          </h3>
-          <p className="text-white/70 mb-10 text-lg leading-relaxed max-w-xl mx-auto">
-            انضم إلى مئات الطلاب الذين يحفظون القرآن الكريم ويتعلمون العلوم الشرعية معنا
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button
-              onClick={onRegisterClick}
-              size="lg"
-              className="bg-emerald-500 hover:bg-emerald-400 text-white border-0 px-10 py-6 text-lg rounded-xl shadow-xl shadow-emerald-500/20 gap-2"
-              data-testid="button-register-cta"
-            >
-              <Sparkles className="h-5 w-5" />
-              سجل الآن مجاناً
-            </Button>
-            <Button
-              onClick={onAboutUs}
-              size="lg"
-              variant="outline"
-              className="border-2 border-white/30 text-white hover:bg-white/10 px-10 py-6 text-lg rounded-xl gap-2"
-              data-testid="button-about-cta"
-            >
-              اعرف المزيد
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <footer className="py-10 bg-white dark:bg-gray-950 px-4 border-t border-gray-100 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto">
+      {/* Footer */}
+      <footer className="py-10 px-5 md:px-8 border-t border-gray-200/50 dark:border-white/5">
+        <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-3">
-              <img src={logoImage} alt="بستان الإيمان" className="w-10 h-10" />
-              <div>
-                <span className="font-bold text-gray-900 dark:text-white text-lg">بستان الإيمان</span>
-                <p className="text-xs text-gray-500 dark:text-gray-400">منصة تحفيظ القرآن الكريم</p>
-              </div>
+              <img src={logoImage} alt="بستان الإيمان" className="w-8 h-8 opacity-60" />
+              <span className="text-sm text-gray-400 dark:text-gray-500">بستان الإيمان — منصة تحفيظ القرآن الكريم</span>
             </div>
             <div className="flex items-center gap-6">
               {navLinks.map((link, index) => (
                 <button
                   key={index}
                   onClick={link.onClick}
-                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   data-testid={`link-footer-${index}`}
                 >
                   {link.label}
@@ -490,8 +474,8 @@ export function MainHomepage({ onLoginClick, onRegisterClick, onQuranReader, onA
               ))}
             </div>
           </div>
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
-            <p className="text-sm text-gray-400 dark:text-gray-500">
+          <div className="mt-6 pt-6 border-t border-gray-200/30 dark:border-white/5 text-center">
+            <p className="text-xs text-gray-300 dark:text-gray-600">
               جميع الحقوق محفوظة &copy; {new Date().getFullYear()} بستان الإيمان
             </p>
           </div>

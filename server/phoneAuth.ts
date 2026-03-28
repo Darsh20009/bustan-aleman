@@ -95,6 +95,28 @@ export async function initializePreregisteredUsers() {
     } else if (failedUsers.length > 0) {
       console.error("⚠️  No users were created or found - there were only failures");
     }
+
+    if (typeof storage.findOrCreateStudentForUser === 'function') {
+      for (const preUser of preregisteredUsers) {
+        if (preUser.role === 'student') {
+          try {
+            const dbUser = await storage.getUserByPhone(preUser.phoneNumber);
+            if (dbUser) {
+              const student = await storage.findOrCreateStudentForUser(dbUser.id, {
+                firstName: preUser.name,
+                phoneNumber: preUser.phoneNumber,
+                passwordHash: dbUser.passwordHash || preUser.phoneNumber,
+              });
+              if (student) {
+                console.log(`  📝 Student record ensured for: ${preUser.name} (${student.id})`);
+              }
+            }
+          } catch (studentErr: any) {
+            console.error(`  ⚠️ Failed to ensure student record for ${preUser.name}:`, studentErr?.message || studentErr);
+          }
+        }
+      }
+    }
   } catch (error: any) {
     const errorMsg = error?.message || String(error);
     

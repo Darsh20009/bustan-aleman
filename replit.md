@@ -11,7 +11,7 @@
 ## System Architecture
 
 ### UI/UX Decisions
-The platform uses a unified design with a core palette of Green (#10B981), White (#FFFFFF), and Orange (#F97316). All UI elements are centered, adhering to an Islamic aesthetic. It features full dark mode support, a Mushaf-style Quran reader with 604-page layout, and a single-page workspace with persistent navigation. Typography uses emerald and orange shades, supporting RTL for Arabic.
+The platform uses a clean, professional design inspired by modern SaaS aesthetics. Core palette: Deep Green (#2D5A3D) as primary, off-white (#FAFAF7) light background, dark (#111111) dark background, gold accents (#D4AF37). Design philosophy: minimal, no typical "AI-generated" patterns — clean typography, ample whitespace, subtle borders instead of heavy shadows. Login page: centered card with logo, rounded inputs. Homepage: left-aligned hero text, feature cards with hover states, muted stats row. Quran reader: frosted glass navbar, white card with shadow. Full dark mode support, RTL for Arabic.
 
 ### Technical Implementations
 -   **Frontend**: React 18 (TypeScript, Vite), shadcn/ui, Radix UI, TanStack Query, Wouter, Tailwind CSS.
