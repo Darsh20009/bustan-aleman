@@ -641,7 +641,17 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     }),
   };
 
-  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript, isListening } = useSpeechRecognition();
+  const { isSupported, startListening, stopListening, transcript, interimTranscript, resetTranscript, isListening, error: speechError } = useSpeechRecognition();
+
+  useEffect(() => {
+    if (speechError) {
+      toast({
+        title: "خطأ في الميكروفون",
+        description: speechError,
+        variant: "destructive"
+      });
+    }
+  }, [speechError]);
 
   // Watch for transcript changes and track progress
   useEffect(() => {
@@ -714,11 +724,19 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
       setActiveAyahIndex(0);
       setRecognizedText("");
       setWordTrackMap(new Map());
-      await startListening();
-      toast({
-        title: "التسميع مفعل",
-        description: "ابدأ بقراءة الآية الأولى في الصفحة",
-      });
+      try {
+        await startListening();
+        toast({
+          title: "التسميع مفعل",
+          description: "ابدأ بقراءة الآية الأولى في الصفحة",
+        });
+      } catch {
+        toast({
+          title: "تعذر تشغيل الميكروفون",
+          description: "يرجى فتح الموقع في نافذة متصفح مستقلة (ليس داخل إطار مضمّن)",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -856,56 +874,47 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkTheme ? 'bg-[#1A1A1A]' : 'bg-[#F5F0E6]'}`} dir="rtl">
-      {/* Decorative border pattern - hidden on mobile */}
-      <div className="hidden sm:block fixed inset-0 pointer-events-none z-0">
-        <div className={`absolute inset-4 border-4 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-lg`} />
-        <div className={`absolute inset-6 border-2 ${isDarkTheme ? 'border-[#D4AF37]/10' : 'border-[#8B7355]/10'} rounded-lg`} />
+    <div className={`min-h-screen ${isDarkTheme ? 'bg-[#0D1117]' : 'bg-[#FEFBF3]'}`} dir="rtl">
+      <div className={`hidden sm:block fixed inset-0 pointer-events-none z-0 ${isDarkTheme ? 'opacity-30' : 'opacity-20'}`}>
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 20% 50%, ${isDarkTheme ? '#D4AF37' : '#2D5A3D'}08 0%, transparent 50%), radial-gradient(circle at 80% 20%, ${isDarkTheme ? '#D4AF37' : '#8B7355'}06 0%, transparent 40%)`
+        }} />
       </div>
 
-      {/* Top navigation bar */}
       <motion.div 
-        className="sticky top-0 z-50 bg-gradient-to-b from-[#2D5A3D] to-[#1E4D2B] shadow-xl"
+        className={`sticky top-0 z-50 ${isDarkTheme ? 'bg-[#0D1117]/95' : 'bg-white/90'} backdrop-blur-xl border-b ${isDarkTheme ? 'border-[#D4AF37]/15' : 'border-[#2D5A3D]/10'}`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="w-full px-2 sm:px-3 py-1.5 sm:py-2">
-          {/* Mobile layout - stacked */}
-          <div className="sm:hidden space-y-1.5">
-            {/* Mobile Row 1 - Back button and Surah info */}
-            <div className="flex items-center justify-between min-h-[40px]">
-              <div className="flex items-center gap-1.5">
+        <div className="w-full px-3 sm:px-4 py-2">
+          <div className="sm:hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 {onBack && (
                   <Button
                     onClick={onBack}
                     size="icon"
                     variant="ghost"
-                    className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                    className={`${isDarkTheme ? 'text-[#D4AF37] hover:bg-[#D4AF37]/10' : 'text-[#2D5A3D] hover:bg-[#2D5A3D]/10'} h-9 w-9 rounded-xl`}
                     data-testid="button-back-home"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </Button>
                 )}
-                <div className="text-[#D4AF37] min-w-0">
-                  <div className="text-xs font-bold flex items-center gap-1">
-                    <Book className="w-3.5 h-3.5 flex-shrink-0" />
-                    <span className="truncate">الجزء {pageData?.juz || 1}</span>
-                  </div>
-                  {getSurahsOnPage()[0] && (
-                    <div className="text-[10px] opacity-80 truncate">{getSurahsOnPage()[0].name}</div>
-                  )}
+                <div className={`${isDarkTheme ? 'text-white' : 'text-[#1A1A1A]'}`}>
+                  <div className="text-sm font-bold">{getSurahsOnPage()[0]?.name || ''}</div>
+                  <div className={`text-[10px] ${isDarkTheme ? 'text-[#D4AF37]/70' : 'text-[#8B7355]'}`}>الجزء {pageData?.juz || 1}</div>
                 </div>
               </div>
 
-              {/* Mobile Row 1 Right - Page and navigation */}
               <div className="flex items-center gap-1">
                 <Button
                   onClick={goToPreviousPage}
                   disabled={currentPage === 1}
                   size="icon"
                   variant="ghost"
-                  className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8"
+                  className={`${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'} hover:bg-black/5 disabled:opacity-30 h-8 w-8 rounded-xl`}
                   data-testid="button-previous-page"
                 >
                   <ChevronRight className="w-4 h-4" />
@@ -915,12 +924,10 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   <DialogTrigger asChild>
                     <Button 
                       variant="ghost" 
-                      className="relative group px-1.5 py-0.5 h-auto hover:bg-white/10 min-w-[45px]"
+                      className={`relative group px-2 py-1 h-auto rounded-xl min-w-[45px] ${isDarkTheme ? 'bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37]' : 'bg-[#2D5A3D]/10 hover:bg-[#2D5A3D]/15 text-[#2D5A3D]'}`}
                       data-testid="button-page-nav"
                     >
-                      <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-2 py-0.5 rounded-full font-bold text-xs text-center">
-                        {currentPage}
-                      </div>
+                      <span className="font-bold text-sm">{currentPage}</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col p-4" dir="rtl">
@@ -1023,17 +1030,17 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             </div>
 
             {/* Mobile Row 2 - Action buttons */}
-            <div className="flex items-center justify-center gap-1.5 min-h-[40px]">
+            <div className={`flex items-center justify-center gap-2 mt-2 pt-2 border-t ${isDarkTheme ? 'border-[#D4AF37]/10' : 'border-[#2D5A3D]/8'}`}>
               {isSupported && (
                 <Button
                   onClick={toggleListening}
                   size="icon"
                   variant="ghost"
-                  className={`${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'} hover:bg-white/20 transition-all duration-200 h-9 w-9`}
+                  className={`rounded-xl h-9 w-9 transition-all duration-300 ${isListening ? 'text-white bg-red-500 shadow-lg shadow-red-500/30 animate-pulse' : isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                   data-testid="button-voice-recitation"
                   title={isListening ? "إيقاف الاستماع" : "بدء الاستماع"}
                 >
-                  {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </Button>
               )}
               <Button
@@ -1043,93 +1050,87 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 }}
                 size="icon"
                 variant="ghost"
-                className={`h-9 w-9 ${memorizationMode ? 'text-amber-400 bg-amber-400/20' : 'text-[#D4AF37] hover:bg-white/10'}`}
+                className={`rounded-xl h-9 w-9 ${memorizationMode ? 'text-white bg-amber-500 shadow-lg shadow-amber-500/30' : isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-memorization-mode"
                 title={memorizationMode ? 'إلغاء وضع الحفظ' : 'وضع الحفظ (إخفاء النص)'}
               >
-                {memorizationMode ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
+                {memorizationMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
               </Button>
               <Button
                 onClick={() => setSearchOpen(true)}
                 size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-search"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4" />
               </Button>
               <Button
                 onClick={() => setShowSettings(true)}
                 size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 h-9 w-9"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-settings"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-4 h-4" />
               </Button>
               <Button
-                onClick={() => window.location.href = '/quran/recitation'}
+                onClick={toggleQuranTheme}
                 size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-white/20 h-9 w-9"
-                data-testid="button-recitation-practice"
-                title="وضع التسميع"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
+                data-testid="button-theme-toggle"
+                title={isDarkTheme ? 'الوضع الفاتح' : 'الوضع الداكن'}
               >
-                <Book className="w-5 h-5" />
+                {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </Button>
             </div>
           </div>
 
           {/* Desktop layout - hidden on mobile */}
           <div className="hidden sm:flex items-center justify-between gap-2">
-            {/* Right side - Back and Surah info */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {onBack && (
                 <Button
                   onClick={onBack}
                   size="sm"
                   variant="ghost"
-                  className="text-[#D4AF37] hover:bg-white/10"
+                  className={`${isDarkTheme ? 'text-[#D4AF37] hover:bg-[#D4AF37]/10' : 'text-[#2D5A3D] hover:bg-[#2D5A3D]/10'} rounded-xl`}
                   data-testid="button-back-home"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </Button>
               )}
-              <div className="text-[#D4AF37]">
+              <div className={isDarkTheme ? 'text-white' : 'text-[#1A1A1A]'}>
                 <div className="text-sm font-bold flex items-center gap-2">
                   <Book className="w-4 h-4" />
-                  <span>الجزء {pageData?.juz || 1}</span>
+                  <span>{getSurahsOnPage()[0]?.name || ''}</span>
                 </div>
-                {getSurahsOnPage()[0] && (
-                  <div className="text-xs opacity-80">{getSurahsOnPage()[0].name}</div>
-                )}
+                <div className={`text-xs ${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#8B7355]'}`}>الجزء {pageData?.juz || 1}</div>
               </div>
             </div>
 
-            {/* Center - Page number with ornamental design */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 onClick={goToPreviousPage}
                 disabled={currentPage === 1}
                 size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8 sm:h-10 sm:w-10"
+                className={`${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'} disabled:opacity-30 h-10 w-10 rounded-xl hover:bg-black/5`}
                 data-testid="button-previous-page"
               >
-                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                <ChevronRight className="w-6 h-6" />
               </Button>
               
               <Dialog>
                 <DialogTrigger asChild>
                   <Button 
                     variant="ghost" 
-                    className="relative group px-2 sm:px-4 py-1 h-auto hover:bg-white/10 min-w-[60px] sm:min-w-[80px]"
+                    className={`relative group px-4 py-1.5 h-auto rounded-xl min-w-[80px] ${isDarkTheme ? 'bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37]' : 'bg-[#2D5A3D]/10 hover:bg-[#2D5A3D]/15 text-[#2D5A3D]'}`}
                     data-testid="button-page-nav"
                   >
-                    <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <div className="relative bg-[#D4AF37] text-[#2D5A3D] px-3 sm:px-4 py-0.5 sm:py-1 rounded-full font-bold text-base sm:text-lg text-center">
-                      {currentPage}
-                    </div>
+                    <span className="font-bold text-lg">{currentPage}</span>
+                    <span className={`text-xs mr-2 ${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#2D5A3D]/60'}`}>/ 604</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[95vw] sm:max-w-[500px] max-h-[85vh] overflow-hidden flex flex-col p-4" dir="rtl">
@@ -1223,25 +1224,24 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 disabled={currentPage === 604}
                 size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 disabled:opacity-30 h-8 w-8 sm:h-10 sm:w-10"
+                className={`${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'} disabled:opacity-30 h-10 w-10 rounded-xl hover:bg-black/5`}
                 data-testid="button-next-page"
               >
-                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                <ChevronLeft className="w-6 h-6" />
               </Button>
             </div>
 
-            {/* Left side - Actions */}
-            <div className="flex items-center gap-2 sm:gap-1">
+            <div className="flex items-center gap-1.5">
               {isSupported && (
                 <Button
                   onClick={toggleListening}
                   size="icon"
                   variant="ghost"
-                  className={`${isListening ? 'text-red-500 animate-pulse bg-red-500/10' : 'text-[#D4AF37] bg-[#D4AF37]/10'} hover:bg-white/20 transition-all duration-200 h-9 w-9 sm:h-8 sm:w-8`}
+                  className={`rounded-xl h-9 w-9 transition-all duration-300 ${isListening ? 'text-white bg-red-500 shadow-lg shadow-red-500/30 animate-pulse' : isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                   data-testid="button-voice-recitation"
                   title={isListening ? "إيقاف الاستماع" : "بدء الاستماع"}
                 >
-                  {isListening ? <MicOff className="w-5 h-5 sm:w-5 sm:h-5" /> : <Mic className="w-5 h-5 sm:w-5 sm:h-5" />}
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </Button>
               )}
               <Button
@@ -1249,42 +1249,39 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                   setMemorizationMode(!memorizationMode);
                   setRevealedAyahs(new Set());
                 }}
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className={`px-3 flex items-center gap-1 ${memorizationMode ? 'text-amber-400 bg-amber-400/20' : 'text-[#D4AF37] hover:bg-white/10'}`}
+                className={`rounded-xl h-9 w-9 ${memorizationMode ? 'text-white bg-amber-500 shadow-lg shadow-amber-500/30' : isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-memorization-mode-desktop"
-                title={memorizationMode ? 'إلغاء وضع الحفظ' : 'وضع الحفظ'}
               >
                 {memorizationMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                <span className="text-xs">{memorizationMode ? 'إظهار' : 'حفظ'}</span>
               </Button>
               <Button
                 onClick={() => setSearchOpen(true)}
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-search"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-4 h-4" />
               </Button>
               <Button
                 onClick={() => setShowSettings(true)}
-                size="sm"
+                size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
                 data-testid="button-settings"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-4 h-4" />
               </Button>
               <Button
-                onClick={() => window.location.href = '/quran/recitation'}
-                size="sm"
+                onClick={toggleQuranTheme}
+                size="icon"
                 variant="ghost"
-                className="text-[#D4AF37] hover:bg-white/10 px-3 flex items-center gap-1"
-                data-testid="button-recitation-practice"
+                className={`rounded-xl h-9 w-9 ${isDarkTheme ? 'text-[#D4AF37] bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20' : 'text-[#2D5A3D] bg-[#2D5A3D]/8 hover:bg-[#2D5A3D]/15'}`}
+                data-testid="button-theme-toggle-desktop"
               >
-                <Book className="w-4 h-4" />
-                <span className="text-xs">تسميع</span>
+                {isDarkTheme ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </Button>
             </div>
           </div>
@@ -1320,31 +1317,23 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
             style={{ perspective: 1000 }}
           >
             {/* Mushaf Page */}
-            <div className={`relative ${isDarkTheme ? 'text-[#E8E8E8]' : 'text-[#1A1A1A]'} overflow-hidden`}>
-              {/* Ornamental frame - hidden on mobile */}
-              <div className="hidden sm:block absolute inset-0 pointer-events-none">
-                {/* Corner decorations */}
-                <div className={`absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-tr-lg`} />
-                <div className={`absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-tl-lg`} />
-                <div className={`absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-br-lg`} />
-                <div className={`absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 ${isDarkTheme ? 'border-[#D4AF37]/20' : 'border-[#8B7355]/20'} rounded-bl-lg`} />
-              </div>
+            <div className={`relative ${isDarkTheme ? 'bg-[#141820] text-[#E8E8E8]' : 'bg-white text-[#1A1A1A]'} overflow-hidden rounded-2xl shadow-xl ${isDarkTheme ? 'shadow-black/30' : 'shadow-[#2D5A3D]/8'} mx-2 sm:mx-0`}>
+              <div className={`hidden sm:block absolute inset-0 pointer-events-none rounded-2xl border ${isDarkTheme ? 'border-[#D4AF37]/10' : 'border-[#2D5A3D]/8'}`} />
 
-              {/* Page header with Surah name */}
-              <div className="py-2 sm:py-3 px-3 sm:px-6 border-b border-[#D4AF37]/20">
+              <div className={`py-3 px-4 sm:px-6 border-b ${isDarkTheme ? 'border-[#D4AF37]/10 bg-[#0D1117]/50' : 'border-[#2D5A3D]/8 bg-[#F8F5ED]'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    {getSurahsOnPage().map((surah, idx) => (
-                      <Badge 
+                    {getSurahsOnPage().map((surah) => (
+                      <span 
                         key={surah.number} 
-                        className={`${isDarkTheme ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-[#2D5A3D]/10 text-[#2D5A3D]'} border-none font-bold`}
+                        className={`text-sm font-bold ${isDarkTheme ? 'text-[#D4AF37]' : 'text-[#2D5A3D]'}`}
                       >
                         {surah.name}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
-                  <div className={`${isDarkTheme ? 'text-[#D4AF37]/60' : 'text-[#8B7355]/60'} text-sm font-medium`}>
-                    صفحة {currentPage} من 604
+                  <div className={`${isDarkTheme ? 'text-white/30' : 'text-[#8B7355]/50'} text-xs`}>
+                    {currentPage}
                   </div>
                 </div>
               </div>
@@ -1454,7 +1443,7 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                                     setRevealedAyahs(prev => new Set(prev).add(ayah.number));
                                   }}
                                 >
-                                  <span className={`${isDarkTheme ? 'text-[#1A1A1A]' : 'text-[#F5F0E6]'} transition-colors duration-300`} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+                                  <span className={`${isDarkTheme ? 'text-[#141820]' : 'text-white'} transition-colors duration-300`} style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
                                     {ayah.text}
                                   </span>
                                 </span>
@@ -1496,48 +1485,60 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
                 )}
               </div>
 
-              {/* Page footer */}
-              <div className="py-2 px-6 border-t border-[#D4AF37]/20">
-                <div className="flex items-center justify-center gap-4 text-[#D4AF37]/60 text-sm">
+              <div className={`py-2 px-6 border-t ${isDarkTheme ? 'border-[#D4AF37]/10' : 'border-[#2D5A3D]/8'}`}>
+                <div className={`flex items-center justify-center gap-4 ${isDarkTheme ? 'text-white/25' : 'text-[#8B7355]/40'} text-xs`}>
                   <span>الجزء {pageData?.juz || 1}</span>
-                  <span className="opacity-30">|</span>
+                  <span>·</span>
                   <span>الحزب {Math.ceil((pageData?.juz || 1) * 2)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Swipe hint */}
-            <div className="flex items-center justify-center mt-4 gap-6 text-[#8B7355]/60 dark:text-[#D4AF37]/40 text-sm">
-              <div className="flex items-center gap-1">
-                <ChevronRight className="w-4 h-4" />
-                <span>اسحب للسابق</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span>اسحب للتالي</span>
-                <ChevronLeft className="w-4 h-4" />
-              </div>
-            </div>
+            {isListening && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mt-3 mx-2 sm:mx-0 px-4 py-3 rounded-xl ${isDarkTheme ? 'bg-red-500/10 border border-red-500/20' : 'bg-red-50 border border-red-200'} flex items-center gap-3`}
+              >
+                <div className="relative flex items-center justify-center">
+                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                  <div className="absolute w-5 h-5 bg-red-500/30 rounded-full animate-ping" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-xs font-medium ${isDarkTheme ? 'text-red-400' : 'text-red-600'}`}>جارٍ الاستماع...</div>
+                  {recognizedText && recognizedText !== '...' && (
+                    <div className={`text-xs truncate mt-0.5 ${isDarkTheme ? 'text-white/50' : 'text-gray-500'}`}>{recognizedText}</div>
+                  )}
+                </div>
+                <Button
+                  onClick={toggleListening}
+                  size="sm"
+                  className="bg-red-500 hover:bg-red-600 text-white rounded-lg h-7 px-3 text-xs"
+                >
+                  إيقاف
+                </Button>
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation arrows for desktop - RTL Quran: next page on right, prev on left */}
         <Button
           onClick={goToNextPage}
           disabled={currentPage === 604}
-          className="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
+          className={`hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 disabled:opacity-20 rounded-2xl w-12 h-12 transition-all duration-200 ${isDarkTheme ? 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20' : 'bg-white text-[#2D5A3D] hover:bg-[#2D5A3D]/10 border border-[#2D5A3D]/15 shadow-lg shadow-black/5'}`}
           size="icon"
           data-testid="button-nav-next"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-5 h-5" />
         </Button>
         <Button
           onClick={goToPreviousPage}
           disabled={currentPage === 1}
-          className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 bg-[#2D5A3D] text-[#D4AF37] hover:bg-[#3D7A4D] disabled:opacity-30 rounded-full w-12 h-12"
+          className={`hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 disabled:opacity-20 rounded-2xl w-12 h-12 transition-all duration-200 ${isDarkTheme ? 'bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20' : 'bg-white text-[#2D5A3D] hover:bg-[#2D5A3D]/10 border border-[#2D5A3D]/15 shadow-lg shadow-black/5'}`}
           size="icon"
           data-testid="button-nav-prev"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5" />
         </Button>
       </div>
 
