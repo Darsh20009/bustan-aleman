@@ -671,16 +671,24 @@ export default function QuranPageReader({ studentId, onBack }: QuranPageProps) {
     const ayahs = pageData.ayahs;
     const normalizedSpoken = normalizeArabicForSearch(combined);
     
+    const spokenWords = normalizedSpoken.split(' ').filter(w => w.length > 2);
+    
     let matchedIdx = activeAyahIndex;
     const searchStart = Math.max(0, activeAyahIndex);
     for (let i = searchStart; i < ayahs.length; i++) {
       const ayahText = normalizeArabicForSearch(ayahs[i].text);
-      const prefix = ayahText.substring(0, 15); 
+      const ayahWordList = ayahText.split(' ').filter(w => w.length > 2);
       
-      const words = normalizedSpoken.split(' ').filter(w => w.length > 2);
-      const wordMatch = words.some(w => ayahText.includes(w));
+      let matchCount = 0;
+      for (const sw of spokenWords) {
+        if (ayahWordList.some(aw => levenshteinSim(sw, aw) >= 0.7)) {
+          matchCount++;
+        }
+      }
       
-      if (normalizedSpoken.includes(prefix) || wordMatch) {
+      const minWordsNeeded = Math.max(3, Math.ceil(ayahWordList.length * 0.3));
+      
+      if (matchCount >= minWordsNeeded) {
         if (matchedIdx !== i) {
           matchedIdx = i;
           setActiveAyahIndex(i);
