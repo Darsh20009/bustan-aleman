@@ -121,5 +121,9 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "overrides": {
+    "form-data": "^4.0.0",
+    "protobufjs": "^7.0.0"
   }
 }
