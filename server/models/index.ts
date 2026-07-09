@@ -8,15 +8,26 @@ const sessionSchema = new Schema({
 });
 export const Session = mongoose.model('Session', sessionSchema);
 
-// User Schema
+// User Schema - المرحلة الأولى: أدوار بستان الإيمان
+// الأدوار: super_admin | tenant_admin | supervisor | sheikh | parent | student
 const userSchema = new Schema({
   email: { type: String, unique: true, sparse: true },
   firstName: String,
   lastName: String,
   profileImageUrl: String,
-  role: { type: String, default: 'student' },
+  role: { 
+    type: String, 
+    default: 'student',
+    enum: ['super_admin', 'tenant_admin', 'supervisor', 'sheikh', 'parent', 'student',
+           // الأدوار القديمة للتوافق
+           'admin', 'owner', 'director', 'teacher']
+  },
   passwordHash: String,
   phoneNumber: { type: String, sparse: true, index: true },
+  // ربط المستخدم بجهة (tenant)
+  tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', default: null },
+  tenantSlug: { type: String, default: null },
+  // بيانات إضافية
   age: Number,
   educationLevel: String,
   quranExperience: String,
@@ -29,6 +40,10 @@ const userSchema = new Schema({
   passwordResetExpiry: Date,
   isActive: { type: Boolean, default: true },
   registrationCompleted: { type: Boolean, default: false },
+  // بيانات إضافية للمستخدم
+  language: { type: String, default: 'ar' },
+  avatar: String,
+  status: { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
 }, { timestamps: true });
 export const User = mongoose.model('User', userSchema);
 

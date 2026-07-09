@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Route, Switch, Redirect } from "wouter";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import { TenantProvider } from "./contexts/TenantContext";
 import { useAuth } from "./hooks/useAuth";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
@@ -60,9 +61,9 @@ import NotFound from "./pages/not-found";
 
 function getRoleRedirect(role: string): string {
   if (role === 'student') return '/student';
-  if (['supervisor', 'teacher', 'sheikh'].includes(role)) return '/teacher';
-  if (['director', 'owner'].includes(role)) return '/admin';
-  if (role === 'admin') return '/admin';
+  if (role === 'parent') return '/student'; // مؤقت ريثما تُبنى لوحة ولي الأمر
+  if (['supervisor', 'sheikh', 'teacher'].includes(role)) return '/teacher';
+  if (['tenant_admin', 'director', 'owner', 'admin', 'super_admin'].includes(role)) return '/admin';
   return '/';
 }
 
@@ -81,7 +82,7 @@ function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode;
     return <Redirect to="/login" />;
   }
 
-  if (user && !allowedRoles.includes(user.role)) {
+  if (user && !allowedRoles.includes(user.role) && user.role !== 'super_admin') {
     return <Redirect to={getRoleRedirect(user.role)} />;
   }
 
@@ -171,7 +172,7 @@ function AppRoutes() {
       </Route>
 
       <Route path="/admin/bank-transfers">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <BankTransferAdminPage />
         </ProtectedRoute>
       </Route>
@@ -321,43 +322,43 @@ function AppRoutes() {
       </Route>
 
       <Route path="/admin">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminStatisticsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/users">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminUsersPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/teachers">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminTeachersPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/halaqas">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminHalaqasPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/subscriptions">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminSubscriptionsPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/messages">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminMessagesPage />
         </ProtectedRoute>
       </Route>
 
       <Route path="/admin/settings">
-        <ProtectedRoute allowedRoles={['director', 'admin', 'owner']}>
+        <ProtectedRoute allowedRoles={['director', 'admin', 'owner', 'tenant_admin', 'super_admin']}>
           <AdminSettingsPage />
         </ProtectedRoute>
       </Route>
@@ -374,11 +375,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <LanguageProvider>
-          <TooltipProvider>
-            <AppRoutes />
-            <Toaster />
-            <InstallPrompt />
-          </TooltipProvider>
+          <TenantProvider>
+            <TooltipProvider>
+              <AppRoutes />
+              <Toaster />
+              <InstallPrompt />
+            </TooltipProvider>
+          </TenantProvider>
         </LanguageProvider>
       </ThemeProvider>
     </QueryClientProvider>

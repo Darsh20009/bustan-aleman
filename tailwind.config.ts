@@ -61,19 +61,17 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Islamic theme colors
-        "islamic-green": "hsl(var(--islamic-green))",
-        "warm-gold": "hsl(var(--warm-gold))",
-        "earth-brown": "hsl(var(--earth-brown))",
-        "warm-white": "hsl(var(--warm-white))",
-        "light-beige": "hsl(var(--light-beige))",
-        "dark-charcoal": "hsl(var(--dark-charcoal))",
-        // Button colors
-        "btn": {
-          DEFAULT: "hsl(var(--btn-bg))",
-          foreground: "hsl(var(--btn-fg))",
-        },
-        // Quran section colors
+        // ألوان بستان الإيمان الرسمية
+        "bustan-dark":  "hsl(var(--bustan-dark))",   // #1E4D3A
+        "bustan-main":  "hsl(var(--bustan-main))",   // #2E7D56
+        "bustan-light": "hsl(var(--bustan-light))",  // #A7C48A
+        "bustan-beige": "hsl(var(--bustan-beige))",  // #F6E9C9
+        "bustan-gold":  "hsl(var(--bustan-gold))",   // #D4AF37
+        "bustan-text":  "hsl(var(--bustan-text))",   // #1F2A23
+        // الأسماء القديمة للتوافق
+        "islamic-green": "hsl(var(--bustan-main))",
+        "warm-gold":     "hsl(var(--bustan-gold))",
+        // قسم القرآن
         "quran": {
           DEFAULT: "hsl(var(--quran-bg))",
           foreground: "hsl(var(--quran-fg))",
@@ -81,11 +79,11 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
-        serif: ["var(--font-serif)"],
-        mono: ["var(--font-mono)"],
-        "arabic-serif": ["Amiri", "serif"],
-        "arabic-sans": ["Noto Sans Arabic", "Arial", "sans-serif"],
+        sans: ["Tajawal", "Arial", "sans-serif"],
+        serif: ["Amiri", "serif"],
+        mono: ["Courier New", "monospace"],
+        tajawal: ["Tajawal", "sans-serif"],
+        quran: ["Amiri Quran", "Amiri", "serif"],
       },
       keyframes: {
         "accordion-down": {

@@ -1,0 +1,1 @@
+- [Bustan Al-Iman Architecture](bustan-architecture.md) — multi-tenant SaaS Quran platform; slug-based tenant routing; Phase 1 foundation complete

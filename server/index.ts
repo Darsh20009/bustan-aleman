@@ -10,6 +10,7 @@ import { migratePasswords } from "./passwordMigration";
 import { initializeTelegramBot } from "./telegramBot";
 import { wsService } from "./websocket";
 import { connectMongoDB } from "./mongodb";
+import { setupTenantRoutes } from "./tenantRoutes";
 import { initializeDatabase } from "./db";
 import MongoStore from 'connect-mongo';
 import mongoose from 'mongoose';
@@ -176,6 +177,9 @@ app.use((req, res, next) => {
     // Setup Settings routes (system settings, timezone, payment config)
     const { setupSettingsRoutes } = await import("./settingsRoutes");
     setupSettingsRoutes(app);
+
+    // Setup Tenant routes (multi-tenant SaaS management)
+    setupTenantRoutes(app);
 
     console.log("🔄 Starting registerRoutes...");
     const server = await registerRoutes(app);
